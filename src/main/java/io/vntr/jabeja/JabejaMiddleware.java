@@ -8,24 +8,33 @@ import io.vntr.User;
  */
 public class JabejaMiddleware implements IMiddleware {
 
+    private JabejaManager manager;
+
+    public JabejaMiddleware(JabejaManager manager) {
+        this.manager = manager;
+    }
+
     @Override
     public void addUser(User user) {
-        //TODO: do this
+        manager.addUser(user);
     }
 
     @Override
     public void removeUser(Long userId) {
-        //TODO: do this
+        manager.removeUser(userId);
     }
 
     @Override
     public void befriend(Long smallerUserId, Long largerUserId) {
-        //TODO: do this
+        manager.befriend(smallerUserId, largerUserId);
+        if(Math.random() > .9) {
+            manager.repartition();
+        }
     }
 
     @Override
     public void unfriend(Long smallerUserId, Long largerUserId) {
-        //TODO: do this
+        manager.unfriend(smallerUserId, largerUserId);
     }
 
     @Override

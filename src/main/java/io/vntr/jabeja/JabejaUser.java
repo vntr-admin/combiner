@@ -15,14 +15,27 @@ public class JabejaUser extends User {
     private int k;
     private Long pid;
     private JabejaManager manager;
-    private Set<JabejaUser> friends; //TODO: make sure this is synchronized with friendIds
+    private Set<JabejaUser> friends;
 
-    public JabejaUser(String name, Long id, int k, double alpha, JabejaManager manager) {
+    public JabejaUser(String name, Long id, Long initialPid, int k, double alpha, JabejaManager manager) {
         super(name, id);
+        this.pid = initialPid;
         this.alpha = alpha;
         this.k = k;
         this.manager = manager;
         friends = new HashSet<JabejaUser>();
+    }
+
+    @Override
+    public void befriend(Long friendId) {
+        super.befriend(friendId);
+        friends.add(manager.getUser(friendId));
+    }
+
+    @Override
+    public void unfriend(Long friendId) {
+        super.unfriend(friendId);
+        friends.remove(manager.getUser(friendId));
     }
 
     public void sampleAndSwap(double initialT, double deltaT) {
@@ -33,7 +46,7 @@ public class JabejaUser extends User {
                 partner = findPartner(manager.getRandomSamplingOfUsers(k), t);
             }
             if(partner != null) {
-                //TODO: swap that this and partner
+                manager.swap(getId(), partner.getId());
             }
             t -= deltaT;
         }
