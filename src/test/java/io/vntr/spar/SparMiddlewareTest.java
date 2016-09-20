@@ -9,25 +9,25 @@ import static org.junit.Assert.*;
 public class SparMiddlewareTest
 {
 	@Test
-	public void testAddUser(User user)
+	public void testAddUser()
 	{
 		//TODO: do this
 	}
 
 	@Test
-	public void testRemoveUser(Long userId)
+	public void testRemoveUser()
 	{
 		//TODO: do this
 	}
 
 	@Test
-	public void testBefriend(Long smallerUserId, Long largerUserId)
+	public void testBefriend()
 	{
 		//TODO: do this
 	}
 
 	@Test
-	public void testUnfriend(Long smallerUserId, Long largerUserId)
+	public void testUnfriend()
 	{
 		//TODO: do this
 	}
@@ -39,7 +39,7 @@ public class SparMiddlewareTest
 	}
 
 	@Test
-	public void testRemovePartition(Long partitionId)
+	public void testRemovePartition()
 	{
 		//TODO: do this
 	}

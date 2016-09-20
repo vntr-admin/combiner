@@ -5,15 +5,7 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class SparManager
 {
@@ -21,7 +13,7 @@ public class SparManager
 
 	private static final Long defaultStartingId = 1L;
 
-	private NavigableMap<Long, SparPartition> partitionIdToPartitionMap;
+	private SortedMap<Long, SparPartition> partitionIdToPartitionMap;
 
 	private Map<Long, Long> userIdToMasterPartitionIdMap = new HashMap<Long, Long>();
 
@@ -323,7 +315,7 @@ public class SparManager
 	public static final String MASTER_SECTION_HEADER = "#MASTERS";
 	public static final String REPLICAS_SECTION_HEADER = "#REPLICAS";
 	public static final String FRIENSHIPS_SECTION_HEADER = "#FRIENSHIPS";
-	public static final String NEWLINE = System.lineSeparator();
+	public static final String NEWLINE = System.getProperty("line.separator");
 	private static final byte[] NEWLINE_BYTES = NEWLINE.getBytes();
 	private static final int friendshipsPerLine = 1000;
 

@@ -1,7 +1,5 @@
 package io.vntr;
 
-import io.vntr.User;
-
 public interface IMiddleware
 {
 	void addUser(User user);
