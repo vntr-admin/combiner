@@ -133,7 +133,7 @@ public class HermesManager {
 
     Long getInitialPartitionId() {
         Long minId = null;
-        int minUsers = -1;
+        int minUsers = Integer.MAX_VALUE;
         for(Long pid : pMap.keySet()) {
             int numUsers = getPartitionById(pid).getNumUsers();
             if(numUsers < minUsers) {
