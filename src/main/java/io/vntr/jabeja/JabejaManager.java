@@ -18,6 +18,8 @@ public class JabejaManager {
     private Map<Long, JabejaUser> uMap;
     private NavigableMap<Long, Set<Long>> partitions;
 
+    private static final Long defaultInitialPid = 1L;
+
     public JabejaManager(double alpha, double initialT, double deltaT, int k) {
         this.alpha = alpha;
         this.initialT = initialT;
@@ -64,9 +66,13 @@ public class JabejaManager {
 
     public void addUser(User user) {
         Long initialPartitionId = getInitialPartitionId();
-        JabejaUser jabejaUser = new JabejaUser(user.getName(), user.getId(), initialPartitionId, k, alpha, this);
+        JabejaUser jabejaUser = new JabejaUser(user.getName(), user.getId(), initialPartitionId, alpha, this);
+        addUser(jabejaUser);
+    }
+
+    void addUser(JabejaUser jabejaUser) {
         uMap.put(jabejaUser.getId(), jabejaUser);
-        partitions.get(initialPartitionId).add(user.getId());
+        partitions.get(jabejaUser.getPid()).add(jabejaUser.getId());
     }
 
     public void removeUser(Long uid) {
@@ -88,9 +94,19 @@ public class JabejaManager {
     }
 
     public void repartition() {
-        //TODO: this is just a placeholder for something that should really happen in parallel
-        for(JabejaUser user : uMap.values()) {
-            user.sampleAndSwap(initialT, deltaT);
+        for(double t = initialT; t >= 1; t -= deltaT) {
+            List<Long> randomUserList = new LinkedList<Long>(uMap.keySet());
+            Collections.shuffle(randomUserList);
+            for(Long uid : randomUserList) {
+                JabejaUser user = getUser(uid);
+                JabejaUser partner = user.findPartner(user.getFriends(), t);
+                if(partner == null) {
+                    partner = user.findPartner(getRandomSamplingOfUsers(k), t);
+                }
+                if(partner != null) {
+                    swap(user.getId(), partner.getId());
+                }
+            }
         }
     }
 
@@ -98,8 +114,10 @@ public class JabejaManager {
         return ProbabilityUtils.getKDistinctValuesFromList(1, new LinkedList<Long>(partitions.keySet())).iterator().next();
     }
 
-    public void addPartition() {
-        partitions.put(partitions.lastKey() + 1L, new HashSet<Long>());
+    public Long addPartition() {
+        Long pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1L;
+        partitions.put(pid, new HashSet<Long>());
+        return pid;
     }
 
     public void removePartition(Long partitionId) {

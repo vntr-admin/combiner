@@ -12,16 +12,14 @@ import java.util.Set;
 public class JabejaUser extends User {
 
     private double alpha;
-    private int k;
     private Long pid;
     private JabejaManager manager;
     private Set<JabejaUser> friends;
 
-    public JabejaUser(String name, Long id, Long initialPid, int k, double alpha, JabejaManager manager) {
+    public JabejaUser(String name, Long id, Long initialPid, double alpha, JabejaManager manager) {
         super(name, id);
         this.pid = initialPid;
         this.alpha = alpha;
-        this.k = k;
         this.manager = manager;
         friends = new HashSet<JabejaUser>();
     }
@@ -36,21 +34,6 @@ public class JabejaUser extends User {
     public void unfriend(Long friendId) {
         super.unfriend(friendId);
         friends.remove(manager.getUser(friendId));
-    }
-
-    public void sampleAndSwap(double initialT, double deltaT) {
-        //TODO: this realistically cannot be monolithic - the while loop has to be synchronized
-        double t = initialT;
-        while(t > 1) { //TODO: find better stopping criteria
-            JabejaUser partner = findPartner(friends, t);
-            if(partner == null) {
-                partner = findPartner(manager.getRandomSamplingOfUsers(k), t);
-            }
-            if(partner != null) {
-                manager.swap(getId(), partner.getId());
-            }
-            t -= deltaT;
-        }
     }
 
     public Long getPid() {
@@ -92,5 +75,9 @@ public class JabejaUser extends User {
         }
 
         return count;
+    }
+
+    public Set<JabejaUser> getFriends() {
+        return friends;
     }
 }
