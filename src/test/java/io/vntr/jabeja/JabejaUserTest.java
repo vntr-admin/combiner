@@ -85,6 +85,21 @@ public class JabejaUserTest {
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
+
+        manager.befriend(1L, 2L);
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
+
+        manager.removeUser(3L);
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
+
+        manager.removeUser(6L);
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 1);
     }
 
     @Test
