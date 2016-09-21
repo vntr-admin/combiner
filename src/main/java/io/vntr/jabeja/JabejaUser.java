@@ -39,6 +39,7 @@ public class JabejaUser extends User {
     }
 
     public void sampleAndSwap(double initialT, double deltaT) {
+        //TODO: this realistically cannot be monolithic - the while loop has to be synchronized
         double t = initialT;
         while(t > 1) { //TODO: find better stopping criteria
             JabejaUser partner = findPartner(friends, t);
@@ -84,11 +85,10 @@ public class JabejaUser extends User {
         return bestPartner;
     }
 
-    public int getNeighborsOnPartition(Long partitionId) {
+    public int getNeighborsOnPartition(Long pid) {
         int count = 0;
-
         for(Long friendId : getFriendIDs()) {
-            count += manager.getPartitionForUser(friendId).equals(partitionId) ? 1 : 0;
+            count += manager.getPartitionForUser(friendId).equals(pid) ? 1 : 0;
         }
 
         return count;

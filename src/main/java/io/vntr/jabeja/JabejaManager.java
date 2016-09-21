@@ -9,18 +9,22 @@ import java.util.*;
  * Created by robertlindquist on 9/20/16.
  */
 public class JabejaManager {
-    private Map<Long, JabejaUser> uMap;
 
     private int k;
     private double alpha;
-    double initialTemp;
-    double tempDelta;
-    private int numPartitions;
+    private double initialT;
+    private double deltaT;
 
-    public JabejaManager(int k, double alpha) {
-        uMap = new HashMap<Long, JabejaUser>();
-        this.k = k;
+    private Map<Long, JabejaUser> uMap;
+    private NavigableMap<Long, Set<Long>> partitions;
+
+    public JabejaManager(double alpha, double initialT, double deltaT, int k) {
         this.alpha = alpha;
+        this.initialT = initialT;
+        this.deltaT = deltaT;
+        this.k = k;
+        uMap = new HashMap<Long, JabejaUser>();
+        partitions = new TreeMap<Long, Set<Long>>();
     }
 
     public Long getPartitionForUser(Long uid) {
@@ -29,6 +33,10 @@ public class JabejaManager {
 
     public JabejaUser getUser(Long uid) {
         return uMap.get(uid);
+    }
+
+    public Set<Long> getPartition(Long pid) {
+        return partitions.get(pid);
     }
 
     public Collection<JabejaUser> getRandomSamplingOfUsers(int n) {
@@ -41,17 +49,24 @@ public class JabejaManager {
     }
 
     public void swap(Long id1, Long id2) {
-        //TODO: make sure there's not more to this
-        Long tempPid = getUser(id1).getPid();
-        getUser(id1).setPid(getUser(id2).getPid());
-        getUser(id2).setPid(tempPid);
+        JabejaUser u1 = getUser(id1);
+        JabejaUser u2 = getUser(id2);
+
+        Long tempPid = u1.getPid();
+        u1.setPid(u2.getPid());
+        u2.setPid(tempPid);
+
+        getPartition(u1.getPid()).add(u1.getId());
+        getPartition(u2.getPid()).add(u2.getId());
+        getPartition(u1.getPid()).remove(u2.getId());
+        getPartition(u2.getPid()).remove(u1.getId());
     }
 
     public void addUser(User user) {
         Long initialPartitionId = getInitialPartitionId();
         JabejaUser jabejaUser = new JabejaUser(user.getName(), user.getId(), initialPartitionId, k, alpha, this);
         uMap.put(jabejaUser.getId(), jabejaUser);
-        //TODO: what else?
+        partitions.get(initialPartitionId).add(user.getId());
     }
 
     public void removeUser(Long uid) {
@@ -59,7 +74,7 @@ public class JabejaManager {
         for(Long friendId : user.getFriendIDs()) {
             getUser(friendId).unfriend(uid);
         }
-        //TODO: what else?
+        partitions.get(user.getPid()).remove(uid);
     }
 
     public void befriend(Long id1, Long id2) {
@@ -73,12 +88,25 @@ public class JabejaManager {
     }
 
     public void repartition() {
+        //TODO: this is just a placeholder for something that should really happen in parallel
         for(JabejaUser user : uMap.values()) {
-            user.sampleAndSwap(initialTemp, tempDelta);
+            user.sampleAndSwap(initialT, deltaT);
         }
     }
 
     Long getInitialPartitionId() {
-        return 0L; //TODO: do this
+        return ProbabilityUtils.getKDistinctValuesFromList(1, new LinkedList<Long>(partitions.keySet())).iterator().next();
+    }
+
+    public void addPartition() {
+        partitions.put(partitions.lastKey() + 1L, new HashSet<Long>());
+    }
+
+    public void removePartition(Long partitionId) {
+        partitions.remove(partitionId);
+    }
+
+    public Collection<Long> getPartitionIds() {
+        return partitions.keySet();
     }
 }

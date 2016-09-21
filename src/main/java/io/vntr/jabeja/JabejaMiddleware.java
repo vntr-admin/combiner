@@ -2,6 +2,11 @@ package io.vntr.jabeja;
 
 import io.vntr.IMiddleware;
 import io.vntr.User;
+import io.vntr.utils.ProbabilityUtils;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -39,12 +44,18 @@ public class JabejaMiddleware implements IMiddleware {
 
     @Override
     public void addPartition() {
-        //TODO: do this
+        manager.addPartition();
     }
 
     @Override
     public void removePartition(Long partitionId) {
-        //TODO: do this
+        Set<Long> partition = manager.getPartition(partitionId);
+        List<Long> pids = new LinkedList<Long>(manager.getPartitionIds());
+        manager.removePartition(partitionId);
+        for(Long uid : partition) {
+            Long newPid = ProbabilityUtils.getKDistinctValuesFromList(1, pids).iterator().next();
+            manager.getUser(uid).setPid(newPid);
+        }
     }
 
 }
