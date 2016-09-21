@@ -2,8 +2,6 @@ package io.vntr.jabeja;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  * Created by robertlindquist on 9/20/16.
  */
@@ -30,7 +28,7 @@ public class JabejaManagerTest {
         //TODO: do this
     }
     @Test
-    Long getInitialPartitionId() {
+    public void getInitialPartitionId() {
         //TODO: do this
     }
     @Test
