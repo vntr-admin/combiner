@@ -100,6 +100,53 @@ public class JabejaUserTest {
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 1);
+
+        manager.addUser(user3);
+        manager.addUser(user6);
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 1);
+
+        manager.befriend(1L, 3L);
+        manager.befriend(1L, 4L);
+        manager.befriend(1L, 6L);
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
+
+        Long pid3 = manager.addPartition();
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
+        assertTrue(user1.getNeighborsOnPartition(pid3) == 0);
+
+        JabejaMiddleware middleware = new JabejaMiddleware(manager);
+
+        middleware.removePartition(pid1);
+
+        assertTrue(user1.getNeighborsOnPartition(pid2) + user1.getNeighborsOnPartition(pid3) == 5);
+
+        middleware.removePartition(pid2);
+
+        assertTrue(user1.getNeighborsOnPartition(pid3) == 5);
+
+        Long pid4 = manager.addPartition();
+        manager.moveUser(2L, pid4);
+        manager.moveUser(4L, pid4);
+        manager.moveUser(6L, pid4);
+
+        assertTrue(user1.getNeighborsOnPartition(pid3) == 2);
+        assertTrue(user1.getNeighborsOnPartition(pid4) == 3);
+
+        manager.unfriend(1L, 2L);
+
+        assertTrue(user1.getNeighborsOnPartition(pid3) == 2);
+        assertTrue(user1.getNeighborsOnPartition(pid4) == 2);
+
+        manager.swap(2L, 3L);
+
+        assertTrue(user1.getNeighborsOnPartition(pid3) == 1);
+        assertTrue(user1.getNeighborsOnPartition(pid4) == 3);
     }
 
     @Test

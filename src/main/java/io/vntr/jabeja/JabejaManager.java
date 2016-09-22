@@ -127,4 +127,14 @@ public class JabejaManager {
     public Collection<Long> getPartitionIds() {
         return partitions.keySet();
     }
+
+    public void moveUser(Long uid, Long newPid) {
+        JabejaUser user = getUser(uid);
+        if(partitions.containsKey(user.getPid())) {
+            getPartition(user.getPid()).remove(uid);
+        }
+        getPartition(newPid).add(uid);
+        user.setPid(newPid);
+
+    }
 }
