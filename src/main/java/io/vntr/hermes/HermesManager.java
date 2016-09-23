@@ -12,6 +12,7 @@ public class HermesManager {
     private Map<Long, Long> uMap;
     private double gamma;
 
+
     private static final long defaultStartingPid = 1L;
 
     public HermesManager(double gamma) {
@@ -44,7 +45,6 @@ public class HermesManager {
         largerUser.unfriend(smallerUserId);
     }
 
-
     public void addPartition() {
         if(pMap.isEmpty()) {
             pMap.put(defaultStartingPid, new HermesPartition(defaultStartingPid, gamma, this));
@@ -56,7 +56,7 @@ public class HermesManager {
     }
 
     public void removePartition(Long pid) {
-        //TODO: do this
+        pMap.remove(pid);
     }
 
     public Set<Long> getAllPartitionIds() {
@@ -173,5 +173,14 @@ public class HermesManager {
             map.put(pid, getPartitionById(pid).getPhysicalUserIds());
         }
         return map;
+    }
+
+    public void moveUser(Long uid, Long pid) {
+        HermesUser user = getUser(uid);
+        uMap.put(uid, pid);
+        getPartitionById(user.getPhysicalPid()).removeUser(uid);
+        getPartitionById(pid).addUser(user);
+        user.setPhysicalPid(pid);
+        user.setLogicalPid(pid);
     }
 }

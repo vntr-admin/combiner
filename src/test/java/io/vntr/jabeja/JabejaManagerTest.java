@@ -65,7 +65,10 @@ public class JabejaManagerTest {
             }
         }
 
+        System.out.println("---1---");
+        System.out.println("Edge cut before: " + manager.getEdgeCut());
         manager.repartition();
+        System.out.println("Edge cut after:  " + manager.getEdgeCut());
         //TODO: do this
     }
 
@@ -93,7 +96,10 @@ public class JabejaManagerTest {
             }
         }
 
+        System.out.println("---2---");
+        System.out.println("Edge cut before: " + manager.getEdgeCut());
         manager.repartition();
+        System.out.println("Edge cut after:  " + manager.getEdgeCut());
     }
 
 

@@ -12,8 +12,11 @@ import java.util.Set;
  */
 public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     private HermesManager manager;
+    private HermesMigrator migrator;
+
     public HermesMiddleware(double gamma) {
         manager = new HermesManager(gamma);
+        migrator = new HermesMigrator(manager, gamma);
     }
 
     @Override
@@ -44,7 +47,8 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public void removePartition(Long partitionId) {
-        //TODO: do this
+        migrator.migrateOffPartition(partitionId);
+        manager.removePartition(partitionId);
     }
 
     @Override
