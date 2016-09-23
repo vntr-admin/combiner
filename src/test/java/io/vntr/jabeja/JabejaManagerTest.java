@@ -1,5 +1,6 @@
 package io.vntr.jabeja;
 
+import io.vntr.utils.ProbabilityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -68,4 +69,67 @@ public class JabejaManagerTest {
         //TODO: do this
     }
 
+    @Test
+    public void testRepartition2() {
+        int numUsers = 1000;
+        int numPartitions = 10;
+        double alpha = 1.1D;
+        JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
+
+        List<Long> partitionIds = new ArrayList<Long>(numPartitions+1);
+        for(int i=0; i<numPartitions; i++) {
+            partitionIds.add(manager.addPartition());
+        }
+
+        for(long id=0; id<numUsers; id++) {
+            Long pid = ProbabilityUtils.getKDistinctValuesFromList(1, partitionIds).iterator().next();
+            manager.addUser(new JabejaUser("User " + id,  id,  pid, alpha, manager));
+        }
+
+        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
+        for(Long userId : friendships.keySet()) {
+            for(Long otherUserId : friendships.get(userId)) {
+                manager.befriend(userId, otherUserId);
+            }
+        }
+
+        manager.repartition();
+    }
+
+
+
+    private static Map<Long, Set<Long>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, double groupMembershipProbability, double intraGroupFriendshipProbability) {
+        Map<Long, Set<Long>> userIdToFriendIds = new HashMap<Long, Set<Long>>();
+        for(long id=0L; id<numUsers; id++) {
+            userIdToFriendIds.put(id, new HashSet<Long>());
+        }
+
+        Map<Long, Set<Long>> groupIdToUserIds = new HashMap<Long, Set<Long>>();
+        for(long id=0; id<numGroups; id++) {
+            groupIdToUserIds.put(id, new HashSet<Long>());
+        }
+
+        for(Long userId : userIdToFriendIds.keySet()) {
+            for(Long groupId : groupIdToUserIds.keySet()) {
+                if(Math.random() < groupMembershipProbability) {
+                    groupIdToUserIds.get(groupId).add(userId);
+                }
+            }
+        }
+
+        for(Set<Long> groupMembers : groupIdToUserIds.values()) {
+            for(long userId : groupMembers) {
+                for(long otherUserId : groupMembers) {
+                    if(userId < otherUserId) { //this avoids running it once for each user
+                        if(Math.random() < intraGroupFriendshipProbability) {
+                            userIdToFriendIds.get(userId).add(otherUserId);
+                            userIdToFriendIds.get(otherUserId).add(userId);
+                        }
+                    }
+                }
+            }
+        }
+
+        return userIdToFriendIds;
+    }
 }
