@@ -382,4 +382,26 @@ public class SparManager
 	{
 		out.write(str.getBytes());
 	}
+
+	public Map<Long, Set<Long>> getPartitionToUserMap() {
+		Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
+		for(Long pid : partitionIdToPartitionMap.keySet()) {
+			map.put(pid, getPartitionById(pid).getIdsOfMasters());
+		}
+		return map;
+	}
+
+	public Long getEdgeCut() {
+		long count = 0L;
+		for(Long uid : userIdToMasterPartitionIdMap.keySet()) {
+			SparUser user = getUserMasterById(uid);
+			Long pid = user.getMasterPartitionId();
+			for(Long friendId : user.getFriendIDs()) {
+				if(!pid.equals(userIdToMasterPartitionIdMap.get(friendId))) {
+					count++;
+				}
+			}
+		}
+		return count/2;
+	}
 }

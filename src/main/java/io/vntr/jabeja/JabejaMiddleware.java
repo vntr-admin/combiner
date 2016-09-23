@@ -1,17 +1,19 @@
 package io.vntr.jabeja;
 
 import io.vntr.IMiddleware;
+import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class JabejaMiddleware implements IMiddleware {
+public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     private JabejaManager manager;
 
@@ -58,4 +60,23 @@ public class JabejaMiddleware implements IMiddleware {
         }
     }
 
+    @Override
+    public Long getNumberOfPartitions() {
+        return manager.getNumPartitions();
+    }
+
+    @Override
+    public Long getNumberOfUsers() {
+        return manager.getNumUsers();
+    }
+
+    @Override
+    public Long getEdgeCut() {
+        return manager.getEdgeCut();
+    }
+
+    @Override
+    public Map<Long, Set<Long>> getPartitionToUserMap() {
+        return manager.getPartitionToUsers();
+    }
 }

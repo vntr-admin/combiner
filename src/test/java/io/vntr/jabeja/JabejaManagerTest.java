@@ -132,4 +132,9 @@ public class JabejaManagerTest {
 
         return userIdToFriendIds;
     }
+
+    @Test
+    public void testGetEdgeCut() {
+        //TODO: do this
+    }
 }

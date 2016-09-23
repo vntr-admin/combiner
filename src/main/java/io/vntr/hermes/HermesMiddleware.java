@@ -1,12 +1,16 @@
 package io.vntr.hermes;
 
 import io.vntr.IMiddleware;
+import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class HermesMiddleware  implements IMiddleware {
+public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     private HermesManager manager;
     public HermesMiddleware(double gamma) {
         manager = new HermesManager(gamma);
@@ -41,5 +45,25 @@ public class HermesMiddleware  implements IMiddleware {
     @Override
     public void removePartition(Long partitionId) {
         //TODO: do this
+    }
+
+    @Override
+    public Long getNumberOfPartitions() {
+        return (long) manager.getAllPartitionIds().size();
+    }
+
+    @Override
+    public Long getNumberOfUsers() {
+        return manager.getNumUsers();
+    }
+
+    @Override
+    public Long getEdgeCut() {
+        return manager.getEdgeCut();
+    }
+
+    @Override
+    public Map<Long, Set<Long>> getPartitionToUserMap() {
+        return manager.getPartitionToUserMap();
     }
 }

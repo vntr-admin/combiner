@@ -7,9 +7,10 @@ import java.util.Map;
 import java.util.Set;
 
 import io.vntr.IMiddleware;
+import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 
-public class SparMiddleware implements IMiddleware
+public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer
 {
 	private SparManager manager;
 	private SparBefriendingStrategy sparBefriendingStrategy;
@@ -179,5 +180,25 @@ public class SparMiddleware implements IMiddleware
 		potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
 		List<Long> list = new LinkedList<Long>(potentialReplicaLocations);
 		return list.get((int) (list.size() * Math.random()));
+	}
+
+	@Override
+	public Long getNumberOfPartitions() {
+		return (long) manager.getAllPartitionIds().size();
+	}
+
+	@Override
+	public Long getNumberOfUsers() {
+		return (long) manager.getNumUsers();
+	}
+
+	@Override
+	public Long getEdgeCut() {
+		return manager.getEdgeCut();
+	}
+
+	@Override
+	public Map<Long, Set<Long>> getPartitionToUserMap() {
+		return manager.getPartitionToUserMap();
 	}
 }

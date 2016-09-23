@@ -107,4 +107,8 @@ public class HermesPartition {
     public void removeUser(Long userId) {
         physicalUsers.remove(userId);
     }
+
+    public Set<Long> getPhysicalUserIds() {
+        return Collections.unmodifiableSet(physicalUsers.keySet());
+    }
 }

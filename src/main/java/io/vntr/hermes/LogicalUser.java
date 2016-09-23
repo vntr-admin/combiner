@@ -42,6 +42,14 @@ public class LogicalUser {
         this.totalWeight = totalWeight;
     }
 
+    public Long getPid() {
+        return pid;
+    }
+
+    public Map<Long, Long> getpToFriendCount() {
+        return pToFriendCount;
+    }
+
     public Target getTargetPart(boolean firstStage) {
         if(getImbalanceFactor(pid, -1L) < (2-gamma)) {
             return new Target(id, null, null, 0);

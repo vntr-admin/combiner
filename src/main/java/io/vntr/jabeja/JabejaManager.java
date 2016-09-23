@@ -137,4 +137,32 @@ public class JabejaManager {
         user.setPid(newPid);
 
     }
+
+    public Long getNumPartitions() {
+        return (long) partitions.size();
+    }
+
+    public Long getNumUsers() {
+        return (long) uMap.size();
+    }
+
+    public Long getEdgeCut() {
+        long count = 0L;
+        for(JabejaUser user : uMap.values()) {
+            for(JabejaUser friend : user.getFriends()) {
+                if(user.getPid().longValue() < friend.getPid().longValue()) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    public Map<Long, Set<Long>> getPartitionToUsers() {
+        Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
+        for(Long pid : partitions.keySet()) {
+            map.put(pid, Collections.unmodifiableSet(partitions.get(pid)));
+        }
+        return map;
+    }
 }

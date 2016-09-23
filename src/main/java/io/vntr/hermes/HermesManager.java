@@ -143,4 +143,35 @@ public class HermesManager {
         }
         return minId;
     }
+
+    HermesUser getUser(Long uid) {
+        return getPartitionById(getPartitionIdForUser(uid)).getUserById(uid);
+    }
+
+    public Long getNumUsers() {
+        return (long) uMap.size();
+    }
+
+    public Long getEdgeCut() {
+        long count = 0;
+        for(Long uid : uMap.keySet()) {
+            LogicalUser user = getUser(uid).getLogicalUser();
+            Map<Long, Long> pToFriendCount = user.getpToFriendCount();
+            for(Long pid : getAllPartitionIds()) {
+                if(!pid.equals(user.getPid()) && pToFriendCount.containsKey(pid)) {
+                    count += pToFriendCount.get(pid);
+                }
+
+            }
+        }
+        return count / 2;
+    }
+
+    public Map<Long,Set<Long>> getPartitionToUserMap() {
+        Map<Long,Set<Long>> map = new HashMap<Long, Set<Long>>();
+        for(Long pid : getAllPartitionIds()) {
+            map.put(pid, getPartitionById(pid).getPhysicalUserIds());
+        }
+        return map;
+    }
 }

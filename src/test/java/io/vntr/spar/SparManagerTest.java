@@ -753,4 +753,10 @@ public class SparManagerTest
 	{
 		//TODO: do this
 	}
+
+	@Test
+	public void testGetEdgeCut()
+	{
+		//TODO: do this
+	}
 }
