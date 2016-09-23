@@ -1,13 +1,15 @@
 package io.vntr;
 
-public interface IMiddleware
-{
-	void addUser(User user);
-	void removeUser(Long userId);
+public interface IMiddleware {
+    void addUser(User user);
 
-	void befriend(Long smallerUserId, Long largerUserId);
-	void unfriend(Long smallerUserId, Long largerUserId);
+    void removeUser(Long userId);
 
-	void addPartition();
-	void removePartition(Long partitionId);
+    void befriend(Long smallerUserId, Long largerUserId);
+
+    void unfriend(Long smallerUserId, Long largerUserId);
+
+    void addPartition();
+
+    void removePartition(Long partitionId);
 }

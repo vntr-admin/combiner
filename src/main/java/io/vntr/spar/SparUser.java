@@ -6,54 +6,67 @@ import java.util.Set;
 
 import io.vntr.User;
 
-public class SparUser extends User
-{
-	private Long partitionId;
-	private Long masterPartitionId;
-	private Set<Long> replicaPartitionIds;
+public class SparUser extends User {
+    private Long partitionId;
+    private Long masterPartitionId;
+    private Set<Long> replicaPartitionIds;
 
-	public SparUser(String name, Long id)
-	{
-		super(name, id);
-		replicaPartitionIds = new HashSet<Long>();
-	}
+    public SparUser(String name, Long id) {
+        super(name, id);
+        replicaPartitionIds = new HashSet<Long>();
+    }
 
-	public Long getPartitionId()     { return partitionId; }
-	public void setPartitionId(Long partitionId) { this.partitionId = partitionId; }
+    public Long getPartitionId() {
+        return partitionId;
+    }
 
-	public Long getMasterPartitionId() { return masterPartitionId; }
-	public void setMasterPartitionId(Long masterPartitionId) { this.masterPartitionId = masterPartitionId; }
+    public void setPartitionId(Long partitionId) {
+        this.partitionId = partitionId;
+    }
 
-	public void addReplicaPartitionId(Long replicaPartitionId) { this.replicaPartitionIds.add(replicaPartitionId); }
-	public void removeReplicaPartitionId(Long replicaPartitionId) { this.replicaPartitionIds.remove(replicaPartitionId); }
+    public Long getMasterPartitionId() {
+        return masterPartitionId;
+    }
 
-	public void addReplicaPartitionIds(Collection<Long> replicaPartitionIds) { this.replicaPartitionIds.addAll(replicaPartitionIds); }
+    public void setMasterPartitionId(Long masterPartitionId) {
+        this.masterPartitionId = masterPartitionId;
+    }
 
-	public Set<Long> getReplicaPartitionIds() { return replicaPartitionIds; }
+    public void addReplicaPartitionId(Long replicaPartitionId) {
+        this.replicaPartitionIds.add(replicaPartitionId);
+    }
 
-	@Override
-	public SparUser clone()
-	{
-		SparUser user = new SparUser(getName(), getId());
-		user.setPartitionId(partitionId);
-		user.setMasterPartitionId(masterPartitionId);
-		user.addReplicaPartitionIds(replicaPartitionIds);
-		for(Long friendId : getFriendIDs())
-		{
-			user.befriend(friendId);
-		}
+    public void removeReplicaPartitionId(Long replicaPartitionId) {
+        this.replicaPartitionIds.remove(replicaPartitionId);
+    }
 
-		return user;
-	}
+    public void addReplicaPartitionIds(Collection<Long> replicaPartitionIds) {
+        this.replicaPartitionIds.addAll(replicaPartitionIds);
+    }
 
-	public boolean isReplica()
-	{
-		return !partitionId.equals(masterPartitionId);
-	}
+    public Set<Long> getReplicaPartitionIds() {
+        return replicaPartitionIds;
+    }
 
-	@Override
-	public String toString()
-	{
-		return super.toString() + "|masterP:" + masterPartitionId + "|P:" + partitionId + "|Reps:" + replicaPartitionIds.toString();
-	}
+    @Override
+    public SparUser clone() {
+        SparUser user = new SparUser(getName(), getId());
+        user.setPartitionId(partitionId);
+        user.setMasterPartitionId(masterPartitionId);
+        user.addReplicaPartitionIds(replicaPartitionIds);
+        for (Long friendId : getFriendIDs()) {
+            user.befriend(friendId);
+        }
+
+        return user;
+    }
+
+    public boolean isReplica() {
+        return !partitionId.equals(masterPartitionId);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + "|masterP:" + masterPartitionId + "|P:" + partitionId + "|Reps:" + replicaPartitionIds.toString();
+    }
 }
