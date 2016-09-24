@@ -34,7 +34,12 @@ public class HermesManager {
     }
 
     public void removeUser(Long userId) {
+        Set<Long> friendIds = getUser(userId).getFriendIDs();
+        for(Long friendId : friendIds) {
+            unfriend(userId, friendId);
+        }
         getPartitionById(getPartitionIdForUser(userId)).removeUser(userId);
+        uMap.remove(userId);
     }
 
     public void befriend(Long smallerUserId, Long largerUserId) {

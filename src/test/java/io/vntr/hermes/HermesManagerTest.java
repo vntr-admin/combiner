@@ -56,11 +56,48 @@ public class HermesManagerTest {
         manager.befriend(1L, 6L);
 
         assertTrue(manager.getEdgeCut() == 3L);
-    }
 
-    @Test
-    public void testAddPartition() {
-        //TODO: do this
+        manager.unfriend(1L, 6L);
+
+        assertTrue(manager.getEdgeCut() == 2L);
+
+        Long pid3 = manager.addPartition();
+
+        HermesUser user7 = new HermesUser(7L, "User 7", pid3, gamma, manager);
+        HermesUser user8 = new HermesUser(8L, "User 8", pid3, gamma, manager);
+        HermesUser user9 = new HermesUser(9L, "User 9", pid3, gamma, manager);
+
+        manager.addUser(user7);
+        manager.addUser(user8);
+        manager.addUser(user9);
+
+        manager.befriend(1L, 7L);
+        manager.befriend(1L, 8L);
+        manager.befriend(1L, 9L);
+
+        assertTrue(manager.getEdgeCut() == 5L);
+
+        manager.removeUser(8L);
+
+        assertTrue(manager.getEdgeCut() == 4L);
+
+        manager.moveUser(4L, pid1);
+
+        assertTrue(manager.getEdgeCut() == 3L);
+
+        manager.moveUser(4L, pid3);
+
+        assertTrue(manager.getEdgeCut() == 4L);
+
+        for(long id=2L; id<=9L; id++) {
+            if(id != 8L) {
+                manager.moveUser(id, pid3);
+            }
+        }
+
+        manager.repartition();
+
+        System.out.println("Hermes edge cut #1: " + manager.getEdgeCut());
     }
 
     @Test
@@ -80,11 +117,6 @@ public class HermesManagerTest {
 
     @Test
     public void testMigrateLogically() {
-        //TODO: do this
-    }
-
-    @Test
-    public void testGetEdgeCut() {
         //TODO: do this
     }
 }

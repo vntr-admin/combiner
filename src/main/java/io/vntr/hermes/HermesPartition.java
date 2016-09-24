@@ -17,6 +17,7 @@ public class HermesPartition {
         this.gamma = gamma;
         this.manager = manager;
         this.physicalUsers = new HashMap<Long, HermesUser>();
+        this.logicalUsers = new HashMap<Long, LogicalUser>();
     }
 
     public Long getId() {
@@ -108,6 +109,7 @@ public class HermesPartition {
 
     public void removeUser(Long userId) {
         physicalUsers.remove(userId);
+        logicalUsers.remove(userId);
     }
 
     public Set<Long> getPhysicalUserIds() {
