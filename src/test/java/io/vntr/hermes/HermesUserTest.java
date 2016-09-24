@@ -11,7 +11,7 @@ public class HermesUserTest {
 
     @Test
     public void testGetLogicalUser() {
-
+        //TODO: do this
     }
 
 }

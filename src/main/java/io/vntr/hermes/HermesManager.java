@@ -24,7 +24,13 @@ public class HermesManager {
     public void addUser(User user) {
         Long initialPid = getInitialPartitionId();
         HermesUser hermesUser = new HermesUser(user.getId(), user.getName(), initialPid, gamma, this);
-        getPartitionById(initialPid).addUser(hermesUser);
+        addUser(hermesUser);
+    }
+
+    void addUser(HermesUser user) {
+        Long pid = user.getPhysicalPid();
+        getPartitionById(pid).addUser(user);
+        uMap.put(user.getId(), pid);
     }
 
     public void removeUser(Long userId) {
@@ -45,14 +51,10 @@ public class HermesManager {
         largerUser.unfriend(smallerUserId);
     }
 
-    public void addPartition() {
-        if(pMap.isEmpty()) {
-            pMap.put(defaultStartingPid, new HermesPartition(defaultStartingPid, gamma, this));
-        }
-        else {
-            Long nextId = pMap.lastKey() + 1;
-            pMap.put(nextId, new HermesPartition(nextId, gamma, this));
-        }
+    public Long addPartition() {
+        Long id = pMap.isEmpty() ? defaultStartingPid : pMap.lastKey() + 1L;
+        pMap.put(id, new HermesPartition(id, gamma, this));
+        return id;
     }
 
     public void removePartition(Long pid) {
@@ -63,8 +65,13 @@ public class HermesManager {
         return pMap.keySet();
     }
 
-    public HermesPartition getPartitionById(Long pid) { return pMap.get(pid); }
-    public Long getPartitionIdForUser(Long uid) { return uMap.get(uid); }
+    public HermesPartition getPartitionById(Long pid) {
+        return pMap.get(pid);
+    }
+
+    public Long getPartitionIdForUser(Long uid) {
+        return uMap.get(uid);
+    }
 
     public void repartition() {
         int k = 3; //TODO: set this intelligently
@@ -98,13 +105,19 @@ public class HermesManager {
             stoppingCondition = !changed;
         }
 
+        Map<Long, Long> usersWhoMoved = new HashMap<Long, Long>();
         for (HermesPartition p : pMap.values()) {
-            p.physicallyMigrateCopy();
+            Set<Long> moved = p.physicallyMigrateCopy();
+            for(Long uid : moved) {
+                usersWhoMoved.put(uid, p.getId());
+            }
         }
 
         for (HermesPartition p : pMap.values()) {
             p.physicallyMigrateDelete();
         }
+
+        uMap.putAll(usersWhoMoved);
     }
 
     void migrateLogically(Target target) {

@@ -1,11 +1,62 @@
 package io.vntr.hermes;
 
+import io.vntr.User;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 9/20/16.
  */
 public class HermesManagerTest {
+
+    @Test
+    public void testThingsInGeneral() {
+        double gamma = 1.2D;
+        HermesManager manager = new HermesManager(gamma);
+
+        Long pid1 = manager.addPartition();
+        Long pid2 = manager.addPartition();
+
+        HermesUser user1 = new HermesUser(1L, "User 1", pid1, gamma, manager);
+        HermesUser user2 = new HermesUser(2L, "User 2", pid2, gamma, manager);
+        HermesUser user3 = new HermesUser(3L, "User 3", pid1, gamma, manager);
+        HermesUser user4 = new HermesUser(4L, "User 4", pid2, gamma, manager);
+        HermesUser user5 = new HermesUser(5L, "User 5", pid1, gamma, manager);
+        HermesUser user6 = new HermesUser(6L, "User 6", pid2, gamma, manager);
+
+        manager.addUser(user1);
+        manager.addUser(user2);
+        manager.addUser(user3);
+        manager.addUser(user4);
+        manager.addUser(user5);
+        manager.addUser(user6);
+
+        Map<Long, Set<Long>> pMap = manager.getPartitionToUserMap();
+        assertTrue(pMap.size() == 2);
+        assertTrue(pMap.get(pid1).equals(new HashSet<Long>(Arrays.asList(1L, 3L, 5L))));
+        assertTrue(pMap.get(pid2).equals(new HashSet<Long>(Arrays.asList(2L, 4L, 6L))));
+
+        assertEquals(user1, manager.getUser(1L));
+        assertEquals(user2, manager.getUser(2L));
+        assertEquals(user3, manager.getUser(3L));
+        assertEquals(user4, manager.getUser(4L));
+        assertEquals(user5, manager.getUser(5L));
+        assertEquals(user6, manager.getUser(6L));
+
+        manager.befriend(1L, 2L);
+        manager.befriend(1L, 3L);
+        manager.befriend(1L, 4L);
+        manager.befriend(1L, 5L);
+        manager.befriend(1L, 6L);
+
+        assertTrue(manager.getEdgeCut() == 3L);
+    }
 
     @Test
     public void testAddPartition() {

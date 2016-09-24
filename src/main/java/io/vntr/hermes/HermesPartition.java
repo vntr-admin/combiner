@@ -57,7 +57,7 @@ public class HermesPartition {
         return topKCandidates;
     }
 
-    public void physicallyMigrateCopy() {
+    public Set<Long> physicallyMigrateCopy() {
         Set<Long> logicalUserSet = new HashSet<Long>(logicalUsers.keySet());
         logicalUserSet.removeAll(physicalUsers.keySet());
         for(Long newUserId : logicalUserSet) {
@@ -65,7 +65,9 @@ public class HermesPartition {
             HermesUser newUser = p.getUserById(newUserId);
             physicalUsers.put(newUserId, newUser);
         }
+        return logicalUserSet;
     }
+
     public void physicallyMigrateDelete() {
         for(Iterator<Long> iter = physicalUsers.keySet().iterator(); iter.hasNext(); ) {
             HermesUser user = physicalUsers.get(iter.next());
