@@ -3,10 +3,7 @@ package io.vntr.hermes;
 import io.vntr.User;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -101,22 +98,12 @@ public class HermesManagerTest {
     }
 
     @Test
-    public void testRemovePartition() {
-        //TODO: do this
-    }
-
-    @Test
-    public void testRepartition() {
-        //TODO: do this
-    }
-
-    @Test
-    public void testUpdateAggregateWeightInformation() {
-        //TODO: do this
-    }
-
-    @Test
-    public void testMigrateLogically() {
+    public void testRepartitionInDepth() {
+        double gamma = 1.5;
+        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
+        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
+        HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
+//        assertTrue(manager.getEdgeCut() == 27); //or whatever
         //TODO: do this
     }
 }

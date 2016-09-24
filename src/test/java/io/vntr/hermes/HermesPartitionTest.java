@@ -27,14 +27,4 @@ public class HermesPartitionTest {
         //TODO: do this
     }
 
-    @Test
-    public void testUpdateLogicalUsersPartitionWeights() {
-        //TODO: do this
-    }
-
-    @Test
-    public void testUpdateLogicalUsersTotalWeights() {
-        //TODO: do this
-    }
-
 }

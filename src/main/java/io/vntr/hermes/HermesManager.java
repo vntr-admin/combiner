@@ -57,9 +57,13 @@ public class HermesManager {
     }
 
     public Long addPartition() {
-        Long id = pMap.isEmpty() ? defaultStartingPid : pMap.lastKey() + 1L;
+        Long pid = pMap.isEmpty() ? defaultStartingPid : pMap.lastKey() + 1L;
+        addPartition(pid);
+        return pid;
+    }
+
+    void addPartition(Long id) {
         pMap.put(id, new HermesPartition(id, gamma, this));
-        return id;
     }
 
     public void removePartition(Long pid) {
