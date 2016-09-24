@@ -29,4 +29,12 @@ public class JabejaTestUtils {
         }
         return list;
     }
+
+    public static <T> Set<T> initSet(T... args) {
+        Set<T> set = new HashSet<T>();
+        for(T t : args) {
+            set.add(t);
+        }
+        return set;
+    }
 }
