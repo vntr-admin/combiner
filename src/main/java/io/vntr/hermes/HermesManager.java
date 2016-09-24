@@ -84,27 +84,35 @@ public class HermesManager {
             p.resetLogicalUsers();
         }
 
+        System.out.println("Original: " + getPartitionToUserMap());
+
+        int iteration = 1;
         boolean stoppingCondition = false;
         while(!stoppingCondition) {
             boolean changed = false;
             for (HermesPartition p : pMap.values()) {
                 Set<Target> targets = p.getCandidates(true, k);
+                System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "a: " + targets);
                 changed |= !targets.isEmpty();
                 for(Target target : targets) {
                     migrateLogically(target);
                 }
             }
 
+            System.out.println("Iteration " + iteration + "a: " + getPartitionToLogicalUserMap());
             updateAggregateWeightInformation();
 
             for (HermesPartition p : pMap.values()) {
                 Set<Target> targets = p.getCandidates(false, k);
+                System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "b: " + targets);
                 changed |= !targets.isEmpty();
                 for(Target target : targets) {
                     migrateLogically(target);
                 }
             }
 
+            System.out.println("Iteration " + iteration + "b: " + getPartitionToLogicalUserMap());
+            iteration++;
             updateAggregateWeightInformation();
 
             stoppingCondition = !changed;
@@ -131,7 +139,7 @@ public class HermesManager {
         HermesUser user = getPartitionById(getPartitionIdForUser(target.userId)).getUserById(target.userId);
         user.setLogicalPid(target.partitionId);
         oldPart.removeLogicalUser(target.userId);
-        newPart.addLogicalUser(user.getLogicalUser()); //TODO: is this actually what we want?
+        newPart.addLogicalUser(user.getLogicalUser(false)); //TODO: is this actually what we want?
     }
 
     void updateAggregateWeightInformation() {
@@ -173,7 +181,7 @@ public class HermesManager {
     public Long getEdgeCut() {
         long count = 0;
         for(Long uid : uMap.keySet()) {
-            LogicalUser user = getUser(uid).getLogicalUser();
+            LogicalUser user = getUser(uid).getLogicalUser(true);
             Map<Long, Long> pToFriendCount = user.getpToFriendCount();
             for(Long pid : getAllPartitionIds()) {
                 if(!pid.equals(user.getPid()) && pToFriendCount.containsKey(pid)) {
@@ -189,6 +197,14 @@ public class HermesManager {
         Map<Long,Set<Long>> map = new HashMap<Long, Set<Long>>();
         for(Long pid : getAllPartitionIds()) {
             map.put(pid, getPartitionById(pid).getPhysicalUserIds());
+        }
+        return map;
+    }
+
+    Map<Long,Set<Long>> getPartitionToLogicalUserMap() {
+        Map<Long,Set<Long>> map = new HashMap<Long, Set<Long>>();
+        for(Long pid : getAllPartitionIds()) {
+            map.put(pid, getPartitionById(pid).getLogicalUserIds());
         }
         return map;
     }

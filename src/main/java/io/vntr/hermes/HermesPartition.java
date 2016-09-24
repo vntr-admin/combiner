@@ -83,7 +83,7 @@ public class HermesPartition {
     public void resetLogicalUsers() {
         logicalUsers = new HashMap<Long, LogicalUser>();
         for(HermesUser hermesUser : physicalUsers.values()) {
-            logicalUsers.put(hermesUser.getId(), hermesUser.getLogicalUser());
+            logicalUsers.put(hermesUser.getId(), hermesUser.getLogicalUser(true));
         }
     }
 
@@ -114,5 +114,19 @@ public class HermesPartition {
 
     public Set<Long> getPhysicalUserIds() {
         return Collections.unmodifiableSet(physicalUsers.keySet());
+    }
+
+    Set<Long> getLogicalUserIds() {
+        return Collections.unmodifiableSet(logicalUsers.keySet());
+    }
+
+    @Override
+    public String toString() {
+        return "HermesPartition{" +
+                "id=" + id +
+                ", gamma=" + gamma +
+                ", physicalUsers=" + physicalUsers +
+                ", logicalUsers=" + logicalUsers +
+                '}';
     }
 }

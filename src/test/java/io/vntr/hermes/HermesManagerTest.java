@@ -17,7 +17,7 @@ public class HermesManagerTest {
 
     @Test
     public void testThingsInGeneral() {
-        double gamma = 1.2D;
+        double gamma = 1.6D;
         HermesManager manager = new HermesManager(gamma);
 
         Long pid1 = manager.addPartition();

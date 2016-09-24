@@ -49,24 +49,28 @@ public class HermesUser extends User {
         this.logicalPid = logicalPid;
     }
 
-    public LogicalUser getLogicalUser() {
+    public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
         Map<Long, Long> pToWeight = new HashMap<Long, Long>();
         long totalWeight = 0L;
         for(Long partitionId : manager.getAllPartitionIds()) {
-            int pWeight = manager.getPartitionById(partitionId).getNumLogicalUsers();
+            int pWeight;
+            if(determineWeightsFromPhysicalPartitions) {
+                pWeight = manager.getPartitionById(partitionId).getNumUsers();
+            }
+            else {
+                pWeight = manager.getPartitionById(partitionId).getNumLogicalUsers();
+            }
             totalWeight += pWeight;
             pToWeight.put(partitionId, (long) pWeight);
         }
         Map<Long, Long> pToFriendCount = new HashMap<Long, Long>();
+        for(Long pid : manager.getAllPartitionIds()) {
+            pToFriendCount.put(pid, 0L);
+        }
         for(Long friendId : getFriendIDs()) {
-            HermesPartition physPartition = manager.getPartitionById(manager.getPartitionIdForUser(friendId));
-            Long partitionId = physPartition.getUserById(friendId).getLogicalPid();
-            if(!pToFriendCount.containsKey(partitionId)) {
-                pToFriendCount.put(partitionId, 1L);
-            }
-            else {
-                pToFriendCount.put(partitionId, pToFriendCount.get(partitionId) + 1L);
-            }
+            HermesUser friend = manager.getUser(friendId);
+            Long partitionId = friend.getLogicalPid();
+            pToFriendCount.put(partitionId, pToFriendCount.get(partitionId) + 1L);
         }
         return new LogicalUser(getId(), logicalPid, gamma, pToFriendCount, pToWeight, totalWeight);
     }

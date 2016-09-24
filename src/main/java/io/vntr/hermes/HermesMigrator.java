@@ -60,7 +60,7 @@ public class HermesMigrator {
     NavigableSet<Target> getPreferredTargets(Long pid) {
         NavigableSet<Target> preferredTargets = new TreeSet<Target>();
         for(Long uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
-            LogicalUser user = manager.getUser(uid).getLogicalUser();
+            LogicalUser user = manager.getUser(uid).getLogicalUser(true);
             long maxFriends = 0L;
             Long maxPid = null;
             for(Long friendPid : user.getpToFriendCount().keySet()) {

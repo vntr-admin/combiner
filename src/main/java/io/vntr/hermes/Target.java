@@ -56,4 +56,10 @@ public class Target implements Comparable<Target> {
         result = 31 * result + (gain != null ? gain.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        String strGain = gain > 0 ? "+" + gain : "" + gain;
+        return userId + ": " + partitionId + "--(" + strGain + ")-->" + oldPartitionId;
+    }
 }
