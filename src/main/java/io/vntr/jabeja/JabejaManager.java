@@ -116,8 +116,12 @@ public class JabejaManager {
 
     public Long addPartition() {
         Long pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1L;
-        partitions.put(pid, new HashSet<Long>());
+        addPartition(pid);
         return pid;
+    }
+
+    void addPartition(Long pid) {
+        partitions.put(pid, new HashSet<Long>());
     }
 
     public void removePartition(Long partitionId) {
