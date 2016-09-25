@@ -7,6 +7,7 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 import static io.vntr.jabeja.JabejaTestUtils.*;
+import static io.vntr.TestUtils.*;
 
 /**
  * Created by robertlindquist on 9/20/16.

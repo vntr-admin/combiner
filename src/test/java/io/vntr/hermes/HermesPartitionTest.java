@@ -22,9 +22,4 @@ public class HermesPartitionTest {
         //TODO: do this
     }
 
-    @Test
-    public void testResetLogicalUsers() {
-        //TODO: do this
-    }
-
 }

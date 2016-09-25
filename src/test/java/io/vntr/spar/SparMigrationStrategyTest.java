@@ -189,7 +189,7 @@ public class SparMigrationStrategyTest {
 
     @Test
     public void testGetWaterFillingStrategyOfPartitions() {
-        SparManager manager = TestUtils.getStandardManager();
+        SparManager manager = SparTestUtils.getStandardManager();
         SparMigrationStrategy strategy = new SparMigrationStrategy(manager);
 
         Map<Long, Integer> partitionIdToNumMastersMap = new HashMap<Long, Integer>();
@@ -252,7 +252,7 @@ public class SparMigrationStrategyTest {
 
     @Test
     public void testGetUserMigrationStrategy() {
-        SparManager manager = TestUtils.getStandardManager();
+        SparManager manager = SparTestUtils.getStandardManager();
         SparMigrationStrategy strategy = new SparMigrationStrategy(manager);
 
         //TODO: do this

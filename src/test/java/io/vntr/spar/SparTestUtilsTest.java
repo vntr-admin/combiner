@@ -6,14 +6,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import io.vntr.spar.TestUtils.GraphSpec;
-import io.vntr.spar.TestUtils.LongPair;
+import io.vntr.spar.SparTestUtils.GraphSpec;
+import io.vntr.spar.SparTestUtils.LongPair;
 
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class TestUtilsTest {
+public class SparTestUtilsTest {
     @Test
     public void testBuildGraphFromGraphSpec() {
         Set<Long> allUserIds = new HashSet<Long>(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L));
@@ -32,7 +32,7 @@ public class TestUtilsTest {
         partitionIdToReplicasMap.put(4L, new HashSet<Long>(Arrays.asList(2L, 3L, 4L, 9L)));
         partitionIdToReplicasMap.put(5L, new HashSet<Long>(Arrays.asList(10L, 4L, 5L, 6L)));
 
-        Set<LongPair> friendships = new HashSet<TestUtils.LongPair>();
+        Set<LongPair> friendships = new HashSet<SparTestUtils.LongPair>();
         friendships.add(new LongPair(1L, 2L));
         friendships.add(new LongPair(1L, 4L));
         friendships.add(new LongPair(1L, 8L));
@@ -54,7 +54,7 @@ public class TestUtilsTest {
             spec.addFriendship(friendship.val1, friendship.val2);
         }
 
-        SparManager manager = TestUtils.buildGraphFromGraphSpec(spec, minNumReplicas);
+        SparManager manager = SparTestUtils.buildGraphFromGraphSpec(spec, minNumReplicas);
 
         assertTrue(manager.getMinNumReplicas() == minNumReplicas);
         assertEquals(new HashSet<Long>(partitionIdToMastersMap.keySet()), new HashSet<Long>(manager.getAllPartitionIds()));

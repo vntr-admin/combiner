@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TestUtils {
+public class SparTestUtils {
     public static final Long[]   STANDAR_USER_ID_ARRAY =   {    3L,          4L,       5L,      6L,       8L,         10L,    11L,   12L};
     public static final String[] STANDARD_USER_NAME_ARRAY = {"Greg", "Henrietta", "Imogen", "James", "Kartuk", "Llewellyn", "Ming", "Nao"};
 
