@@ -106,43 +106,6 @@ public class JabejaManagerTest {
         System.out.println("Edge cut after:  " + manager.getEdgeCut());
     }
 
-
-
-    private static Map<Long, Set<Long>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, double groupMembershipProbability, double intraGroupFriendshipProbability) {
-        Map<Long, Set<Long>> userIdToFriendIds = new HashMap<Long, Set<Long>>();
-        for(long id=0L; id<numUsers; id++) {
-            userIdToFriendIds.put(id, new HashSet<Long>());
-        }
-
-        Map<Long, Set<Long>> groupIdToUserIds = new HashMap<Long, Set<Long>>();
-        for(long id=0; id<numGroups; id++) {
-            groupIdToUserIds.put(id, new HashSet<Long>());
-        }
-
-        for(Long userId : userIdToFriendIds.keySet()) {
-            for(Long groupId : groupIdToUserIds.keySet()) {
-                if(Math.random() < groupMembershipProbability) {
-                    groupIdToUserIds.get(groupId).add(userId);
-                }
-            }
-        }
-
-        for(Set<Long> groupMembers : groupIdToUserIds.values()) {
-            for(long userId : groupMembers) {
-                for(long otherUserId : groupMembers) {
-                    if(userId < otherUserId) { //this avoids running it once for each user
-                        if(Math.random() < intraGroupFriendshipProbability) {
-                            userIdToFriendIds.get(userId).add(otherUserId);
-                            userIdToFriendIds.get(otherUserId).add(userId);
-                        }
-                    }
-                }
-            }
-        }
-
-        return userIdToFriendIds;
-    }
-
     @Test
     public void testGetEdgeCut() {
         double alpha = 1.1D;
