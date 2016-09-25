@@ -91,7 +91,9 @@ public class HermesManager {
             boolean changed = false;
             for (HermesPartition p : pMap.values()) {
                 Set<Target> targets = p.getCandidates(true, k);
-                System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "a: " + targets);
+                if(!targets.isEmpty()) {
+                    System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "a: " + targets);
+                }
                 changed |= !targets.isEmpty();
                 for(Target target : targets) {
                     migrateLogically(target);
@@ -103,7 +105,9 @@ public class HermesManager {
 
             for (HermesPartition p : pMap.values()) {
                 Set<Target> targets = p.getCandidates(false, k);
-                System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "b: " + targets);
+                if(!targets.isEmpty()) {
+                    System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "b: " + targets);
+                }
                 changed |= !targets.isEmpty();
                 for(Target target : targets) {
                     migrateLogically(target);

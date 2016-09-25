@@ -14,8 +14,8 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     private HermesManager manager;
     private HermesMigrator migrator;
 
-    public HermesMiddleware(double gamma) {
-        manager = new HermesManager(gamma);
+    public HermesMiddleware(HermesManager manager, double gamma) {
+        this.manager = manager;
         migrator = new HermesMigrator(manager, gamma);
     }
 

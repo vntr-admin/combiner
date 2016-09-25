@@ -1,5 +1,7 @@
 package io.vntr.hermes;
 
+import io.vntr.utils.ProbabilityUtils;
+
 import java.util.*;
 
 /**
@@ -57,12 +59,17 @@ public class HermesMigrator {
     }
 
     NavigableSet<Target> getPreferredTargets(Long pid) {
+        List<Long> options = new LinkedList<Long>(manager.getAllPartitionIds());
+        options.remove(pid);
         NavigableSet<Target> preferredTargets = new TreeSet<Target>();
         for(Long uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
             LogicalUser user = manager.getUser(uid).getLogicalUser(true);
             long maxFriends = 0L;
             Long maxPid = null;
             for(Long friendPid : user.getpToFriendCount().keySet()) {
+                if(friendPid.equals(pid)) {
+                    continue;
+                }
                 long numFriends = user.getpToFriendCount().get(friendPid);
                 if(numFriends > maxFriends) {
                     maxPid = friendPid;
@@ -70,6 +77,9 @@ public class HermesMigrator {
                 }
             }
 
+            if(maxPid == null) {
+                maxPid = ProbabilityUtils.getKDistinctValuesFromList(1, options).iterator().next();
+            }
             Target target = new Target(uid, maxPid, pid, (int) maxFriends);
             preferredTargets.add(target);
         }

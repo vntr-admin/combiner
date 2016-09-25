@@ -1,10 +1,12 @@
 package io.vntr.hermes;
 
+import io.vntr.TestUtils;
 import io.vntr.User;
 import org.junit.Test;
 
 import java.util.*;
 
+import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
 import static org.junit.Assert.*;
 
 /**
@@ -99,11 +101,23 @@ public class HermesManagerTest {
 
     @Test
     public void testRepartitionInDepth() {
+        //TODO: this occasionally doesn't terminate
+        int numUsers = 5000;
+        int numPartitions = 10;
+
         double gamma = 1.5;
+        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 30, 0.1, 0.1);
         Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
+        for(long pid=0L; pid<=numPartitions; pid++) {
+            partitions.put(pid, new HashSet<Long>());
+        }
+        for(long uid=0L; uid<=numUsers; uid++) {
+            partitions.get(uid % numPartitions).add(uid);
+        }
         HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
-//        assertTrue(manager.getEdgeCut() == 27); //or whatever
-        //TODO: do this
+        Long initialEdgeCut = manager.getEdgeCut();
+        manager.repartition();
+        Long finalEdgeCut = manager.getEdgeCut();
+        System.out.println("Edge cut before: " + initialEdgeCut + ", after: " + finalEdgeCut);
     }
 }
