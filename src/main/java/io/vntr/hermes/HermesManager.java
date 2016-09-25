@@ -12,7 +12,6 @@ public class HermesManager {
     private Map<Long, Long> uMap;
     private double gamma;
 
-
     private static final long defaultStartingPid = 1L;
 
     public HermesManager(double gamma) {
@@ -43,17 +42,13 @@ public class HermesManager {
     }
 
     public void befriend(Long smallerUserId, Long largerUserId) {
-        HermesUser smallerUser = getPartitionById(getPartitionIdForUser(smallerUserId)).getUserById(smallerUserId);
-        smallerUser.befriend(largerUserId);
-        HermesUser largerUser = getPartitionById(getPartitionIdForUser(largerUserId)).getUserById(largerUserId);
-        largerUser.befriend(smallerUserId);
+        getUser(smallerUserId).befriend(largerUserId);
+        getUser(largerUserId).befriend(smallerUserId);
     }
 
     public void unfriend(Long smallerUserId, Long largerUserId) {
-        HermesUser smallerUser = getPartitionById(getPartitionIdForUser(smallerUserId)).getUserById(smallerUserId);
-        smallerUser.unfriend(largerUserId);
-        HermesUser largerUser = getPartitionById(getPartitionIdForUser(largerUserId)).getUserById(largerUserId);
-        largerUser.unfriend(smallerUserId);
+        getUser(smallerUserId).unfriend(largerUserId);
+        getUser(largerUserId).unfriend(smallerUserId);
     }
 
     public Long addPartition() {
@@ -140,7 +135,7 @@ public class HermesManager {
     void migrateLogically(Target target) {
         HermesPartition oldPart = getPartitionById(target.oldPartitionId);
         HermesPartition newPart = getPartitionById(target.partitionId);
-        HermesUser user = getPartitionById(getPartitionIdForUser(target.userId)).getUserById(target.userId);
+        HermesUser user = getUser(target.userId);
         user.setLogicalPid(target.partitionId);
         oldPart.removeLogicalUser(target.userId);
         newPart.addLogicalUser(user.getLogicalUser(false)); //TODO: is this actually what we want?

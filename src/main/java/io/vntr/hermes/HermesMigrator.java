@@ -15,7 +15,6 @@ public class HermesMigrator {
     }
 
     public void migrateOffPartition(Long pid) {
-        HermesPartition p = manager.getPartitionById(pid);
         NavigableSet<Target> preferredTargets = getPreferredTargets(pid);
         Map<Long, Long> actualTargets = new HashMap<Long, Long>();
         Map<Long, Integer> userCounts = getUserCounts();

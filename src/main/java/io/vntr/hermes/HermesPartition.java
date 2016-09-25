@@ -58,13 +58,12 @@ public class HermesPartition {
         return topKCandidates;
     }
 
+    /** Returns the users who were copied to this partition. */
     public Set<Long> physicallyMigrateCopy() {
         Set<Long> logicalUserSet = new HashSet<Long>(logicalUsers.keySet());
         logicalUserSet.removeAll(physicalUsers.keySet());
         for(Long newUserId : logicalUserSet) {
-            HermesPartition p = manager.getPartitionById(manager.getPartitionIdForUser(newUserId));
-            HermesUser newUser = p.getUserById(newUserId);
-            physicalUsers.put(newUserId, newUser);
+            physicalUsers.put(newUserId, manager.getUser(newUserId));
         }
         return logicalUserSet;
     }
