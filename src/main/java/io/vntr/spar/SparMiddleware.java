@@ -21,6 +21,12 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         sparMigrationStrategy = new SparMigrationStrategy(manager);
     }
 
+    SparMiddleware(SparManager manager) {
+        this.manager = manager;
+        sparBefriendingStrategy = new SparBefriendingStrategy(manager);
+        sparMigrationStrategy = new SparMigrationStrategy(manager);
+    }
+
     public void addUser(User user) {
         manager.addUser(user);
     }

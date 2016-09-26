@@ -108,18 +108,27 @@ public class SparMigrationStrategy {
         usersYetUnplaced.removeAll(strategy.keySet());
 
         for (Long uid : usersYetUnplaced) {
-            strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid));
+            strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getAllPartitionIds()));
         }
 
         return strategy;
     }
 
-    Long getLeastOverloadedPartitionWhereThisUserHasAReplica(Long uid) {
+    Long getLeastOverloadedPartitionWhereThisUserHasAReplica(Long uid, Map<Long, Long> strategy, Set<Long> allPids) {
+        Map<Long, Integer> pToStrategyCount = new HashMap<Long, Integer>();
+        for(Long pid : allPids) {
+            pToStrategyCount.put(pid, 0);
+        }
+        for(Long uid1 : strategy.keySet()) {
+            long pid = strategy.get(uid1);
+            pToStrategyCount.put(pid, pToStrategyCount.get(pid));
+        }
+
         SparUser user = manager.getUserMasterById(uid);
         int minMasters = Integer.MAX_VALUE;
         Long minPid = null;
         for(Long pid : user.getReplicaPartitionIds()) {
-            int numMasters = manager.getPartitionById(pid).getNumMasters();
+            int numMasters = manager.getPartitionById(pid).getNumMasters() + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;
                 minPid = pid;
