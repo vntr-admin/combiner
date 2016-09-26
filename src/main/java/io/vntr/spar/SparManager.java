@@ -344,4 +344,12 @@ public class SparManager {
         }
         return count / 2;
     }
+
+    public Long getReplicationCount() {
+        int count = 0;
+        for(Long pid : getAllPartitionIds()) {
+            count += getPartitionById(pid).getNumReplicas();
+        }
+        return (long) count;
+    }
 }

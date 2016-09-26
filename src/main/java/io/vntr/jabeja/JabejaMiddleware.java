@@ -79,4 +79,9 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public Map<Long, Set<Long>> getPartitionToUserMap() {
         return manager.getPartitionToUsers();
     }
+
+    @Override
+    public Long getReplicationCount() {
+        return 0L; //Ja-be-Ja does not replicate
+    }
 }

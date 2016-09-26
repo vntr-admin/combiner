@@ -32,16 +32,15 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void befriend(Long smallerUserId, Long largerUserId) {
         SparUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparUser largerUser = manager.getUserMasterById(largerUserId);
+        manager.befriend(smallerUser, largerUser);
+
         Long smallerUserMasterPartitionId = smallerUser.getMasterPartitionId();
         Long largerUserMasterPartitionId = largerUser.getMasterPartitionId();
 
         boolean colocatedMasters = smallerUserMasterPartitionId.equals(largerUserMasterPartitionId);
         boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserMasterPartitionId) && largerUser.getReplicaPartitionIds().contains(smallerUserMasterPartitionId);
-        if (colocatedMasters || colocatedReplicas) {
-            manager.befriend(smallerUser, largerUser);
-        } else {
+        if (!colocatedMasters && !colocatedReplicas) {
             BEFRIEND_REBALANCE_STRATEGY bestBefriendingRebalanceStrategy = sparBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
-            manager.befriend(smallerUser, largerUser);
             if (bestBefriendingRebalanceStrategy == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE) {
                 if (!smallerUser.getReplicaPartitionIds().contains(largerUserMasterPartitionId)) {
                     manager.addReplica(smallerUser, largerUserMasterPartitionId);
@@ -169,5 +168,10 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public Map<Long, Set<Long>> getPartitionToUserMap() {
         return manager.getPartitionToUserMap();
+    }
+
+    @Override
+    public Long getReplicationCount() {
+        return manager.getReplicationCount();
     }
 }

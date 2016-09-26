@@ -10,5 +10,6 @@ public interface IMiddlewareAnalyzer {
     Long getNumberOfPartitions();
     Long getNumberOfUsers();
     Long getEdgeCut();
+    Long getReplicationCount();
     Map<Long, Set<Long>> getPartitionToUserMap();
 }

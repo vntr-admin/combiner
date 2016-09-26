@@ -70,4 +70,9 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     public Map<Long, Set<Long>> getPartitionToUserMap() {
         return manager.getPartitionToUserMap();
     }
+
+    @Override
+    public Long getReplicationCount() {
+        return 0L; //Hermes does not replicate
+    }
 }
