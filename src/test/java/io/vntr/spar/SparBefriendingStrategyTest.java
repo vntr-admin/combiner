@@ -5,6 +5,9 @@ import java.util.*;
 import org.junit.Test;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
 import static org.junit.Assert.*;
 
 public class SparBefriendingStrategyTest {
@@ -539,52 +542,24 @@ public class SparBefriendingStrategyTest {
     }
 
     @Test
-    public void testDetermineBestBefriendingRebalanceStrategy() {
-        int minNumReplicas = 1;
-        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        partitions.put(1L, initSet( 1L,  2L,  3L,  4L,  5L));
-        partitions.put(2L, initSet( 6L,  7L,  8L,  9L, 10L));
-        partitions.put(3L, initSet(11L, 12L, 13L, 14L, 15L));
-        partitions.put(4L, initSet(16L, 17L, 18L, 19L, 20L));
+    public void testDetermineStrategy() {
+        for(int i=0; i<10; i++) {
+            assertEquals(SparBefriendingStrategy.determineStrategy(4, 4, 4, (int) (Math.random() * 20), (int) (Math.random() * 20)), NO_CHANGE);
+            assertEquals(SparBefriendingStrategy.determineStrategy(4, 5, 4, (int) (Math.random() * 20), (int) (Math.random() * 20)), NO_CHANGE);
+            assertEquals(SparBefriendingStrategy.determineStrategy(4, 4, 5, (int) (Math.random() * 20), (int) (Math.random() * 20)), NO_CHANGE);
+            assertEquals(SparBefriendingStrategy.determineStrategy(4, 5, 5, (int) (Math.random() * 20), (int) (Math.random() * 20)), NO_CHANGE);
+        }
 
-        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
-        friendships.put( 1L, initSet( 2L,  4L,  6L,  8L, 10L, 12L, 14L, 16L, 18L, 20L));
-        friendships.put( 2L, initSet( 3L,  6L,  9L, 12L, 15L, 18L));
-        friendships.put( 3L, initSet( 4L,  8L, 12L, 16L, 20L));
-        friendships.put( 4L, initSet( 5L, 10L, 15L));
-        friendships.put( 5L, initSet( 6L, 12L, 18L));
-        friendships.put( 6L, initSet( 7L, 14L));
-        friendships.put( 7L, initSet( 8L, 16L));
-        friendships.put( 8L, initSet( 9L, 18L));
-        friendships.put( 9L, initSet(10L, 20L));
-        friendships.put(10L, initSet(11L));
-        friendships.put(11L, initSet(12L));
-        friendships.put(12L, initSet(13L));
-        friendships.put(13L, initSet(14L));
-        friendships.put(14L, initSet(15L));
-        friendships.put(15L, initSet(16L));
-        friendships.put(16L, initSet(17L));
-        friendships.put(17L, initSet(18L));
-        friendships.put(18L, initSet(19L));
-        friendships.put(19L, initSet(20L));
-        friendships.put(20L, Collections.<Long>emptySet());
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 4, 5, 2, 3), LARGE_TO_SMALL);
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 4, 5, 5, 5), LARGE_TO_SMALL);
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 4, 5, 3, 3), NO_CHANGE);
 
-        Map<Long, Set<Long>> replicaPartitions = new HashMap<Long, Set<Long>>();
-        replicaPartitions.put(1L, initSet(16L, 17L, 18L, 19L, 20L, 12L));
-        replicaPartitions.put(2L, initSet( 1L,  2L,  3L,  4L,  5L, 11L, 18L, 19L));
-        replicaPartitions.put(3L, initSet( 6L,  7L,  8L,  9L, 10L,  2L, 17L));
-        replicaPartitions.put(4L, initSet(11L, 12L, 13L, 14L, 15L,  3L,  5L));
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 4, 4, 2, 3), LARGE_TO_SMALL);
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 4, 4, 3, 3), NO_CHANGE);
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicaPartitions);
-
-        SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
-
-        //TODO: these asserts are failing
-        BEFRIEND_REBALANCE_STRATEGY strat1 = strategy.determineBestBefriendingRebalanceStrategy(manager.getUserMasterById(3L), manager.getUserMasterById(18L));
-//        assertEquals(strat1, BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
-
-        BEFRIEND_REBALANCE_STRATEGY strat2 = strategy.determineBestBefriendingRebalanceStrategy(manager.getUserMasterById(12L), manager.getUserMasterById(18L));
-        assertEquals(strat2, BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE);
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 5, 4, 3, 2), SMALL_TO_LARGE);
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 5, 4, 5, 5), SMALL_TO_LARGE);
+        assertEquals(SparBefriendingStrategy.determineStrategy(5, 5, 4, 3, 3), NO_CHANGE);
     }
 
     @Test
@@ -617,7 +592,7 @@ public class SparBefriendingStrategyTest {
 
         int originalNumReplicas = partitionA.getNumReplicas() + partitionB.getNumReplicas();
 
-        int numReplicasNoMovement = strategy.calcNumReplicasNoMovement(alpha, beta);
+        int numReplicasNoMovement = strategy.calcNumReplicasStay(alpha, beta);
         assertTrue(numReplicasNoMovement == originalNumReplicas + 2);
     }
 
@@ -650,7 +625,7 @@ public class SparBefriendingStrategyTest {
 
         int originalNumReplicas = partitionA.getNumReplicas() + partitionB.getNumReplicas();
 
-        int numReplicasNoMovement = strategy.calcNumReplicasNoMovement(alpha, beta);
+        int numReplicasNoMovement = strategy.calcNumReplicasStay(alpha, beta);
         assertTrue(numReplicasNoMovement == originalNumReplicas + 1);
     }
 
@@ -683,7 +658,7 @@ public class SparBefriendingStrategyTest {
 
         int originalNumReplicas = partitionA.getNumReplicas() + partitionB.getNumReplicas();
 
-        int numReplicasNoMovement = strategy.calcNumReplicasNoMovement(alpha, beta);
+        int numReplicasNoMovement = strategy.calcNumReplicasStay(alpha, beta);
         assertTrue(numReplicasNoMovement == originalNumReplicas);
     }
 
@@ -696,8 +671,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario1.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario1.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario1.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario1.alpha, scenario1.beta);
+        int curNumReplicas = manager.getPartitionById(scenario1.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario1.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario1.alpha, scenario1.beta);
         assertTrue(curNumReplicas == calculatedNumReplicas);
     }
 
@@ -710,8 +685,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario2.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario2.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario2.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario2.alpha, scenario2.beta);
+        int curNumReplicas = manager.getPartitionById(scenario2.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario2.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario2.alpha, scenario2.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -725,8 +700,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario3.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario3.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario3.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario3.alpha, scenario3.beta);
+        int curNumReplicas = manager.getPartitionById(scenario3.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario3.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario3.alpha, scenario3.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -740,8 +715,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario4.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario4.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario4.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario4.alpha, scenario4.beta);
+        int curNumReplicas = manager.getPartitionById(scenario4.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario4.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario4.alpha, scenario4.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 2);
     }
@@ -755,8 +730,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario5.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario5.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario5.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario5.alpha, scenario5.beta);
+        int curNumReplicas = manager.getPartitionById(scenario5.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario5.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario5.alpha, scenario5.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -770,8 +745,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario6.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario6.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario6.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario6.alpha, scenario6.beta);
+        int curNumReplicas = manager.getPartitionById(scenario6.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario6.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario6.alpha, scenario6.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -785,8 +760,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario7.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario7.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario7.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario7.alpha, scenario7.beta);
+        int curNumReplicas = manager.getPartitionById(scenario7.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario7.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario7.alpha, scenario7.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -800,8 +775,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario8.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario8.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario8.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario8.alpha, scenario8.beta);
+        int curNumReplicas = manager.getPartitionById(scenario8.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario8.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario8.alpha, scenario8.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 1);
     }
@@ -815,8 +790,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario9.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario9.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario9.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario9.alpha, scenario9.beta);
+        int curNumReplicas = manager.getPartitionById(scenario9.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario9.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario9.alpha, scenario9.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 2);
     }
@@ -826,14 +801,38 @@ public class SparBefriendingStrategyTest {
         //Scenario 10: alpha has replica in B, beta has no replica in A, alpha has friend aleph in A, aleph has a replica in B, no other friendships exist, alpha exceeds minimum redundancy
         //Result: numReplicas remains unchanged
 
-        Scenario scenario10 = getScenario10();
-        SparManager manager = SparTestUtils.getStandardManager();
+        Long A = 1L;
+        Long B = 2L;
+        Long X = 99L;
+        Long alpha = 1L;
+        Long beta  = 2L;
+        Long aleph = 3L;
+        Long xi = 112L;
+
+        int minNumReplicas = 1;
+        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
+        partitions.put(A, initSet(alpha, aleph));
+        partitions.put(B, initSet( beta));
+        partitions.put(X, initSet(xi));
+
+        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
+        friendships.put(alpha, initSet(aleph));
+        friendships.put(beta,  Collections.<Long>emptySet());
+        friendships.put(aleph, Collections.<Long>emptySet());
+        friendships.put(xi,    Collections.<Long>emptySet());
+
+        Map<Long, Set<Long>> replicaPartitions = new HashMap<Long, Set<Long>>();
+        replicaPartitions.put(A, initSet(xi));
+        replicaPartitions.put(B, initSet(alpha, aleph));
+        replicaPartitions.put(X, initSet(alpha));
+
+        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicaPartitions);
+
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario10.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario10.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario10.alpha, scenario10.beta);
+        int curNumReplicas = manager.getPartitionById(A).getNumReplicas() + manager.getPartitionById(B).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(manager.getUserMasterById(alpha), manager.getUserMasterById(beta));
 
-        //TODO: this failed once
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
 
@@ -846,8 +845,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario11.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario11.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario11.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario11.alpha, scenario11.beta);
+        int curNumReplicas = manager.getPartitionById(scenario11.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario11.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario11.alpha, scenario11.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 1);
     }
@@ -861,8 +860,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario12.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario12.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario12.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario12.alpha, scenario12.beta);
+        int curNumReplicas = manager.getPartitionById(scenario12.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario12.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario12.alpha, scenario12.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -876,8 +875,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario13.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario13.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario13.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario13.alpha, scenario13.beta);
+        int curNumReplicas = manager.getPartitionById(scenario13.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario13.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario13.alpha, scenario13.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -891,8 +890,8 @@ public class SparBefriendingStrategyTest {
         SparManager manager = scenario.manager;
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        int curNumReplicas = manager.getPartitionById(scenario.alpha.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(scenario.beta.getMasterPartitionId()).getNumMasters();
-        int calculatedNumReplicas = strategy.calcNumReplicasOneMovesToOther(scenario.alpha, scenario.beta);
+        int curNumReplicas = manager.getPartitionById(scenario.alpha.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(scenario.beta.getMasterPartitionId()).getNumReplicas();
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario.alpha, scenario.beta);
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 1);
     }

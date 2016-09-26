@@ -76,6 +76,8 @@ public class SparMiddlewareTest {
         assertEquals((Long) 4L, manager.getUserMasterById(18L).getMasterPartitionId());
         assertEquals(initSet(1L, 4L), manager.getUserMasterById(12L).getReplicaPartitionIds());
         assertEquals(initSet(1L, 2L, 3L), manager.getUserMasterById(18L).getReplicaPartitionIds());
+
+        //TODO: check out more scenarios
     }
 
     @Test

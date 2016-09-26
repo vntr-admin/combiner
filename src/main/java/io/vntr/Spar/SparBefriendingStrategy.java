@@ -1,8 +1,11 @@
 package io.vntr.spar;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
 
 public class SparBefriendingStrategy {
     private SparManager manager;
@@ -17,67 +20,49 @@ public class SparBefriendingStrategy {
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
         //  3) the opposite of (3)
 
-        int numReplicasNoMovement = calcNumReplicasNoMovement(smallerUser, largerUser);
-        int numReplicasSmallerToLarger = calcNumReplicasOneMovesToOther(smallerUser, largerUser);
-        int numReplicasLargerToSmaller = calcNumReplicasOneMovesToOther(largerUser, smallerUser);
+        int stay      = calcNumReplicasStay(smallerUser, largerUser);
+        int toLarger  = calcNumReplicasMove(smallerUser, largerUser);
+        int toSmaller = calcNumReplicasMove(largerUser, smallerUser);
 
-        if (numReplicasNoMovement <= numReplicasLargerToSmaller && numReplicasNoMovement <= numReplicasSmallerToLarger) {
-            return BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
-        }
+        int smallerMasters = manager.getPartitionById(smallerUser.getMasterPartitionId()).getNumMasters();
+        int largerMasters  = manager.getPartitionById(largerUser.getMasterPartitionId()).getNumMasters();
 
-        SparPartition smallerPartition = manager.getPartitionById(smallerUser.getMasterPartitionId());
-        SparPartition largerPartition = manager.getPartitionById(largerUser.getMasterPartitionId());
-
-        int curNumMastersSmaller = smallerPartition.getNumMasters();
-        int curNumMastersLarger = largerPartition.getNumMasters();
-
-        if (numReplicasLargerToSmaller <= numReplicasNoMovement && numReplicasLargerToSmaller <= numReplicasSmallerToLarger) {
-            if (curNumMastersSmaller < curNumMastersLarger) {
-                return BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
-            }
-
-            double imbalanceRatio = (curNumMastersSmaller + 1D) / curNumMastersLarger;
-            if (numReplicasNoMovement <= numReplicasSmallerToLarger) {
-                //Second-best option is no movement
-                double ratioOfNoChangeReplicasToL2SReplicas = ((double) numReplicasNoMovement) / numReplicasLargerToSmaller;
-                if (ratioOfNoChangeReplicasToL2SReplicas > imbalanceRatio) {
-                    return BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
-                }
-            } else {
-                //Second-best option is smaller-to-larger
-                double ratioOfS2LReplicasToL2SReplicas = ((double) numReplicasSmallerToLarger) / numReplicasLargerToSmaller;
-                if (ratioOfS2LReplicasToL2SReplicas > imbalanceRatio) {
-                    return BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
-                }
-            }
-        }
-
-        if (numReplicasSmallerToLarger <= numReplicasNoMovement && numReplicasSmallerToLarger <= numReplicasLargerToSmaller) {
-            if (curNumMastersLarger < curNumMastersSmaller) {
-                return BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
-            }
-
-            double imbalanceRatio = (curNumMastersLarger + 1D) / curNumMastersSmaller;
-
-            if (numReplicasNoMovement <= numReplicasLargerToSmaller) {
-                //Second-best option is no movement
-                double ratioOfNoChangeReplicasToS2LReplicas = ((double) numReplicasNoMovement) / numReplicasSmallerToLarger;
-                if (ratioOfNoChangeReplicasToS2LReplicas > imbalanceRatio) {
-                    return BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
-                }
-            } else {
-                //Second-best option is larger-to-smaller
-                double ratioOfL2SReplicasToS2LReplicas = ((double) numReplicasLargerToSmaller) / numReplicasSmallerToLarger;
-                if (ratioOfL2SReplicasToS2LReplicas > imbalanceRatio) {
-                    return BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
-                }
-            }
-        }
-
-        return BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
+        return determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
     }
 
-    int calcNumReplicasNoMovement(SparUser smallerUser, SparUser largerUser) {
+    static BEFRIEND_REBALANCE_STRATEGY determineStrategy(int stay, int toSmaller, int toLarger, int smallerMasters, int largerMasters) {
+        if (stay <= toSmaller && stay <= toLarger) {
+            return NO_CHANGE;
+        }
+
+        if (toSmaller <= stay && toSmaller <= toLarger) {
+            if (smallerMasters < largerMasters) {
+                return LARGE_TO_SMALL;
+            }
+
+            double imbalanceRatio = (smallerMasters + 1D) / largerMasters;
+            double ratioOfSecondBestToBest = ((double) Math.min(stay, toLarger)) / toSmaller;
+            if (ratioOfSecondBestToBest > imbalanceRatio) {
+                return LARGE_TO_SMALL;
+            }
+        }
+
+        if (toLarger <= stay && toLarger <= toSmaller) {
+            if (largerMasters < smallerMasters) {
+                return SMALL_TO_LARGE;
+            }
+
+            double imbalanceRatio = (largerMasters + 1D) / smallerMasters;
+            double ratioOfSecondBestToBest = ((double) Math.min(stay, toSmaller)) / toLarger;
+            if (ratioOfSecondBestToBest > imbalanceRatio) {
+                return SMALL_TO_LARGE;
+            }
+        }
+
+        return NO_CHANGE;
+    }
+
+    int calcNumReplicasStay(SparUser smallerUser, SparUser largerUser) {
         Long smallerPartitionId = smallerUser.getMasterPartitionId();
         Long largerPartitionId = largerUser.getMasterPartitionId();
         boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPartitionIds().contains(smallerPartitionId);
@@ -87,7 +72,7 @@ public class SparBefriendingStrategy {
         return curReplicas + deltaReplicas;
     }
 
-    int calcNumReplicasOneMovesToOther(SparUser movingUser, SparUser stayingUser) {
+    int calcNumReplicasMove(SparUser movingUser, SparUser stayingUser) {
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser);
         Set<Long> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
