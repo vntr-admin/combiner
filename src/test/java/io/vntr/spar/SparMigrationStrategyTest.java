@@ -223,7 +223,6 @@ public class SparMigrationStrategyTest {
         SparManager manager = SparTestUtils.initGraph(minNumReplicas+1, partitions, friendships, replicaPartitions);
 
         Map<Long, Long> expectedMigrationStrategy = new HashMap<Long, Long>();
-        //TODO: this actually seems wrong, so fix it
         expectedMigrationStrategy.put( 6L, 1L);
         expectedMigrationStrategy.put( 7L, 1L);
         expectedMigrationStrategy.put( 8L, 3L);
