@@ -101,30 +101,30 @@ public class SparManager {
         return newId;
     }
 
-    void addPartition(Long partitionId) {
-        partitionIdToPartitionMap.put(partitionId, new SparPartition(partitionId));
+    void addPartition(Long pid) {
+        partitionIdToPartitionMap.put(pid, new SparPartition(pid));
     }
 
     public void removePartition(Long id) {
         partitionIdToPartitionMap.remove(id);
     }
 
-    public void addReplica(SparUser user, Long destinationPartitionId) {
-        SparUser replicaOfUser = addReplicaNoUpdates(user, destinationPartitionId);
+    public void addReplica(SparUser user, Long destPid) {
+        SparUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
         //Update the replicaPartitionIds to reflect this addition
-        replicaOfUser.addReplicaPartitionId(destinationPartitionId);
-        for (Long partitionId : user.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(partitionId).getReplicaById(user.getId()).addReplicaPartitionId(destinationPartitionId);
+        replicaOfUser.addReplicaPartitionId(destPid);
+        for (Long pid : user.getReplicaPartitionIds()) {
+            partitionIdToPartitionMap.get(pid).getReplicaById(user.getId()).addReplicaPartitionId(destPid);
         }
-        user.addReplicaPartitionId(destinationPartitionId);
+        user.addReplicaPartitionId(destPid);
     }
 
-    SparUser addReplicaNoUpdates(SparUser user, Long destinationPartitionId) {
-        SparUser replicaOfUser = user.clone();
-        replicaOfUser.setPartitionId(destinationPartitionId);
-        partitionIdToPartitionMap.get(destinationPartitionId).addReplica(replicaOfUser);
-        return replicaOfUser;
+    SparUser addReplicaNoUpdates(SparUser user, Long destPid) {
+        SparUser replica = user.clone();
+        replica.setPartitionId(destPid);
+        partitionIdToPartitionMap.get(destPid).addReplica(replica);
+        return replica;
     }
 
     public void removeReplica(SparUser user, Long removalPartitionId) {
