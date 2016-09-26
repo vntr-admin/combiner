@@ -2,6 +2,7 @@ package io.vntr.hermes;
 
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,7 @@ public class HermesUserTest {
         friendships.put(17L, initSet(18L));
         friendships.put(18L, initSet(19L));
         friendships.put(19L, initSet(20L));
+        friendships.put(20L, Collections.<Long>emptySet());
 
         HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
         for(Long pid : manager.getAllPartitionIds()) {

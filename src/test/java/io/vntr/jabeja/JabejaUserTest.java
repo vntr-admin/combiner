@@ -32,6 +32,8 @@ public class JabejaUserTest {
         fig2aFriendships.put(3L, initSet(7L));
         fig2aFriendships.put(4L, initSet(7L));
         fig2aFriendships.put(5L, initSet(7L));
+        fig2aFriendships.put(6L, Collections.<Long>emptySet());
+        fig2aFriendships.put(7L, Collections.<Long>emptySet());
 
         fig2bPartitions.put(1L, initSet(1L, 2L, 3L, 4L, 5L, 6L));
         fig2bPartitions.put(2L, initSet(7L, 8L, 9L, 10L));
@@ -43,6 +45,7 @@ public class JabejaUserTest {
         fig2bFriendships.put(6L, initSet(9L, 10L));
         fig2bFriendships.put(8L, initSet(10L));
         fig2bFriendships.put(9L, initSet(10L));
+        fig2bFriendships.put(10L, Collections.<Long>emptySet());
     }
 
     @Test
@@ -204,6 +207,7 @@ public class JabejaUserTest {
         friendships.put(10L, initSet(11L));
         friendships.put(11L, initSet(12L));
         friendships.put(12L, initSet(13L));
+        friendships.put(13L, Collections.<Long>emptySet());
 
         JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
 
@@ -248,6 +252,7 @@ public class JabejaUserTest {
         friendships.put(10L, initSet(11L));
         friendships.put(11L, initSet(12L));
         friendships.put(12L, initSet(13L));
+        friendships.put(13L, Collections.<Long>emptySet());
 
         JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
 

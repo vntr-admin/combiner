@@ -102,11 +102,11 @@ public class HermesManagerTest {
     @Test
     public void testRepartitionInDepth() {
         //TODO: this occasionally doesn't terminate
-        int numUsers = 5000;
+        int numUsers = 1000;
         int numPartitions = 10;
 
         double gamma = 1.5;
-        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 30, 0.1, 0.1);
+        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
         Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
         for(long pid=0L; pid<=numPartitions; pid++) {
             partitions.put(pid, new HashSet<Long>());
