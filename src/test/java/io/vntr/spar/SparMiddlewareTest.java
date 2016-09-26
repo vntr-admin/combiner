@@ -44,7 +44,7 @@ public class SparMiddlewareTest {
         friendships.put(20L, Collections.<Long>emptySet());
 
         Map<Long, Set<Long>> replicaPartitions = new HashMap<Long, Set<Long>>();
-        replicaPartitions.put(1L, initSet(16L, 17L, 18L, 19L, 20L));
+        replicaPartitions.put(1L, initSet(16L, 17L, 18L, 19L, 20L, 12L));
         replicaPartitions.put(2L, initSet( 1L,  2L,  3L,  4L,  5L, 11L, 18L, 19L));
         replicaPartitions.put(3L, initSet( 6L,  7L,  8L,  9L, 10L,  2L, 17L));
         replicaPartitions.put(4L, initSet(11L, 12L, 13L, 14L, 15L,  3L,  5L));
@@ -54,9 +54,28 @@ public class SparMiddlewareTest {
 
         assertEquals((Long) 28L, middleware.getEdgeCut());
 
+        assertEquals((Long) 1L, manager.getUserMasterById( 3L).getMasterPartitionId());
+        assertEquals((Long) 4L, manager.getUserMasterById(18L).getMasterPartitionId());
+        assertEquals(initSet(2L, 4L), manager.getUserMasterById( 3L).getReplicaPartitionIds());
+        assertEquals(initSet(1L, 2L), manager.getUserMasterById(18L).getReplicaPartitionIds());
+
+        middleware.befriend( 3L, 18L);
+
+        assertEquals((Long) 1L, manager.getUserMasterById( 3L).getMasterPartitionId());
+        assertEquals((Long) 4L, manager.getUserMasterById(18L).getMasterPartitionId());
+        assertEquals(initSet(2L, 4L), manager.getUserMasterById( 3L).getReplicaPartitionIds());
+        assertEquals(initSet(1L, 2L), manager.getUserMasterById(18L).getReplicaPartitionIds());
+
+        assertEquals((Long) 3L, manager.getUserMasterById(12L).getMasterPartitionId());
+        assertEquals((Long) 4L, manager.getUserMasterById(18L).getMasterPartitionId());
+        assertEquals(initSet(1L, 4L), manager.getUserMasterById(12L).getReplicaPartitionIds());
+
         middleware.befriend(12L, 18L);
 
-        //TODO: do this
+        assertEquals((Long) 4L, manager.getUserMasterById(12L).getMasterPartitionId());
+        assertEquals((Long) 4L, manager.getUserMasterById(18L).getMasterPartitionId());
+        assertEquals(initSet(1L, 2L), manager.getUserMasterById(18L).getReplicaPartitionIds());
+        assertEquals(initSet(1L, 3L), manager.getUserMasterById(12L).getReplicaPartitionIds());
     }
 
     @Test
