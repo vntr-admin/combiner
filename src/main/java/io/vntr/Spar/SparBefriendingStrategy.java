@@ -101,7 +101,7 @@ public class SparBefriendingStrategy {
         int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
         int numReplicasToDelete = replicasInMovingPartitionToDelete.size() + (shouldWeDeleteReplicaOfMovingUserInStayingPartition ? 1 : 0) + (shouldWeDeleteReplicaOfStayingUserInMovingPartition ? 1 : 0);
         int deltaReplicas = numReplicasToAdd - numReplicasToDelete;
-        int curReplicas = manager.getPartitionById(movingUser.getMasterPartitionId()).getNumMasters() + manager.getPartitionById(stayingUser.getMasterPartitionId()).getNumMasters();
+        int curReplicas = manager.getPartitionById(movingUser.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(stayingUser.getMasterPartitionId()).getNumReplicas();
         return curReplicas + deltaReplicas;
     }
 

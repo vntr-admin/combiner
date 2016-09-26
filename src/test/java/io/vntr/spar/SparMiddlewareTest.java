@@ -72,10 +72,10 @@ public class SparMiddlewareTest {
 
         middleware.befriend(12L, 18L);
 
-        assertEquals((Long) 4L, manager.getUserMasterById(12L).getMasterPartitionId());
+        assertEquals((Long) 3L, manager.getUserMasterById(12L).getMasterPartitionId());
         assertEquals((Long) 4L, manager.getUserMasterById(18L).getMasterPartitionId());
-        assertEquals(initSet(1L, 2L), manager.getUserMasterById(18L).getReplicaPartitionIds());
-        assertEquals(initSet(1L, 3L), manager.getUserMasterById(12L).getReplicaPartitionIds());
+        assertEquals(initSet(1L, 4L), manager.getUserMasterById(12L).getReplicaPartitionIds());
+        assertEquals(initSet(1L, 2L, 3L), manager.getUserMasterById(18L).getReplicaPartitionIds());
     }
 
     @Test

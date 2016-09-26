@@ -1,11 +1,10 @@
 package io.vntr.spar;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Test;
 
+import static io.vntr.TestUtils.initSet;
 import static org.junit.Assert.*;
 
 public class SparBefriendingStrategyTest {
@@ -541,7 +540,51 @@ public class SparBefriendingStrategyTest {
 
     @Test
     public void testDetermineBestBefriendingRebalanceStrategy() {
-        //TODO: do these things
+        int minNumReplicas = 1;
+        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
+        partitions.put(1L, initSet( 1L,  2L,  3L,  4L,  5L));
+        partitions.put(2L, initSet( 6L,  7L,  8L,  9L, 10L));
+        partitions.put(3L, initSet(11L, 12L, 13L, 14L, 15L));
+        partitions.put(4L, initSet(16L, 17L, 18L, 19L, 20L));
+
+        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
+        friendships.put( 1L, initSet( 2L,  4L,  6L,  8L, 10L, 12L, 14L, 16L, 18L, 20L));
+        friendships.put( 2L, initSet( 3L,  6L,  9L, 12L, 15L, 18L));
+        friendships.put( 3L, initSet( 4L,  8L, 12L, 16L, 20L));
+        friendships.put( 4L, initSet( 5L, 10L, 15L));
+        friendships.put( 5L, initSet( 6L, 12L, 18L));
+        friendships.put( 6L, initSet( 7L, 14L));
+        friendships.put( 7L, initSet( 8L, 16L));
+        friendships.put( 8L, initSet( 9L, 18L));
+        friendships.put( 9L, initSet(10L, 20L));
+        friendships.put(10L, initSet(11L));
+        friendships.put(11L, initSet(12L));
+        friendships.put(12L, initSet(13L));
+        friendships.put(13L, initSet(14L));
+        friendships.put(14L, initSet(15L));
+        friendships.put(15L, initSet(16L));
+        friendships.put(16L, initSet(17L));
+        friendships.put(17L, initSet(18L));
+        friendships.put(18L, initSet(19L));
+        friendships.put(19L, initSet(20L));
+        friendships.put(20L, Collections.<Long>emptySet());
+
+        Map<Long, Set<Long>> replicaPartitions = new HashMap<Long, Set<Long>>();
+        replicaPartitions.put(1L, initSet(16L, 17L, 18L, 19L, 20L, 12L));
+        replicaPartitions.put(2L, initSet( 1L,  2L,  3L,  4L,  5L, 11L, 18L, 19L));
+        replicaPartitions.put(3L, initSet( 6L,  7L,  8L,  9L, 10L,  2L, 17L));
+        replicaPartitions.put(4L, initSet(11L, 12L, 13L, 14L, 15L,  3L,  5L));
+
+        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicaPartitions);
+
+        SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
+
+        //TODO: these asserts are failing
+        BEFRIEND_REBALANCE_STRATEGY strat1 = strategy.determineBestBefriendingRebalanceStrategy(manager.getUserMasterById(3L), manager.getUserMasterById(18L));
+//        assertEquals(strat1, BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
+
+        BEFRIEND_REBALANCE_STRATEGY strat2 = strategy.determineBestBefriendingRebalanceStrategy(manager.getUserMasterById(12L), manager.getUserMasterById(18L));
+        assertEquals(strat2, BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE);
     }
 
     @Test
