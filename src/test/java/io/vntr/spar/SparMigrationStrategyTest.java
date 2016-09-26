@@ -2,15 +2,11 @@ package io.vntr.spar;
 
 import io.vntr.User;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Test;
 
+import static io.vntr.TestUtils.initSet;
 import static org.junit.Assert.*;
 
 public class SparMigrationStrategyTest {
@@ -188,73 +184,55 @@ public class SparMigrationStrategyTest {
     }
 
     @Test
-    public void testGetWaterFillingStrategyOfPartitions() {
-        SparManager manager = SparTestUtils.getStandardManager();
-        SparMigrationStrategy strategy = new SparMigrationStrategy(manager);
-
-        Map<Long, Integer> partitionIdToNumMastersMap = new HashMap<Long, Integer>();
-        for (Long partitionId : manager.getAllPartitionIds()) {
-            partitionIdToNumMastersMap.put(partitionId, manager.getPartitionById(partitionId).getNumMasters());
-        }
-
-        List<Long> waterFillingStrategy = strategy.getWaterFillingStrategyOfPartitions(new HashSet<Long>(), new HashMap<Long, Long>(), 7);
-        Map<Long, Integer> partitionIdToNumMastersMapCopy = new HashMap<Long, Integer>(partitionIdToNumMastersMap);
-        for (Long partitionId : waterFillingStrategy) {
-            partitionIdToNumMastersMapCopy.put(partitionId, partitionIdToNumMastersMapCopy.get(partitionId) + 1);
-        }
-
-        for (Long partitionId : partitionIdToNumMastersMapCopy.keySet()) {
-            assertTrue(partitionIdToNumMastersMapCopy.get(partitionId).intValue() == 3);
-        }
-
-        Long partitionIdWithTwoMasters = null;
-        for (Long partitionId : partitionIdToNumMastersMap.keySet()) {
-            if (partitionIdToNumMastersMap.get(partitionId).intValue() == 2) {
-                partitionIdWithTwoMasters = partitionId;
-                break;
-            }
-        }
-
-        List<Long> secondWaterFillingStrategy = strategy.getWaterFillingStrategyOfPartitions(new HashSet<Long>(Arrays.asList(partitionIdWithTwoMasters)), new HashMap<Long, Long>(), 6);
-        partitionIdToNumMastersMapCopy = new HashMap<Long, Integer>(partitionIdToNumMastersMap);
-        for (Long partitionId : secondWaterFillingStrategy) {
-            partitionIdToNumMastersMapCopy.put(partitionId, partitionIdToNumMastersMapCopy.get(partitionId) + 1);
-        }
-
-        for (Long partitionId : partitionIdToNumMastersMapCopy.keySet()) {
-            assertTrue(partitionIdToNumMastersMapCopy.get(partitionId).intValue() == 3 || partitionIdWithTwoMasters.equals(partitionId));
-        }
-
-        Map<Long, Long> preExistingStrategyMap = new HashMap<Long, Long>();
-        for (Long partitionId : manager.getAllPartitionIds()) {
-            preExistingStrategyMap.put(partitionId * 2, partitionId);
-        }
-
-        List<Long> thirdWaterFillingStrategy = strategy.getWaterFillingStrategyOfPartitions(new HashSet<Long>(), preExistingStrategyMap, 7);
-        partitionIdToNumMastersMapCopy = new HashMap<Long, Integer>(partitionIdToNumMastersMap);
-        for (Long partitionId : thirdWaterFillingStrategy) {
-            partitionIdToNumMastersMapCopy.put(partitionId, partitionIdToNumMastersMapCopy.get(partitionId) + 1);
-        }
-        for (Long partitionId : partitionIdToNumMastersMapCopy.keySet()) {
-            assertTrue(partitionIdToNumMastersMapCopy.get(partitionId).intValue() == 3);
-        }
-
-        preExistingStrategyMap.remove(partitionIdWithTwoMasters * 2);
-        List<Long> fourthWaterFillingStrategy = strategy.getWaterFillingStrategyOfPartitions(new HashSet<Long>(Arrays.asList(partitionIdWithTwoMasters)), preExistingStrategyMap, 6);
-        partitionIdToNumMastersMapCopy = new HashMap<Long, Integer>(partitionIdToNumMastersMap);
-        for (Long partitionId : fourthWaterFillingStrategy) {
-            partitionIdToNumMastersMapCopy.put(partitionId, partitionIdToNumMastersMapCopy.get(partitionId) + 1);
-        }
-        for (Long partitionId : partitionIdToNumMastersMapCopy.keySet()) {
-            assertTrue(partitionIdToNumMastersMapCopy.get(partitionId).intValue() == 3 || partitionId.equals(partitionIdWithTwoMasters));
-        }
-    }
-
-    @Test
     public void testGetUserMigrationStrategy() {
-        SparManager manager = SparTestUtils.getStandardManager();
-        SparMigrationStrategy strategy = new SparMigrationStrategy(manager);
+        int minNumReplicas = 2;
+        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
+        partitions.put(1L, initSet( 1L,  2L,  3L,  4L,  5L));
+        partitions.put(2L, initSet( 6L,  7L,  8L,  9L, 10L));
+        partitions.put(3L, initSet(11L, 12L, 13L, 14L, 15L));
+        partitions.put(4L, initSet(16L, 17L, 18L, 19L, 20L));
 
-        //TODO: do this
+        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
+        friendships.put( 1L, initSet( 2L,  4L,  6L,  8L, 10L, 12L, 14L, 16L, 18L, 20L));
+        friendships.put( 2L, initSet( 3L,  6L,  9L, 12L, 15L, 18L));
+        friendships.put( 3L, initSet( 4L,  8L, 12L, 16L, 20L));
+        friendships.put( 4L, initSet( 5L, 10L, 15L));
+        friendships.put( 5L, initSet( 6L, 12L, 18L));
+        friendships.put( 6L, initSet( 7L, 14L));
+        friendships.put( 7L, initSet( 8L, 16L));
+        friendships.put( 8L, initSet( 9L, 18L));
+        friendships.put( 9L, initSet(10L, 20L));
+        friendships.put(10L, initSet(11L));
+        friendships.put(11L, initSet(12L));
+        friendships.put(12L, initSet(13L));
+        friendships.put(13L, initSet(14L));
+        friendships.put(14L, initSet(15L));
+        friendships.put(15L, initSet(16L));
+        friendships.put(16L, initSet(17L));
+        friendships.put(17L, initSet(18L));
+        friendships.put(18L, initSet(19L));
+        friendships.put(19L, initSet(20L));
+        friendships.put(20L, Collections.<Long>emptySet());
+
+        Map<Long, Set<Long>> replicaPartitions = new HashMap<Long, Set<Long>>();
+        replicaPartitions.put(1L, initSet( 6L,  7L,  8L,  9L, 10L, 16L, 17L, 18L, 19L, 20L));
+        replicaPartitions.put(2L, initSet( 1L,  2L,  3L,  4L,  5L, 11L, 12L, 13L, 14L, 15L));
+        replicaPartitions.put(3L, initSet( 6L,  7L,  8L,  9L, 10L, 16L, 17L, 18L, 19L, 20L));
+        replicaPartitions.put(4L, initSet( 1L,  2L,  3L,  4L,  5L, 11L, 12L, 13L, 14L, 15L));
+
+        SparManager manager = SparTestUtils.initGraph(minNumReplicas+1, partitions, friendships, replicaPartitions);
+
+        Map<Long, Long> expectedMigrationStrategy = new HashMap<Long, Long>();
+        //TODO: this actually seems wrong, so fix it
+        expectedMigrationStrategy.put( 6L, 1L);
+        expectedMigrationStrategy.put( 7L, 1L);
+        expectedMigrationStrategy.put( 8L, 3L);
+        expectedMigrationStrategy.put( 9L, 3L);
+        expectedMigrationStrategy.put(10L, 1L);
+        SparMigrationStrategy strategy = new SparMigrationStrategy(manager);
+        Map<Long, Long> migrationStrategy = strategy.getUserMigrationStrategy(2L);
+        assertEquals(expectedMigrationStrategy, migrationStrategy);
+
+
     }
 }

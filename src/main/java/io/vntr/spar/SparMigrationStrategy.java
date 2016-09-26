@@ -26,7 +26,7 @@ public class SparMigrationStrategy {
         //Place the remaining nodes wherever they fit, following simple water-filling strategy.
 
         Set<Long> partitionIdsToSkip = new HashSet<Long>(Arrays.asList(partitionId));
-        SparPartition partition = manager.getPartitionById(partitionId);
+        final SparPartition partition = manager.getPartitionById(partitionId);
         Set<Long> masterIds = partition.getIdsOfMasters();
 
         class Score implements Comparable<Score> {
@@ -75,6 +75,12 @@ public class SparMigrationStrategy {
             public int hashCode() {
                 return ((int) userId) << 15 + ((int) partitionId);
             }
+
+            @Override
+            public String toString() {
+//                String scoreStr = String.format("%d: --(%.2f)--> %d", userId, score, partitionId);
+                return String.format("%3d: --(%.2f)--> %3d", userId, score, partitionId);//userId + ": --(" + score + ")-->" + partitionId;
+            }
         }
 
         NavigableSet<Score> scores = new TreeSet<Score>();
@@ -89,8 +95,7 @@ public class SparMigrationStrategy {
 
         Map<Long, Long> strategy = new HashMap<Long, Long>();
 
-        Iterator<Score> iter = scores.descendingIterator();
-        while (iter.hasNext()) {
+        for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
             Score score = iter.next();
             int remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
             if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0) {
@@ -102,14 +107,25 @@ public class SparMigrationStrategy {
         Set<Long> usersYetUnplaced = new HashSet<Long>(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
 
-        List<Long> waterFillingStrategyRemainingPartitions = getWaterFillingStrategyOfPartitions(partitionIdsToSkip, strategy, usersYetUnplaced.size() + 1);
-        Iterator<Long> waterFillingStrategyRemainingPartitionsIter = waterFillingStrategyRemainingPartitions.iterator();
-
-        for (Long unplacedUserId : usersYetUnplaced) {
-            strategy.put(unplacedUserId, waterFillingStrategyRemainingPartitionsIter.next());
+        for (Long uid : usersYetUnplaced) {
+            strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid));
         }
 
         return strategy;
+    }
+
+    Long getLeastOverloadedPartitionWhereThisUserHasAReplica(Long uid) {
+        SparUser user = manager.getUserMasterById(uid);
+        int minMasters = Integer.MAX_VALUE;
+        Long minPid = null;
+        for(Long pid : user.getReplicaPartitionIds()) {
+            int numMasters = manager.getPartitionById(pid).getNumMasters();
+            if(numMasters < minMasters) {
+                minMasters = numMasters;
+                minPid = pid;
+            }
+        }
+        return minPid;
     }
 
     double scoreReplicaPromotion(SparUser user, Long replicaPartitionId) {
@@ -152,89 +168,4 @@ public class SparMigrationStrategy {
         return remainingSpotsInPartitions;
     }
 
-    List<Long> getWaterFillingStrategyOfPartitions(Set<Long> partitionIdsToSkip, Map<Long, Long> currentStrategy, int maxListLength) {
-        class SizedPartition implements Comparable<SizedPartition> {
-            public final long partitionId;
-            private int numMasters;
-
-            public SizedPartition(long partitionId, int numMasters) {
-                this.partitionId = partitionId;
-                this.numMasters = numMasters;
-            }
-
-            @Override
-            public String toString() {
-                return "P" + partitionId + ":" + numMasters;
-            }
-
-            public int getNumMasters() {
-                return numMasters;
-            }
-
-            @SuppressWarnings("unused")
-            public void setNumMasters(int numMasters) {
-                this.numMasters = numMasters;
-            }
-
-            @Override
-            public int hashCode() {
-                return (int) partitionId;
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (o instanceof SizedPartition) {
-                    SizedPartition s = (SizedPartition) o;
-                    return s.partitionId == this.partitionId && s.numMasters == this.numMasters;
-                }
-                return false;
-            }
-
-            public int compareTo(SizedPartition o) {
-                if (this.numMasters > o.numMasters) {
-                    return 1;
-                } else if (this.numMasters < o.numMasters) {
-                    return -1;
-                } else {
-                    if (this.partitionId > o.partitionId) {
-                        return 1;
-                    } else if (this.partitionId < o.partitionId) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }
-            }
-        }
-
-        Map<Long, Integer> partitionIdToNumMastersMap = new HashMap<Long, Integer>();
-        for (Long partitionId : manager.getAllPartitionIds()) {
-            if (partitionIdsToSkip.contains(partitionId)) {
-                continue;
-            }
-            partitionIdToNumMastersMap.put(partitionId, manager.getPartitionById(partitionId).getNumMasters());
-        }
-
-        for (Long key : currentStrategy.keySet()) {
-            Long partitionId = currentStrategy.get(key);
-            int currentCount = partitionIdToNumMastersMap.get(partitionId);
-            partitionIdToNumMastersMap.put(partitionId, currentCount + 1);
-        }
-
-        PriorityQueue<SizedPartition> queue = new PriorityQueue<SizedPartition>();
-
-        for (Long partitionId : partitionIdToNumMastersMap.keySet()) {
-            queue.add(new SizedPartition(partitionId, partitionIdToNumMastersMap.get(partitionId)));
-        }
-
-        List<Long> partitionList = new LinkedList<Long>();
-
-        while (partitionList.size() < maxListLength) {
-            SizedPartition s = queue.poll();
-            partitionList.add(s.partitionId);
-            queue.add(new SizedPartition(s.partitionId, s.getNumMasters() + 1));
-        }
-
-        return partitionList;
-    }
 }
