@@ -17,6 +17,15 @@ public class TestUtils {
         return set;
     }
 
+    public static <T> Set<T> initSet(Set<T> initialSet, T... args) {
+        Set<T> set = new HashSet<T>();
+        set.addAll(initialSet);
+        for(T t : args) {
+            set.add(t);
+        }
+        return set;
+    }
+
     public static Map<Long, Set<Long>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, double groupMembershipProbability, double intraGroupFriendshipProbability) {
         Map<Long, Set<Long>> userIdToFriendIds = new HashMap<Long, Set<Long>>();
         for(long id=0L; id<numUsers; id++) {

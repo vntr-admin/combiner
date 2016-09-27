@@ -331,6 +331,14 @@ public class SparManager {
         return map;
     }
 
+    Map<Long, Set<Long>> getPartitionToReplicasMap() {
+        Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
+        for (Long pid : partitionIdToPartitionMap.keySet()) {
+            map.put(pid, getPartitionById(pid).getIdsOfReplicas());
+        }
+        return map;
+    }
+
     public Long getEdgeCut() {
         long count = 0L;
         for (Long uid : userIdToMasterPartitionIdMap.keySet()) {

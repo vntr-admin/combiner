@@ -10,6 +10,9 @@ import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
+
 public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     private SparManager manager;
     private SparBefriendingStrategy sparBefriendingStrategy;
@@ -40,29 +43,36 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         SparUser largerUser = manager.getUserMasterById(largerUserId);
         manager.befriend(smallerUser, largerUser);
 
-        Long smallerUserMasterPartitionId = smallerUser.getMasterPartitionId();
-        Long largerUserMasterPartitionId = largerUser.getMasterPartitionId();
+        Long smallerUserPid = smallerUser.getMasterPartitionId();
+        Long largerUserPid  = largerUser.getMasterPartitionId();
 
-        boolean colocatedMasters = smallerUserMasterPartitionId.equals(largerUserMasterPartitionId);
-        boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserMasterPartitionId) && largerUser.getReplicaPartitionIds().contains(smallerUserMasterPartitionId);
+        boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
+        boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserPid) && largerUser.getReplicaPartitionIds().contains(smallerUserPid);
         if (!colocatedMasters && !colocatedReplicas) {
-            BEFRIEND_REBALANCE_STRATEGY bestBefriendingRebalanceStrategy = sparBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
-            if (bestBefriendingRebalanceStrategy == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE) {
-                if (!smallerUser.getReplicaPartitionIds().contains(largerUserMasterPartitionId)) {
-                    manager.addReplica(smallerUser, largerUserMasterPartitionId);
-                }
-                if (!largerUser.getReplicaPartitionIds().contains(smallerUserMasterPartitionId)) {
-                    manager.addReplica(largerUser, smallerUserMasterPartitionId);
-                }
-            } else if (bestBefriendingRebalanceStrategy == BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE) {
-                Set<Long> replicasToAddInDestinationPartition = sparBefriendingStrategy.findReplicasToAddToTargetPartition(smallerUser, largerUserMasterPartitionId);
-                Set<Long> replicasToDeleteInSourcePartition = sparBefriendingStrategy.findReplicasInMovingPartitionToDelete(smallerUser, replicasToAddInDestinationPartition);
-                manager.moveUser(smallerUser, largerUserMasterPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
-            } else {
-                Set<Long> replicasToAddInDestinationPartition = sparBefriendingStrategy.findReplicasToAddToTargetPartition(largerUser, smallerUserMasterPartitionId);
-                Set<Long> replicasToDeleteInSourcePartition = sparBefriendingStrategy.findReplicasInMovingPartitionToDelete(largerUser, replicasToAddInDestinationPartition);
-                manager.moveUser(largerUser, smallerUserMasterPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
+            BEFRIEND_REBALANCE_STRATEGY strategy = sparBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
+            performRebalace(strategy, smallerUserId, largerUserId);
+        }
+    }
+
+    void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Long smallUid, Long largeUid) {
+        SparUser smallerUser = manager.getUserMasterById(smallUid);
+        SparUser largerUser = manager.getUserMasterById(largeUid);
+        Long smallerUserPid = smallerUser.getMasterPartitionId();
+        Long largerUserPid = largerUser.getMasterPartitionId();
+
+        if (strategy == NO_CHANGE) {
+            if (!smallerUser.getReplicaPartitionIds().contains(largerUserPid)) {
+                manager.addReplica(smallerUser, largerUserPid);
             }
+            if (!largerUser.getReplicaPartitionIds().contains(smallerUserPid)) {
+                manager.addReplica(largerUser, smallerUserPid);
+            }
+        } else {
+            SparUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
+            Long targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
+            Set<Long> replicasToAddInDestinationPartition = sparBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
+            Set<Long> replicasToDeleteInSourcePartition = sparBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
+            manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
 
