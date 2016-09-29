@@ -4,10 +4,14 @@ import io.vntr.User;
 
 import java.util.*;
 
+import org.apache.log4j.Logger;
+
 /**
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesManager {
+    final static Logger logger = Logger.getLogger(HermesManager.class);
+
     private NavigableMap<Long, HermesPartition> pMap;
     private Map<Long, Long> uMap;
     private double gamma;
@@ -77,49 +81,90 @@ public class HermesManager {
         return uMap.get(uid);
     }
 
+    private Map<Long, Set<Long>> getFriendshipMap() {
+        Map<Long, Set<Long>> friendshipMap = new HashMap<Long, Set<Long>>();
+        for(Long uid : uMap.keySet()) {
+            friendshipMap.put(uid, new HashSet<Long>());
+        }
+        for(Long uid : friendshipMap.keySet()) {
+            for(Long friendId : getUser(uid).getFriendIDs())
+            {
+                if(uid.longValue() < friendId.longValue()) {
+                    friendshipMap.get(uid).add(friendId);
+                }
+            }
+        }
+        return friendshipMap;
+    }
+
     public void repartition() {
         int k = 3; //TODO: set this intelligently
         for (HermesPartition p : pMap.values()) {
             p.resetLogicalUsers();
         }
 
-        System.out.println("Original: " + getPartitionToUserMap());
+        logger.warn("Original: " + getPartitionToUserMap());
+        logger.warn("Friends: " + getFriendshipMap());
 
         int iteration = 1;
         boolean stoppingCondition = false;
         while(!stoppingCondition) {
+            int pibetapi = 0;
+            if(iteration > 1000) {
+                pibetapi += 1;
+            }
+
+            if((iteration % 20) == 0) {
+                logger.warn("Iteration: " + iteration);
+            }
             boolean changed = false;
+            Map<Long, Set<Target>> firstStageTargets = new HashMap<Long, Set<Target>>();
             for (HermesPartition p : pMap.values()) {
                 Set<Target> targets = p.getCandidates(true, k);
+                firstStageTargets.put(p.getId(), targets);
                 if(!targets.isEmpty()) {
-                    System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "a: " + targets);
+//                    logger.warn("Iteration " + iteration + " - targets from p" + p.getId() + "a: " + targets);
                 }
                 changed |= !targets.isEmpty();
-                for(Target target : targets) {
+//                for(Target target : targets) {
+//                    migrateLogically(target);
+//                }
+            }
+
+            for(Long pid : pMap.keySet()) {
+                for(Target target : firstStageTargets.get(pid)) {
                     migrateLogically(target);
                 }
             }
 
-            System.out.println("Iteration " + iteration + "a: " + getPartitionToLogicalUserMap());
+//            logger.warn("Iteration " + iteration + "a: " + getPartitionToLogicalUserMap());
             updateAggregateWeightInformation();
 
+            Map<Long, Set<Target>> secondStageTargets = new HashMap<Long, Set<Target>>();
             for (HermesPartition p : pMap.values()) {
                 Set<Target> targets = p.getCandidates(false, k);
+                secondStageTargets.put(p.getId(), targets);
                 if(!targets.isEmpty()) {
-                    System.out.println("Iteration " + iteration + " - targets from p" + p.getId() + "b: " + targets);
+//                    logger.warn("Iteration " + iteration + " - targets from p" + p.getId() + "b: " + targets);
                 }
                 changed |= !targets.isEmpty();
-                for(Target target : targets) {
+//                for(Target target : targets) {
+//                    migrateLogically(target);
+//                }
+            }
+            for(Long pid : pMap.keySet()) {
+                for(Target target : secondStageTargets.get(pid)) {
                     migrateLogically(target);
                 }
             }
 
-            System.out.println("Iteration " + iteration + "b: " + getPartitionToLogicalUserMap());
+//            logger.warn("Iteration " + iteration + "b: " + getPartitionToLogicalUserMap());
             iteration++;
             updateAggregateWeightInformation();
 
             stoppingCondition = !changed;
         }
+        System.out.println("Number of iterations: " + iteration);
 
         Map<Long, Long> usersWhoMoved = new HashMap<Long, Long>();
         for (HermesPartition p : pMap.values()) {

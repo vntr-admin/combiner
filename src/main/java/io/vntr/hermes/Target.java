@@ -60,6 +60,6 @@ public class Target implements Comparable<Target> {
     @Override
     public String toString() {
         String strGain = gain > 0 ? "+" + gain : "" + gain;
-        return userId + ": " + partitionId + "--(" + strGain + ")-->" + oldPartitionId;
+        return userId + ": " + oldPartitionId + "--(" + strGain + ")-->" + partitionId;
     }
 }
