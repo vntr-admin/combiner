@@ -10,6 +10,7 @@ import java.util.*;
  */
 public class SpajaManager {
     private int minNumReplicas;
+    private double alpha;
 
     private static final Long defaultStartingId = 1L;
 
@@ -17,9 +18,10 @@ public class SpajaManager {
 
     private Map<Long, Long> userIdToMasterPartitionIdMap = new HashMap<Long, Long>();
 
-    public SpajaManager(int minNumReplicas) {
+    public SpajaManager(int minNumReplicas, double alpha) {
         this.minNumReplicas = minNumReplicas;
         this.partitionIdToPartitionMap = new TreeMap<Long, SpajaPartition>();
+        this.alpha = alpha;
     }
 
     public int getMinNumReplicas() {
@@ -41,6 +43,13 @@ public class SpajaManager {
         return null;
     }
 
+    public Set<SpajaUser> getUserMastersById(Collection<Long> ids) {
+        Set<SpajaUser> users = new HashSet<SpajaUser>();
+        for(Long uid : ids) {
+            users.add(getUserMasterById(uid));
+        }
+        return users;
+    }
     public int getNumUsers() {
         return userIdToMasterPartitionIdMap.size();
     }
@@ -56,7 +65,7 @@ public class SpajaManager {
     public void addUser(User user) {
         Long masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SpajaUser spajaUser = new SpajaUser(user.getName(), user.getId());
+        SpajaUser spajaUser = new SpajaUser(user.getName(), user.getId(), alpha, minNumReplicas, this);
         spajaUser.setMasterPartitionId(masterPartitionId);
         spajaUser.setPartitionId(masterPartitionId);
 
@@ -167,34 +176,23 @@ public class SpajaManager {
         }
     }
 
-    public void moveUser(SpajaUser user, Long destinationPartitionId, Set<Long> replicasToAddInDestinationPartition, Set<Long> replicasToDeleteInSourcePartition) {
+    public void moveUser(SpajaUser user, Long toPid, Set<Long> replicateInDestPartition, Set<Long> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
-        Long userId = user.getId();
-        Long oldPartitionId = user.getMasterPartitionId();
-        SpajaPartition oldPartition = partitionIdToPartitionMap.get(user.getMasterPartitionId());
-        SpajaPartition newPartition = partitionIdToPartitionMap.get(destinationPartitionId);
-        oldPartition.removeMaster(userId);
-        newPartition.addMaster(user);
-        userIdToMasterPartitionIdMap.put(userId, destinationPartitionId);
+        Long uid = user.getId();
+        Long fromPid = user.getMasterPartitionId();
 
-        user.setMasterPartitionId(destinationPartitionId);
-        user.setPartitionId(destinationPartitionId);
-
-        for (Long replicaPartitionId : user.getReplicaPartitionIds()) {
-            SpajaUser replica = partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
-            replica.setMasterPartitionId(destinationPartitionId);
-        }
+        moveMasterAndInformReplicas(uid, fromPid, toPid);
 
         //Step 2: add the necessary replicas
         for (Long friendId : user.getFriendIDs()) {
-            if (userIdToMasterPartitionIdMap.get(friendId).equals(oldPartitionId)) {
-                addReplica(user, oldPartitionId);
+            if (userIdToMasterPartitionIdMap.get(friendId).equals(fromPid)) {
+                addReplica(user, fromPid);
                 break;
             }
         }
 
-        for (Long friendToReplicateId : replicasToAddInDestinationPartition) {
-            addReplica(getUserMasterById(friendToReplicateId), destinationPartitionId);
+        for (Long friendToReplicateId : replicateInDestPartition) {
+            addReplica(getUserMasterById(friendToReplicateId), toPid);
         }
 
         //Step 3: remove unnecessary replicas
@@ -203,19 +201,17 @@ public class SpajaManager {
         // (2) replicas of user's friends in oldPartition with no other purpose
         // (3) [the replica of the new friend that prompted this move should already be accounted for in (2)]
 
-        if (user.getReplicaPartitionIds().contains(destinationPartitionId)) {
-            if (user.getReplicaPartitionIds().size() > minNumReplicas) {
-                removeReplica(user, destinationPartitionId);
-            } else {
-                //delete the replica in destinationPartition,  but add one in another partition that doesn't yet have one of this user
+        if (user.getReplicaPartitionIds().contains(toPid)) {
+            if (user.getReplicaPartitionIds().size() <= minNumReplicas) {
+                //add one in another partition that doesn't yet have one of this user
                 addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
-                removeReplica(user, destinationPartitionId);
             }
+            removeReplica(user, toPid);
         }
 
         //delete the replica of the appropriate friends in oldPartition
         for (Long replicaIdToDelete : replicasToDeleteInSourcePartition) {
-            removeReplica(getUserMasterById(replicaIdToDelete), oldPartitionId);
+            removeReplica(getUserMasterById(replicaIdToDelete), fromPid);
         }
     }
 
@@ -301,5 +297,49 @@ public class SpajaManager {
             count += getPartitionById(pid).getNumReplicas();
         }
         return (long) count;
+    }
+
+    void moveMasterAndInformReplicas(Long uid, Long fromPid, Long toPid) {
+        SpajaUser user = getUserMasterById(uid);
+        getPartitionById(fromPid).removeMaster(uid);
+        getPartitionById(toPid).addMaster(user);
+
+        userIdToMasterPartitionIdMap.put(uid, toPid);
+
+        user.setMasterPartitionId(toPid);
+        user.setPartitionId(toPid);
+
+        for (Long rPid : user.getReplicaPartitionIds()) {
+            partitionIdToPartitionMap.get(rPid).getReplicaById(uid).setMasterPartitionId(toPid);
+        }
+    }
+
+    public void swap(Long uid1, Long uid2, SpajaBefriendingStrategy strategy) {
+        SpajaUser u1 = getUserMasterById(uid1);
+        SpajaUser u2 = getUserMasterById(uid2);
+
+        Long pid1 = u1.getMasterPartitionId();
+        Long pid2 = u2.getMasterPartitionId();
+
+        moveMasterAndInformReplicas(uid1, pid1, pid2);
+        moveMasterAndInformReplicas(uid2, pid2, pid1);
+
+        SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
+
+        for(Long uid : swapChanges.getAddToP1()) {
+            addReplica(getUserMasterById(uid), pid1);
+        }
+
+        for(Long uid : swapChanges.getAddToP2()) {
+            addReplica(getUserMasterById(uid), pid2);
+        }
+
+        for(Long uid : swapChanges.getRemoveFromP1()) {
+            removeReplica(getUserMasterById(uid), pid1);
+        }
+
+        for(Long uid : swapChanges.getRemoveFromP2()) {
+            removeReplica(getUserMasterById(uid), pid2);
+        }
     }
 }

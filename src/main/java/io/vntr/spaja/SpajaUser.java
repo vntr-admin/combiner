@@ -10,14 +10,20 @@ import java.util.Set;
  * Created by robertlindquist on 9/28/16.
  * Should be done
  */
-public class SpajaUser  extends User {
+public class SpajaUser extends User {
+    private double alpha;
     private Long partitionId;
     private Long masterPartitionId;
     private Set<Long> replicaPartitionIds;
+    private SpajaManager manager; //TODO: this is sloppy; replace its usage with passing in the necessary info
+    private int k;
 
-    public SpajaUser(String name, Long id) {
+    public SpajaUser(String name, Long id, double alpha, int k, SpajaManager manager) {
         super(name, id);
         replicaPartitionIds = new HashSet<Long>();
+        this.alpha = alpha;
+        this.k = k;
+        this.manager = manager;
     }
 
     public Long getPartitionId() {
@@ -54,7 +60,7 @@ public class SpajaUser  extends User {
 
     @Override
     public SpajaUser clone() {
-        SpajaUser user = new SpajaUser(getName(), getId());
+        SpajaUser user = new SpajaUser(getName(), getId(), alpha, k, manager);
         user.setPartitionId(partitionId);
         user.setMasterPartitionId(masterPartitionId);
         user.addReplicaPartitionIds(replicaPartitionIds);
@@ -72,5 +78,41 @@ public class SpajaUser  extends User {
     @Override
     public String toString() {
         return super.toString() + "|masterP:" + masterPartitionId + "|P:" + partitionId + "|Reps:" + replicaPartitionIds.toString();
+    }
+
+
+    public SpajaUser findPartner(Collection<SpajaUser> randomSamplingOfUsers, double t, SpajaBefriendingStrategy strategy) {
+        SpajaUser bestPartner = null;
+        double bestScore = 0d;
+
+        for(SpajaUser partner : randomSamplingOfUsers) {
+            int replicasOnMine   = manager.getPartitionById(partitionId).getNumReplicas();
+            int replicasOnTheirs = manager.getPartitionById(partner.getPartitionId()).getNumReplicas();
+
+            double oldScore = Math.pow(replicasOnMine, alpha) + Math.pow(replicasOnTheirs, alpha);
+            double newScore = getReplicasIfSwappedUsingAlpha(this, partner, strategy);
+
+            if(newScore > bestScore && (newScore * t) > oldScore) {
+                bestPartner = partner;
+                bestScore = newScore;
+            }
+        }
+
+        return bestPartner;
+    }
+
+    double getReplicasIfSwappedUsingAlpha(SpajaUser u1, SpajaUser u2, SpajaBefriendingStrategy strategy) {
+        SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
+
+        int replicasInP1 = manager.getPartitionById(u1.getPartitionId()).getNumReplicas();
+        int replicasInP2 = manager.getPartitionById(u2.getPartitionId()).getNumReplicas();
+
+        replicasInP1 += swapChanges.getAddToP1().size();
+        replicasInP2 += swapChanges.getAddToP2().size();
+
+        replicasInP1 -= swapChanges.getRemoveFromP1().size();
+        replicasInP2 -= swapChanges.getRemoveFromP2().size();
+
+        return Math.pow(replicasInP1, alpha) + Math.pow(replicasInP2, alpha);
     }
 }

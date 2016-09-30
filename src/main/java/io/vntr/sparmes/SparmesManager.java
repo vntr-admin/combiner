@@ -167,34 +167,23 @@ public class SparmesManager {
         }
     }
 
-    public void moveUser(SparmesUser user, Long destinationPartitionId, Set<Long> replicasToAddInDestinationPartition, Set<Long> replicasToDeleteInSourcePartition) {
+    public void moveUser(SparmesUser user, Long toPid, Set<Long> replicateInDestinationPartition, Set<Long> replicasToDeleteInSourcePartition) {
+        Long uid = user.getId();
+        Long fromPid = user.getMasterPartitionId();
+
         //Step 1: move the actual user
-        Long userId = user.getId();
-        Long oldPartitionId = user.getMasterPartitionId();
-        SparmesPartition oldPartition = partitionIdToPartitionMap.get(user.getMasterPartitionId());
-        SparmesPartition newPartition = partitionIdToPartitionMap.get(destinationPartitionId);
-        oldPartition.removeMaster(userId);
-        newPartition.addMaster(user);
-        userIdToMasterPartitionIdMap.put(userId, destinationPartitionId);
-
-        user.setMasterPartitionId(destinationPartitionId);
-        user.setPartitionId(destinationPartitionId);
-
-        for (Long replicaPartitionId : user.getReplicaPartitionIds()) {
-            SparmesUser replica = partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
-            replica.setMasterPartitionId(destinationPartitionId);
-        }
+        moveMasterAndInformReplicas(uid, fromPid, toPid);
 
         //Step 2: add the necessary replicas
         for (Long friendId : user.getFriendIDs()) {
-            if (userIdToMasterPartitionIdMap.get(friendId).equals(oldPartitionId)) {
-                addReplica(user, oldPartitionId);
+            if (userIdToMasterPartitionIdMap.get(friendId).equals(fromPid)) {
+                addReplica(user, fromPid);
                 break;
             }
         }
 
-        for (Long friendToReplicateId : replicasToAddInDestinationPartition) {
-            addReplica(getUserMasterById(friendToReplicateId), destinationPartitionId);
+        for (Long friendToReplicateId : replicateInDestinationPartition) {
+            addReplica(getUserMasterById(friendToReplicateId), toPid);
         }
 
         //Step 3: remove unnecessary replicas
@@ -203,19 +192,17 @@ public class SparmesManager {
         // (2) replicas of user's friends in oldPartition with no other purpose
         // (3) [the replica of the new friend that prompted this move should already be accounted for in (2)]
 
-        if (user.getReplicaPartitionIds().contains(destinationPartitionId)) {
-            if (user.getReplicaPartitionIds().size() > minNumReplicas) {
-                removeReplica(user, destinationPartitionId);
-            } else {
-                //delete the replica in destinationPartition,  but add one in another partition that doesn't yet have one of this user
+        if (user.getReplicaPartitionIds().contains(toPid)) {
+            if (user.getReplicaPartitionIds().size() <= minNumReplicas) {
+                //add one in another partition that doesn't yet have one of this user
                 addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
-                removeReplica(user, destinationPartitionId);
             }
+            removeReplica(user, toPid);
         }
 
         //delete the replica of the appropriate friends in oldPartition
         for (Long replicaIdToDelete : replicasToDeleteInSourcePartition) {
-            removeReplica(getUserMasterById(replicaIdToDelete), oldPartitionId);
+            removeReplica(getUserMasterById(replicaIdToDelete), fromPid);
         }
     }
 
@@ -301,5 +288,20 @@ public class SparmesManager {
             count += getPartitionById(pid).getNumReplicas();
         }
         return (long) count;
+    }
+
+    void moveMasterAndInformReplicas(Long uid, Long fromPid, Long toPid) {
+        SparmesUser user = getUserMasterById(uid);
+        getPartitionById(fromPid).removeMaster(uid);
+        getPartitionById(toPid).addMaster(user);
+
+        userIdToMasterPartitionIdMap.put(uid, toPid);
+
+        user.setMasterPartitionId(toPid);
+        user.setPartitionId(toPid);
+
+        for (Long rPid : user.getReplicaPartitionIds()) {
+            partitionIdToPartitionMap.get(rPid).getReplicaById(uid).setMasterPartitionId(toPid);
+        }
     }
 }

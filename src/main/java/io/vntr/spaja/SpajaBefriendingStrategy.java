@@ -103,6 +103,16 @@ public class SpajaBefriendingStrategy {
         return replicasToAddInStayingPartition;
     }
 
+    boolean shouldDeleteReplicaInTargetPartition(SpajaUser user, Long pid2, int k) {
+        boolean answer = false;
+        if(user.getReplicaPartitionIds().contains(pid2)) {
+            boolean addReplicaInCurrentPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(user);
+            int numReplicas = user.getReplicaPartitionIds().size() + (addReplicaInCurrentPartition ? 1 : 0);
+            answer = numReplicas > k;
+        }
+        return answer;
+    }
+
     Set<Long> findReplicasInMovingPartitionToDelete(SpajaUser movingUser, Set<Long> replicasToBeAdded) {
         Set<Long> replicasInMovingPartitionToDelete = new HashSet<Long>();
         for (Long replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
@@ -139,7 +149,7 @@ public class SpajaBefriendingStrategy {
         return replicasThatWereJustThereForThisUsersSake;
     }
 
-    private boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SpajaUser movingUser) {
+    boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SpajaUser movingUser) {
         for (Long friendId : movingUser.getFriendIDs()) {
             Long friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
             if (movingUser.getMasterPartitionId().equals(friendMasterPartitionId)) {
@@ -173,5 +183,41 @@ public class SpajaBefriendingStrategy {
         }
 
         return movingPartitionHasStayingUserReplica && stayingUserHasNoOtherFriendMastersInMovingPartition;
+    }
+
+    public SwapChanges getSwapChanges(SpajaUser u1, SpajaUser u2) {
+        int k = manager.getMinNumReplicas();
+        Long pid1 = u1.getMasterPartitionId();
+        Long pid2 = u2.getMasterPartitionId();
+
+        SwapChanges swapChanges = new SwapChanges();
+        swapChanges.setPid1(pid1);
+        swapChanges.setPid2(pid2);
+
+        Set<Long> addToP1 = findReplicasToAddToTargetPartition(u2, pid1);
+        if(shouldWeAddAReplicaOfMovingUserInMovingPartition(u1)) {
+            addToP1.add(u1.getId());
+        }
+        swapChanges.setAddToP1(addToP1);
+
+        Set<Long> addToP2 = findReplicasToAddToTargetPartition(u1, pid2);
+        if(shouldWeAddAReplicaOfMovingUserInMovingPartition(u2)) {
+            addToP2.add(u2.getId());
+        }
+        swapChanges.setAddToP2(addToP2);
+
+        Set<Long> removeFromP1 = findReplicasInMovingPartitionToDelete(u1, addToP1);
+        if(shouldDeleteReplicaInTargetPartition(u2, pid1, k)) {
+            removeFromP1.add(u2.getId());
+        }
+        swapChanges.setRemoveFromP1(removeFromP1);
+
+        Set<Long> removeFromP2 = findReplicasInMovingPartitionToDelete(u2, addToP2);
+        if(shouldDeleteReplicaInTargetPartition(u1, pid2, k)) {
+            removeFromP2.add(u1.getId());
+        }
+        swapChanges.setRemoveFromP2(removeFromP2);
+
+        return swapChanges;
     }
 }
