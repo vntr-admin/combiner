@@ -109,60 +109,11 @@ public class HermesManager {
         int iteration = 1;
         boolean stoppingCondition = false;
         while(!stoppingCondition) {
-            int pibetapi = 0;
-            if(iteration > 1000) {
-                pibetapi += 1;
-            }
-
-            if((iteration % 20) == 0) {
-                logger.warn("Iteration: " + iteration);
-            }
             boolean changed = false;
-            Map<Long, Set<Target>> firstStageTargets = new HashMap<Long, Set<Target>>();
-            for (HermesPartition p : pMap.values()) {
-                Set<Target> targets = p.getCandidates(true, k);
-                firstStageTargets.put(p.getId(), targets);
-                if(!targets.isEmpty()) {
-//                    logger.warn("Iteration " + iteration + " - targets from p" + p.getId() + "a: " + targets);
-                }
-                changed |= !targets.isEmpty();
-//                for(Target target : targets) {
-//                    migrateLogically(target);
-//                }
-            }
-
-            for(Long pid : pMap.keySet()) {
-                for(Target target : firstStageTargets.get(pid)) {
-                    migrateLogically(target);
-                }
-            }
-
-//            logger.warn("Iteration " + iteration + "a: " + getPartitionToLogicalUserMap());
-            updateAggregateWeightInformation();
-
-            Map<Long, Set<Target>> secondStageTargets = new HashMap<Long, Set<Target>>();
-            for (HermesPartition p : pMap.values()) {
-                Set<Target> targets = p.getCandidates(false, k);
-                secondStageTargets.put(p.getId(), targets);
-                if(!targets.isEmpty()) {
-//                    logger.warn("Iteration " + iteration + " - targets from p" + p.getId() + "b: " + targets);
-                }
-                changed |= !targets.isEmpty();
-//                for(Target target : targets) {
-//                    migrateLogically(target);
-//                }
-            }
-            for(Long pid : pMap.keySet()) {
-                for(Target target : secondStageTargets.get(pid)) {
-                    migrateLogically(target);
-                }
-            }
-
-//            logger.warn("Iteration " + iteration + "b: " + getPartitionToLogicalUserMap());
-            iteration++;
-            updateAggregateWeightInformation();
-
+            changed |= performStage(true, k);
+            changed |= performStage(false, k);
             stoppingCondition = !changed;
+            iteration++;
         }
         System.out.println("Number of iterations: " + iteration);
 
@@ -179,6 +130,25 @@ public class HermesManager {
         }
 
         uMap.putAll(usersWhoMoved);
+    }
+
+    boolean performStage(boolean firstStage, int k) {
+        boolean changed = false;
+        Map<Long, Set<Target>> stageTargets = new HashMap<Long, Set<Target>>();
+        for (HermesPartition p : pMap.values()) {
+            Set<Target> targets = p.getCandidates(firstStage, k);
+            stageTargets.put(p.getId(), targets);
+            changed |= !targets.isEmpty();
+        }
+
+        for(Long pid : pMap.keySet()) {
+            for(Target target : stageTargets.get(pid)) {
+                migrateLogically(target);
+            }
+        }
+
+        updateAggregateWeightInformation();
+        return changed;
     }
 
     void migrateLogically(Target target) {
