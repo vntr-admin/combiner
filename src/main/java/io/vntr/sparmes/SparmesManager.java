@@ -103,7 +103,7 @@ public class SparmesManager {
     }
 
     void addPartition(Long pid) {
-        pMap.put(pid, new SparmesPartition(pid));
+        pMap.put(pid, new SparmesPartition(pid, this));
     }
 
     public void removePartition(Long id) {

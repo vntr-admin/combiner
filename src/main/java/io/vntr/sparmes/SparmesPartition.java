@@ -12,9 +12,11 @@ public class SparmesPartition {
     private Map<Long, SparmesUser> idToReplicaMap = new HashMap<Long, SparmesUser>();
     private Map<Long, LogicalUser> logicalUsers = new HashMap<Long, LogicalUser>();
     private Long id;
+    private SparmesManager manager;
 
-    public SparmesPartition(Long id) {
+    public SparmesPartition(Long id, SparmesManager manager) {
         this.id = id;
+        this.manager = manager;
     }
 
     public void addMaster(SparmesUser user) {
@@ -88,12 +90,52 @@ public class SparmesPartition {
 
 
     public Set<Long> physicallyMigrateCopy() {
-        //TODO: do this
-        return Collections.emptySet();
+        Set<Long> logicalUserSet = new HashSet<Long>(logicalUsers.keySet());
+        Set<Long> friendsSet = new HashSet<Long>();
+        logicalUserSet.removeAll(idToMasterMap.keySet());
+        for(Long newUid : logicalUserSet) {
+            SparmesUser user = manager.getUserMasterById(newUid);
+            idToMasterMap.put(newUid, user);
+            friendsSet.addAll(user.getFriendIDs());
+        }
+
+        //Add friend replicas as appropriate
+        for(Long friendId : friendsSet) {
+            if(!idToMasterMap.containsKey(friendId) && !idToReplicaMap.containsKey(friendId)) {
+                manager.addReplica(manager.getUserMasterById(friendId), id);
+            }
+        }
+        return logicalUserSet;
     }
 
     public void physicallyMigrateDelete() {
-        //TODO: do this
+        Set<Long> friendIds = new HashSet<Long>();
+        Set<Long> removedUsers = new HashSet<Long>();
+        for(Iterator<Long> iter = idToMasterMap.keySet().iterator(); iter.hasNext(); ) {
+            Long uid = iter.next();
+            SparmesUser user = idToMasterMap.get(uid);
+            Long logicalPid = user.getLogicalPid();
+            if(!logicalPid.equals(id)) {
+                user.setMasterPartitionId(logicalPid);
+                friendIds.addAll(user.getFriendIDs());
+                removedUsers.add(uid);
+                iter.remove();
+            }
+        }
+        friendIds.removeAll(idToMasterMap.keySet());
+        for(Long friendId : friendIds) {
+            SparmesUser friend = idToMasterMap.get(friendId);
+            if(friend.getReplicaPartitionIds().size() > manager.getMinNumReplicas() && !hasFriendOnPartition(friend, removedUsers)) {
+                manager.removeReplica(friend, id);
+            }
+        }
+    }
+
+    boolean hasFriendOnPartition(SparmesUser user, Set<Long> removedUsers) {
+        Set<Long> friendIds = new HashSet<Long>(user.getFriendIDs());
+        friendIds.removeAll(removedUsers);
+        friendIds.retainAll(idToMasterMap.keySet());
+        return !friendIds.isEmpty();
     }
 
     public int getNumLogicalUsers() {

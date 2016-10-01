@@ -10,6 +10,7 @@ import java.util.*;
 public class SparmesUser extends User {
     private Long partitionId;
     private Long masterPartitionId;
+    private Long logicalPid;
     private Set<Long> replicaPartitionIds;
     private SparmesManager manager;
 
@@ -49,6 +50,14 @@ public class SparmesUser extends User {
 
     public Set<Long> getReplicaPartitionIds() {
         return replicaPartitionIds;
+    }
+
+    public Long getLogicalPid() {
+        return logicalPid;
+    }
+
+    public void setLogicalPid(Long logicalPid) {
+        this.logicalPid = logicalPid;
     }
 
     @Override
