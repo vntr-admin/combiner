@@ -139,7 +139,7 @@ public class SparmesBefriendingStrategy {
         return replicasThatWereJustThereForThisUsersSake;
     }
 
-    private boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SparmesUser movingUser) {
+    boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SparmesUser movingUser) {
         for (Long friendId : movingUser.getFriendIDs()) {
             Long friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
             if (movingUser.getMasterPartitionId().equals(friendMasterPartitionId)) {

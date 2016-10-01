@@ -10,6 +10,7 @@ import java.util.*;
  */
 public class SparmesManager {
     private int minNumReplicas;
+    private double gamma;
 
     private static final Long defaultStartingId = 1L;
 
@@ -17,13 +18,21 @@ public class SparmesManager {
 
     private Map<Long, Long> uMap = new HashMap<Long, Long>();
 
-    public SparmesManager(int minNumReplicas) {
+    private SparmesBefriendingStrategy sparmesBefriendingStrategy;
+
+    public SparmesManager(int minNumReplicas, double gamma) {
         this.minNumReplicas = minNumReplicas;
+        this.gamma = gamma;
         this.pMap = new TreeMap<Long, SparmesPartition>();
+        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
     }
 
     public int getMinNumReplicas() {
         return minNumReplicas;
+    }
+
+    public SparmesBefriendingStrategy getSparmesBefriendingStrategy() {
+        return sparmesBefriendingStrategy;
     }
 
     public SparmesPartition getPartitionById(Long id) {
@@ -56,7 +65,7 @@ public class SparmesManager {
     public void addUser(User user) {
         Long masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparmesUser spajaUser = new SparmesUser(user.getName(), user.getId(), this);
+        SparmesUser spajaUser = new SparmesUser(user.getName(), user.getId(), gamma, this);
         spajaUser.setMasterPartitionId(masterPartitionId);
         spajaUser.setPartitionId(masterPartitionId);
 
@@ -103,7 +112,7 @@ public class SparmesManager {
     }
 
     void addPartition(Long pid) {
-        pMap.put(pid, new SparmesPartition(pid, this));
+        pMap.put(pid, new SparmesPartition(pid, gamma, this));
     }
 
     public void removePartition(Long id) {
@@ -314,37 +323,8 @@ public class SparmesManager {
         boolean stoppingCondition = false;
         while (!stoppingCondition) {
             boolean changed = false;
-
-            Map<Long, Set<Target>> firstStageTargets = new HashMap<Long, Set<Target>>();
-            for (SparmesPartition p : pMap.values()) {
-                Set<Target> targets = p.getCandidates(true, k);
-                firstStageTargets.put(p.getId(), targets);
-                changed |= !targets.isEmpty();
-            }
-
-            for(Long pid : pMap.keySet()) {
-                for(Target target : firstStageTargets.get(pid)) {
-                    migrateLogically(target);
-                }
-            }
-
-            updateAggregateWeightInformation();
-
-            Map<Long, Set<Target>> secondStageTargets = new HashMap<Long, Set<Target>>();
-            for (SparmesPartition p : pMap.values()) {
-                Set<Target> targets = p.getCandidates(false, k);
-                secondStageTargets.put(p.getId(), targets);
-                changed |= !targets.isEmpty();
-            }
-
-            for(Long pid : pMap.keySet()) {
-                for(Target target : secondStageTargets .get(pid)) {
-                    migrateLogically(target);
-                }
-            }
-
-            updateAggregateWeightInformation();
-
+            changed |= performStage(true,  k);
+            changed |= performStage(false, k);
             stoppingCondition = !changed;
         }
 
@@ -363,11 +343,64 @@ public class SparmesManager {
         uMap.putAll(usersWhoMoved);
     }
 
+    boolean performStage(boolean firstStage, int k) {
+        boolean changed = false;
+        Map<Long, Set<Target>> stageTargets = new HashMap<Long, Set<Target>>();
+        for (SparmesPartition p : pMap.values()) {
+            Set<Target> targets = p.getCandidates(firstStage, k);
+            stageTargets.put(p.getId(), targets);
+            changed |= !targets.isEmpty();
+        }
+
+        for(Long pid : pMap.keySet()) {
+            for(Target target : stageTargets.get(pid)) {
+                migrateLogically(target);
+            }
+        }
+
+        updateAggregateWeightInformation();
+
+        return changed;
+    }
+
     void migrateLogically(Target target) {
-        //TODO: do this
+        SparmesPartition oldPart = getPartitionById(target.oldPartitionId);
+        SparmesPartition newPart = getPartitionById(target.partitionId);
+        SparmesUser user = getUserMasterById(target.userId);
+        user.setLogicalPid(target.partitionId);
+        oldPart.removeLogicalUser(target.userId);
+        newPart.addLogicalUser(user.getLogicalUser(false));
+        //TODO: how to handle the replicas?
+        //what about replicaLocations, numFriendReplicas..., and replicateInSourcePartition?
     }
 
     void updateAggregateWeightInformation() {
-        //TODO: do this
+        Map<Long, Long> pToWeight = getPToWeight(false);
+        long totalWeight = 0L;
+        for(Long pWeight: pToWeight.values()) {
+            totalWeight += pWeight;
+        }
+
+        for (SparmesPartition p : pMap.values()) {
+            p.updateLogicalUsersPartitionWeights(pToWeight);
+            p.updateLogicalUsersTotalWeights(totalWeight);
+        }
+        //TODO: is there anything else we need to do with updating replicas?
+        //what about replicaLocations, numFriendReplicas..., and replicateInSourcePartition?
+    }
+
+    Map<Long, Long> getPToWeight(boolean determineWeightsFromPhysicalPartitions) {
+        Map<Long, Long> pToWeight = new HashMap<Long, Long>();
+        for(Long partitionId : getAllPartitionIds()) {
+            int pWeight;
+            if(determineWeightsFromPhysicalPartitions) {
+                pWeight = getPartitionById(partitionId).getNumMasters();
+            }
+            else {
+                pWeight = getPartitionById(partitionId).getNumLogicalUsers();
+            }
+            pToWeight.put(partitionId, (long) pWeight);
+        }
+        return pToWeight;
     }
 }

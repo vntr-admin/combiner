@@ -8,15 +8,17 @@ import java.util.*;
  * Created by robertlindquist on 9/28/16.
  */
 public class SparmesPartition {
+    private final double gamma;
     private Map<Long, SparmesUser> idToMasterMap = new HashMap<Long, SparmesUser>();
     private Map<Long, SparmesUser> idToReplicaMap = new HashMap<Long, SparmesUser>();
     private Map<Long, LogicalUser> logicalUsers = new HashMap<Long, LogicalUser>();
     private Long id;
     private SparmesManager manager;
 
-    public SparmesPartition(Long id, SparmesManager manager) {
+    public SparmesPartition(Long id, double gamma, SparmesManager manager) {
         this.id = id;
         this.manager = manager;
+        this.gamma = gamma;
     }
 
     public void addMaster(SparmesUser user) {
@@ -140,5 +142,25 @@ public class SparmesPartition {
 
     public int getNumLogicalUsers() {
         return logicalUsers.size();
+    }
+
+    public void removeLogicalUser(Long userId) {
+        logicalUsers.remove(userId);
+    }
+
+    public void addLogicalUser(LogicalUser logicalUser) {
+        this.logicalUsers.put(logicalUser.getId(), logicalUser);
+    }
+
+    public void updateLogicalUsersPartitionWeights(Map<Long, Long> pToWeight) {
+        for(LogicalUser logicalUser : logicalUsers.values()) {
+            logicalUser.setpToWeight(pToWeight);
+        }
+    }
+
+    public void updateLogicalUsersTotalWeights(Long totalWeight) {
+        for(LogicalUser logicalUser : logicalUsers.values()) {
+            logicalUser.setTotalWeight(totalWeight);
+        }
     }
 }
