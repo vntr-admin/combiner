@@ -71,8 +71,8 @@ public class SpajaMigrationStrategy {
 
             @Override
             public String toString() {
-//                String scoreStr = String.format("%d: --(%.2f)--> %d", userId, score, partitionId);
-                return String.format("%3d: --(%.2f)--> %3d", userId, score, partitionId);//userId + ": --(" + score + ")-->" + partitionId;
+//                String scoreStr = String.format("%d: --(%.2f)--> %d", uid, score, newPid);
+                return String.format("%3d: --(%.2f)--> %3d", userId, score, partitionId);//uid + ": --(" + score + ")-->" + newPid;
             }
         }
 
