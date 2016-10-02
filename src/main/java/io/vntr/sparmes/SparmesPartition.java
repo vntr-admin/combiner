@@ -12,6 +12,7 @@ public class SparmesPartition {
     private Map<Long, SparmesUser> idToMasterMap = new HashMap<Long, SparmesUser>();
     private Map<Long, SparmesUser> idToReplicaMap = new HashMap<Long, SparmesUser>();
     private Map<Long, LogicalUser> logicalUsers = new HashMap<Long, LogicalUser>();
+    private Set<Long> logicalReplicaIds = new HashSet<Long>();
     private Long id;
     private SparmesManager manager;
 
@@ -65,6 +66,18 @@ public class SparmesPartition {
         return id;
     }
 
+    public Set<Long> getLogicalReplicaIds() {
+        return logicalReplicaIds;
+    }
+
+    public void removeLogicalReplicaId(Long uid) {
+        logicalReplicaIds.remove(uid);
+    }
+
+    public void addLogicalReplicaId(Long uid) {
+        logicalReplicaIds.add(uid);
+    }
+
     public void resetLogicalUsers() {
         logicalUsers = new HashMap<Long, LogicalUser>();
         for(SparmesUser user : idToMasterMap.values()) {
@@ -76,7 +89,7 @@ public class SparmesPartition {
         NavigableSet<Target> candidates = new TreeSet<Target>();
         for(LogicalUser luser : logicalUsers.values()) {
             Target target = luser.getTargetPart(firstIteration);
-            if(target.partitionId != null) {
+            if(target.newPid != null) {
                 candidates.add(target);
             }
         }
@@ -92,6 +105,7 @@ public class SparmesPartition {
 
 
     public Set<Long> physicallyMigrateCopy() {
+        //TODO: make sure we migrate the replicas as well
         Set<Long> logicalUserSet = new HashSet<Long>(logicalUsers.keySet());
         Set<Long> friendsSet = new HashSet<Long>();
         logicalUserSet.removeAll(idToMasterMap.keySet());
@@ -111,6 +125,7 @@ public class SparmesPartition {
     }
 
     public void physicallyMigrateDelete() {
+        //TODO: make sure we migrate the replicas as well
         Set<Long> friendIds = new HashSet<Long>();
         Set<Long> removedUsers = new HashSet<Long>();
         for(Iterator<Long> iter = idToMasterMap.keySet().iterator(); iter.hasNext(); ) {
@@ -144,6 +159,10 @@ public class SparmesPartition {
         return logicalUsers.size();
     }
 
+    public Set<Long> getLogicalUserIds() {
+        return logicalUsers.keySet();
+    }
+
     public void removeLogicalUser(Long userId) {
         logicalUsers.remove(userId);
     }
@@ -162,5 +181,9 @@ public class SparmesPartition {
         for(LogicalUser logicalUser : logicalUsers.values()) {
             logicalUser.setTotalWeight(totalWeight);
         }
+    }
+
+    public void updateLogicalUserFriendCounts(Long logicalUid, Map<Long, Long> updatedFriendCounts) {
+        logicalUsers.get(logicalUid).setPToFriendCount(updatedFriendCounts);
     }
 }

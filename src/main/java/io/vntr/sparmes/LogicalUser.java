@@ -10,13 +10,14 @@ public class LogicalUser {
     private Long id;
     private Long pid;
     private double gamma;
+    private Long totalWeight;
     private Map<Long, Long> pToFriendCount;
     private Map<Long, Long> pToWeight;
+
     private Set<Long> replicaLocations; //TODO: make sure this gets updated properly
     private Map<Long, Integer> numFriendsToAddInEachPartition;
     private int numFriendReplicasToDeleteInSourcePartition; //TODO: make sure this gets updated properly
     private boolean replicateInSourcePartition; //TODO: make sure this gets updated properly
-    private Long totalWeight;
 
     public LogicalUser(Long id, Long pid, double gamma, Map<Long, Long> pToFriendCount, Map<Long, Long> pToWeight, Set<Long> replicaLocations, Map<Long, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Long totalWeight) {
         this.id = id;
@@ -150,5 +151,9 @@ public class LogicalUser {
         result = 31 * result + (replicateInSourcePartition ? 1 : 0);
         result = 31 * result + totalWeight.hashCode();
         return result;
+    }
+
+    public void setPToFriendCount(Map<Long, Long> updatedFriendCounts) {
+        pToFriendCount = updatedFriendCounts;
     }
 }

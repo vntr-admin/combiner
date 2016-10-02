@@ -13,11 +13,13 @@ public class SparmesUser extends User {
     private Long logicalPid;
     private double gamma;
     private Set<Long> replicaPartitionIds;
+    private Set<Long> logicalPartitionIds;
     private SparmesManager manager;
 
     public SparmesUser(String name, Long id, double gamma, SparmesManager manager) {
         super(name, id);
         replicaPartitionIds = new HashSet<Long>();
+        logicalPartitionIds = new HashSet<Long>();
         this.gamma = gamma;
         this.manager = manager;
     }
@@ -62,6 +64,18 @@ public class SparmesUser extends User {
         this.logicalPid = logicalPid;
     }
 
+    public Set<Long> getLogicalPartitionIds() {
+        return logicalPartitionIds;
+    }
+
+    public void addLogicalPartitionId(Long pid) {
+        logicalPartitionIds.add(pid);
+    }
+
+    public void removeLogicalPartitionId(Long pid) {
+        logicalPartitionIds.remove(pid);
+    }
+
     @Override
     public SparmesUser clone() {
         SparmesUser user = new SparmesUser(getName(), getId(), gamma, manager);
@@ -91,7 +105,7 @@ public class SparmesUser extends User {
             totalWeight += pWeight;
         }
 
-        Map<Long, Long> pToFriendCount = getPToFriendCount();
+        Map<Long, Long> pToFriendCount = getPToFriendCountLogical();
 
         SparmesBefriendingStrategy strat = manager.getSparmesBefriendingStrategy();
 
@@ -105,17 +119,80 @@ public class SparmesUser extends User {
         return new LogicalUser(getId(), partitionId, gamma, pToFriendCount, pToWeight, replicaPartitionIds, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight);
     }
 
-    Map<Long, Long> getPToFriendCount() {
+    Map<Long, Integer> getFriendsToAddInEachPartitionLogical() {
+        Map<Long, Integer> friendsToAddInEachPartition = new HashMap<Long, Integer>();
+        for(Long pid : manager.getAllPartitionIds()) {
+            friendsToAddInEachPartition.put(pid, findReplicasToAddToPartition(pid).size());
+        }
+        return friendsToAddInEachPartition;
+    }
+
+    Set<Long> findReplicasToAddToPartition(Long targetPid) {
+        Set<Long> toReplicate = new HashSet<Long>();
+        for (Long friendId : getFriendIDs()) {
+            SparmesUser friend = manager.getUserMasterById(friendId);
+            if (!targetPid.equals(friend.getLogicalPid()) && !friend.getLogicalPartitionIds().contains(targetPid)) {
+                toReplicate.add(friendId);
+            }
+        }
+
+        return toReplicate;
+    }
+
+    boolean shouldReplicateInSourcePartitionLogical() {
+        for (Long friendId : getFriendIDs()) {
+            Long friendPid = manager.getUserMasterById(friendId).getLogicalPid();
+            if (logicalPid.equals(manager.getUserMasterById(friendId).getLogicalPid())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    Map<Long, Long> getPToFriendCountLogical() {
         Map<Long, Long> pToFriendCount = new HashMap<Long, Long>();
         for(Long pid : manager.getAllPartitionIds()) {
             pToFriendCount.put(pid, 0L);
         }
         for(Long friendId : getFriendIDs()) {
-            SparmesUser friend = manager.getUserMasterById(friendId);
-            Long partitionId = friend.getLogicalPid();
+            Long partitionId = manager.getUserMasterById(friendId).getLogicalPid();
             pToFriendCount.put(partitionId, pToFriendCount.get(partitionId) + 1L);
         }
         return pToFriendCount;
     }
 
+    int getNumFriendsToDeleteInCurrentPartitionLogical() {
+        int count = 0;
+        for (Long replicaId : findDeletionCandidatesLogical()) {
+            if (manager.getUserMasterById(replicaId).getLogicalPartitionIds().size() > manager.getMinNumReplicas()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    Set<Long> findDeletionCandidatesLogical() {
+        Set<Long> deletionCandidates = new HashSet<Long>();
+outer:  for (Long friendId : getFriendIDs()) {
+            SparmesUser friend = manager.getUserMasterById(friendId);
+            if (!friend.getLogicalPid().equals(logicalPid)) {
+                for (Long friendOfFriendId : friend.getFriendIDs()) {
+                    if (friendOfFriendId.equals(getId())) {
+                        continue;
+                    }
+
+                    SparmesUser friendOfFriend = manager.getUserMasterById(friendOfFriendId);
+                    if (friendOfFriend.getLogicalPid().equals(logicalPid)) {
+                        continue outer;
+                    }
+                }
+
+                deletionCandidates.add(friendId);
+            }
+        }
+
+        return deletionCandidates;
+    }
 }

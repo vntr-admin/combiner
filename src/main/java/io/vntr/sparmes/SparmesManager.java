@@ -358,35 +358,94 @@ public class SparmesManager {
             }
         }
 
-        updateAggregateWeightInformation();
+        updateLogicalUsers();
 
         return changed;
     }
 
-    void migrateLogically(Target target) {
-        SparmesPartition oldPart = getPartitionById(target.oldPartitionId);
-        SparmesPartition newPart = getPartitionById(target.partitionId);
-        SparmesUser user = getUserMasterById(target.userId);
-        user.setLogicalPid(target.partitionId);
-        oldPart.removeLogicalUser(target.userId);
-        newPart.addLogicalUser(user.getLogicalUser(false));
-        //TODO: how to handle the replicas?
-        //what about replicaLocations, numFriendReplicas..., and replicateInSourcePartition?
+    private void addLogicalReplica(Long uid, Long pid) {
+        getUserMasterById(uid).addLogicalPartitionId(pid);
+        getPartitionById(pid).addLogicalReplicaId(uid);
     }
 
-    void updateAggregateWeightInformation() {
+    private void removeLogicalReplica(Long uid, Long pid) {
+        getUserMasterById(uid).removeLogicalPartitionId(pid);
+        getPartitionById(pid).removeLogicalReplicaId(uid);
+    }
+
+    void migrateLogically(Target t) {
+        SparmesPartition oldPart = getPartitionById(t.oldPid);
+        SparmesPartition newPart = getPartitionById(t.newPid);
+        SparmesUser user = getUserMasterById(t.uid);
+
+        //Add the actual user
+        user.setLogicalPid(t.newPid);
+        oldPart.removeLogicalUser(t.uid);
+        newPart.addLogicalUser(user.getLogicalUser(false));
+
+        //Add replicas as necessary
+        //First, replicate user in old partition if necessary
+        for(Long friendId : user.getFriendIDs()) {
+            if(getUserMasterById(friendId).getLogicalPid().equals(t.oldPid)) {
+                addLogicalReplica(t.uid, t.oldPid);
+                break;
+            }
+        }
+
+        //Second, replicate friends in new partition if they aren't there already
+        for(Long friendId : user.getFriendIDs()) {
+            SparmesUser friend = getUserMasterById(friendId);
+            if(!friend.getLogicalPid().equals(t.newPid) && !friend.getLogicalPartitionIds().contains(t.newPid)) {
+                addLogicalReplica(friendId, t.newPid);
+            }
+        }
+
+        //Remove replicas as allowed
+        //First, remove user replica from new partition if one exists
+        if(newPart.getLogicalReplicaIds().contains(t.uid)) {
+            removeLogicalReplica(t.uid, t.newPid);
+        }
+
+        //Second, if we've violated k-constraints, choose another partition at random and replicate this user there
+        if(user.getLogicalPartitionIds().size() < minNumReplicas) {
+            Set<Long> potentialReplicaLocations = new HashSet<Long>(pMap.keySet());
+            potentialReplicaLocations.remove(user.getLogicalPid());
+            potentialReplicaLocations.removeAll(user.getLogicalPartitionIds());
+            List<Long> list = new LinkedList<Long>(potentialReplicaLocations);
+            Long newReplicaPid = list.get((int) (list.size() * Math.random()));
+            addLogicalReplica(t.uid, newReplicaPid);
+        }
+
+        //Third, remove friends replicas from old partition if they weren't being used for any other reason and don't violate k-replication
+        Set<Long> friendReplicasToRemove = new HashSet<Long>(user.getFriendIDs());
+        friendReplicasToRemove.retainAll(oldPart.getLogicalReplicaIds());
+        for(Long friendId : friendReplicasToRemove) {
+            SparmesUser friend = getUserMasterById(friendId);
+            Set<Long> friendsOfFriend = new HashSet<Long>(friend.getFriendIDs());
+            friendsOfFriend.retainAll(oldPart.getLogicalUserIds());
+            if(friendsOfFriend.isEmpty() && friend.getLogicalPartitionIds().size() > minNumReplicas) {
+                oldPart.removeLogicalReplicaId(friendId);
+            }
+        }
+    }
+
+    void updateLogicalUsers() {
         Map<Long, Long> pToWeight = getPToWeight(false);
         long totalWeight = 0L;
         for(Long pWeight: pToWeight.values()) {
             totalWeight += pWeight;
         }
-
-        for (SparmesPartition p : pMap.values()) {
-            p.updateLogicalUsersPartitionWeights(pToWeight);
-            p.updateLogicalUsersTotalWeights(totalWeight);
+        for(SparmesPartition p : pMap.values()) {
+            for(Long logicalUid : p.getLogicalUserIds()) {
+                SparmesUser user = getUserMasterById(logicalUid);
+                Map<Long, Long> updatedFriendCounts = user.getPToFriendCountLogical();
+                boolean replicateInSourcePartition = user.shouldReplicateInSourcePartitionLogical();
+                int numFriendsToDeleteInCurrentPartition = user.getNumFriendsToDeleteInCurrentPartitionLogical();
+                Map<Long, Integer> friendsToAddInEachPartition = user.getFriendsToAddInEachPartitionLogical();
+                LogicalUser luser = new LogicalUser(user.getId(), user.getLogicalPid(), gamma, updatedFriendCounts, pToWeight, user.getLogicalPartitionIds(), friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight);
+                p.addLogicalUser(luser);
+            }
         }
-        //TODO: is there anything else we need to do with updating replicas?
-        //what about replicaLocations, numFriendReplicas..., and replicateInSourcePartition?
     }
 
     Map<Long, Long> getPToWeight(boolean determineWeightsFromPhysicalPartitions) {
@@ -403,4 +462,5 @@ public class SparmesManager {
         }
         return pToWeight;
     }
+
 }

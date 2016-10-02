@@ -4,15 +4,15 @@ package io.vntr.sparmes;
  * Created by robertlindquist on 9/29/16.
  */
 public class Target implements Comparable<Target> {
-    public final Long userId;
-    public final Long partitionId;
-    public final Long oldPartitionId;
+    public final Long uid;
+    public final Long newPid;
+    public final Long oldPid;
     public final Integer gain;
 
-    public Target(Long userId, Long partitionId, Long oldPartitionId, Integer gain) {
-        this.userId = userId;
-        this.partitionId = partitionId;
-        this.oldPartitionId = oldPartitionId;
+    public Target(Long uid, Long newPid, Long oldPid, Integer gain) {
+        this.uid = uid;
+        this.newPid = newPid;
+        this.oldPid = oldPid;
         this.gain = gain;
     }
 
@@ -22,15 +22,15 @@ public class Target implements Comparable<Target> {
         if(gainCompare != 0) {
             return gainCompare;
         }
-        int partCompare = partitionId.compareTo(o.partitionId);
+        int partCompare = newPid.compareTo(o.newPid);
         if(partCompare != 0) {
             return partCompare;
         }
-        int oldPartCompare = oldPartitionId.compareTo(o.oldPartitionId);
+        int oldPartCompare = oldPid.compareTo(o.oldPid);
         if(oldPartCompare != 0) {
             return oldPartCompare;
         }
-        return userId.compareTo(o.userId);
+        return uid.compareTo(o.uid);
     }
 
     @Override
@@ -40,27 +40,26 @@ public class Target implements Comparable<Target> {
 
         Target target = (Target) o;
 
-        if (userId != null ? !userId.equals(target.userId) : target.userId != null) return false;
-        if (partitionId != null ? !partitionId.equals(target.partitionId) : target.partitionId != null) return false;
-        if (oldPartitionId != null ? !oldPartitionId.equals(target.oldPartitionId) : target.oldPartitionId != null)
-            return false;
-        return gain != null ? gain.equals(target.gain) : target.gain == null;
+        if (!uid.equals(target.uid)) return false;
+        if (!newPid.equals(target.newPid)) return false;
+        if (!oldPid.equals(target.oldPid)) return false;
+        return gain.equals(target.gain);
 
     }
 
     @Override
     public int hashCode() {
-        int result = userId != null ? userId.hashCode() : 0;
-        result = 31 * result + (partitionId != null ? partitionId.hashCode() : 0);
-        result = 31 * result + (oldPartitionId != null ? oldPartitionId.hashCode() : 0);
-        result = 31 * result + (gain != null ? gain.hashCode() : 0);
+        int result = uid.hashCode();
+        result = 31 * result + newPid.hashCode();
+        result = 31 * result + oldPid.hashCode();
+        result = 31 * result + gain.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
         String strGain = gain > 0 ? "+" + gain : "" + gain;
-        return userId + ": " + oldPartitionId + "--(" + strGain + ")-->" + partitionId;
+        return uid + ": " + oldPid + "--(" + strGain + ")-->" + newPid;
     }
 }
 
