@@ -75,4 +75,9 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     public Long getReplicationCount() {
         return 0L; //Hermes does not replicate
     }
+
+    @Override
+    public void broadcastDowntime() {
+        manager.repartition();
+    }
 }

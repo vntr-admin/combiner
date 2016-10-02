@@ -11,6 +11,8 @@ import java.util.*;
 public class SpajaManager {
     private int minNumReplicas;
     private double alpha;
+    private double initialT;
+    private double deltaT;
 
     private static final Long defaultStartingId = 1L;
 
@@ -18,14 +20,28 @@ public class SpajaManager {
 
     private Map<Long, Long> userIdToMasterPartitionIdMap = new HashMap<Long, Long>();
 
-    public SpajaManager(int minNumReplicas, double alpha) {
+    public SpajaManager(int minNumReplicas, double alpha, double initialT, double deltaT) {
         this.minNumReplicas = minNumReplicas;
         this.partitionIdToPartitionMap = new TreeMap<Long, SpajaPartition>();
         this.alpha = alpha;
+        this.initialT = initialT;
+        this.deltaT = deltaT;
     }
 
     public int getMinNumReplicas() {
         return minNumReplicas;
+    }
+
+    public double getAlpha() {
+        return alpha;
+    }
+
+    public double getInitialT() {
+        return initialT;
+    }
+
+    public double getDeltaT() {
+        return deltaT;
     }
 
     public SpajaPartition getPartitionById(Long id) {

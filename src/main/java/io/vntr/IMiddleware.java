@@ -12,4 +12,6 @@ public interface IMiddleware {
     void addPartition();
 
     void removePartition(Long partitionId);
+
+    void broadcastDowntime();
 }

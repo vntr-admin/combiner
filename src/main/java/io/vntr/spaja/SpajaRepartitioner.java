@@ -17,11 +17,11 @@ public class SpajaRepartitioner {
     private double initialT;
     private double deltaT;
 
-    public SpajaRepartitioner(SpajaManager manager, SpajaBefriendingStrategy spajaBefriendingStrategy, int k, double alpha, double initialT, double deltaT) {
-        this.k = k;
-        this.alpha = alpha;
-        this.initialT = initialT;
-        this.deltaT = deltaT;
+    public SpajaRepartitioner(SpajaManager manager, SpajaBefriendingStrategy spajaBefriendingStrategy) {
+        this.k = manager.getMinNumReplicas();
+        this.alpha = manager.getAlpha();
+        this.initialT = manager.getInitialT();
+        this.deltaT = manager.getDeltaT();
         this.manager = manager;
         this.spajaBefriendingStrategy = spajaBefriendingStrategy;
     }

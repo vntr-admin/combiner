@@ -16,6 +16,7 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     private SpajaManager manager;
     private SpajaBefriendingStrategy spajaBefriendingStrategy;
     private SpajaMigrationStrategy spajaMigrationStrategy;
+    private SpajaRepartitioner spajaRepartitioner;
 
     public SpajaMiddleware(SpajaManager manager, SpajaBefriendingStrategy spajaBefriendingStrategy, SpajaMigrationStrategy spajaMigrationStrategy) {
         this.manager = manager;
@@ -27,6 +28,7 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         this.manager = manager;
         spajaBefriendingStrategy = new SpajaBefriendingStrategy(manager);
         spajaMigrationStrategy = new SpajaMigrationStrategy(manager);
+        spajaRepartitioner = new SpajaRepartitioner(manager, spajaBefriendingStrategy);
     }
 
     @Override
@@ -186,5 +188,10 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public Long getReplicationCount() {
         return manager.getReplicationCount();
+    }
+
+    @Override
+    public void broadcastDowntime() {
+        spajaRepartitioner.repartition();
     }
 }

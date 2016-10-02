@@ -190,4 +190,9 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public Long getReplicationCount() {
         return manager.getReplicationCount();
     }
+
+    @Override
+    public void broadcastDowntime() {
+        //SPAR ignores downtime
+    }
 }

@@ -84,4 +84,9 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public Long getReplicationCount() {
         return 0L; //Ja-be-Ja does not replicate
     }
+
+    @Override
+    public void broadcastDowntime() {
+        manager.repartition();
+    }
 }
