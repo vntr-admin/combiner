@@ -128,4 +128,8 @@ public class HermesPartition {
                 ", logicalUsers=" + logicalUsers +
                 '}';
     }
+
+    public void updateLogicalUserFriendCounts(Long logicalUid, Map<Long, Long> updatedFriendCounts) {
+        logicalUsers.get(logicalUid).setPToFriendCount(updatedFriendCounts);
+    }
 }

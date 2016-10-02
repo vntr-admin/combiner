@@ -147,7 +147,7 @@ public class HermesManager {
             }
         }
 
-        updateAggregateWeightInformation();
+        updateLogicalUsers();
         return changed;
     }
 
@@ -160,7 +160,7 @@ public class HermesManager {
         newPart.addLogicalUser(user.getLogicalUser(false)); //TODO: is this actually what we want?
     }
 
-    void updateAggregateWeightInformation() {
+    void updateLogicalUsers() {
         Long totalWeight = 0L;
         Map<Long, Long> pToWeight = new HashMap<Long, Long>();
         for (HermesPartition p : pMap.values()) {
@@ -172,6 +172,13 @@ public class HermesManager {
         for (HermesPartition p : pMap.values()) {
             p.updateLogicalUsersPartitionWeights(pToWeight);
             p.updateLogicalUsersTotalWeights(totalWeight);
+        }
+
+        for(HermesPartition p : pMap.values()) {
+            for(Long logicalUid : p.getLogicalUserIds()) {
+                Map<Long, Long> updatedFriendCounts = getUser(logicalUid).getPToFriendCount();
+                p.updateLogicalUserFriendCounts(logicalUid, updatedFriendCounts);
+            }
         }
     }
 

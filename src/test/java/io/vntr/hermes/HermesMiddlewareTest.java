@@ -18,11 +18,11 @@ public class HermesMiddlewareTest {
 
     @Test
     public void testRemovePartition() {
-        int numUsers = 2000;
+        int numUsers = 1000;
         int numPartitions = 10;
 
         double gamma = 1.5;
-        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
+        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1, 0.1);
         Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
         for(long pid=0L; pid<numPartitions; pid++) {
             partitions.put(pid, new HashSet<Long>());

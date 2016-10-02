@@ -107,4 +107,8 @@ public class LogicalUser {
         result = 31 * result + (totalWeight != null ? totalWeight.hashCode() : 0);
         return result;
     }
+
+    public void setPToFriendCount(Map<Long, Long> updatedFriendCounts) {
+        pToFriendCount = updatedFriendCounts;
+    }
 }

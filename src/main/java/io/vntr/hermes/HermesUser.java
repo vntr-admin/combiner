@@ -63,16 +63,19 @@ public class HermesUser extends User {
             totalWeight += pWeight;
             pToWeight.put(partitionId, (long) pWeight);
         }
+        return new LogicalUser(getId(), logicalPid, gamma, getPToFriendCount(), pToWeight, totalWeight);
+    }
+
+    Map<Long, Long> getPToFriendCount() {
         Map<Long, Long> pToFriendCount = new HashMap<Long, Long>();
         for(Long pid : manager.getAllPartitionIds()) {
             pToFriendCount.put(pid, 0L);
         }
         for(Long friendId : getFriendIDs()) {
-            HermesUser friend = manager.getUser(friendId);
-            Long partitionId = friend.getLogicalPid();
-            pToFriendCount.put(partitionId, pToFriendCount.get(partitionId) + 1L);
+            Long pid = manager.getUser(friendId).getLogicalPid();
+            pToFriendCount.put(pid, pToFriendCount.get(pid) + 1L);
         }
-        return new LogicalUser(getId(), logicalPid, gamma, pToFriendCount, pToWeight, totalWeight);
+        return pToFriendCount;
     }
 
     public void befriend(Long uid) {
