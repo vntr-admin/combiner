@@ -14,10 +14,10 @@ public class LogicalUser {
     private Map<Long, Long> pToFriendCount;
     private Map<Long, Long> pToWeight;
 
-    private Set<Long> replicaLocations; //TODO: make sure this gets updated properly
+    private Set<Long> replicaLocations;
     private Map<Long, Integer> numFriendsToAddInEachPartition;
-    private int numFriendReplicasToDeleteInSourcePartition; //TODO: make sure this gets updated properly
-    private boolean replicateInSourcePartition; //TODO: make sure this gets updated properly
+    private int numFriendReplicasToDeleteInSourcePartition;
+    private boolean replicateInSourcePartition;
 
     public LogicalUser(Long id, Long pid, double gamma, Map<Long, Long> pToFriendCount, Map<Long, Long> pToWeight, Set<Long> replicaLocations, Map<Long, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Long totalWeight) {
         this.id = id;
@@ -113,7 +113,6 @@ public class LogicalUser {
         return partitionWeight / averageWeight;
     }
 
-    //TODO: this will need to be updated if you add more fields
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -134,7 +133,6 @@ public class LogicalUser {
 
     }
 
-    //TODO: this will need to be updated if you add more fields
     @Override
     public int hashCode() {
         int result;
