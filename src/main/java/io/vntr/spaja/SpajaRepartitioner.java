@@ -44,7 +44,7 @@ public class SpajaRepartitioner {
     }
 
     public Collection<SpajaUser> getRandomSamplingOfUsers(int n) {
-        Set<Long> ids = getKDistinctValuesFromList(n, new LinkedList<Long>(manager.getAllUserIds()));
+        Set<Long> ids = getKDistinctValuesFromList(n, manager.getAllUserIds());
         return manager.getUserMastersById(ids);
     }
 }

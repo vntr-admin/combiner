@@ -1,10 +1,6 @@
 package io.vntr.utils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class ProbabilityUtils
 {
@@ -17,6 +13,11 @@ public class ProbabilityUtils
 		}
 
 		return getKDistinctValuesFromList(k, tempList);
+	}
+
+	public static Set<Long> getKDistinctValuesFromList(long k, Collection<Long> set)
+	{
+		return getKDistinctValuesFromList(k, new LinkedList<Long>(set));
 	}
 
 	public static Set<Long> getKDistinctValuesFromList(long k, List<Long> list)
@@ -33,4 +34,5 @@ public class ProbabilityUtils
 
 		return returnSet;
 	}
+
 }

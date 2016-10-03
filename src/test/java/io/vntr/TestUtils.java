@@ -1,8 +1,8 @@
 package io.vntr;
 
-import io.vntr.utils.ProbabilityUtils;
-
 import java.util.*;
+
+import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
  * Created by robertlindquist on 9/24/16.
@@ -99,7 +99,7 @@ public class TestUtils {
                 Set<Long> possibilities = new HashSet<Long>(partitions.keySet());
                 possibilities.removeAll(replicaLocations.get(uid));
                 possibilities.remove(uMap.get(uid));
-                Set<Long> newReplicas = ProbabilityUtils.getKDistinctValuesFromList(numShort, new LinkedList<Long>(possibilities));
+                Set<Long> newReplicas = getKDistinctValuesFromList(numShort, possibilities);
                 for(Long pid : newReplicas) {
                     replicas.get(pid).add(uid);
                 }
@@ -108,4 +108,5 @@ public class TestUtils {
 
         return replicas;
     }
+
 }

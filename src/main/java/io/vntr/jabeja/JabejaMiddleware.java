@@ -53,9 +53,8 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void removePartition(Long partitionId) {
         Set<Long> partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
-        List<Long> pids = new LinkedList<Long>(manager.getPartitionIds());
         for(Long uid : partition) {
-            Long newPid = ProbabilityUtils.getKDistinctValuesFromList(1, pids).iterator().next();
+            Long newPid = ProbabilityUtils.getKDistinctValuesFromList(1, manager.getPartitionIds()).iterator().next();
             manager.moveUser(uid, newPid);
         }
     }

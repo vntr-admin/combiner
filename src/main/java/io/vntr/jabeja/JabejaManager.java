@@ -43,7 +43,7 @@ public class JabejaManager {
 
     public Collection<JabejaUser> getRandomSamplingOfUsers(int n) {
         Set<JabejaUser> users = new HashSet<JabejaUser>();
-        Set<Long> ids = ProbabilityUtils.getKDistinctValuesFromList(n, new LinkedList<Long>(uMap.keySet()));
+        Set<Long> ids = ProbabilityUtils.getKDistinctValuesFromList(n, uMap.keySet());
         for(Long id : ids) {
             users.add(uMap.get(id));
         }
@@ -111,7 +111,7 @@ public class JabejaManager {
     }
 
     Long getInitialPartitionId() {
-        return ProbabilityUtils.getKDistinctValuesFromList(1, new LinkedList<Long>(partitions.keySet())).iterator().next();
+        return ProbabilityUtils.getKDistinctValuesFromList(1, partitions.keySet()).iterator().next();
     }
 
     public Long addPartition() {
