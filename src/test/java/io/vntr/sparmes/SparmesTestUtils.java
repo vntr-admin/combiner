@@ -13,11 +13,11 @@ import java.util.Set;
 public class SparmesTestUtils {
 
     public static SparmesManager initGraph(int minNumReplicas, double gamma, long numPartitions, Map<Long, Set<Long>> friendships) {
-        SparmesManager manager = new SparmesManager(minNumReplicas, gamma);
+        Set<Long> pids = new HashSet<Long>();
         for(long pid = 0; pid < numPartitions; pid++) {
-            manager.addPartition(pid);
+            pids.add(pid);
         }
-        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(manager.getAllPartitionIds(), friendships.keySet());
+        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
         Map<Long, Set<Long>> replicas = TestUtils.getInitialReplicasObeyingKReplication(minNumReplicas, partitions, friendships);
         return initGraph(minNumReplicas, gamma, partitions, friendships, replicas);
     }

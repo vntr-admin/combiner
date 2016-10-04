@@ -1,7 +1,5 @@
 package io.vntr.spaja;
 
-import io.vntr.utils.ProbabilityUtils;
-
 import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
@@ -13,6 +11,7 @@ public class SpajaRepartitioner {
     private SpajaManager manager;
     private SpajaBefriendingStrategy spajaBefriendingStrategy;
     private int k;
+    private int randomSampingSize;
     private double alpha;
     private double initialT;
     private double deltaT;
@@ -24,6 +23,7 @@ public class SpajaRepartitioner {
         this.deltaT = manager.getDeltaT();
         this.manager = manager;
         this.spajaBefriendingStrategy = spajaBefriendingStrategy;
+        this.randomSampingSize = manager.getRandomSampingSize();
     }
 
     public void repartition() {
@@ -34,7 +34,7 @@ public class SpajaRepartitioner {
                 SpajaUser user = manager.getUserMasterById(uid);
                 SpajaUser partner = user.findPartner(manager.getUserMastersById(user.getFriendIDs()), t, spajaBefriendingStrategy);
                 if(partner == null) {
-                    partner = user.findPartner(getRandomSamplingOfUsers(k), t, spajaBefriendingStrategy);
+                    partner = user.findPartner(getRandomSamplingOfUsers(randomSampingSize), t, spajaBefriendingStrategy);
                 }
                 if(partner != null) {
                     manager.swap(user.getId(), partner.getId(), spajaBefriendingStrategy);

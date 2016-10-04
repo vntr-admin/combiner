@@ -25,12 +25,11 @@ public class HermesTestUtils {
     }
 
     public static HermesManager initGraph(double gamma, long numPartitions, Map<Long, Set<Long>> friendships) {
-        HermesManager manager = new HermesManager(gamma);
+        Set<Long> pids = new HashSet<Long>();
         for(long pid = 0; pid < numPartitions; pid++) {
-            manager.addPartition(pid);
+            pids.add(pid);
         }
-
-        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(manager.getAllPartitionIds(), friendships.keySet());
+        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
 
         return initGraph(gamma, partitions, friendships);
     }

@@ -10,6 +10,7 @@ import java.util.*;
  */
 public class SpajaManager {
     private int minNumReplicas;
+    private int randomSampingSize;
     private double alpha;
     private double initialT;
     private double deltaT;
@@ -20,12 +21,13 @@ public class SpajaManager {
 
     private Map<Long, Long> userIdToMasterPartitionIdMap = new HashMap<Long, Long>();
 
-    public SpajaManager(int minNumReplicas, double alpha, double initialT, double deltaT) {
+    public SpajaManager(int minNumReplicas, double alpha, double initialT, double deltaT, int randomSampingSize) {
         this.minNumReplicas = minNumReplicas;
         this.partitionIdToPartitionMap = new TreeMap<Long, SpajaPartition>();
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
+        this.randomSampingSize = randomSampingSize;
     }
 
     public int getMinNumReplicas() {
@@ -42,6 +44,10 @@ public class SpajaManager {
 
     public double getDeltaT() {
         return deltaT;
+    }
+
+    public int getRandomSampingSize() {
+        return randomSampingSize;
     }
 
     public SpajaPartition getPartitionById(Long id) {

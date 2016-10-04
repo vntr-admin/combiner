@@ -10,19 +10,19 @@ import java.util.Set;
 /**
  * Created by robertlindquist on 10/3/16.
  */
-public class SparjaTestUtils {
-    public static SpajaManager initGraph(int minNumReplicas, double alpha, double initialT, double deltaT, long numPartitions, Map<Long, Set<Long>> friendships) {
-        SpajaManager manager = new SpajaManager(minNumReplicas, alpha, initialT, deltaT);
+public class SpajaTestUtils {
+    public static SpajaManager initGraph(int minNumReplicas, double alpha, double initialT, double deltaT, int randomSampingSize, long numPartitions, Map<Long, Set<Long>> friendships) {
+        Set<Long> pids = new HashSet<Long>();
         for(long pid = 0; pid < numPartitions; pid++) {
-            manager.addPartition(pid);
+            pids.add(pid);
         }
-        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(manager.getAllPartitionIds(), friendships.keySet());
+        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
         Map<Long, Set<Long>> replicas = TestUtils.getInitialReplicasObeyingKReplication(minNumReplicas, partitions, friendships);
-        return initGraph(minNumReplicas, alpha, initialT, deltaT, partitions, friendships, replicas);
+        return initGraph(minNumReplicas, alpha, initialT, deltaT, randomSampingSize, partitions, friendships, replicas);
     }
 
-    public static SpajaManager initGraph(int minNumReplicas, double alpha, double initialT, double deltaT, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> replicaPartitions) {
-        SpajaManager manager = new SpajaManager(minNumReplicas, alpha, initialT, deltaT);
+    public static SpajaManager initGraph(int minNumReplicas, double alpha, double initialT, double deltaT, int randomSampingSize, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> replicaPartitions) {
+        SpajaManager manager = new SpajaManager(minNumReplicas, alpha, initialT, deltaT, randomSampingSize);
         for(Long pid : partitions.keySet()) {
             manager.addPartition(pid);
         }
