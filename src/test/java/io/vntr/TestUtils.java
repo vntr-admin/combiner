@@ -2,6 +2,7 @@ package io.vntr;
 
  import io.vntr.utils.ProbabilityUtils;
 
+ import java.io.File;
  import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
@@ -132,4 +133,40 @@ public class TestUtils {
         }
         return partitions;
     }
+
+    public static Map<Long, Set<Long>> extractFriendshipsFromFile(String filename) throws Exception {
+        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
+        File file = new File(filename);
+        Scanner scanner = new Scanner(file);
+        while(scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            Long uid = extractIdFromLine(line);
+            Set<Long> friends = extractFriendsFromLine(line);
+            if(uid != null && friends != null) {
+                friendships.put(uid, friends);
+            }
+        }
+        return friendships;
+    }
+
+    static Long extractIdFromLine(String line) {
+        if(line == null || line.length() < 2 || line.indexOf(':') < 0) {
+            return null;
+        }
+        return Long.parseLong(line.substring(0, line.indexOf(':')));
+    }
+
+    static Set<Long> extractFriendsFromLine(String line) {
+        if(line == null || line.length() < 4 || line.indexOf(':') < 0) {
+            return null;
+        }
+        String mainPart = line.substring(line.indexOf(':')+2);
+        String[] ids = mainPart.split(", ");
+        Set<Long> idSet = new HashSet<Long>();
+        for(String id : ids) {
+            idSet.add(Long.parseLong(id));
+        }
+        return idSet;
+    }
+
 }
