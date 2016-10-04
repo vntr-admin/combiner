@@ -1,5 +1,7 @@
 package io.vntr.hermes;
 
+import io.vntr.TestUtils;
+
 import java.util.*;
 
 /**
@@ -7,7 +9,7 @@ import java.util.*;
  */
 public class HermesTestUtils {
     public static HermesManager initGraph(double gamma, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> friendships) {
-        HermesManager manager = new HermesManager(0.9D);
+        HermesManager manager = new HermesManager(gamma);
         for(Long pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Long uid : partitions.get(pid)) {
@@ -20,5 +22,16 @@ public class HermesTestUtils {
             }
         }
         return manager;
+    }
+
+    public static HermesManager initGraph(double gamma, long numPartitions, Map<Long, Set<Long>> friendships) {
+        HermesManager manager = new HermesManager(gamma);
+        for(long pid = 0; pid < numPartitions; pid++) {
+            manager.addPartition(pid);
+        }
+
+        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(manager.getAllPartitionIds(), friendships.keySet());
+
+        return initGraph(gamma, partitions, friendships);
     }
 }

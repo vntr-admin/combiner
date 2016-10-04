@@ -1,5 +1,7 @@
 package io.vntr.jabeja;
 
+import io.vntr.TestUtils;
+
 import java.util.*;
 
 /**
@@ -28,5 +30,14 @@ public class JabejaTestUtils {
             list.add(manager.getUser(uid));
         }
         return list;
+    }
+
+    public static JabejaManager initGraph(double alpha, double initialT, double deltaT, int k, long numPartitions, Map<Long, Set<Long>> friendships) {
+        JabejaManager manager = new JabejaManager(alpha, initialT, deltaT, k);
+        for(long pid = 0; pid < numPartitions; pid++) {
+            manager.addPartition(pid);
+        }
+        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(manager.getAllPartitionIds(), friendships.keySet());
+        return initGraph(alpha, initialT, deltaT, k, partitions, friendships);
     }
 }

@@ -1,5 +1,6 @@
 package io.vntr.spar;
 
+import io.vntr.TestUtils;
 import io.vntr.User;
 
 import java.util.Collections;
@@ -252,6 +253,16 @@ public class SparTestUtils {
         }
 
         return partitionIdsWithNMasters;
+    }
+
+    public static SparManager initGraph(int minNumReplicas, long numPartitions, Map<Long, Set<Long>> friendships) {
+        SparManager manager = new SparManager(minNumReplicas);
+        for(long pid = 0; pid < numPartitions; pid++) {
+            manager.addPartition(pid);
+        }
+        Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(manager.getAllPartitionIds(), friendships.keySet());
+        Map<Long, Set<Long>> replicas = TestUtils.getInitialReplicasObeyingKReplication(minNumReplicas, partitions, friendships);
+        return initGraph(minNumReplicas, partitions, friendships, replicas);
     }
 
     public static SparManager initGraph(int minNumReplicas, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> replicaPartitions) {

@@ -1,6 +1,8 @@
 package io.vntr;
 
-import java.util.*;
+ import io.vntr.utils.ProbabilityUtils;
+
+ import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
@@ -109,4 +111,25 @@ public class TestUtils {
         return replicas;
     }
 
+    public static Map<Long, Set<Long>> getRandomPartitioning(Set<Long> pids, Set<Long> uids) {
+        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
+        int numPartitions = pids.size();
+        int numUsers = uids.size();
+        int usersPerPartition = numUsers / numPartitions;
+        int numRemainderUsers = numUsers % numPartitions;
+        Set<Long> remainingUids = new HashSet<Long>(uids);
+        while(remainingUids.size() > 0) {
+            int k = usersPerPartition;
+            if(numRemainderUsers > 0) {
+                k++;
+                numRemainderUsers--;
+            }
+            Set<Long> pUids = ProbabilityUtils.getKDistinctValuesFromList(k, remainingUids);
+            remainingUids.removeAll(pUids);
+            Long pid = pids.iterator().next();
+            pids.remove(pid);
+            partitions.put(pid, pUids);
+        }
+        return partitions;
+    }
 }

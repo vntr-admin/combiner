@@ -169,4 +169,8 @@ public class JabejaManager {
         }
         return map;
     }
+
+    public Set<Long> getAllPartitionIds() {
+        return partitions.keySet();
+    }
 }
