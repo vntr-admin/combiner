@@ -50,7 +50,7 @@ public class LogicalUser {
         return pToFriendCount;
     }
 
-    public Target getTargetPart(boolean firstStage) {
+    public Target getTargetPart(boolean firstStage, boolean probabilistic) {
         if(getImbalanceFactor(pid, -1) < (2-gamma)) {
             return new Target(id, null, null, 0);
         }
@@ -60,8 +60,8 @@ public class LogicalUser {
             maxGain = Integer.MIN_VALUE;
         }
         for(Integer targetPid : pToFriendCount.keySet()) {
-            if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
-                int gain = (int) (pToFriendCount.get(targetPid) - pToFriendCount.get(pid));
+            if(((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) && (!probabilistic || Math.random() < 0.95)) {
+                int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
                 if(gain > maxGain && getImbalanceFactor(targetPid, 1) < gamma) {
                     target = targetPid;
                     maxGain = gain;

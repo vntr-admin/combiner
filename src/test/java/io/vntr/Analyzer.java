@@ -37,9 +37,15 @@ public class Analyzer {
     //TODO: commit this reenabled once it all works
 //    @Test
     public void testParsing() throws Exception {
-        for(String filename : filenames) {
-            System.out.println(filename);
-            Map<Integer, Set<Integer>> friendships = TestUtils.extractFriendshipsFromFile(filename);
+        List<Map<Integer, Set<Integer>>> friendshipsList = new ArrayList<Map<Integer, Set<Integer>>>(6);
+        friendshipsList.add(TestUtils.getTopographyForMultigroupSocialNetwork(1000, 12, 0.1f, 0.1f));
+        friendshipsList.add(TestUtils.getTopographyForMultigroupSocialNetwork(2500, 20, 0.07f, 0.07f));
+        friendshipsList.add(TestUtils.extractFriendshipsFromFile(LESKOVEC_FACEBOOK));
+//        friendshipsList.add(TestUtils.extractFriendshipsFromFile(MISLOVE_FACEBOOK));
+//        friendshipsList.add(TestUtils.extractFriendshipsFromFile(ASU_FRIENDSTER));
+
+        for(Map<Integer, Set<Integer>> friendships : friendshipsList) {
+            System.out.println("\nSize: " + friendships.size());
 
             Set<Integer> pids = new HashSet<Integer>();
             for(int pid = 0; pid < friendships.size() / USERS_PER_PARTITION; pid++) {
@@ -103,7 +109,7 @@ public class Analyzer {
     }
 
     private HermesManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return HermesTestUtils.initGraph(1.2f, partitions, friendships);
+        return HermesTestUtils.initGraph(1.2f, true, partitions, friendships);
     }
 
     private HermesMiddleware initHermesMiddleware(HermesManager manager) {
@@ -127,7 +133,7 @@ public class Analyzer {
     }
 
     private SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SparmesTestUtils.initGraph(2, 1.2f, partitions, friendships, replicas);
+        return SparmesTestUtils.initGraph(2, 1.2f, true, partitions, friendships, replicas);
     }
 
     private SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {

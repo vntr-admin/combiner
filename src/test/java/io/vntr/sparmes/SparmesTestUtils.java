@@ -12,18 +12,18 @@ import java.util.Set;
  */
 public class SparmesTestUtils {
 
-    public static SparmesManager initGraph(int minNumReplicas, float gamma, int numPartitions, Map<Integer, Set<Integer>> friendships) {
+    public static SparmesManager initGraph(int minNumReplicas, float gamma, boolean probabilistic, int numPartitions, Map<Integer, Set<Integer>> friendships) {
         Set<Integer> pids = new HashSet<Integer>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);
         }
         Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
         Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(minNumReplicas, partitions, friendships);
-        return initGraph(minNumReplicas, gamma, partitions, friendships, replicas);
+        return initGraph(minNumReplicas, gamma, probabilistic, partitions, friendships, replicas);
     }
 
-    public static SparmesManager initGraph(int minNumReplicas, float gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicaPartitions) {
-        SparmesManager manager = new SparmesManager(minNumReplicas, gamma);
+    public static SparmesManager initGraph(int minNumReplicas, float gamma, boolean probabilistic, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicaPartitions) {
+        SparmesManager manager = new SparmesManager(minNumReplicas, gamma, probabilistic);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
         }

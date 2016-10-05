@@ -30,9 +30,9 @@ public class HermesMiddlewareTest {
         for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
-        HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
+        HermesManager manager = HermesTestUtils.initGraph(gamma, true, partitions, friendships);
         HermesMiddleware middleware = new HermesMiddleware(manager, gamma);
-        middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (int) (numPartitions - 1)).iterator().next());
+        middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (numPartitions - 1)).iterator().next());
         for(Integer uid : friendships.keySet()) {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
         }

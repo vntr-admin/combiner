@@ -40,10 +40,10 @@ public class HermesPartition {
         this.logicalUsers.remove(logicalUserId);
     }
 
-    public Set<Target> getCandidates(boolean firstIteration, int k) {
+    public Set<Target> getCandidates(boolean firstIteration, int k, boolean probabilistic) {
         NavigableSet<Target> candidates = new TreeSet<Target>();
         for(LogicalUser luser : logicalUsers.values()) {
-            Target target = luser.getTargetPart(firstIteration);
+            Target target = luser.getTargetPart(firstIteration, probabilistic);
             if(target.partitionId != null) {
                 candidates.add(target);
             }

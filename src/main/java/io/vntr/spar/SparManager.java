@@ -360,6 +360,6 @@ public class SparManager {
         for(Integer pid : getAllPartitionIds()) {
             count += getPartitionById(pid).getNumReplicas();
         }
-        return (int) count;
+        return count;
     }
 }

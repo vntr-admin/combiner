@@ -318,7 +318,7 @@ public class SpajaManager {
         for(Integer pid : getAllPartitionIds()) {
             count += getPartitionById(pid).getNumReplicas();
         }
-        return (int) count;
+        return count;
     }
 
     void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {

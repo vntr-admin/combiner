@@ -16,7 +16,7 @@ public class HermesManagerTest {
     @Test
     public void testThingsInGeneral() {
         float gamma = 1.6f;
-        HermesManager manager = new HermesManager(gamma);
+        HermesManager manager = new HermesManager(gamma, false);
 
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
@@ -115,7 +115,7 @@ public class HermesManagerTest {
             for(int uid=0; uid<numUsers; uid++) {
                 partitions.get(uid % numPartitions).add(uid);
             }
-            HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
+            HermesManager manager = HermesTestUtils.initGraph(gamma, true, partitions, friendships);
             Integer initialEdgeCut = manager.getEdgeCut();
             long start = System.nanoTime();
             manager.repartition();
@@ -144,7 +144,7 @@ public class HermesManagerTest {
         friendships.putAll(getFirst300ines());
         friendships.putAll(getRemainingLines());
 
-        HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
+        HermesManager manager = HermesTestUtils.initGraph(gamma, true, partitions, friendships);
         Integer initialEdgeCut = manager.getEdgeCut();
         manager.repartition();
         Integer finalEdgeCut = manager.getEdgeCut();
@@ -1213,7 +1213,7 @@ public class HermesManagerTest {
         friendships.put(39, initSet(40));
         friendships.put(40, Collections.<Integer>emptySet());
 
-        HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
+        HermesManager manager = HermesTestUtils.initGraph(gamma, true, partitions, friendships);
         Integer initialEdgeCut = manager.getEdgeCut();
         manager.repartition();
         Integer finalEdgeCut = manager.getEdgeCut();

@@ -165,12 +165,12 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public Integer getNumberOfPartitions() {
-        return (int) manager.getAllPartitionIds().size();
+        return manager.getAllPartitionIds().size();
     }
 
     @Override
     public Integer getNumberOfUsers() {
-        return (int) manager.getNumUsers();
+        return manager.getNumUsers();
     }
 
     @Override

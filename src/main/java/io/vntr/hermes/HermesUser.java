@@ -61,7 +61,7 @@ public class HermesUser extends User {
                 pWeight = manager.getPartitionById(partitionId).getNumLogicalUsers();
             }
             totalWeight += pWeight;
-            pToWeight.put(partitionId, (int) pWeight);
+            pToWeight.put(partitionId, pWeight);
         }
         return new LogicalUser(getId(), logicalPid, gamma, getPToFriendCount(), pToWeight, totalWeight);
     }

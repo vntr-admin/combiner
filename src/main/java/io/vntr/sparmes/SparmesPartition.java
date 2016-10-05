@@ -85,10 +85,10 @@ public class SparmesPartition {
         }
     }
 
-    public Set<Target> getCandidates(boolean firstIteration, int k) {
+    public Set<Target> getCandidates(boolean firstIteration, int k, boolean probabilistic) {
         NavigableSet<Target> candidates = new TreeSet<Target>();
         for(LogicalUser luser : logicalUsers.values()) {
-            Target target = luser.getTargetPart(firstIteration);
+            Target target = luser.getTargetPart(firstIteration, probabilistic);
             if(target.newPid != null) {
                 candidates.add(target);
             }

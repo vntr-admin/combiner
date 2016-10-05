@@ -11,6 +11,7 @@ import java.util.*;
 public class SparmesManager {
     private int minNumReplicas;
     private float gamma;
+    private boolean probabilistic;
 
     private static final Integer defaultStartingId = 1;
 
@@ -20,9 +21,10 @@ public class SparmesManager {
 
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
-    public SparmesManager(int minNumReplicas, float gamma) {
+    public SparmesManager(int minNumReplicas, float gamma, boolean probabilistic) {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
+        this.probabilistic = probabilistic;
         this.pMap = new TreeMap<Integer, SparmesPartition>();
         this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
     }
@@ -294,7 +296,7 @@ public class SparmesManager {
         for(Integer pid : getAllPartitionIds()) {
             count += getPartitionById(pid).getNumReplicas();
         }
-        return (int) count;
+        return count;
     }
 
     void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
@@ -345,7 +347,7 @@ public class SparmesManager {
         boolean changed = false;
         Map<Integer, Set<Target>> stageTargets = new HashMap<Integer, Set<Target>>();
         for (SparmesPartition p : pMap.values()) {
-            Set<Target> targets = p.getCandidates(firstStage, k);
+            Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
             stageTargets.put(p.getId(), targets);
             changed |= !targets.isEmpty();
         }
@@ -456,7 +458,7 @@ public class SparmesManager {
             else {
                 pWeight = getPartitionById(partitionId).getNumLogicalUsers();
             }
-            pToWeight.put(partitionId, (int) pWeight);
+            pToWeight.put(partitionId, pWeight);
         }
         return pToWeight;
     }

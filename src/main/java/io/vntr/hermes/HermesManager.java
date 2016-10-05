@@ -15,11 +15,13 @@ public class HermesManager {
     private NavigableMap<Integer, HermesPartition> pMap;
     private Map<Integer, Integer> uMap;
     private float gamma;
+    private boolean probabilistic;
 
     private static final int defaultStartingPid = 1;
 
-    public HermesManager(float gamma) {
+    public HermesManager(float gamma, boolean probabilistic) {
         this.gamma = gamma;
+        this.probabilistic = probabilistic;
         pMap = new TreeMap<Integer, HermesPartition>();
         uMap = new HashMap<Integer, Integer>();
     }
@@ -110,8 +112,8 @@ public class HermesManager {
         boolean stoppingCondition = false;
         while(!stoppingCondition) {
             boolean changed = false;
-            changed |= performStage(true, k);
-            changed |= performStage(false, k);
+            changed |= performStage(true, k, probabilistic);
+            changed |= performStage(false, k, probabilistic);
             stoppingCondition = !changed;
             iteration++;
         }
@@ -132,11 +134,11 @@ public class HermesManager {
         uMap.putAll(usersWhoMoved);
     }
 
-    boolean performStage(boolean firstStage, int k) {
+    boolean performStage(boolean firstStage, int k, boolean probabilistic) {
         boolean changed = false;
         Map<Integer, Set<Target>> stageTargets = new HashMap<Integer, Set<Target>>();
         for (HermesPartition p : pMap.values()) {
-            Set<Target> targets = p.getCandidates(firstStage, k);
+            Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
             stageTargets.put(p.getId(), targets);
             changed |= !targets.isEmpty();
         }
@@ -200,7 +202,7 @@ public class HermesManager {
     }
 
     public Integer getNumUsers() {
-        return (int) uMap.size();
+        return uMap.size();
     }
 
     public Integer getEdgeCut() {

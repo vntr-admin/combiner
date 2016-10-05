@@ -72,7 +72,7 @@ public class LogicalUser {
         this.totalWeight = totalWeight;
     }
 
-    public Target getTargetPart(boolean firstStage) {
+    public Target getTargetPart(boolean firstStage, boolean probabilistic) {
         if(getImbalanceFactor(pid, -1) < (2-gamma)) {
             return new Target(id, null, null, 0);
         }
@@ -85,7 +85,7 @@ public class LogicalUser {
         }
 
         for(Integer targetPid : pToFriendCount.keySet()) {
-            if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
+            if(((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) && (!probabilistic || Math.random() < 0.95)) {
                 int gain = calculateGain(targetPid);
                 if(gain > maxGain && getImbalanceFactor(targetPid, 1) < gamma) {
                     target = targetPid;

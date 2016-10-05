@@ -53,7 +53,7 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public Integer getNumberOfPartitions() {
-        return (int) manager.getAllPartitionIds().size();
+        return manager.getAllPartitionIds().size();
     }
 
     @Override

@@ -143,11 +143,11 @@ public class JabejaManager {
     }
 
     public Integer getNumPartitions() {
-        return (int) partitions.size();
+        return partitions.size();
     }
 
     public Integer getNumUsers() {
-        return (int) uMap.size();
+        return uMap.size();
     }
 
     public Integer getEdgeCut() {
