@@ -32,11 +32,8 @@ public class SparmesTestUtils {
         Map<Long, Set<Long>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Long uid : friendships.keySet()) {
-            SparmesUser user = new SparmesUser("User " + uid, uid, gamma, manager);
             Long pid = uToMasterMap.get(uid);
-            user.setMasterPartitionId(pid);
-            user.setPartitionId(pid);
-
+            SparmesUser user = new SparmesUser("User " + uid, uid, pid, gamma, manager);
             manager.addUser(user, pid);
 
             for (Long rPid : uToReplicasMap.get(uid)) {

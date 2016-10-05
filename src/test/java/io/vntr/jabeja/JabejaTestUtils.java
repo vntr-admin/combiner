@@ -16,8 +16,8 @@ public class JabejaTestUtils {
                 manager.addUser(new JabejaUser("User " + uid, uid, pid, alpha, manager));
             }
         }
-        for(Long uid1 : friendships.keySet()) {
-            for(Long uid2 : friendships.get(uid1)) {
+        for (Long uid1 : friendships.keySet()) {
+            for (Long uid2 : friendships.get(uid1)) {
                 manager.befriend(uid1, uid2);
             }
         }

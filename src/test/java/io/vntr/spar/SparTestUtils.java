@@ -282,8 +282,12 @@ public class SparTestUtils {
 
             manager.addUser(user, pid);
 
+
+        }
+
+        for(Long uid : friendships.keySet()) {
             for (Long rPid : uToReplicasMap.get(uid)) {
-                manager.addReplica(user, rPid);
+                manager.addReplica(manager.getUserMasterById(uid), rPid);
             }
         }
 

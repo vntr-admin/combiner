@@ -114,7 +114,8 @@ public class TestUtils {
 
     public static Map<Long, Set<Long>> getRandomPartitioning(Set<Long> pids, Set<Long> uids) {
         Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        int numPartitions = pids.size();
+        Set<Long> pidCopies = new HashSet<Long>(pids);
+        int numPartitions = pidCopies.size();
         int numUsers = uids.size();
         int usersPerPartition = numUsers / numPartitions;
         int numRemainderUsers = numUsers % numPartitions;
@@ -127,8 +128,8 @@ public class TestUtils {
             }
             Set<Long> pUids = ProbabilityUtils.getKDistinctValuesFromList(k, remainingUids);
             remainingUids.removeAll(pUids);
-            Long pid = pids.iterator().next();
-            pids.remove(pid);
+            Long pid = pidCopies.iterator().next();
+            pidCopies.remove(pid);
             partitions.put(pid, pUids);
         }
         return partitions;
@@ -138,13 +139,22 @@ public class TestUtils {
         Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
         File file = new File(filename);
         Scanner scanner = new Scanner(file);
+        Set<Long> allUids = new HashSet<Long>();
         while(scanner.hasNextLine()) {
             String line = scanner.nextLine();
             Long uid = extractIdFromLine(line);
             Set<Long> friends = extractFriendsFromLine(line);
-            if(uid != null && friends != null) {
-                friendships.put(uid, friends);
+            if(uid != null) {
+                allUids.add(uid);
+                if(friends != null) {
+                    friendships.put(uid, friends);
+                    allUids.addAll(friends);
+                }
             }
+        }
+        allUids.removeAll(friendships.keySet());
+        for(Long friendless : allUids) {
+            friendships.put(friendless, new HashSet<Long>());
         }
         return friendships;
     }
@@ -161,6 +171,9 @@ public class TestUtils {
             return null;
         }
         String mainPart = line.substring(line.indexOf(':')+2);
+        if(mainPart.isEmpty()) {
+            return null;
+        }
         String[] ids = mainPart.split(", ");
         Set<Long> idSet = new HashSet<Long>();
         for(String id : ids) {

@@ -30,6 +30,10 @@ public class ForestFireGenerator {
         geoDistY = new GeometricDistribution(forward*backward / (1-(forward*backward)));
     }
 
+    public Long getV() {
+        return v;
+    }
+
     private static Map<Long, Set<Long>> cloneFriendships(NavigableMap<Long, Set<Long>> friendships) {
         Map<Long, Set<Long>> clone = new HashMap<Long, Set<Long>>();
         for(Long key : friendships.keySet()) {
@@ -84,7 +88,7 @@ public class ForestFireGenerator {
         Set<Long> allFriendsOfW = bidirectionalFriendshipSet.get(w);
         allFriendsOfW.removeAll(visited);
         Set<Long> links;
-        if(allFriendsOfW.size() < numToBefriend) {
+        if(allFriendsOfW.size() > numToBefriend) {
             links = getKDistinctValuesFromList(numToBefriend, allFriendsOfW);
         }
         else {

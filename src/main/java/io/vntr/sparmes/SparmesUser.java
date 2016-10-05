@@ -16,12 +16,15 @@ public class SparmesUser extends User {
     private Set<Long> logicalPartitionIds;
     private SparmesManager manager;
 
-    public SparmesUser(String name, Long id, double gamma, SparmesManager manager) {
+    public SparmesUser(String name, Long id, Long initialPid, double gamma, SparmesManager manager) {
         super(name, id);
         replicaPartitionIds = new HashSet<Long>();
         logicalPartitionIds = new HashSet<Long>();
         this.gamma = gamma;
         this.manager = manager;
+        this.masterPartitionId = initialPid;
+        this.partitionId = initialPid;
+        this.logicalPid = initialPid;
     }
 
     public Long getPartitionId() {
@@ -78,9 +81,10 @@ public class SparmesUser extends User {
 
     @Override
     public SparmesUser clone() {
-        SparmesUser user = new SparmesUser(getName(), getId(), gamma, manager);
-        user.setPartitionId(partitionId);
+        SparmesUser user = new SparmesUser(getName(), getId(), masterPartitionId, gamma, manager);
         user.setMasterPartitionId(masterPartitionId);
+        user.setPartitionId(partitionId);
+        user.setLogicalPid(logicalPid);
         user.addReplicaPartitionIds(replicaPartitionIds);
         for (Long friendId : getFriendIDs()) {
             user.befriend(friendId);
