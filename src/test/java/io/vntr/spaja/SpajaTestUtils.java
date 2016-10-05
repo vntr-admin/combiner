@@ -11,7 +11,7 @@ import java.util.Set;
  * Created by robertlindquist on 10/3/16.
  */
 public class SpajaTestUtils {
-    public static SpajaManager initGraph(int minNumReplicas, double alpha, double initialT, double deltaT, int randomSampingSize, int numPartitions, Map<Integer, Set<Integer>> friendships) {
+    public static SpajaManager initGraph(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize, int numPartitions, Map<Integer, Set<Integer>> friendships) {
         Set<Integer> pids = new HashSet<Integer>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);
@@ -21,7 +21,7 @@ public class SpajaTestUtils {
         return initGraph(minNumReplicas, alpha, initialT, deltaT, randomSampingSize, partitions, friendships, replicas);
     }
 
-    public static SpajaManager initGraph(int minNumReplicas, double alpha, double initialT, double deltaT, int randomSampingSize, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicaPartitions) {
+    public static SpajaManager initGraph(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicaPartitions) {
         SpajaManager manager = new SpajaManager(minNumReplicas, alpha, initialT, deltaT, randomSampingSize);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);

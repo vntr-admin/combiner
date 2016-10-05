@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class SparmesManager {
     private int minNumReplicas;
-    private double gamma;
+    private float gamma;
 
     private static final Integer defaultStartingId = 1;
 
@@ -20,7 +20,7 @@ public class SparmesManager {
 
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
-    public SparmesManager(int minNumReplicas, double gamma) {
+    public SparmesManager(int minNumReplicas, float gamma) {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.pMap = new TreeMap<Integer, SparmesPartition>();

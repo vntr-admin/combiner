@@ -8,12 +8,12 @@ import java.util.Map;
 public class LogicalUser {
     private Integer id;
     private Integer pid;
-    private double gamma;
+    private float gamma;
     private Map<Integer, Integer> pToFriendCount;
     private Map<Integer, Integer> pToWeight;
     private Integer totalWeight;
 
-    public LogicalUser(Integer id, Integer pid, double gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Integer totalWeight) {
+    public LogicalUser(Integer id, Integer pid, float gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Integer totalWeight) {
         this.id = id;
         this.pid = pid;
         this.gamma = gamma;
@@ -71,9 +71,9 @@ public class LogicalUser {
         return new Target(id, target, pid, maxGain);
     }
 
-    private double getImbalanceFactor(Integer pId, Integer offset) {
-        double partitionWeight = pToWeight.get(pId) + offset;
-        double averageWeight = ((double) totalWeight) / pToWeight.keySet().size();
+    private float getImbalanceFactor(Integer pId, Integer offset) {
+        float partitionWeight = pToWeight.get(pId) + offset;
+        float averageWeight = ((float) totalWeight) / pToWeight.keySet().size();
         return partitionWeight / averageWeight;
     }
 
@@ -84,7 +84,7 @@ public class LogicalUser {
 
         LogicalUser that = (LogicalUser) o;
 
-        if (Double.compare(that.gamma, gamma) != 0) return false;
+        if (Float.compare(that.gamma, gamma) != 0) return false;
         if (!id.equals(that.id)) return false;
         if (!pid.equals(that.pid)) return false;
         if (!pToFriendCount.equals(that.pToFriendCount)) return false;
@@ -95,12 +95,9 @@ public class LogicalUser {
 
     @Override
     public int hashCode() {
-        int result;
-        long temp;
-        result = id.hashCode();
+        int result = id.hashCode();
         result = 31 * result + pid.hashCode();
-        temp = Double.doubleToLongBits(gamma);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
         result = 31 * result + pToFriendCount.hashCode();
         result = 31 * result + pToWeight.hashCode();
         result = 31 * result + totalWeight.hashCode();

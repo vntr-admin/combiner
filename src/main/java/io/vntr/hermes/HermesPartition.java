@@ -7,12 +7,12 @@ import java.util.*;
  */
 public class HermesPartition {
     private Integer id;
-    private double gamma;
+    private float gamma;
     private HermesManager manager;
     private Map<Integer, HermesUser> physicalUsers;
     private Map<Integer, LogicalUser> logicalUsers;
 
-    public HermesPartition(Integer id, double gamma, HermesManager manager) {
+    public HermesPartition(Integer id, float gamma, HermesManager manager) {
         this.id = id;
         this.gamma = gamma;
         this.manager = manager;

@@ -76,11 +76,11 @@ public class SparMigrationStrategyTest {
 
         Integer friendPartitionId = manager.getUserMasterById(sparUser6.getFriendIDs().iterator().next()).getMasterPartitionId();
 
-        assertTrue(strategy.scoreReplicaPromotion(sparUser6, friendPartitionId) == 1D);
+        assertTrue(strategy.scoreReplicaPromotion(sparUser6, friendPartitionId) == 1f);
         Set<Integer> replicaPartitionIds = new HashSet<Integer>(sparUser6.getReplicaPartitionIds());
         replicaPartitionIds.remove(friendPartitionId);
         Integer nonFriendPartitionId = replicaPartitionIds.iterator().next();
-        assertTrue(strategy.scoreReplicaPromotion(sparUser6, nonFriendPartitionId) == 0D);
+        assertTrue(strategy.scoreReplicaPromotion(sparUser6, nonFriendPartitionId) == 0f);
 
         Integer[] userIdArray = {3, 4, 5, 6, 8, 10, 11, 12, 13};
         for (int i = 0; i < 9; i++) {

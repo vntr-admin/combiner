@@ -12,12 +12,12 @@ import java.util.Set;
  */
 public class HermesUser extends User {
     private Integer pId;
-    private double gamma;
+    private float gamma;
     private Integer physicalPid;
     private Integer logicalPid;
     private HermesManager manager;
 
-    public HermesUser(Integer id, Integer initialPid, double gamma, HermesManager manager) {
+    public HermesUser(Integer id, Integer initialPid, float gamma, HermesManager manager) {
         super(id);
         this.gamma = gamma;
         this.manager = manager;
@@ -93,7 +93,7 @@ public class HermesUser extends User {
 
         HermesUser user = (HermesUser) o;
 
-        if (Double.compare(user.gamma, gamma) != 0) return false;
+        if (Float.compare(user.gamma, gamma) != 0) return false;
         if (!pId.equals(user.pId)) return false;
         if (!physicalPid.equals(user.physicalPid)) return false;
         return logicalPid.equals(user.logicalPid);
@@ -102,11 +102,8 @@ public class HermesUser extends User {
 
     @Override
     public int hashCode() {
-        int result;
-        long temp;
-        result = pId.hashCode();
-        temp = Double.doubleToLongBits(gamma);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        int result = pId.hashCode();
+        result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
         result = 31 * result + physicalPid.hashCode();
         result = 31 * result + logicalPid.hashCode();
         return result;

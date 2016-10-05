@@ -19,7 +19,7 @@ public class ForestFireGenerator {
     private Set<Integer> visited;
     private Integer v;
 
-    public ForestFireGenerator(double forward, double backward, NavigableMap<Integer, Set<Integer>> friendships) {
+    public ForestFireGenerator(float forward, float backward, NavigableMap<Integer, Set<Integer>> friendships) {
         v = friendships.lastKey() + 1;
         this.friendships = friendships;
         this.friendships.put(v, new HashSet<Integer>());

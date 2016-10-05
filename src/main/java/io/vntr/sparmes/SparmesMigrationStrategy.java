@@ -25,9 +25,9 @@ public class SparmesMigrationStrategy {
         class Score implements Comparable<Score> {
             public final int userId;
             public final int partitionId;
-            public final double score;
+            public final float score;
 
-            public Score(Integer userId, Integer partitionId, double score) {
+            public Score(Integer userId, Integer partitionId, float score) {
                 this.userId = userId;
                 this.partitionId = partitionId;
                 this.score = score;
@@ -64,18 +64,15 @@ public class SparmesMigrationStrategy {
 
                 if (userId != score1.userId) return false;
                 if (partitionId != score1.partitionId) return false;
-                return Double.compare(score1.score, score) == 0;
+                return Float.compare(score1.score, score) == 0;
 
             }
 
             @Override
             public int hashCode() {
-                int result;
-                long temp;
-                result = userId;
+                int result = userId;
                 result = 31 * result + partitionId;
-                temp = Double.doubleToLongBits(score);
-                result = 31 * result + (int) (temp ^ (temp >>> 32));
+                result = 31 * result + (score != +0.0f ? Float.floatToIntBits(score) : 0);
                 return result;
             }
 
@@ -140,7 +137,7 @@ public class SparmesMigrationStrategy {
         return minPid;
     }
 
-    double scoreReplicaPromotion(SparmesUser user, Integer replicaPartitionId) {
+    float scoreReplicaPromotion(SparmesUser user, Integer replicaPartitionId) {
         //based on what they've said, it seems like a decent scoring mechanism is numFriendsOnPartition^2 / numFriendsTotal
         int numFriendsOnPartition = 0;
         for (Integer friendId : user.getFriendIDs()) {
@@ -152,7 +149,7 @@ public class SparmesMigrationStrategy {
 
         int numFriendsTotal = user.getFriendIDs().size();
 
-        return ((double) (numFriendsOnPartition * numFriendsOnPartition)) / (numFriendsTotal);
+        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / (numFriendsTotal);
     }
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {

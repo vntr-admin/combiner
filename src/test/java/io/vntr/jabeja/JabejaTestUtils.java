@@ -8,7 +8,7 @@ import java.util.*;
  * Created by robertlindquist on 9/23/16.
  */
 public class JabejaTestUtils {
-    public static JabejaManager initGraph(double alpha, double initialT, double deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+    public static JabejaManager initGraph(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         JabejaManager manager = new JabejaManager(alpha, initialT, deltaT, k);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
@@ -32,7 +32,7 @@ public class JabejaTestUtils {
         return list;
     }
 
-    public static JabejaManager initGraph(double alpha, double initialT, double deltaT, int k, int numPartitions, Map<Integer, Set<Integer>> friendships) {
+    public static JabejaManager initGraph(float alpha, float initialT, float deltaT, int k, int numPartitions, Map<Integer, Set<Integer>> friendships) {
         Set<Integer> pids = new HashSet<Integer>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);

@@ -51,8 +51,8 @@ public class JabejaUserTest {
     @Test
     public void testGetNeighborsOnPartition()
     {
-        double alpha = 1.1D;
-        JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
+        float alpha = 1.1f;
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
@@ -188,7 +188,7 @@ public class JabejaUserTest {
 
     @Test
     public void testFindPartnerPrimary() {
-        double alpha = 1D;
+        float alpha = 1f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
@@ -209,7 +209,7 @@ public class JabejaUserTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
+        JabejaManager manager = initGraph(alpha, 2f, .2f, 9, partitions, friendships);
 
         //Scenarios:
         //    2: ensure that negative gain is impossible with T=1, and possible with T > 1
@@ -218,22 +218,22 @@ public class JabejaUserTest {
 
         //Scenario 1: ensure that the best partner is chosen
         Collection<JabejaUser> col = getUsers(manager, 1, 2, 3, 4, 5, 6, 7, 8);
-        assertEquals(manager.getUser(1), manager.getUser(12).findPartner(col, 1D));
+        assertEquals(manager.getUser(1), manager.getUser(12).findPartner(col, 1f));
 
         col = getUsers(manager, 2, 3, 4, 5, 6, 7, 8);
-        assertEquals(manager.getUser(2), manager.getUser(12).findPartner(col, 1D));
+        assertEquals(manager.getUser(2), manager.getUser(12).findPartner(col, 1f));
 
         col = getUsers(manager, 6, 7, 8, 9, 10, 11, 12, 13);
-        assertEquals(manager.getUser(12), manager.getUser(1).findPartner(col, 1D));
+        assertEquals(manager.getUser(12), manager.getUser(1).findPartner(col, 1f));
 
         col = getUsers(manager, 6, 7, 8);
-        assertNull(manager.getUser(11).findPartner(col, 1D));
-        assertNull(manager.getUser(11).findPartner(col, 100D));
+        assertNull(manager.getUser(11).findPartner(col, 1f));
+        assertNull(manager.getUser(11).findPartner(col, 100f));
     }
 
     @Test
     public void testFindPartnerEffectOfT() {
-        double alpha = 1D;
+        float alpha = 1f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
@@ -254,12 +254,12 @@ public class JabejaUserTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
+        JabejaManager manager = initGraph(alpha, 2f, .2f, 9, partitions, friendships);
 
         //Scenario 2: ensure that non-positive gain is impossible with T=1, and possible with T > 1
         Collection<JabejaUser> col = getUsers(manager, 6, 7, 8, 9);
-        assertNull(manager.getUser(10).findPartner(col, 1D));
-        assertEquals(manager.getUser(9), manager.getUser(10).findPartner(col, 1.001D));
+        assertNull(manager.getUser(10).findPartner(col, 1f));
+        assertEquals(manager.getUser(9), manager.getUser(10).findPartner(col, 1.001f));
     }
 
     @Test
@@ -268,20 +268,20 @@ public class JabejaUserTest {
         //SICS Technical Report T2013:03
         //ISSN 1100-3154
 
-        JabejaManager fig2aAlpha1     = initGraph(1D,     2D, .2D, 9, fig2aPartitions, fig2aFriendships);
-        JabejaManager fig2aAlpha1_001 = initGraph(1.001D, 2D, .2D, 9, fig2aPartitions, fig2aFriendships);
+        JabejaManager fig2aAlpha1     = initGraph(1f,     2f, .2f, 9, fig2aPartitions, fig2aFriendships);
+        JabejaManager fig2aAlpha1_001 = initGraph(1.001f, 2f, .2f, 9, fig2aPartitions, fig2aFriendships);
 
-        JabejaManager fig2bAlpha1     = initGraph(1D,     2D, .2D, 9, fig2bPartitions, fig2bFriendships);
-        JabejaManager fig2bAlpha1_001 = initGraph(1.001D, 2D, .2D, 9, fig2bPartitions, fig2bFriendships);
+        JabejaManager fig2bAlpha1     = initGraph(1f,     2f, .2f, 9, fig2bPartitions, fig2bFriendships);
+        JabejaManager fig2bAlpha1_001 = initGraph(1.001f, 2f, .2f, 9, fig2bPartitions, fig2bFriendships);
 
-        assertEquals(fig2aAlpha1.getUser    (7), fig2aAlpha1.getUser    (2).findPartner(getUsers(fig2aAlpha1,     7), 1D));
-        assertEquals(fig2aAlpha1.getUser    (2), fig2aAlpha1.getUser    (7).findPartner(getUsers(fig2aAlpha1,     2), 1D));
-        assertEquals(fig2aAlpha1_001.getUser(7), fig2aAlpha1_001.getUser(2).findPartner(getUsers(fig2aAlpha1_001, 7), 1D));
-        assertEquals(fig2aAlpha1_001.getUser(2), fig2aAlpha1_001.getUser(7).findPartner(getUsers(fig2aAlpha1_001, 2), 1D));
+        assertEquals(fig2aAlpha1.getUser    (7), fig2aAlpha1.getUser    (2).findPartner(getUsers(fig2aAlpha1,     7), 1f));
+        assertEquals(fig2aAlpha1.getUser    (2), fig2aAlpha1.getUser    (7).findPartner(getUsers(fig2aAlpha1,     2), 1f));
+        assertEquals(fig2aAlpha1_001.getUser(7), fig2aAlpha1_001.getUser(2).findPartner(getUsers(fig2aAlpha1_001, 7), 1f));
+        assertEquals(fig2aAlpha1_001.getUser(2), fig2aAlpha1_001.getUser(7).findPartner(getUsers(fig2aAlpha1_001, 2), 1f));
 
-        assertNull(fig2bAlpha1.getUser    (3).findPartner(getUsers(fig2bAlpha1,     10), 1D));
-        assertNull(fig2bAlpha1.getUser    (10).findPartner(getUsers(fig2bAlpha1,     3), 1D));
-        assertEquals(fig2bAlpha1_001.getUser(10), fig2bAlpha1_001.getUser(3).findPartner(getUsers(fig2bAlpha1_001, 10), 1D));
-        assertEquals(fig2bAlpha1_001.getUser(3), fig2bAlpha1_001.getUser(10).findPartner(getUsers(fig2bAlpha1_001, 3), 1D));
+        assertNull(fig2bAlpha1.getUser    (3).findPartner(getUsers(fig2bAlpha1,     10), 1f));
+        assertNull(fig2bAlpha1.getUser    (10).findPartner(getUsers(fig2bAlpha1,     3), 1f));
+        assertEquals(fig2bAlpha1_001.getUser(10), fig2bAlpha1_001.getUser(3).findPartner(getUsers(fig2bAlpha1_001, 10), 1f));
+        assertEquals(fig2bAlpha1_001.getUser(3), fig2bAlpha1_001.getUser(10).findPartner(getUsers(fig2bAlpha1_001, 3), 1f));
     }
 }

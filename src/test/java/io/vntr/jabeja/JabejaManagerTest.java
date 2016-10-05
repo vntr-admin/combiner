@@ -20,8 +20,8 @@ public class JabejaManagerTest {
     public void testGetRandomSamplingOfUsers() {
         int numUsers = 20;
         int numRuns = 100000;
-        double alpha = 1.1D;
-        JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
+        float alpha = 1.1f;
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
@@ -41,8 +41,8 @@ public class JabejaManagerTest {
             }
         }
 
-        double averageCountPerUser = ((double) totalCount) / numUsers;
-        double threshold = 0.9 * averageCountPerUser;
+        float averageCountPerUser = ((float) totalCount) / numUsers;
+        float threshold = 0.9f * averageCountPerUser;
         for(int i=0; i<numUsers; i++) {
             assertTrue(count[i] > threshold);
         }
@@ -52,8 +52,8 @@ public class JabejaManagerTest {
     @Test
     public void testRepartition() {
         int numUsers = 1000;
-        double alpha = 1.1D;
-        JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
+        float alpha = 1.1f;
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
@@ -80,8 +80,8 @@ public class JabejaManagerTest {
     public void testRepartition2() {
         int numUsers = 1000;
         int numPartitions = 10;
-        double alpha = 1.1D;
-        JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
+        float alpha = 1.1f;
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
 
         List<Integer> partitionIds = new ArrayList<Integer>(numPartitions+1);
         for(int i=0; i<numPartitions; i++) {
@@ -93,7 +93,7 @@ public class JabejaManagerTest {
             manager.addUser(new JabejaUser(id,  pid, alpha, manager));
         }
 
-        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
+        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1f, 0.1f);
         for(Integer userId : friendships.keySet()) {
             for(Integer otherUserId : friendships.get(userId)) {
                 manager.befriend(userId, otherUserId);
@@ -108,7 +108,7 @@ public class JabejaManagerTest {
 
     @Test
     public void testGetEdgeCut() {
-        double alpha = 1.1D;
+        float alpha = 1.1f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
@@ -122,7 +122,7 @@ public class JabejaManagerTest {
             }
         }
 
-        JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
+        JabejaManager manager = initGraph(alpha, 2f, .2f, 9, partitions, friendships);
 
         Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);

@@ -9,7 +9,7 @@ import java.util.Set;
 public class LogicalUser {
     private Integer id;
     private Integer pid;
-    private double gamma;
+    private float gamma;
     private Integer totalWeight;
     private Map<Integer, Integer> pToFriendCount;
     private Map<Integer, Integer> pToWeight;
@@ -19,7 +19,7 @@ public class LogicalUser {
     private int numFriendReplicasToDeleteInSourcePartition;
     private boolean replicateInSourcePartition;
 
-    public LogicalUser(Integer id, Integer pid, double gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Set<Integer> replicaLocations, Map<Integer, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Integer totalWeight) {
+    public LogicalUser(Integer id, Integer pid, float gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Set<Integer> replicaLocations, Map<Integer, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Integer totalWeight) {
         this.id = id;
         this.pid = pid;
         this.gamma = gamma;
@@ -107,9 +107,9 @@ public class LogicalUser {
         return numToDelete - numToAdd;
     }
 
-    private double getImbalanceFactor(Integer pId, Integer offset) {
-        double partitionWeight = pToWeight.get(pId) + offset;
-        double averageWeight = ((double) totalWeight) / pToWeight.keySet().size();
+    private float getImbalanceFactor(Integer pId, Integer offset) {
+        float partitionWeight = pToWeight.get(pId) + offset;
+        float averageWeight = ((float) totalWeight) / pToWeight.keySet().size();
         return partitionWeight / averageWeight;
     }
 
@@ -120,7 +120,7 @@ public class LogicalUser {
 
         LogicalUser that = (LogicalUser) o;
 
-        if (Double.compare(that.gamma, gamma) != 0) return false;
+        if (Float.compare(that.gamma, gamma) != 0) return false;
         if (numFriendReplicasToDeleteInSourcePartition != that.numFriendReplicasToDeleteInSourcePartition) return false;
         if (replicateInSourcePartition != that.replicateInSourcePartition) return false;
         if (!id.equals(that.id)) return false;
@@ -135,12 +135,9 @@ public class LogicalUser {
 
     @Override
     public int hashCode() {
-        int result;
-        long temp;
-        result = id.hashCode();
+        int result = id.hashCode();
         result = 31 * result + pid.hashCode();
-        temp = Double.doubleToLongBits(gamma);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
         result = 31 * result + totalWeight.hashCode();
         result = 31 * result + pToFriendCount.hashCode();
         result = 31 * result + pToWeight.hashCode();

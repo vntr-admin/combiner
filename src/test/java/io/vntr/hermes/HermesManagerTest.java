@@ -15,7 +15,7 @@ public class HermesManagerTest {
 
     @Test
     public void testThingsInGeneral() {
-        double gamma = 1.6D;
+        float gamma = 1.6f;
         HermesManager manager = new HermesManager(gamma);
 
         Integer pid1 = manager.addPartition();
@@ -106,8 +106,8 @@ public class HermesManagerTest {
             int numUsers = 1000;
             int numPartitions = 10;
 
-            double gamma = 1.5;
-            Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
+            float gamma = 1.5f;
+            Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1f, 0.1f);
             Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
             for(int pid=0; pid<numPartitions; pid++) {
                 partitions.put(pid, new HashSet<Integer>());
@@ -127,7 +127,7 @@ public class HermesManagerTest {
 
 //    @Test
     public void specialDeadlockTest() {
-        double gamma = 1.5;
+        float gamma = 1.5f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(0, initSet(0, 770, 260, 520, 10, 780, 270, 530, 20, 790, 280, 540, 30, 800, 290, 550, 40, 810, 300, 560, 50, 820, 310, 570, 60, 830, 320, 580, 70, 840, 330, 590, 80, 850, 340, 600, 90, 860, 350, 610, 100, 870, 360, 620, 110, 880, 370, 630, 120, 890, 380, 640, 130, 900, 390, 650, 140, 910, 400, 660, 150, 920, 410, 670, 160, 930, 420, 680, 170, 940, 430, 690, 180, 950, 440, 700, 190, 960, 450, 710, 200, 970, 460, 720, 210, 980, 470, 730, 220, 990, 480, 740, 230, 490, 750, 240, 500, 760, 250, 510));
         partitions.put(1, initSet(1, 771, 261, 521, 11, 781, 271, 531, 21, 791, 281, 541, 31, 801, 291, 551, 41, 811, 301, 561, 51, 821, 311, 571, 61, 831, 321, 581, 71, 841, 331, 591, 81, 851, 341, 601, 91, 861, 351, 611, 101, 871, 361, 621, 111, 881, 371, 631, 121, 891, 381, 641, 131, 901, 391, 651, 141, 911, 401, 661, 151, 921, 411, 671, 161, 931, 421, 681, 171, 941, 431, 691, 181, 951, 441, 701, 191, 961, 451, 711, 201, 971, 461, 721, 211, 981, 471, 731, 221, 991, 481, 741, 231, 491, 751, 241, 501, 761, 251, 511));
@@ -1163,7 +1163,7 @@ public class HermesManagerTest {
 
 //    @Test
     public void testToyExample() {
-        double gamma = 1.5;
+        float gamma = 1.5f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));

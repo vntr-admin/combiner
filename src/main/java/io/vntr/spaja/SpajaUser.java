@@ -11,14 +11,14 @@ import java.util.Set;
  * Should be done
  */
 public class SpajaUser extends User {
-    private double alpha;
+    private float alpha;
     private Integer partitionId;
     private Integer masterPartitionId;
     private Set<Integer> replicaPartitionIds;
     private SpajaManager manager; //TODO: this is sloppy; replace its usage with passing in the necessary info
     private int k;
 
-    public SpajaUser(Integer id, double alpha, int k, SpajaManager manager) {
+    public SpajaUser(Integer id, float alpha, int k, SpajaManager manager) {
         super(id);
         replicaPartitionIds = new HashSet<Integer>();
         this.alpha = alpha;
@@ -81,16 +81,16 @@ public class SpajaUser extends User {
     }
 
 
-    public SpajaUser findPartner(Collection<SpajaUser> randomSamplingOfUsers, double t, SpajaBefriendingStrategy strategy) {
+    public SpajaUser findPartner(Collection<SpajaUser> randomSamplingOfUsers, float t, SpajaBefriendingStrategy strategy) {
         SpajaUser bestPartner = null;
-        double bestScore = 0d;
+        float bestScore = 0;
 
         for(SpajaUser partner : randomSamplingOfUsers) {
             int replicasOnMine   = manager.getPartitionById(partitionId).getNumReplicas();
             int replicasOnTheirs = manager.getPartitionById(partner.getPartitionId()).getNumReplicas();
 
-            double oldScore = Math.pow(replicasOnMine, alpha) + Math.pow(replicasOnTheirs, alpha);
-            double newScore = getReplicasIfSwappedUsingAlpha(this, partner, strategy);
+            float oldScore = (float)(Math.pow(replicasOnMine, alpha) + Math.pow(replicasOnTheirs, alpha));
+            float newScore = getReplicasIfSwappedUsingAlpha(this, partner, strategy);
 
             if(newScore > bestScore && (newScore * t) > oldScore) {
                 bestPartner = partner;
@@ -101,7 +101,7 @@ public class SpajaUser extends User {
         return bestPartner;
     }
 
-    double getReplicasIfSwappedUsingAlpha(SpajaUser u1, SpajaUser u2, SpajaBefriendingStrategy strategy) {
+    float getReplicasIfSwappedUsingAlpha(SpajaUser u1, SpajaUser u2, SpajaBefriendingStrategy strategy) {
         SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
 
         int replicasInP1 = manager.getPartitionById(u1.getPartitionId()).getNumReplicas();
@@ -113,6 +113,6 @@ public class SpajaUser extends User {
         replicasInP1 -= swapChanges.getRemoveFromP1().size();
         replicasInP2 -= swapChanges.getRemoveFromP2().size();
 
-        return Math.pow(replicasInP1, alpha) + Math.pow(replicasInP2, alpha);
+        return (float)(Math.pow(replicasInP1, alpha) + Math.pow(replicasInP2, alpha));
     }
 }

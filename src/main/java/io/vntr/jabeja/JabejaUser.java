@@ -11,12 +11,12 @@ import java.util.Set;
  */
 public class JabejaUser extends User {
 
-    private double alpha;
+    private float alpha;
     private Integer pid;
     private JabejaManager manager;
     private Set<JabejaUser> friends;
 
-    public JabejaUser(Integer id, Integer initialPid, double alpha, JabejaManager manager) {
+    public JabejaUser(Integer id, Integer initialPid, float alpha, JabejaManager manager) {
         super(id);
         this.pid = initialPid;
         this.alpha = alpha;
@@ -44,9 +44,9 @@ public class JabejaUser extends User {
         this.pid = pid;
     }
 
-    public JabejaUser findPartner(Collection<JabejaUser> users, double t) {
+    public JabejaUser findPartner(Collection<JabejaUser> users, float t) {
         JabejaUser bestPartner = null;
-        double bestScore = 0d;
+        float bestScore = 0f;
 
         for(JabejaUser partner : users) {
             Integer theirPid = partner.getPid();
@@ -56,8 +56,8 @@ public class JabejaUser extends User {
             int theirNeighborsOnMine   = partner.getNeighborsOnPartition(pid);
             int theirNeighborsOnTheirs = partner.getNeighborsOnPartition(theirPid);
 
-            double oldScore = Math.pow(myNeighborsOnMine, alpha) + Math.pow(theirNeighborsOnTheirs, alpha);
-            double newScore = Math.pow(myNeighborsOnTheirs, alpha) + Math.pow(theirNeighborsOnMine, alpha);
+            float oldScore = (float) (Math.pow(myNeighborsOnMine, alpha) + Math.pow(theirNeighborsOnTheirs, alpha));
+            float newScore = (float) (Math.pow(myNeighborsOnTheirs, alpha) + Math.pow(theirNeighborsOnMine, alpha));
 
             if(newScore > bestScore && (newScore * t) > oldScore) {
                 bestPartner = partner;

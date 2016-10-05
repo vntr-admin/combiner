@@ -14,11 +14,11 @@ public class HermesManager {
 
     private NavigableMap<Integer, HermesPartition> pMap;
     private Map<Integer, Integer> uMap;
-    private double gamma;
+    private float gamma;
 
     private static final int defaultStartingPid = 1;
 
-    public HermesManager(double gamma) {
+    public HermesManager(float gamma) {
         this.gamma = gamma;
         pMap = new TreeMap<Integer, HermesPartition>();
         uMap = new HashMap<Integer, Integer>();

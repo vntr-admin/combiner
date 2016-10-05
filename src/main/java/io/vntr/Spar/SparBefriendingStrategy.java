@@ -40,8 +40,8 @@ public class SparBefriendingStrategy {
                 return LARGE_TO_SMALL;
             }
 
-            double imbalanceRatio = (smallerMasters + 1D) / largerMasters;
-            double ratioOfSecondBestToBest = ((double) Math.min(stay, toLarger)) / toSmaller;
+            float imbalanceRatio = (smallerMasters + 1f) / largerMasters;
+            float ratioOfSecondBestToBest = ((float) Math.min(stay, toLarger)) / toSmaller;
             if (ratioOfSecondBestToBest > imbalanceRatio) {
                 return LARGE_TO_SMALL;
             }
@@ -52,8 +52,8 @@ public class SparBefriendingStrategy {
                 return SMALL_TO_LARGE;
             }
 
-            double imbalanceRatio = (largerMasters + 1D) / smallerMasters;
-            double ratioOfSecondBestToBest = ((double) Math.min(stay, toSmaller)) / toLarger;
+            float imbalanceRatio = (largerMasters + 1f) / smallerMasters;
+            float ratioOfSecondBestToBest = ((float) Math.min(stay, toSmaller)) / toLarger;
             if (ratioOfSecondBestToBest > imbalanceRatio) {
                 return SMALL_TO_LARGE;
             }

@@ -8,7 +8,7 @@ import java.util.*;
  * Created by robertlindquist on 9/28/16.
  */
 public class SparmesPartition {
-    private final double gamma;
+    private final float gamma;
     private Map<Integer, SparmesUser> idToMasterMap = new HashMap<Integer, SparmesUser>();
     private Map<Integer, SparmesUser> idToReplicaMap = new HashMap<Integer, SparmesUser>();
     private Map<Integer, LogicalUser> logicalUsers = new HashMap<Integer, LogicalUser>();
@@ -16,7 +16,7 @@ public class SparmesPartition {
     private Integer id;
     private SparmesManager manager;
 
-    public SparmesPartition(Integer id, double gamma, SparmesManager manager) {
+    public SparmesPartition(Integer id, float gamma, SparmesManager manager) {
         this.id = id;
         this.manager = manager;
         this.gamma = gamma;

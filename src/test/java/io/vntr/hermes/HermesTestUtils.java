@@ -8,7 +8,7 @@ import java.util.*;
  * Created by robertlindquist on 9/23/16.
  */
 public class HermesTestUtils {
-    public static HermesManager initGraph(double gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+    public static HermesManager initGraph(float gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         HermesManager manager = new HermesManager(gamma);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
@@ -24,7 +24,7 @@ public class HermesTestUtils {
         return manager;
     }
 
-    public static HermesManager initGraph(double gamma, int numPartitions, Map<Integer, Set<Integer>> friendships) {
+    public static HermesManager initGraph(float gamma, int numPartitions, Map<Integer, Set<Integer>> friendships) {
         Set<Integer> pids = new HashSet<Integer>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);

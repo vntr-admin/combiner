@@ -17,7 +17,7 @@ public class HermesPartitionTest {
 
     @Test
     public void testGetCandidatesNoUnderweightNoOverweight() {
-        double gamma = 1.5;
+        float gamma = 1.5f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
@@ -63,7 +63,7 @@ public class HermesPartitionTest {
 
     @Test
     public void testGetCandidatesUnderweightOverweight() {
-        double gamma = 1.3; //underweight is < 2.8, overweight is > 5.2
+        float gamma = 1.3f; //underweight is < 2.8, overweight is > 5.2
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11));
@@ -100,7 +100,7 @@ public class HermesPartitionTest {
 
     @Test
     public void testPhysicallyMigrateCopyAndDelete() {
-        double gamma = 1.5;
+        float gamma = 1.5f;
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));

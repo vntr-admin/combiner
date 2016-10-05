@@ -9,9 +9,9 @@ import java.util.*;
  */
 public class HermesMigrator {
     private HermesManager manager;
-    private double gamma;
+    private float gamma;
 
-    public HermesMigrator(HermesManager manager, double gamma) {
+    public HermesMigrator(HermesManager manager, float gamma) {
         this.manager = manager;
         this.gamma = gamma;
     }
@@ -51,9 +51,9 @@ public class HermesMigrator {
     }
 
     boolean isOverloaded(Integer pid, Map<Integer, Integer> userCounts) {
-        double numUsers = manager.getNumUsers();
-        double numPartitions = manager.getAllPartitionIds().size() - 1;
-        double avgUsers = numUsers / numPartitions;
+        float numUsers = manager.getNumUsers();
+        float numPartitions = manager.getAllPartitionIds().size() - 1;
+        float avgUsers = numUsers / numPartitions;
         int cutoff = (int) (avgUsers * gamma) + 1;
         return userCounts.get(pid) > cutoff;
     }

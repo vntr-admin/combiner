@@ -28,7 +28,7 @@ public class TestUtils {
         return set;
     }
 
-    public static Map<Integer, Set<Integer>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, double groupMembershipProbability, double intraGroupFriendshipProbability) {
+    public static Map<Integer, Set<Integer>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
         Map<Integer, Set<Integer>> userIdToFriendIds = new HashMap<Integer, Set<Integer>>();
         for(int id=0; id<numUsers; id++) {
             userIdToFriendIds.put(id, new HashSet<Integer>());

@@ -67,7 +67,7 @@ public class Analyzer {
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             //TODO: figure out how to hook this up to the above and run it
-            ForestFireGenerator generator = new ForestFireGenerator(.34, .34, new TreeMap<Integer, Set<Integer>>(friendships));
+            ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(friendships));
             System.out.println("Starting generator");
             Map<Integer, Set<Integer>> newFriendships = generator.run();
             Integer newUid = generator.getV();
@@ -103,15 +103,15 @@ public class Analyzer {
     }
 
     private HermesManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return HermesTestUtils.initGraph(1.2, partitions, friendships);
+        return HermesTestUtils.initGraph(1.2f, partitions, friendships);
     }
 
     private HermesMiddleware initHermesMiddleware(HermesManager manager) {
-        return new HermesMiddleware(manager, 1.2);
+        return new HermesMiddleware(manager, 1.2f);
     }
 
     private JabejaManager initJabejaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return JabejaTestUtils.initGraph(1.5, 2D, 0.2D, 9, partitions, friendships);
+        return JabejaTestUtils.initGraph(1.5f, 2f, 0.2f, 9, partitions, friendships);
     }
 
     private JabejaMiddleware initJabejaMiddleware(JabejaManager manager) {
@@ -119,7 +119,7 @@ public class Analyzer {
     }
 
     private SpajaManager initSpajaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SpajaTestUtils.initGraph(2, 1.5, 2D, 0.2D, 9, partitions, friendships, replicas);
+        return SpajaTestUtils.initGraph(2, 1.5f, 2f, 0.2f, 9, partitions, friendships, replicas);
     }
 
     private SpajaMiddleware initSpajaMiddleware(SpajaManager manager) {
@@ -127,7 +127,7 @@ public class Analyzer {
     }
 
     private SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SparmesTestUtils.initGraph(2, 1.2, partitions, friendships, replicas);
+        return SparmesTestUtils.initGraph(2, 1.2f, partitions, friendships, replicas);
     }
 
     private SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {

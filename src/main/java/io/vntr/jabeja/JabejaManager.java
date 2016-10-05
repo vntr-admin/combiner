@@ -11,16 +11,16 @@ import java.util.*;
 public class JabejaManager {
 
     private int k;
-    private double alpha;
-    private double initialT;
-    private double deltaT;
+    private float alpha;
+    private float initialT;
+    private float deltaT;
 
     private Map<Integer, JabejaUser> uMap;
     private NavigableMap<Integer, Set<Integer>> partitions;
 
     private static final Integer defaultInitialPid = 1;
 
-    public JabejaManager(double alpha, double initialT, double deltaT, int k) {
+    public JabejaManager(float alpha, float initialT, float deltaT, int k) {
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
@@ -94,7 +94,7 @@ public class JabejaManager {
     }
 
     public void repartition() {
-        for(double t = initialT; t >= 1; t -= deltaT) {
+        for(float t = initialT; t >= 1; t -= deltaT) {
             List<Integer> randomUserList = new LinkedList<Integer>(uMap.keySet());
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {

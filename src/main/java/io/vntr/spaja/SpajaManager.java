@@ -11,9 +11,9 @@ import java.util.*;
 public class SpajaManager {
     private int minNumReplicas;
     private int randomSampingSize;
-    private double alpha;
-    private double initialT;
-    private double deltaT;
+    private float alpha;
+    private float initialT;
+    private float deltaT;
 
     private static final Integer defaultStartingId = 1;
 
@@ -21,7 +21,7 @@ public class SpajaManager {
 
     private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<Integer, Integer>();
 
-    public SpajaManager(int minNumReplicas, double alpha, double initialT, double deltaT, int randomSampingSize) {
+    public SpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize) {
         this.minNumReplicas = minNumReplicas;
         this.partitionIdToPartitionMap = new TreeMap<Integer, SpajaPartition>();
         this.alpha = alpha;
@@ -34,15 +34,15 @@ public class SpajaManager {
         return minNumReplicas;
     }
 
-    public double getAlpha() {
+    public float getAlpha() {
         return alpha;
     }
 
-    public double getInitialT() {
+    public float getInitialT() {
         return initialT;
     }
 
-    public double getDeltaT() {
+    public float getDeltaT() {
         return deltaT;
     }
 

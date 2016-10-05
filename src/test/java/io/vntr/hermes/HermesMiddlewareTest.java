@@ -21,8 +21,8 @@ public class HermesMiddlewareTest {
         int numUsers = 1000;
         int numPartitions = 10;
 
-        double gamma = 1.5;
-        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1, 0.1);
+        float gamma = 1.5f;
+        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1f, 0.1f);
         Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
         for(int pid=0; pid<numPartitions; pid++) {
             partitions.put(pid, new HashSet<Integer>());

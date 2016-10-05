@@ -12,9 +12,9 @@ public class SpajaRepartitioner {
     private SpajaBefriendingStrategy spajaBefriendingStrategy;
     private int k;
     private int randomSampingSize;
-    private double alpha;
-    private double initialT;
-    private double deltaT;
+    private float alpha;
+    private float initialT;
+    private float deltaT;
 
     public SpajaRepartitioner(SpajaManager manager, SpajaBefriendingStrategy spajaBefriendingStrategy) {
         this.k = manager.getMinNumReplicas();
@@ -27,7 +27,7 @@ public class SpajaRepartitioner {
     }
 
     public void repartition() {
-        for(double t = initialT; t >= 1; t -= deltaT) {
+        for(float t = initialT; t >= 1; t -= deltaT) {
             List<Integer> randomUserList = new LinkedList<Integer>(manager.getAllUserIds());
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {

@@ -11,12 +11,12 @@ public class SparmesUser extends User {
     private Integer partitionId;
     private Integer masterPartitionId;
     private Integer logicalPid;
-    private double gamma;
+    private float gamma;
     private Set<Integer> replicaPartitionIds;
     private Set<Integer> logicalPartitionIds;
     private SparmesManager manager;
 
-    public SparmesUser(Integer id, Integer initialPid, double gamma, SparmesManager manager) {
+    public SparmesUser(Integer id, Integer initialPid, float gamma, SparmesManager manager) {
         super(id);
         replicaPartitionIds = new HashSet<Integer>();
         logicalPartitionIds = new HashSet<Integer>();
