@@ -33,7 +33,7 @@ public class SparmesTestUtils {
 
         for(Integer uid : friendships.keySet()) {
             Integer pid = uToMasterMap.get(uid);
-            SparmesUser user = new SparmesUser("User " + uid, uid, pid, gamma, manager);
+            SparmesUser user = new SparmesUser(uid, pid, gamma, manager);
             manager.addUser(user, pid);
 
             for (Integer rPid : uToReplicasMap.get(uid)) {

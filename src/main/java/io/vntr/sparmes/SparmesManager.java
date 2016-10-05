@@ -65,7 +65,7 @@ public class SparmesManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparmesUser spajaUser = new SparmesUser(user.getName(), user.getId(), masterPartitionId, gamma, this);
+        SparmesUser spajaUser = new SparmesUser(user.getId(), masterPartitionId, gamma, this);
 
         addUser(spajaUser, masterPartitionId);
 

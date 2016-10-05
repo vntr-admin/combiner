@@ -80,7 +80,7 @@ public class Analyzer {
 //            List<IMiddleware> middlewares = Arrays.<IMiddleware>asList(sparmesMiddleware);
             for(IMiddleware iMiddleware : middlewares) {
                 System.out.println(iMiddleware + "\n");
-                iMiddleware.addUser(new User("User " + newUid, newUid));
+                iMiddleware.addUser(new User(newUid));
                 for(Integer uid1 : newFriendships.keySet()) {
                     for(Integer uid2 : newFriendships.get(uid1)) {
                         iMiddleware.befriend(uid1, uid2);

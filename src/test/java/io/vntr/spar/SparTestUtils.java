@@ -12,8 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SparTestUtils {
-    public static final Integer[]   STANDAR_USER_ID_ARRAY =   {    3,          4,       5,      6,       8,         10,    11,   12};
-    public static final String[] STANDARD_USER_NAME_ARRAY = {"Greg", "Henrietta", "Imogen", "James", "Kartuk", "Llewellyn", "Ming", "Nao"};
+    public static final Integer[] STANDAR_USER_ID_ARRAY = {3, 4, 5, 6, 8, 10, 11, 12};
 
     public static class IntegerPair {
         public final Integer val1;
@@ -173,7 +172,7 @@ public class SparTestUtils {
         for (Integer userId : spec.getUserIds()) {
             Integer masterPartitionId = spec.getMasterPartitionIdForUser(userId);
             Set<Integer> replicaPartitionIds = spec.getReplicaPartitionIdsForUser(userId);
-            SparUser user = new SparUser("user" + userId, userId);
+            SparUser user = new SparUser(userId);
             user.setMasterPartitionId(masterPartitionId);
             user.setPartitionId(masterPartitionId);
             user.addReplicaPartitionIds(replicaPartitionIds);
@@ -197,7 +196,7 @@ public class SparTestUtils {
         }
 
         for (int i = 0; i < 8; i++) {
-            manager.addUser(new User(STANDARD_USER_NAME_ARRAY[i], STANDAR_USER_ID_ARRAY[i]));
+            manager.addUser(new User(STANDAR_USER_ID_ARRAY[i]));
         }
 
         return manager;
@@ -288,7 +287,7 @@ public class SparTestUtils {
         Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
-            SparUser user = new SparUser("User " + uid, uid);
+            SparUser user = new SparUser(uid);
             Integer pid = uToMasterMap.get(uid);
             user.setMasterPartitionId(pid);
             user.setPartitionId(pid);

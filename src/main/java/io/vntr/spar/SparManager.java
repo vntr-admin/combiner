@@ -55,7 +55,7 @@ public class SparManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparUser sparUser = new SparUser(user.getName(), user.getId());
+        SparUser sparUser = new SparUser(user.getId());
         sparUser.setMasterPartitionId(masterPartitionId);
         sparUser.setPartitionId(masterPartitionId);
 

@@ -21,12 +21,12 @@ public class HermesManagerTest {
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
-        HermesUser user1 = new HermesUser(1, "User 1", pid1, gamma, manager);
-        HermesUser user2 = new HermesUser(2, "User 2", pid2, gamma, manager);
-        HermesUser user3 = new HermesUser(3, "User 3", pid1, gamma, manager);
-        HermesUser user4 = new HermesUser(4, "User 4", pid2, gamma, manager);
-        HermesUser user5 = new HermesUser(5, "User 5", pid1, gamma, manager);
-        HermesUser user6 = new HermesUser(6, "User 6", pid2, gamma, manager);
+        HermesUser user1 = new HermesUser(1, pid1, gamma, manager);
+        HermesUser user2 = new HermesUser(2, pid2, gamma, manager);
+        HermesUser user3 = new HermesUser(3, pid1, gamma, manager);
+        HermesUser user4 = new HermesUser(4, pid2, gamma, manager);
+        HermesUser user5 = new HermesUser(5, pid1, gamma, manager);
+        HermesUser user6 = new HermesUser(6, pid2, gamma, manager);
 
         manager.addUser(user1);
         manager.addUser(user2);
@@ -61,9 +61,9 @@ public class HermesManagerTest {
 
         Integer pid3 = manager.addPartition();
 
-        HermesUser user7 = new HermesUser(7, "User 7", pid3, gamma, manager);
-        HermesUser user8 = new HermesUser(8, "User 8", pid3, gamma, manager);
-        HermesUser user9 = new HermesUser(9, "User 9", pid3, gamma, manager);
+        HermesUser user7 = new HermesUser(7, pid3, gamma, manager);
+        HermesUser user8 = new HermesUser(8, pid3, gamma, manager);
+        HermesUser user9 = new HermesUser(9, pid3, gamma, manager);
 
         manager.addUser(user7);
         manager.addUser(user8);

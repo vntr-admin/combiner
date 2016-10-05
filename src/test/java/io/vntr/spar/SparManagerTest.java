@@ -29,21 +29,21 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         assertTrue(manager.getNumUsers() == 1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         assertTrue(manager.getNumUsers() == 2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -112,11 +112,10 @@ public class SparManagerTest {
         assertNotEquals(thirdId, fourthId);
 
         Integer userId = 23;
-        User user = new User("Anita", userId);
+        User user = new User(userId);
         manager.addUser(user);
 
         SparUser sparUser = manager.getUserMasterById(userId);
-        assertEquals(sparUser.getName(), user.getName());
         assertEquals(sparUser.getId(), user.getId());
 
         assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
@@ -138,17 +137,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -160,7 +159,6 @@ public class SparManagerTest {
         for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
-            assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
             assertEquals(sparUser.getPartitionId(), sparUser.getMasterPartitionId());
 
@@ -174,7 +172,6 @@ public class SparManagerTest {
                     System.out.println("Boom");
                     SparUser replica = partition.getReplicaById(userId);
                     assertEquals(replica.getId(), sparUser.getId());
-                    assertEquals(replica.getName(), sparUser.getName());
                     assertEquals(replica.getMasterPartitionId(), sparUser.getMasterPartitionId());
                     assertEquals(replica.getReplicaPartitionIds(), sparUser.getReplicaPartitionIds());
                     assertEquals(replica.getPartitionId(), partitionId);
@@ -198,7 +195,6 @@ public class SparManagerTest {
         for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
-            assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
@@ -258,17 +254,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -276,7 +272,6 @@ public class SparManagerTest {
         for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
-            assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
@@ -314,17 +309,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -332,7 +327,6 @@ public class SparManagerTest {
         for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
-            assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
@@ -386,17 +380,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -470,17 +464,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -517,17 +511,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -597,17 +591,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
@@ -654,17 +648,17 @@ public class SparManagerTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 

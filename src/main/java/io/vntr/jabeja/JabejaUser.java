@@ -16,8 +16,8 @@ public class JabejaUser extends User {
     private JabejaManager manager;
     private Set<JabejaUser> friends;
 
-    public JabejaUser(String name, Integer id, Integer initialPid, double alpha, JabejaManager manager) {
-        super(name, id);
+    public JabejaUser(Integer id, Integer initialPid, double alpha, JabejaManager manager) {
+        super(id);
         this.pid = initialPid;
         this.alpha = alpha;
         this.manager = manager;

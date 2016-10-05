@@ -66,7 +66,7 @@ public class JabejaManager {
 
     public void addUser(User user) {
         Integer initialPartitionId = getInitialPartitionId();
-        JabejaUser jabejaUser = new JabejaUser(user.getName(), user.getId(), initialPartitionId, alpha, this);
+        JabejaUser jabejaUser = new JabejaUser(user.getId(), initialPartitionId, alpha, this);
         addUser(jabejaUser);
     }
 

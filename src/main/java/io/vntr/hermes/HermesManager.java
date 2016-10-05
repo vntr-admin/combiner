@@ -26,7 +26,7 @@ public class HermesManager {
 
     public void addUser(User user) {
         Integer initialPid = getInitialPartitionId();
-        HermesUser hermesUser = new HermesUser(user.getId(), user.getName(), initialPid, gamma, this);
+        HermesUser hermesUser = new HermesUser(user.getId(), initialPid, gamma, this);
         addUser(hermesUser);
     }
 

@@ -31,7 +31,7 @@ public class SpajaTestUtils {
         Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
-            SpajaUser user = new SpajaUser("User " + uid, uid, alpha, minNumReplicas, manager);
+            SpajaUser user = new SpajaUser(uid, alpha, minNumReplicas, manager);
             Integer pid = uToMasterMap.get(uid);
             user.setMasterPartitionId(pid);
             user.setPartitionId(pid);

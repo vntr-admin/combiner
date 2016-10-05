@@ -4,22 +4,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class User {
-    private String name;
     private Integer id;
     private Set<Integer> friendIDs;
 
-    public User(String name, Integer id) {
-        this.name = name;
+    public User(Integer id) {
         this.id = id;
         this.friendIDs = new HashSet<Integer>();
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Integer getId() {
@@ -44,6 +34,6 @@ public class User {
 
     @Override
     public String toString() {
-        return id + "|" + name + "|friends:" + friendIDs.toString();
+        return id + "|friends:" + friendIDs.toString();
     }
 }

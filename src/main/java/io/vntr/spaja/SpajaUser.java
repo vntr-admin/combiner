@@ -18,8 +18,8 @@ public class SpajaUser extends User {
     private SpajaManager manager; //TODO: this is sloppy; replace its usage with passing in the necessary info
     private int k;
 
-    public SpajaUser(String name, Integer id, double alpha, int k, SpajaManager manager) {
-        super(name, id);
+    public SpajaUser(Integer id, double alpha, int k, SpajaManager manager) {
+        super(id);
         replicaPartitionIds = new HashSet<Integer>();
         this.alpha = alpha;
         this.k = k;
@@ -60,7 +60,7 @@ public class SpajaUser extends User {
 
     @Override
     public SpajaUser clone() {
-        SpajaUser user = new SpajaUser(getName(), getId(), alpha, k, manager);
+        SpajaUser user = new SpajaUser(getId(), alpha, k, manager);
         user.setPartitionId(partitionId);
         user.setMasterPartitionId(masterPartitionId);
         user.addReplicaPartitionIds(replicaPartitionIds);

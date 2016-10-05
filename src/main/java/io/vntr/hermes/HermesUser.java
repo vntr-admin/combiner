@@ -17,8 +17,8 @@ public class HermesUser extends User {
     private Integer logicalPid;
     private HermesManager manager;
 
-    public HermesUser(Integer id, String name, Integer initialPid, double gamma, HermesManager manager) {
-        super(name, id);
+    public HermesUser(Integer id, Integer initialPid, double gamma, HermesManager manager) {
+        super(id);
         this.gamma = gamma;
         this.manager = manager;
         this.physicalPid = initialPid;

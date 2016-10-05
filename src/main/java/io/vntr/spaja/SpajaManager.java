@@ -87,7 +87,7 @@ public class SpajaManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SpajaUser spajaUser = new SpajaUser(user.getName(), user.getId(), alpha, minNumReplicas, this);
+        SpajaUser spajaUser = new SpajaUser(user.getId(), alpha, minNumReplicas, this);
         spajaUser.setMasterPartitionId(masterPartitionId);
         spajaUser.setPartitionId(masterPartitionId);
 

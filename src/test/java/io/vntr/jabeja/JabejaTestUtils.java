@@ -13,7 +13,7 @@ public class JabejaTestUtils {
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new JabejaUser("User " + uid, uid, pid, alpha, manager));
+                manager.addUser(new JabejaUser(uid, pid, alpha, manager));
             }
         }
         for (Integer uid1 : friendships.keySet()) {

@@ -16,8 +16,8 @@ public class SparmesUser extends User {
     private Set<Integer> logicalPartitionIds;
     private SparmesManager manager;
 
-    public SparmesUser(String name, Integer id, Integer initialPid, double gamma, SparmesManager manager) {
-        super(name, id);
+    public SparmesUser(Integer id, Integer initialPid, double gamma, SparmesManager manager) {
+        super(id);
         replicaPartitionIds = new HashSet<Integer>();
         logicalPartitionIds = new HashSet<Integer>();
         this.gamma = gamma;
@@ -81,7 +81,7 @@ public class SparmesUser extends User {
 
     @Override
     public SparmesUser clone() {
-        SparmesUser user = new SparmesUser(getName(), getId(), masterPartitionId, gamma, manager);
+        SparmesUser user = new SparmesUser(getId(), masterPartitionId, gamma, manager);
         user.setMasterPartitionId(masterPartitionId);
         user.setPartitionId(partitionId);
         user.setLogicalPid(logicalPid);

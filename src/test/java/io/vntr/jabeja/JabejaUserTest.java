@@ -56,12 +56,12 @@ public class JabejaUserTest {
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
-        JabejaUser user1 = new JabejaUser("User 1", 1, pid1, alpha, manager);
-        JabejaUser user2 = new JabejaUser("User 2", 2, pid1, alpha, manager);
-        JabejaUser user3 = new JabejaUser("User 3", 3, pid1, alpha, manager);
-        JabejaUser user4 = new JabejaUser("User 4", 4, pid2, alpha, manager);
-        JabejaUser user5 = new JabejaUser("User 5", 5, pid2, alpha, manager);
-        JabejaUser user6 = new JabejaUser("User 6", 6, pid2, alpha, manager);
+        JabejaUser user1 = new JabejaUser(1, pid1, alpha, manager);
+        JabejaUser user2 = new JabejaUser(2, pid1, alpha, manager);
+        JabejaUser user3 = new JabejaUser(3, pid1, alpha, manager);
+        JabejaUser user4 = new JabejaUser(4, pid2, alpha, manager);
+        JabejaUser user5 = new JabejaUser(5, pid2, alpha, manager);
+        JabejaUser user6 = new JabejaUser(6, pid2, alpha, manager);
 
         manager.addUser(user1);
         manager.addUser(user2);

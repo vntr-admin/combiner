@@ -11,8 +11,8 @@ public class SparUser extends User {
     private Integer masterPartitionId;
     private Set<Integer> replicaPartitionIds;
 
-    public SparUser(String name, Integer id) {
-        super(name, id);
+    public SparUser(Integer id) {
+        super(id);
         replicaPartitionIds = new HashSet<Integer>();
     }
 
@@ -50,7 +50,7 @@ public class SparUser extends User {
 
     @Override
     public SparUser clone() {
-        SparUser user = new SparUser(getName(), getId());
+        SparUser user = new SparUser(getId());
         user.setPartitionId(partitionId);
         user.setMasterPartitionId(masterPartitionId);
         user.addReplicaPartitionIds(replicaPartitionIds);

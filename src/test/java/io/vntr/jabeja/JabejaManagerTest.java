@@ -26,7 +26,7 @@ public class JabejaManagerTest {
         Integer pid2 = manager.addPartition();
 
         for(int id=1; id<=numUsers; id++) {
-            manager.addUser(new JabejaUser("User " + id,  id,  id%2 == 1 ? pid1 : pid2, alpha, manager));
+            manager.addUser(new JabejaUser(id,  id%2 == 1 ? pid1 : pid2, alpha, manager));
         }
 
         int[] count = new int[numUsers];
@@ -58,7 +58,7 @@ public class JabejaManagerTest {
         Integer pid2 = manager.addPartition();
 
         for(int id=1; id<=numUsers; id++) {
-            manager.addUser(new JabejaUser("User " + id,  id,  id%2 == 1 ? pid1 : pid2, alpha, manager));
+            manager.addUser(new JabejaUser(id,  id%2 == 1 ? pid1 : pid2, alpha, manager));
         }
 
 
@@ -90,7 +90,7 @@ public class JabejaManagerTest {
 
         for(int id=0; id<numUsers; id++) {
             Integer pid = ProbabilityUtils.getKDistinctValuesFromList(1, partitionIds).iterator().next();
-            manager.addUser(new JabejaUser("User " + id,  id,  pid, alpha, manager));
+            manager.addUser(new JabejaUser(id,  pid, alpha, manager));
         }
 
         Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);

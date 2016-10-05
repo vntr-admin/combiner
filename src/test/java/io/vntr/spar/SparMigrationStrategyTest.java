@@ -23,27 +23,27 @@ public class SparMigrationStrategyTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer userId1 = 23;
-        User user1 = new User("Anita", userId1);
+        User user1 = new User(userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         Integer userId2 = 15;
-        User user2 = new User("Bob", userId2);
+        User user2 = new User(userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         Integer userId3 = 2;
-        User user3 = new User("Carol", userId3);
+        User user3 = new User(userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
         Integer userId4 = 7;
-        User user4 = new User("Declan", userId4);
+        User user4 = new User(userId4);
         manager.addUser(user4);
         userIdToUserMap.put(userId4, user4);
 
         Integer userId5 = 9;
-        User user5 = new User("Erin", userId5);
+        User user5 = new User(userId5);
         manager.addUser(user5);
         userIdToUserMap.put(userId5, user5);
 
@@ -57,7 +57,7 @@ public class SparMigrationStrategyTest {
         }
 
         Integer userId6 = 29;
-        User user6 = new User("Francisco", userId6);
+        User user6 = new User(userId6);
         manager.addUser(user6);
         userIdToUserMap.put(userId6, user6);
 
@@ -83,9 +83,8 @@ public class SparMigrationStrategyTest {
         assertTrue(strategy.scoreReplicaPromotion(sparUser6, nonFriendPartitionId) == 0D);
 
         Integer[] userIdArray = {3, 4, 5, 6, 8, 10, 11, 12, 13};
-        String[] userNameArray = {"Greg", "Henrietta", "Imogen", "James", "Kartuk", "Llewellyn", "Ming", "Nao", "Ortega"};
         for (int i = 0; i < 9; i++) {
-            User user = new User(userNameArray[i], userIdArray[i]);
+            User user = new User(userIdArray[i]);
             manager.addUser(user);
             userIdToUserMap.put(userIdArray[i], user);
         }
@@ -120,9 +119,8 @@ public class SparMigrationStrategyTest {
 
         Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
         Integer[] userIdArray = {3, 4, 5, 6, 8, 10, 11, 12};
-        String[] userNameArray = {"Greg", "Henrietta", "Imogen", "James", "Kartuk", "Llewellyn", "Ming", "Nao"};
         for (int i = 0; i < 8; i++) {
-            User user = new User(userNameArray[i], userIdArray[i]);
+            User user = new User(userIdArray[i]);
             manager.addUser(user);
             userIdToUserMap.put(userIdArray[i], user);
         }
