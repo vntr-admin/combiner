@@ -32,6 +32,7 @@ public class Analyzer {
     private static final List<String> filenames = Arrays.asList(LESKOVEC_FACEBOOK, MISLOVE_FACEBOOK, ASU_FRIENDSTER);
 
     private static final int USERS_PER_PARTITION = 100;
+    private static final int MIN_NUM_REPLICAS = 2;
 
     //TODO: commit this reenabled once it all works
 //    @Test
@@ -39,16 +40,25 @@ public class Analyzer {
         for(String filename : filenames) {
             System.out.println(filename);
             Map<Long, Set<Long>> friendships = TestUtils.extractFriendshipsFromFile(filename);
+
+            Set<Long> pids = new HashSet<Long>();
+            for(long pid = 0; pid < friendships.size() / USERS_PER_PARTITION; pid++) {
+                pids.add(pid);
+            }
+            Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
+            Map<Long, Set<Long>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
+
+
             System.out.println("Starting Ja-be-Ja");
-            JabejaManager jabejaManager = initJabejaManager(friendships);
+            JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
             System.out.println("Starting Hermes");
-            HermesManager hermesManager = initHermesManager(friendships);
+            HermesManager hermesManager = initHermesManager(friendships, partitions);
             System.out.println("Starting SPAR");
-            SparManager sparManager = initSparManager(friendships);
+            SparManager sparManager = initSparManager(friendships, partitions, replicas);
             System.out.println("Starting Spaja");
-            SpajaManager spajaManager = initSpajaManager(friendships);
+            SpajaManager spajaManager = initSpajaManager(friendships, partitions, replicas);
             System.out.println("Starting Sparmes");
-            SparmesManager sparmesManager = initSparmesManager(friendships);
+            SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
             JabejaMiddleware  jabejaMiddleware  = initJabejaMiddleware(jabejaManager);
             HermesMiddleware  hermesMiddleware  = initHermesMiddleware(hermesManager);
@@ -84,40 +94,40 @@ public class Analyzer {
         }
     }
 
-    private SparManager initSparManager(Map<Long, Set<Long>> friendships) {
-        return SparTestUtils.initGraph(2, friendships.size() / USERS_PER_PARTITION, friendships);
+    private SparManager initSparManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> replicas) {
+        return SparTestUtils.initGraph(2, partitions, friendships, replicas);
     }
 
     private SparMiddleware initSparMiddleware(SparManager manager) {
         return new SparMiddleware(manager);
     }
 
-    private HermesManager initHermesManager(Map<Long, Set<Long>> friendships) throws Exception {
-        return HermesTestUtils.initGraph(1.2, friendships.size() / USERS_PER_PARTITION, friendships);
+    private HermesManager initHermesManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions) throws Exception {
+        return HermesTestUtils.initGraph(1.2, partitions, friendships);
     }
 
     private HermesMiddleware initHermesMiddleware(HermesManager manager) {
         return new HermesMiddleware(manager, 1.2);
     }
 
-    private JabejaManager initJabejaManager(Map<Long, Set<Long>> friendships) throws Exception {
-        return JabejaTestUtils.initGraph(1.5, 2D, 0.2D, 9, friendships.size() / USERS_PER_PARTITION, friendships);
+    private JabejaManager initJabejaManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions) throws Exception {
+        return JabejaTestUtils.initGraph(1.5, 2D, 0.2D, 9, partitions, friendships);
     }
 
     private JabejaMiddleware initJabejaMiddleware(JabejaManager manager) {
         return new JabejaMiddleware(manager);
     }
 
-    private SpajaManager initSpajaManager(Map<Long, Set<Long>> friendships) {
-        return SpajaTestUtils.initGraph(2, 1.5, 2D, 0.2D, 9, friendships.size() / USERS_PER_PARTITION, friendships);
+    private SpajaManager initSpajaManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> replicas) {
+        return SpajaTestUtils.initGraph(2, 1.5, 2D, 0.2D, 9, partitions, friendships, replicas);
     }
 
     private SpajaMiddleware initSpajaMiddleware(SpajaManager manager) {
         return new SpajaMiddleware(manager);
     }
 
-    private SparmesManager initSparmesManager(Map<Long, Set<Long>> friendships) {
-        return SparmesTestUtils.initGraph(2, 1.2, friendships.size() / USERS_PER_PARTITION, friendships);
+    private SparmesManager initSparmesManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> replicas) {
+        return SparmesTestUtils.initGraph(2, 1.2, partitions, friendships, replicas);
     }
 
     private SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {
