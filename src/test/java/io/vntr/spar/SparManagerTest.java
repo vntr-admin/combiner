@@ -27,22 +27,22 @@ public class SparManagerTest {
 
         assertTrue(manager.getNumUsers() == 0);
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
         assertTrue(manager.getNumUsers() == 1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
         assertTrue(manager.getNumUsers() == 2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
@@ -53,19 +53,19 @@ public class SparManagerTest {
     @Test
     public void testGetAllPartitionIds() {
         SparManager manager = new SparManager(2);
-        Long firstId = manager.addPartition();
+        Integer firstId = manager.addPartition();
         SparPartition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
-        Long secondId = manager.addPartition();
+        Integer secondId = manager.addPartition();
         SparPartition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
-        Long thirdId = manager.addPartition();
+        Integer thirdId = manager.addPartition();
         SparPartition thirdPartition = manager.getPartitionById(thirdId);
         assertTrue(thirdPartition.getId().equals(thirdId));
 
-        Long fourthId = manager.addPartition();
+        Integer fourthId = manager.addPartition();
         SparPartition fourthPartition = manager.getPartitionById(fourthId);
         assertTrue(fourthPartition.getId().equals(fourthId));
 
@@ -76,7 +76,7 @@ public class SparManagerTest {
         assertNotEquals(secondId, fourthId);
         assertNotEquals(thirdId, fourthId);
 
-        Set<Long> partitionIds = manager.getAllPartitionIds();
+        Set<Integer> partitionIds = manager.getAllPartitionIds();
 
         assertTrue(partitionIds.size() == 4);
         assertTrue(partitionIds.contains(firstId));
@@ -88,19 +88,19 @@ public class SparManagerTest {
     @Test
     public void testAddUser() {
         SparManager manager = new SparManager(2);
-        Long firstId = manager.addPartition();
+        Integer firstId = manager.addPartition();
         SparPartition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
-        Long secondId = manager.addPartition();
+        Integer secondId = manager.addPartition();
         SparPartition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
-        Long thirdId = manager.addPartition();
+        Integer thirdId = manager.addPartition();
         SparPartition thirdPartition = manager.getPartitionById(thirdId);
         assertTrue(thirdPartition.getId().equals(thirdId));
 
-        Long fourthId = manager.addPartition();
+        Integer fourthId = manager.addPartition();
         SparPartition fourthPartition = manager.getPartitionById(fourthId);
         assertTrue(fourthPartition.getId().equals(fourthId));
 
@@ -111,7 +111,7 @@ public class SparManagerTest {
         assertNotEquals(secondId, fourthId);
         assertNotEquals(thirdId, fourthId);
 
-        Long userId = 23L;
+        Integer userId = 23;
         User user = new User("Anita", userId);
         manager.addUser(user);
 
@@ -120,7 +120,7 @@ public class SparManagerTest {
         assertEquals(sparUser.getId(), user.getId());
 
         assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = sparUser.getReplicaPartitionIds().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
@@ -136,28 +136,28 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             assertTrue(partition.getNumMasters() == 0 || partition.getNumMasters() == 1);
         }
 
-        for (Long userId : userIdToUserMap.keySet()) {
+        for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
             assertEquals(sparUser.getName(), user.getName());
@@ -165,7 +165,7 @@ public class SparManagerTest {
             assertEquals(sparUser.getPartitionId(), sparUser.getMasterPartitionId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
-            for (Long partitionId : manager.getAllPartitionIds()) {
+            for (Integer partitionId : manager.getAllPartitionIds()) {
                 SparPartition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = sparUser.getReplicaPartitionIds().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
@@ -188,21 +188,21 @@ public class SparManagerTest {
 
         assertNull(manager.getUserMasterById(userId1));
 
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             assertFalse(partition.getIdsOfMasters().contains(userId1));
             assertFalse(partition.getIdsOfReplicas().contains(userId1));
         }
 
         userIdToUserMap.remove(userId1);
-        for (Long userId : userIdToUserMap.keySet()) {
+        for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
             assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
-            for (Long partitionId : manager.getAllPartitionIds()) {
+            for (Integer partitionId : manager.getAllPartitionIds()) {
                 SparPartition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = sparUser.getReplicaPartitionIds().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
@@ -214,11 +214,11 @@ public class SparManagerTest {
     @Test
     public void testAddPartition() {
         SparManager manager = new SparManager(2);
-        Long firstId = manager.addPartition();
+        Integer firstId = manager.addPartition();
         SparPartition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
-        Long secondId = manager.addPartition();
+        Integer secondId = manager.addPartition();
         SparPartition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
@@ -228,21 +228,21 @@ public class SparManagerTest {
     @Test
     public void testRemovePartition() {
         SparManager manager = new SparManager(2);
-        Long firstId = manager.addPartition();
+        Integer firstId = manager.addPartition();
         SparPartition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
-        Long secondId = manager.addPartition();
+        Integer secondId = manager.addPartition();
         SparPartition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
-        Long thirdId = manager.addPartition();
+        Integer thirdId = manager.addPartition();
         SparPartition thirdPartition = manager.getPartitionById(thirdId);
         assertTrue(thirdPartition.getId().equals(thirdId));
 
         manager.removePartition(secondId);
 
-        Set<Long> partitionIds = manager.getAllPartitionIds();
+        Set<Integer> partitionIds = manager.getAllPartitionIds();
         assertTrue(partitionIds.size() == 2);
         assertTrue(partitionIds.contains(firstId));
         assertTrue(partitionIds.contains(thirdId));
@@ -256,31 +256,31 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
 
-        for (Long userId : userIdToUserMap.keySet()) {
+        for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
             assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
-            for (Long partitionId : manager.getAllPartitionIds()) {
+            for (Integer partitionId : manager.getAllPartitionIds()) {
                 SparPartition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = sparUser.getReplicaPartitionIds().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
@@ -291,12 +291,12 @@ public class SparManagerTest {
         assertTrue(manager.getNumUsers() == 3);
 
         SparUser sparUser1 = manager.getUserMasterById(userId1);
-        Long newPartitionId = manager.getRandomPartitionIdWhereThisUserIsNotPresent(sparUser1);
+        Integer newPartitionId = manager.getRandomPartitionIdWhereThisUserIsNotPresent(sparUser1);
         assertFalse(sparUser1.getReplicaPartitionIds().contains(newPartitionId));
         manager.addReplica(manager.getUserMasterById(userId1), newPartitionId);
 
         assertTrue(sparUser1.getReplicaPartitionIds().size() == manager.getMinNumReplicas() + 1);
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = sparUser1.getReplicaPartitionIds().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
@@ -312,31 +312,31 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
 
-        for (Long userId : userIdToUserMap.keySet()) {
+        for (Integer userId : userIdToUserMap.keySet()) {
             User user = userIdToUserMap.get(userId);
             SparUser sparUser = manager.getUserMasterById(userId);
             assertEquals(sparUser.getName(), user.getName());
             assertEquals(sparUser.getId(), user.getId());
 
             assertTrue(sparUser.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
-            for (Long partitionId : manager.getAllPartitionIds()) {
+            for (Integer partitionId : manager.getAllPartitionIds()) {
                 SparPartition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = sparUser.getReplicaPartitionIds().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
@@ -347,27 +347,27 @@ public class SparManagerTest {
         assertTrue(manager.getNumUsers() == 3);
 
         SparUser sparUser1 = manager.getUserMasterById(userId1);
-        Long newPartitionId = manager.getRandomPartitionIdWhereThisUserIsNotPresent(sparUser1);
+        Integer newPartitionId = manager.getRandomPartitionIdWhereThisUserIsNotPresent(sparUser1);
         assertFalse(sparUser1.getReplicaPartitionIds().contains(newPartitionId));
         manager.addReplica(manager.getUserMasterById(userId1), newPartitionId);
 
         assertTrue(sparUser1.getReplicaPartitionIds().size() == manager.getMinNumReplicas() + 1);
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = sparUser1.getReplicaPartitionIds().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
             assertTrue(containsReplica == shouldContainReplica);
         }
 
-        Set<Long> replicaSetCopy = new HashSet<Long>(sparUser1.getReplicaPartitionIds());
+        Set<Integer> replicaSetCopy = new HashSet<Integer>(sparUser1.getReplicaPartitionIds());
         replicaSetCopy.remove(newPartitionId);
-        Long replicaPartitionToRemove = replicaSetCopy.iterator().next();
+        Integer replicaPartitionToRemove = replicaSetCopy.iterator().next();
 
         manager.removeReplica(sparUser1, replicaPartitionToRemove);
 
         assertFalse(sparUser1.getReplicaPartitionIds().contains(replicaPartitionToRemove));
         assertTrue(sparUser1.getReplicaPartitionIds().size() == manager.getMinNumReplicas());
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = sparUser1.getReplicaPartitionIds().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
@@ -384,18 +384,18 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
@@ -405,27 +405,27 @@ public class SparManagerTest {
 
         manager.befriend(sparUser3, sparUser1);
 
-        Long oldPartitionId = sparUser1.getMasterPartitionId();
-        Set<Long> oldReplicaIds = sparUser1.getReplicaPartitionIds();
+        Integer oldPartitionId = sparUser1.getMasterPartitionId();
+        Set<Integer> oldReplicaIds = sparUser1.getReplicaPartitionIds();
 
         //Check that the partitions are correct
         assertNotNull(manager.getPartitionById(oldPartitionId).getMasterById(userId1));
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             if (!partitionId.equals(oldPartitionId)) {
                 assertNull(manager.getPartitionById(partitionId).getMasterById(userId1));
             }
         }
 
         //Check that the replicas are correct:
-        for (Long partitionId : sparUser1.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertEquals(replica.getMasterPartitionId(), oldPartitionId);
             assertEquals(replica.getReplicaPartitionIds(), oldReplicaIds);
         }
 
-        Long newPartitionId = manager.getPartitionIdWithFewestMasters();
-        Set<Long> replicasToAddInDestinationPartition = new HashSet<Long>();
-        for (Long friendId : sparUser1.getFriendIDs()) {
+        Integer newPartitionId = manager.getPartitionIdWithFewestMasters();
+        Set<Integer> replicasToAddInDestinationPartition = new HashSet<Integer>();
+        for (Integer friendId : sparUser1.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);
             if (!friend.getMasterPartitionId().equals(newPartitionId) && !friend.getReplicaPartitionIds().contains(newPartitionId)) {
                 replicasToAddInDestinationPartition.add(friendId);
@@ -433,11 +433,11 @@ public class SparManagerTest {
         }
 
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
-        Set<Long> replicasToDeleteInSourcePartition = new HashSet<Long>(strategy.findReplicasInMovingPartitionToDelete(sparUser1, replicasToAddInDestinationPartition));
+        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<Integer>(strategy.findReplicasInMovingPartitionToDelete(sparUser1, replicasToAddInDestinationPartition));
         manager.moveUser(sparUser1, newPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
 
         SparUser sparUser1Again = manager.getUserMasterById(userId1);
-        Set<Long> expectedReplicaIds = new HashSet<Long>(oldReplicaIds);
+        Set<Integer> expectedReplicaIds = new HashSet<Integer>(oldReplicaIds);
         expectedReplicaIds.remove(newPartitionId);
         assertEquals(expectedReplicaIds, sparUser1Again.getReplicaPartitionIds());
         assertEquals(newPartitionId, sparUser1Again.getMasterPartitionId());
@@ -445,14 +445,14 @@ public class SparManagerTest {
 
         //Check that the partitions are correct
         assertNotNull(manager.getPartitionById(newPartitionId).getMasterById(userId1));
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             if (!partitionId.equals(newPartitionId)) {
                 assertNull(manager.getPartitionById(partitionId).getMasterById(userId1));
             }
         }
 
         //Check that the replicas are correct:
-        for (Long partitionId : sparUser1Again.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1Again.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertEquals(replica.getMasterPartitionId(), newPartitionId);
             assertEquals(replica.getReplicaPartitionIds(), expectedReplicaIds);
@@ -468,18 +468,18 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
@@ -495,12 +495,12 @@ public class SparManagerTest {
         assertTrue(sparUser1.getFriendIDs().contains(userId3));
         assertTrue(sparUser3.getFriendIDs().contains(userId1));
 
-        for (Long partitionId : sparUser1.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertTrue(replica.getFriendIDs().contains(userId3));
         }
 
-        for (Long partitionId : sparUser3.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser3.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId3);
             assertTrue(replica.getFriendIDs().contains(userId1));
         }
@@ -515,18 +515,18 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
@@ -546,18 +546,18 @@ public class SparManagerTest {
         assertTrue(sparUser2.getFriendIDs().contains(userId1));
         assertTrue(sparUser3.getFriendIDs().contains(userId1));
 
-        for (Long partitionId : sparUser1.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertTrue(replica.getFriendIDs().contains(userId3));
             assertTrue(replica.getFriendIDs().contains(userId2));
         }
 
-        for (Long partitionId : sparUser2.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser2.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId2);
             assertTrue(replica.getFriendIDs().contains(userId1));
         }
 
-        for (Long partitionId : sparUser3.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser3.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId3);
             assertTrue(replica.getFriendIDs().contains(userId1));
         }
@@ -569,18 +569,18 @@ public class SparManagerTest {
         assertFalse(sparUser2.getFriendIDs().contains(userId1));
         assertTrue(sparUser3.getFriendIDs().contains(userId1));
 
-        for (Long partitionId : sparUser1.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertTrue(replica.getFriendIDs().contains(userId3));
             assertFalse(replica.getFriendIDs().contains(userId2));
         }
 
-        for (Long partitionId : sparUser2.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser2.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId2);
             assertFalse(replica.getFriendIDs().contains(userId1));
         }
 
-        for (Long partitionId : sparUser3.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser3.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId3);
             assertTrue(replica.getFriendIDs().contains(userId1));
         }
@@ -595,44 +595,44 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
         SparUser sparUser1 = manager.getUserMasterById(userId1);
-        Long user1OriginalMasterPartitionId = sparUser1.getMasterPartitionId();
-        Set<Long> user1OriginalReplicaIds = new HashSet<Long>(sparUser1.getReplicaPartitionIds());
+        Integer user1OriginalMasterPartitionId = sparUser1.getMasterPartitionId();
+        Set<Integer> user1OriginalReplicaIds = new HashSet<Integer>(sparUser1.getReplicaPartitionIds());
 
-        for (Long partitionId : sparUser1.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertEquals(replica.getMasterPartitionId(), user1OriginalMasterPartitionId);
             assertEquals(replica.getReplicaPartitionIds(), user1OriginalReplicaIds);
         }
 
-        Long user1NewMasterPartitionId = sparUser1.getReplicaPartitionIds().iterator().next();
+        Integer user1NewMasterPartitionId = sparUser1.getReplicaPartitionIds().iterator().next();
         assertNotEquals(user1NewMasterPartitionId, user1OriginalMasterPartitionId);
         manager.promoteReplicaToMaster(userId1, user1NewMasterPartitionId);
 
-        Set<Long> user1NewReplicaIds = new HashSet<Long>(user1OriginalReplicaIds);
+        Set<Integer> user1NewReplicaIds = new HashSet<Integer>(user1OriginalReplicaIds);
         user1NewReplicaIds.remove(user1NewMasterPartitionId);
         SparUser sparUser1Again = manager.getUserMasterById(userId1);
         assertEquals(sparUser1Again.getMasterPartitionId(), user1NewMasterPartitionId);
         assertEquals(sparUser1Again.getPartitionId(), user1NewMasterPartitionId);
         assertEquals(sparUser1Again.getReplicaPartitionIds(), user1NewReplicaIds);
 
-        for (Long partitionId : sparUser1Again.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser1Again.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertEquals(replica.getMasterPartitionId(), user1NewMasterPartitionId);
             assertEquals(replica.getReplicaPartitionIds(), user1NewReplicaIds);
@@ -652,24 +652,24 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Long, User> userIdToUserMap = new HashMap<Long, User>();
-        Long userId1 = 23L;
+        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Integer userId1 = 23;
         User user1 = new User("Anita", userId1);
         manager.addUser(user1);
         userIdToUserMap.put(userId1, user1);
 
-        Long userId2 = 15L;
+        Integer userId2 = 15;
         User user2 = new User("Bob", userId2);
         manager.addUser(user2);
         userIdToUserMap.put(userId2, user2);
 
-        Long userId3 = 2L;
+        Integer userId3 = 2;
         User user3 = new User("Carol", userId3);
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
-        Set<Long> partitionsWithoutThisUser = new HashSet<Long>();
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        Set<Integer> partitionsWithoutThisUser = new HashSet<Integer>();
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             if (!partition.getIdsOfMasters().contains(userId1) && !partition.getIdsOfReplicas().contains(userId1)) {
                 partitionsWithoutThisUser.add(partitionId);
@@ -677,7 +677,7 @@ public class SparManagerTest {
         }
 
         SparUser sparUser1 = manager.getUserMasterById(userId1);
-        Long partitionIdWhereThisUserIsNotPresent = manager.getRandomPartitionIdWhereThisUserIsNotPresent(sparUser1);
+        Integer partitionIdWhereThisUserIsNotPresent = manager.getRandomPartitionIdWhereThisUserIsNotPresent(sparUser1);
         assertTrue(partitionsWithoutThisUser.contains(partitionIdWhereThisUserIsNotPresent));
     }
 
@@ -686,10 +686,10 @@ public class SparManagerTest {
         SparManager manager = new SparManager(2);
         manager.addPartition();
         manager.addPartition();
-        Long thirdPartitionId = manager.addPartition();
+        Integer thirdPartitionId = manager.addPartition();
         manager.addPartition();
         manager.addPartition();
-        Set<Long> initialReplicaLocations = manager.getPartitionsToAddInitialReplicas(thirdPartitionId);
+        Set<Integer> initialReplicaLocations = manager.getPartitionsToAddInitialReplicas(thirdPartitionId);
 
         assertFalse(initialReplicaLocations.contains(thirdPartitionId));
     }
@@ -702,49 +702,49 @@ public class SparManagerTest {
     @Test
     public void testGetEdgeCut() {
         int minNumReplicas = 0;
-        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        partitions.put(1L, initSet( 1L,  2L,  3L,  4L,  5L,  6L,  7L));
-        partitions.put(2L, initSet( 8L,  9L, 10L, 11L, 12L, 13L, 14L));
-        partitions.put(3L, initSet(15L, 16L, 17L, 18L,  19L, 20L));
+        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
+        partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
+        partitions.put(3, initSet(15, 16, 17, 18,  19, 20));
 
-        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
-        friendships.put( 1L, initSet( 2L,  4L,  6L,  8L, 10L, 12L, 14L, 16L, 18L, 20L));
-        friendships.put( 2L, initSet( 3L,  6L,  9L, 12L, 15L, 18L));
-        friendships.put( 3L, initSet( 4L,  8L, 12L, 16L, 20L));
-        friendships.put( 4L, initSet( 5L, 10L, 15L));
-        friendships.put( 5L, initSet( 6L, 12L, 18L));
-        friendships.put( 6L, initSet( 7L, 14L));
-        friendships.put( 7L, initSet( 8L, 16L));
-        friendships.put( 8L, initSet( 9L, 18L));
-        friendships.put( 9L, initSet(10L, 20L));
-        friendships.put(10L, initSet(11L));
-        friendships.put(11L, initSet(12L));
-        friendships.put(12L, initSet(13L));
-        friendships.put(13L, initSet(14L));
-        friendships.put(14L, initSet(15L));
-        friendships.put(15L, initSet(16L));
-        friendships.put(16L, initSet(17L));
-        friendships.put(17L, initSet(18L));
-        friendships.put(18L, initSet(19L));
-        friendships.put(19L, initSet(20L));
-        friendships.put(20L, Collections.<Long>emptySet());
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
+        friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
+        friendships.put( 3, initSet( 4,  8, 12, 16, 20));
+        friendships.put( 4, initSet( 5, 10, 15));
+        friendships.put( 5, initSet( 6, 12, 18));
+        friendships.put( 6, initSet( 7, 14));
+        friendships.put( 7, initSet( 8, 16));
+        friendships.put( 8, initSet( 9, 18));
+        friendships.put( 9, initSet(10, 20));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, initSet(14));
+        friendships.put(14, initSet(15));
+        friendships.put(15, initSet(16));
+        friendships.put(16, initSet(17));
+        friendships.put(17, initSet(18));
+        friendships.put(18, initSet(19));
+        friendships.put(19, initSet(20));
+        friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Long, Set<Long>> replicaPartitions = new HashMap<Long, Set<Long>>();
-        replicaPartitions.put(1L, Collections.<Long>emptySet());
-        replicaPartitions.put(2L, Collections.<Long>emptySet());
-        replicaPartitions.put(3L, Collections.<Long>emptySet());
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        replicaPartitions.put(1, Collections.<Integer>emptySet());
+        replicaPartitions.put(2, Collections.<Integer>emptySet());
+        replicaPartitions.put(3, Collections.<Integer>emptySet());
 
         SparManager manager = SparTestUtils.initGraph(minNumReplicas+1, partitions, friendships, replicaPartitions);
 
-        assertEquals(manager.getEdgeCut(), (Long) 25L);
+        assertEquals(manager.getEdgeCut(), (Integer) 25);
 
-        replicaPartitions.put(1L, initSet(15L, 16L, 17L, 18L,  19L, 20L));
-        replicaPartitions.put(2L, initSet( 1L,  2L,  3L,  4L,  5L,  6L,  7L));
-        replicaPartitions.put(3L, initSet( 8L,  9L, 10L, 11L, 12L, 13L, 14L));
+        replicaPartitions.put(1, initSet(15, 16, 17, 18,  19, 20));
+        replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5,  6,  7));
+        replicaPartitions.put(3, initSet( 8,  9, 10, 11, 12, 13, 14));
 
         manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicaPartitions);
 
-        assertEquals(manager.getEdgeCut(), (Long) 25L);
+        assertEquals(manager.getEdgeCut(), (Integer) 25);
     }
 
 

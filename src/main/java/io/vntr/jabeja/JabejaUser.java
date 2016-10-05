@@ -12,11 +12,11 @@ import java.util.Set;
 public class JabejaUser extends User {
 
     private double alpha;
-    private Long pid;
+    private Integer pid;
     private JabejaManager manager;
     private Set<JabejaUser> friends;
 
-    public JabejaUser(String name, Long id, Long initialPid, double alpha, JabejaManager manager) {
+    public JabejaUser(String name, Integer id, Integer initialPid, double alpha, JabejaManager manager) {
         super(name, id);
         this.pid = initialPid;
         this.alpha = alpha;
@@ -25,22 +25,22 @@ public class JabejaUser extends User {
     }
 
     @Override
-    public void befriend(Long friendId) {
+    public void befriend(Integer friendId) {
         super.befriend(friendId);
         friends.add(manager.getUser(friendId));
     }
 
     @Override
-    public void unfriend(Long friendId) {
+    public void unfriend(Integer friendId) {
         super.unfriend(friendId);
         friends.remove(manager.getUser(friendId));
     }
 
-    public Long getPid() {
+    public Integer getPid() {
         return pid;
     }
 
-    public void setPid(Long pid) {
+    public void setPid(Integer pid) {
         this.pid = pid;
     }
 
@@ -49,7 +49,7 @@ public class JabejaUser extends User {
         double bestScore = 0d;
 
         for(JabejaUser partner : users) {
-            Long theirPid = partner.getPid();
+            Integer theirPid = partner.getPid();
 
             int myNeighborsOnMine      = this.getNeighborsOnPartition(pid);
             int myNeighborsOnTheirs    = this.getNeighborsOnPartition(theirPid);
@@ -68,9 +68,9 @@ public class JabejaUser extends User {
         return bestPartner;
     }
 
-    public int getNeighborsOnPartition(Long pid) {
+    public int getNeighborsOnPartition(Integer pid) {
         int count = 0;
-        for(Long friendId : getFriendIDs()) {
+        for(Integer friendId : getFriendIDs()) {
             count += manager.getPartitionForUser(friendId).equals(pid) ? 1 : 0;
         }
 

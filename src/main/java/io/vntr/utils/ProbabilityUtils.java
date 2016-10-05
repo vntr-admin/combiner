@@ -4,10 +4,10 @@ import java.util.*;
 
 public class ProbabilityUtils
 {
-	public static Set<Long> getKDistinctValuesBetweenMandNInclusive(long k, long m, long n)
+	public static Set<Integer> getKDistinctValuesBetweenMandNInclusive(int k, int m, int n)
 	{
-		List<Long> tempList = new LinkedList<Long>();
-		for(long i = m; i <= n; i++)
+		List<Integer> tempList = new LinkedList<Integer>();
+		for(int i = m; i <= n; i++)
 		{
 			tempList.add(i);
 		}
@@ -15,16 +15,16 @@ public class ProbabilityUtils
 		return getKDistinctValuesFromList(k, tempList);
 	}
 
-	public static Set<Long> getKDistinctValuesFromList(long k, Collection<Long> set)
+	public static Set<Integer> getKDistinctValuesFromList(int k, Collection<Integer> set)
 	{
-		return getKDistinctValuesFromList(k, new LinkedList<Long>(set));
+		return getKDistinctValuesFromList(k, new LinkedList<Integer>(set));
 	}
 
-	public static Set<Long> getKDistinctValuesFromList(long k, List<Long> list)
+	public static Set<Integer> getKDistinctValuesFromList(int k, List<Integer> list)
 	{
-		List<Long> tempList = new LinkedList<Long>(list);
+		List<Integer> tempList = new LinkedList<Integer>(list);
 //		Collections.copy(tempList, list);
-		Set<Long> returnSet = new HashSet<Long>();
+		Set<Integer> returnSet = new HashSet<Integer>();
 		for(int i=0; i<k; i++)
 		{
 			int index = (int)(Math.random() * tempList.size());

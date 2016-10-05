@@ -26,17 +26,17 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Long userId) {
+    public void removeUser(Integer userId) {
         manager.removeUser(userId);
     }
 
     @Override
-    public void befriend(Long smallerUserId, Long largerUserId) {
+    public void befriend(Integer smallerUserId, Integer largerUserId) {
         manager.befriend(smallerUserId, largerUserId);
     }
 
     @Override
-    public void unfriend(Long smallerUserId, Long largerUserId) {
+    public void unfriend(Integer smallerUserId, Integer largerUserId) {
         manager.unfriend(smallerUserId, largerUserId);
     }
 
@@ -46,34 +46,34 @@ public class HermesMiddleware  implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removePartition(Long partitionId) {
+    public void removePartition(Integer partitionId) {
         migrator.migrateOffPartition(partitionId);
         manager.removePartition(partitionId);
     }
 
     @Override
-    public Long getNumberOfPartitions() {
-        return (long) manager.getAllPartitionIds().size();
+    public Integer getNumberOfPartitions() {
+        return (int) manager.getAllPartitionIds().size();
     }
 
     @Override
-    public Long getNumberOfUsers() {
+    public Integer getNumberOfUsers() {
         return manager.getNumUsers();
     }
 
     @Override
-    public Long getEdgeCut() {
+    public Integer getEdgeCut() {
         return manager.getEdgeCut();
     }
 
     @Override
-    public Map<Long, Set<Long>> getPartitionToUserMap() {
+    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         return manager.getPartitionToUserMap();
     }
 
     @Override
-    public Long getReplicationCount() {
-        return 0L; //Hermes does not replicate
+    public Integer getReplicationCount() {
+        return 0; //Hermes does not replicate
     }
 
     @Override

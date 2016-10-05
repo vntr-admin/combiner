@@ -22,24 +22,24 @@ public class HermesMiddlewareTest {
         int numPartitions = 10;
 
         double gamma = 1.5;
-        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1, 0.1);
-        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        for(long pid=0L; pid<numPartitions; pid++) {
-            partitions.put(pid, new HashSet<Long>());
+        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1, 0.1);
+        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        for(int pid=0; pid<numPartitions; pid++) {
+            partitions.put(pid, new HashSet<Integer>());
         }
-        for(long uid=0L; uid<numUsers; uid++) {
+        for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
         HermesManager manager = HermesTestUtils.initGraph(gamma, partitions, friendships);
         HermesMiddleware middleware = new HermesMiddleware(manager, gamma);
-        middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1L, 0L, (long) (numPartitions - 1)).iterator().next());
-        for(Long uid : friendships.keySet()) {
+        middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (int) (numPartitions - 1)).iterator().next());
+        for(Integer uid : friendships.keySet()) {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
         }
 
-        Map<Long, Set<Long>> finalTopology = manager.getPartitionToUserMap();
-        Set<Long> observedUsers = new HashSet<Long>();
-        for(Long pid : finalTopology.keySet()) {
+        Map<Integer, Set<Integer>> finalTopology = manager.getPartitionToUserMap();
+        Set<Integer> observedUsers = new HashSet<Integer>();
+        for(Integer pid : finalTopology.keySet()) {
             observedUsers.addAll(finalTopology.get(pid));
         }
 

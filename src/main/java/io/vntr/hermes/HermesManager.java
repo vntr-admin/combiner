@@ -12,84 +12,84 @@ import org.apache.log4j.Logger;
 public class HermesManager {
     final static Logger logger = Logger.getLogger(HermesManager.class);
 
-    private NavigableMap<Long, HermesPartition> pMap;
-    private Map<Long, Long> uMap;
+    private NavigableMap<Integer, HermesPartition> pMap;
+    private Map<Integer, Integer> uMap;
     private double gamma;
 
-    private static final long defaultStartingPid = 1L;
+    private static final int defaultStartingPid = 1;
 
     public HermesManager(double gamma) {
         this.gamma = gamma;
-        pMap = new TreeMap<Long, HermesPartition>();
-        uMap = new HashMap<Long, Long>();
+        pMap = new TreeMap<Integer, HermesPartition>();
+        uMap = new HashMap<Integer, Integer>();
     }
 
     public void addUser(User user) {
-        Long initialPid = getInitialPartitionId();
+        Integer initialPid = getInitialPartitionId();
         HermesUser hermesUser = new HermesUser(user.getId(), user.getName(), initialPid, gamma, this);
         addUser(hermesUser);
     }
 
     void addUser(HermesUser user) {
-        Long pid = user.getPhysicalPid();
+        Integer pid = user.getPhysicalPid();
         getPartitionById(pid).addUser(user);
         uMap.put(user.getId(), pid);
     }
 
-    public void removeUser(Long userId) {
-        Set<Long> friendIds = getUser(userId).getFriendIDs();
-        for(Long friendId : friendIds) {
+    public void removeUser(Integer userId) {
+        Set<Integer> friendIds = getUser(userId).getFriendIDs();
+        for(Integer friendId : friendIds) {
             unfriend(userId, friendId);
         }
         getPartitionById(getPartitionIdForUser(userId)).removeUser(userId);
         uMap.remove(userId);
     }
 
-    public void befriend(Long smallerUserId, Long largerUserId) {
+    public void befriend(Integer smallerUserId, Integer largerUserId) {
         getUser(smallerUserId).befriend(largerUserId);
         getUser(largerUserId).befriend(smallerUserId);
     }
 
-    public void unfriend(Long smallerUserId, Long largerUserId) {
+    public void unfriend(Integer smallerUserId, Integer largerUserId) {
         getUser(smallerUserId).unfriend(largerUserId);
         getUser(largerUserId).unfriend(smallerUserId);
     }
 
-    public Long addPartition() {
-        Long pid = pMap.isEmpty() ? defaultStartingPid : pMap.lastKey() + 1L;
+    public Integer addPartition() {
+        Integer pid = pMap.isEmpty() ? defaultStartingPid : pMap.lastKey() + 1;
         addPartition(pid);
         return pid;
     }
 
-    void addPartition(Long id) {
+    void addPartition(Integer id) {
         pMap.put(id, new HermesPartition(id, gamma, this));
     }
 
-    public void removePartition(Long pid) {
+    public void removePartition(Integer pid) {
         pMap.remove(pid);
     }
 
-    public Set<Long> getAllPartitionIds() {
+    public Set<Integer> getAllPartitionIds() {
         return pMap.keySet();
     }
 
-    public HermesPartition getPartitionById(Long pid) {
+    public HermesPartition getPartitionById(Integer pid) {
         return pMap.get(pid);
     }
 
-    public Long getPartitionIdForUser(Long uid) {
+    public Integer getPartitionIdForUser(Integer uid) {
         return uMap.get(uid);
     }
 
-    private Map<Long, Set<Long>> getFriendshipMap() {
-        Map<Long, Set<Long>> friendshipMap = new HashMap<Long, Set<Long>>();
-        for(Long uid : uMap.keySet()) {
-            friendshipMap.put(uid, new HashSet<Long>());
+    private Map<Integer, Set<Integer>> getFriendshipMap() {
+        Map<Integer, Set<Integer>> friendshipMap = new HashMap<Integer, Set<Integer>>();
+        for(Integer uid : uMap.keySet()) {
+            friendshipMap.put(uid, new HashSet<Integer>());
         }
-        for(Long uid : friendshipMap.keySet()) {
-            for(Long friendId : getUser(uid).getFriendIDs())
+        for(Integer uid : friendshipMap.keySet()) {
+            for(Integer friendId : getUser(uid).getFriendIDs())
             {
-                if(uid.longValue() < friendId.longValue()) {
+                if(uid.intValue() < friendId.intValue()) {
                     friendshipMap.get(uid).add(friendId);
                 }
             }
@@ -117,10 +117,10 @@ public class HermesManager {
         }
         System.out.println("Number of iterations: " + iteration);
 
-        Map<Long, Long> usersWhoMoved = new HashMap<Long, Long>();
+        Map<Integer, Integer> usersWhoMoved = new HashMap<Integer, Integer>();
         for (HermesPartition p : pMap.values()) {
-            Set<Long> moved = p.physicallyMigrateCopy();
-            for(Long uid : moved) {
+            Set<Integer> moved = p.physicallyMigrateCopy();
+            for(Integer uid : moved) {
                 usersWhoMoved.put(uid, p.getId());
             }
         }
@@ -134,14 +134,14 @@ public class HermesManager {
 
     boolean performStage(boolean firstStage, int k) {
         boolean changed = false;
-        Map<Long, Set<Target>> stageTargets = new HashMap<Long, Set<Target>>();
+        Map<Integer, Set<Target>> stageTargets = new HashMap<Integer, Set<Target>>();
         for (HermesPartition p : pMap.values()) {
             Set<Target> targets = p.getCandidates(firstStage, k);
             stageTargets.put(p.getId(), targets);
             changed |= !targets.isEmpty();
         }
 
-        for(Long pid : pMap.keySet()) {
+        for(Integer pid : pMap.keySet()) {
             for(Target target : stageTargets.get(pid)) {
                 migrateLogically(target);
             }
@@ -161,10 +161,10 @@ public class HermesManager {
     }
 
     void updateLogicalUsers() {
-        Long totalWeight = 0L;
-        Map<Long, Long> pToWeight = new HashMap<Long, Long>();
+        Integer totalWeight = 0;
+        Map<Integer, Integer> pToWeight = new HashMap<Integer, Integer>();
         for (HermesPartition p : pMap.values()) {
-            long weight = p.getNumLogicalUsers();
+            int weight = p.getNumLogicalUsers();
             totalWeight += weight;
             pToWeight.put(p.getId(), weight);
         }
@@ -175,17 +175,17 @@ public class HermesManager {
         }
 
         for(HermesPartition p : pMap.values()) {
-            for(Long logicalUid : p.getLogicalUserIds()) {
-                Map<Long, Long> updatedFriendCounts = getUser(logicalUid).getPToFriendCount();
+            for(Integer logicalUid : p.getLogicalUserIds()) {
+                Map<Integer, Integer> updatedFriendCounts = getUser(logicalUid).getPToFriendCount();
                 p.updateLogicalUserFriendCounts(logicalUid, updatedFriendCounts);
             }
         }
     }
 
-    Long getInitialPartitionId() {
-        Long minId = null;
+    Integer getInitialPartitionId() {
+        Integer minId = null;
         int minUsers = Integer.MAX_VALUE;
-        for(Long pid : pMap.keySet()) {
+        for(Integer pid : pMap.keySet()) {
             int numUsers = getPartitionById(pid).getNumUsers();
             if(numUsers < minUsers) {
                 minUsers = numUsers;
@@ -195,20 +195,20 @@ public class HermesManager {
         return minId;
     }
 
-    HermesUser getUser(Long uid) {
+    HermesUser getUser(Integer uid) {
         return getPartitionById(getPartitionIdForUser(uid)).getUserById(uid);
     }
 
-    public Long getNumUsers() {
-        return (long) uMap.size();
+    public Integer getNumUsers() {
+        return (int) uMap.size();
     }
 
-    public Long getEdgeCut() {
-        long count = 0;
-        for(Long uid : uMap.keySet()) {
+    public Integer getEdgeCut() {
+        int count = 0;
+        for(Integer uid : uMap.keySet()) {
             LogicalUser user = getUser(uid).getLogicalUser(true);
-            Map<Long, Long> pToFriendCount = user.getpToFriendCount();
-            for(Long pid : getAllPartitionIds()) {
+            Map<Integer, Integer> pToFriendCount = user.getpToFriendCount();
+            for(Integer pid : getAllPartitionIds()) {
                 if(!pid.equals(user.getPid()) && pToFriendCount.containsKey(pid)) {
                     count += pToFriendCount.get(pid);
                 }
@@ -218,23 +218,23 @@ public class HermesManager {
         return count / 2;
     }
 
-    public Map<Long,Set<Long>> getPartitionToUserMap() {
-        Map<Long,Set<Long>> map = new HashMap<Long, Set<Long>>();
-        for(Long pid : getAllPartitionIds()) {
+    public Map<Integer,Set<Integer>> getPartitionToUserMap() {
+        Map<Integer,Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        for(Integer pid : getAllPartitionIds()) {
             map.put(pid, getPartitionById(pid).getPhysicalUserIds());
         }
         return map;
     }
 
-    Map<Long,Set<Long>> getPartitionToLogicalUserMap() {
-        Map<Long,Set<Long>> map = new HashMap<Long, Set<Long>>();
-        for(Long pid : getAllPartitionIds()) {
+    Map<Integer,Set<Integer>> getPartitionToLogicalUserMap() {
+        Map<Integer,Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        for(Integer pid : getAllPartitionIds()) {
             map.put(pid, getPartitionById(pid).getLogicalUserIds());
         }
         return map;
     }
 
-    public void moveUser(Long uid, Long pid) {
+    public void moveUser(Integer uid, Integer pid) {
         HermesUser user = getUser(uid);
         uMap.put(uid, pid);
         getPartitionById(user.getPhysicalPid()).removeUser(uid);

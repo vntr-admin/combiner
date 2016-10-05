@@ -6,14 +6,14 @@ import java.util.Map;
  * Created by robertlindquist on 9/19/16.
  */
 public class LogicalUser {
-    private Long id;
-    private Long pid;
+    private Integer id;
+    private Integer pid;
     private double gamma;
-    private Map<Long, Long> pToFriendCount;
-    private Map<Long, Long> pToWeight;
-    private Long totalWeight;
+    private Map<Integer, Integer> pToFriendCount;
+    private Map<Integer, Integer> pToWeight;
+    private Integer totalWeight;
 
-    public LogicalUser(Long id, Long pid, double gamma, Map<Long, Long> pToFriendCount, Map<Long, Long> pToWeight, Long totalWeight) {
+    public LogicalUser(Integer id, Integer pid, double gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Integer totalWeight) {
         this.id = id;
         this.pid = pid;
         this.gamma = gamma;
@@ -22,47 +22,47 @@ public class LogicalUser {
         this.totalWeight = totalWeight;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public Map<Long, Long> getpToWeight() {
+    public Map<Integer, Integer> getpToWeight() {
         return pToWeight;
     }
 
-    public void setpToWeight(Map<Long, Long> pToWeight) {
+    public void setpToWeight(Map<Integer, Integer> pToWeight) {
         this.pToWeight = pToWeight;
     }
 
-    public Long getTotalWeight() {
+    public Integer getTotalWeight() {
         return totalWeight;
     }
 
-    public void setTotalWeight(Long totalWeight) {
+    public void setTotalWeight(Integer totalWeight) {
         this.totalWeight = totalWeight;
     }
 
-    public Long getPid() {
+    public Integer getPid() {
         return pid;
     }
 
-    public Map<Long, Long> getpToFriendCount() {
+    public Map<Integer, Integer> getpToFriendCount() {
         return pToFriendCount;
     }
 
     public Target getTargetPart(boolean firstStage) {
-        if(getImbalanceFactor(pid, -1L) < (2-gamma)) {
+        if(getImbalanceFactor(pid, -1) < (2-gamma)) {
             return new Target(id, null, null, 0);
         }
-        Long target = null;
+        Integer target = null;
         Integer maxGain = 0;
-        if(getImbalanceFactor(pid, 0L) > gamma) {
+        if(getImbalanceFactor(pid, 0) > gamma) {
             maxGain = Integer.MIN_VALUE;
         }
-        for(Long targetPid : pToFriendCount.keySet()) {
+        for(Integer targetPid : pToFriendCount.keySet()) {
             if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
                 int gain = (int) (pToFriendCount.get(targetPid) - pToFriendCount.get(pid));
-                if(gain > maxGain && getImbalanceFactor(targetPid, 1L) < gamma) {
+                if(gain > maxGain && getImbalanceFactor(targetPid, 1) < gamma) {
                     target = targetPid;
                     maxGain = gain;
                 }
@@ -71,7 +71,7 @@ public class LogicalUser {
         return new Target(id, target, pid, maxGain);
     }
 
-    private double getImbalanceFactor(Long pId, Long offset) {
+    private double getImbalanceFactor(Integer pId, Integer offset) {
         double partitionWeight = pToWeight.get(pId) + offset;
         double averageWeight = ((double) totalWeight) / pToWeight.keySet().size();
         return partitionWeight / averageWeight;
@@ -85,12 +85,11 @@ public class LogicalUser {
         LogicalUser that = (LogicalUser) o;
 
         if (Double.compare(that.gamma, gamma) != 0) return false;
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (pid != null ? !pid.equals(that.pid) : that.pid != null) return false;
-        if (pToFriendCount != null ? !pToFriendCount.equals(that.pToFriendCount) : that.pToFriendCount != null)
-            return false;
-        if (pToWeight != null ? !pToWeight.equals(that.pToWeight) : that.pToWeight != null) return false;
-        return totalWeight != null ? totalWeight.equals(that.totalWeight) : that.totalWeight == null;
+        if (!id.equals(that.id)) return false;
+        if (!pid.equals(that.pid)) return false;
+        if (!pToFriendCount.equals(that.pToFriendCount)) return false;
+        if (!pToWeight.equals(that.pToWeight)) return false;
+        return totalWeight.equals(that.totalWeight);
 
     }
 
@@ -98,17 +97,17 @@ public class LogicalUser {
     public int hashCode() {
         int result;
         long temp;
-        result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (pid != null ? pid.hashCode() : 0);
+        result = id.hashCode();
+        result = 31 * result + pid.hashCode();
         temp = Double.doubleToLongBits(gamma);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
-        result = 31 * result + (pToFriendCount != null ? pToFriendCount.hashCode() : 0);
-        result = 31 * result + (pToWeight != null ? pToWeight.hashCode() : 0);
-        result = 31 * result + (totalWeight != null ? totalWeight.hashCode() : 0);
+        result = 31 * result + pToFriendCount.hashCode();
+        result = 31 * result + pToWeight.hashCode();
+        result = 31 * result + totalWeight.hashCode();
         return result;
     }
 
-    public void setPToFriendCount(Map<Long, Long> updatedFriendCounts) {
+    public void setPToFriendCount(Map<Integer, Integer> updatedFriendCounts) {
         pToFriendCount = updatedFriendCounts;
     }
 }

@@ -13,39 +13,39 @@ import static io.vntr.TestUtils.*;
  * Created by robertlindquist on 9/20/16.
  */
 public class JabejaUserTest {
-    private Map<Long, Set<Long>> fig2aPartitions;
-    private Map<Long, Set<Long>> fig2aFriendships;
-    private Map<Long, Set<Long>> fig2bPartitions;
-    private Map<Long, Set<Long>> fig2bFriendships;
+    private Map<Integer, Set<Integer>> fig2aPartitions;
+    private Map<Integer, Set<Integer>> fig2aFriendships;
+    private Map<Integer, Set<Integer>> fig2bPartitions;
+    private Map<Integer, Set<Integer>> fig2bFriendships;
 
     @Before
     public void init() {
-        fig2aPartitions  = new HashMap<Long, Set<Long>>();
-        fig2aFriendships = new HashMap<Long, Set<Long>>();
-        fig2bPartitions  = new HashMap<Long, Set<Long>>();
-        fig2bFriendships = new HashMap<Long, Set<Long>>();
+        fig2aPartitions  = new HashMap<Integer, Set<Integer>>();
+        fig2aFriendships = new HashMap<Integer, Set<Integer>>();
+        fig2bPartitions  = new HashMap<Integer, Set<Integer>>();
+        fig2bFriendships = new HashMap<Integer, Set<Integer>>();
 
-        fig2aPartitions.put(1L, initSet(1L, 2L, 3L, 4L, 5L));
-        fig2aPartitions.put(2L, initSet(6L, 7L));
-        fig2aFriendships.put(1L, initSet(2L, 6L));
-        fig2aFriendships.put(2L, initSet(6L));
-        fig2aFriendships.put(3L, initSet(7L));
-        fig2aFriendships.put(4L, initSet(7L));
-        fig2aFriendships.put(5L, initSet(7L));
-        fig2aFriendships.put(6L, Collections.<Long>emptySet());
-        fig2aFriendships.put(7L, Collections.<Long>emptySet());
+        fig2aPartitions.put(1, initSet(1, 2, 3, 4, 5));
+        fig2aPartitions.put(2, initSet(6, 7));
+        fig2aFriendships.put(1, initSet(2, 6));
+        fig2aFriendships.put(2, initSet(6));
+        fig2aFriendships.put(3, initSet(7));
+        fig2aFriendships.put(4, initSet(7));
+        fig2aFriendships.put(5, initSet(7));
+        fig2aFriendships.put(6, Collections.<Integer>emptySet());
+        fig2aFriendships.put(7, Collections.<Integer>emptySet());
 
-        fig2bPartitions.put(1L, initSet(1L, 2L, 3L, 4L, 5L, 6L));
-        fig2bPartitions.put(2L, initSet(7L, 8L, 9L, 10L));
-        fig2bFriendships.put(1L, initSet(3L, 7L));
-        fig2bFriendships.put(2L, initSet(3L));
-        fig2bFriendships.put(3L, initSet(7L));
-        fig2bFriendships.put(4L, initSet(6L, 8L, 10L));
-        fig2bFriendships.put(5L, initSet(6L, 10L));
-        fig2bFriendships.put(6L, initSet(9L, 10L));
-        fig2bFriendships.put(8L, initSet(10L));
-        fig2bFriendships.put(9L, initSet(10L));
-        fig2bFriendships.put(10L, Collections.<Long>emptySet());
+        fig2bPartitions.put(1, initSet(1, 2, 3, 4, 5, 6));
+        fig2bPartitions.put(2, initSet(7, 8, 9, 10));
+        fig2bFriendships.put(1, initSet(3, 7));
+        fig2bFriendships.put(2, initSet(3));
+        fig2bFriendships.put(3, initSet(7));
+        fig2bFriendships.put(4, initSet(6, 8, 10));
+        fig2bFriendships.put(5, initSet(6, 10));
+        fig2bFriendships.put(6, initSet(9, 10));
+        fig2bFriendships.put(8, initSet(10));
+        fig2bFriendships.put(9, initSet(10));
+        fig2bFriendships.put(10, Collections.<Integer>emptySet());
     }
 
     @Test
@@ -53,15 +53,15 @@ public class JabejaUserTest {
     {
         double alpha = 1.1D;
         JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
-        Long pid1 = manager.addPartition();
-        Long pid2 = manager.addPartition();
+        Integer pid1 = manager.addPartition();
+        Integer pid2 = manager.addPartition();
 
-        JabejaUser user1 = new JabejaUser("User 1", 1L, pid1, alpha, manager);
-        JabejaUser user2 = new JabejaUser("User 2", 2L, pid1, alpha, manager);
-        JabejaUser user3 = new JabejaUser("User 3", 3L, pid1, alpha, manager);
-        JabejaUser user4 = new JabejaUser("User 4", 4L, pid2, alpha, manager);
-        JabejaUser user5 = new JabejaUser("User 5", 5L, pid2, alpha, manager);
-        JabejaUser user6 = new JabejaUser("User 6", 6L, pid2, alpha, manager);
+        JabejaUser user1 = new JabejaUser("User 1", 1, pid1, alpha, manager);
+        JabejaUser user2 = new JabejaUser("User 2", 2, pid1, alpha, manager);
+        JabejaUser user3 = new JabejaUser("User 3", 3, pid1, alpha, manager);
+        JabejaUser user4 = new JabejaUser("User 4", 4, pid2, alpha, manager);
+        JabejaUser user5 = new JabejaUser("User 5", 5, pid2, alpha, manager);
+        JabejaUser user6 = new JabejaUser("User 6", 6, pid2, alpha, manager);
 
         manager.addUser(user1);
         manager.addUser(user2);
@@ -73,67 +73,67 @@ public class JabejaUserTest {
         assertTrue(user1.getNeighborsOnPartition(pid1) == 0);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 0);
 
-        manager.befriend(1L, 2L);
+        manager.befriend(1, 2);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 0);
 
-        manager.befriend(1L, 3L);
+        manager.befriend(1, 3);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 0);
 
-        manager.befriend(1L, 4L);
+        manager.befriend(1, 4);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 1);
 
-        manager.befriend(1L, 5L);
+        manager.befriend(1, 5);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
 
-        manager.befriend(1L, 6L);
-
-        assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
-        assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
-
-        manager.befriend(2L, 3L);
+        manager.befriend(1, 6);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
 
-        manager.befriend(4L, 5L);
+        manager.befriend(2, 3);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
 
-        manager.unfriend(1L, 2L);
+        manager.befriend(4, 5);
+
+        assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
+        assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
+
+        manager.unfriend(1, 2);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
 
-        manager.unfriend(1L, 4L);
+        manager.unfriend(1, 4);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
 
-        manager.unfriend(4L, 5L);
+        manager.unfriend(4, 5);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
 
-        manager.befriend(1L, 2L);
+        manager.befriend(1, 2);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
 
-        manager.removeUser(3L);
+        manager.removeUser(3);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 2);
 
-        manager.removeUser(6L);
+        manager.removeUser(6);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 1);
@@ -144,14 +144,14 @@ public class JabejaUserTest {
         assertTrue(user1.getNeighborsOnPartition(pid1) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 1);
 
-        manager.befriend(1L, 3L);
-        manager.befriend(1L, 4L);
-        manager.befriend(1L, 6L);
+        manager.befriend(1, 3);
+        manager.befriend(1, 4);
+        manager.befriend(1, 6);
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
 
-        Long pid3 = manager.addPartition();
+        Integer pid3 = manager.addPartition();
 
         assertTrue(user1.getNeighborsOnPartition(pid1) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid2) == 3);
@@ -167,20 +167,20 @@ public class JabejaUserTest {
 
         assertTrue(user1.getNeighborsOnPartition(pid3) == 5);
 
-        Long pid4 = manager.addPartition();
-        manager.moveUser(2L, pid4);
-        manager.moveUser(4L, pid4);
-        manager.moveUser(6L, pid4);
+        Integer pid4 = manager.addPartition();
+        manager.moveUser(2, pid4);
+        manager.moveUser(4, pid4);
+        manager.moveUser(6, pid4);
 
         assertTrue(user1.getNeighborsOnPartition(pid3) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid4) == 3);
 
-        manager.unfriend(1L, 2L);
+        manager.unfriend(1, 2);
 
         assertTrue(user1.getNeighborsOnPartition(pid3) == 2);
         assertTrue(user1.getNeighborsOnPartition(pid4) == 2);
 
-        manager.swap(2L, 3L);
+        manager.swap(2, 3);
 
         assertTrue(user1.getNeighborsOnPartition(pid3) == 1);
         assertTrue(user1.getNeighborsOnPartition(pid4) == 3);
@@ -189,25 +189,25 @@ public class JabejaUserTest {
     @Test
     public void testFindPartnerPrimary() {
         double alpha = 1D;
-        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        partitions.put(1L, initSet( 1L,  2L,  3L,  4L, 5L));
-        partitions.put(2L, initSet( 6L,  7L,  8L,  9L));
-        partitions.put(3L, initSet(10L, 11L, 12L, 13L));
+        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
-        friendships.put(1L,  initSet(2L, 4L, 6L, 8L, 10L, 12L));
-        friendships.put(2L,  initSet(3L, 6L, 9L, 12L));
-        friendships.put(3L,  initSet(4L, 8L, 12L));
-        friendships.put(4L,  initSet(5L, 10L));
-        friendships.put(5L,  initSet(6L, 12L));
-        friendships.put(6L,  initSet(7L));
-        friendships.put(7L,  initSet(8L));
-        friendships.put(8L,  initSet(9L));
-        friendships.put(9L,  initSet(10L));
-        friendships.put(10L, initSet(11L));
-        friendships.put(11L, initSet(12L));
-        friendships.put(12L, initSet(13L));
-        friendships.put(13L, Collections.<Long>emptySet());
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put(2,  initSet(3, 6, 9, 12));
+        friendships.put(3,  initSet(4, 8, 12));
+        friendships.put(4,  initSet(5, 10));
+        friendships.put(5,  initSet(6, 12));
+        friendships.put(6,  initSet(7));
+        friendships.put(7,  initSet(8));
+        friendships.put(8,  initSet(9));
+        friendships.put(9,  initSet(10));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, Collections.<Integer>emptySet());
 
         JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
 
@@ -217,49 +217,49 @@ public class JabejaUserTest {
 
 
         //Scenario 1: ensure that the best partner is chosen
-        Collection<JabejaUser> col = getUsers(manager, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
-        assertEquals(manager.getUser(1L), manager.getUser(12L).findPartner(col, 1D));
+        Collection<JabejaUser> col = getUsers(manager, 1, 2, 3, 4, 5, 6, 7, 8);
+        assertEquals(manager.getUser(1), manager.getUser(12).findPartner(col, 1D));
 
-        col = getUsers(manager, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
-        assertEquals(manager.getUser(2L), manager.getUser(12L).findPartner(col, 1D));
+        col = getUsers(manager, 2, 3, 4, 5, 6, 7, 8);
+        assertEquals(manager.getUser(2), manager.getUser(12).findPartner(col, 1D));
 
-        col = getUsers(manager, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L);
-        assertEquals(manager.getUser(12L), manager.getUser(1L).findPartner(col, 1D));
+        col = getUsers(manager, 6, 7, 8, 9, 10, 11, 12, 13);
+        assertEquals(manager.getUser(12), manager.getUser(1).findPartner(col, 1D));
 
-        col = getUsers(manager, 6L, 7L, 8L);
-        assertNull(manager.getUser(11L).findPartner(col, 1D));
-        assertNull(manager.getUser(11L).findPartner(col, 100D));
+        col = getUsers(manager, 6, 7, 8);
+        assertNull(manager.getUser(11).findPartner(col, 1D));
+        assertNull(manager.getUser(11).findPartner(col, 100D));
     }
 
     @Test
     public void testFindPartnerEffectOfT() {
         double alpha = 1D;
-        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        partitions.put(1L, initSet( 1L,  2L,  3L,  4L, 5L));
-        partitions.put(2L, initSet( 6L,  7L,  8L,  9L));
-        partitions.put(3L, initSet(10L, 11L, 12L, 13L));
+        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
-        friendships.put(1L,  initSet(2L, 4L, 6L, 8L, 10L, 12L));
-        friendships.put(2L,  initSet(3L, 6L, 9L, 12L));
-        friendships.put(3L,  initSet(4L, 8L, 12L));
-        friendships.put(4L,  initSet(5L, 10L));
-        friendships.put(5L,  initSet(6L, 12L));
-        friendships.put(6L,  initSet(7L));
-        friendships.put(7L,  initSet(8L));
-        friendships.put(8L,  initSet(9L));
-        friendships.put(9L,  initSet(10L));
-        friendships.put(10L, initSet(11L));
-        friendships.put(11L, initSet(12L));
-        friendships.put(12L, initSet(13L));
-        friendships.put(13L, Collections.<Long>emptySet());
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put(2,  initSet(3, 6, 9, 12));
+        friendships.put(3,  initSet(4, 8, 12));
+        friendships.put(4,  initSet(5, 10));
+        friendships.put(5,  initSet(6, 12));
+        friendships.put(6,  initSet(7));
+        friendships.put(7,  initSet(8));
+        friendships.put(8,  initSet(9));
+        friendships.put(9,  initSet(10));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, Collections.<Integer>emptySet());
 
         JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
 
         //Scenario 2: ensure that non-positive gain is impossible with T=1, and possible with T > 1
-        Collection<JabejaUser> col = getUsers(manager, 6L, 7L, 8L, 9L);
-        assertNull(manager.getUser(10L).findPartner(col, 1D));
-        assertEquals(manager.getUser(9L), manager.getUser(10L).findPartner(col, 1.001D));
+        Collection<JabejaUser> col = getUsers(manager, 6, 7, 8, 9);
+        assertNull(manager.getUser(10).findPartner(col, 1D));
+        assertEquals(manager.getUser(9), manager.getUser(10).findPartner(col, 1.001D));
     }
 
     @Test
@@ -274,14 +274,14 @@ public class JabejaUserTest {
         JabejaManager fig2bAlpha1     = initGraph(1D,     2D, .2D, 9, fig2bPartitions, fig2bFriendships);
         JabejaManager fig2bAlpha1_001 = initGraph(1.001D, 2D, .2D, 9, fig2bPartitions, fig2bFriendships);
 
-        assertEquals(fig2aAlpha1.getUser    (7L), fig2aAlpha1.getUser    (2L).findPartner(getUsers(fig2aAlpha1,     7L), 1D));
-        assertEquals(fig2aAlpha1.getUser    (2L), fig2aAlpha1.getUser    (7L).findPartner(getUsers(fig2aAlpha1,     2L), 1D));
-        assertEquals(fig2aAlpha1_001.getUser(7L), fig2aAlpha1_001.getUser(2L).findPartner(getUsers(fig2aAlpha1_001, 7L), 1D));
-        assertEquals(fig2aAlpha1_001.getUser(2L), fig2aAlpha1_001.getUser(7L).findPartner(getUsers(fig2aAlpha1_001, 2L), 1D));
+        assertEquals(fig2aAlpha1.getUser    (7), fig2aAlpha1.getUser    (2).findPartner(getUsers(fig2aAlpha1,     7), 1D));
+        assertEquals(fig2aAlpha1.getUser    (2), fig2aAlpha1.getUser    (7).findPartner(getUsers(fig2aAlpha1,     2), 1D));
+        assertEquals(fig2aAlpha1_001.getUser(7), fig2aAlpha1_001.getUser(2).findPartner(getUsers(fig2aAlpha1_001, 7), 1D));
+        assertEquals(fig2aAlpha1_001.getUser(2), fig2aAlpha1_001.getUser(7).findPartner(getUsers(fig2aAlpha1_001, 2), 1D));
 
-        assertNull(fig2bAlpha1.getUser    (3L).findPartner(getUsers(fig2bAlpha1,     10L), 1D));
-        assertNull(fig2bAlpha1.getUser    (10L).findPartner(getUsers(fig2bAlpha1,     3L), 1D));
-        assertEquals(fig2bAlpha1_001.getUser(10L), fig2bAlpha1_001.getUser(3L).findPartner(getUsers(fig2bAlpha1_001, 10L), 1D));
-        assertEquals(fig2bAlpha1_001.getUser(3L), fig2bAlpha1_001.getUser(10L).findPartner(getUsers(fig2bAlpha1_001, 3L), 1D));
+        assertNull(fig2bAlpha1.getUser    (3).findPartner(getUsers(fig2bAlpha1,     10), 1D));
+        assertNull(fig2bAlpha1.getUser    (10).findPartner(getUsers(fig2bAlpha1,     3), 1D));
+        assertEquals(fig2bAlpha1_001.getUser(10), fig2bAlpha1_001.getUser(3).findPartner(getUsers(fig2bAlpha1_001, 10), 1D));
+        assertEquals(fig2bAlpha1_001.getUser(3), fig2bAlpha1_001.getUser(10).findPartner(getUsers(fig2bAlpha1_001, 3), 1D));
     }
 }

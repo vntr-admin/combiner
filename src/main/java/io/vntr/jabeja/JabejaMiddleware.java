@@ -27,12 +27,12 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Long userId) {
+    public void removeUser(Integer userId) {
         manager.removeUser(userId);
     }
 
     @Override
-    public void befriend(Long smallerUserId, Long largerUserId) {
+    public void befriend(Integer smallerUserId, Integer largerUserId) {
         manager.befriend(smallerUserId, largerUserId);
         if(Math.random() > .9) {
             manager.repartition();
@@ -40,7 +40,7 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void unfriend(Long smallerUserId, Long largerUserId) {
+    public void unfriend(Integer smallerUserId, Integer largerUserId) {
         manager.unfriend(smallerUserId, largerUserId);
     }
 
@@ -50,38 +50,38 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removePartition(Long partitionId) {
-        Set<Long> partition = manager.getPartition(partitionId);
+    public void removePartition(Integer partitionId) {
+        Set<Integer> partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
-        for(Long uid : partition) {
-            Long newPid = ProbabilityUtils.getKDistinctValuesFromList(1, manager.getPartitionIds()).iterator().next();
+        for(Integer uid : partition) {
+            Integer newPid = ProbabilityUtils.getKDistinctValuesFromList(1, manager.getPartitionIds()).iterator().next();
             manager.moveUser(uid, newPid);
         }
     }
 
     @Override
-    public Long getNumberOfPartitions() {
+    public Integer getNumberOfPartitions() {
         return manager.getNumPartitions();
     }
 
     @Override
-    public Long getNumberOfUsers() {
+    public Integer getNumberOfUsers() {
         return manager.getNumUsers();
     }
 
     @Override
-    public Long getEdgeCut() {
+    public Integer getEdgeCut() {
         return manager.getEdgeCut();
     }
 
     @Override
-    public Map<Long, Set<Long>> getPartitionToUserMap() {
+    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         return manager.getPartitionToUsers();
     }
 
     @Override
-    public Long getReplicationCount() {
-        return 0L; //Ja-be-Ja does not replicate
+    public Integer getReplicationCount() {
+        return 0; //Ja-be-Ja does not replicate
     }
 
     @Override

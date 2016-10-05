@@ -7,9 +7,9 @@ import java.util.Set;
  * Created by robertlindquist on 9/23/16.
  */
 public interface IMiddlewareAnalyzer {
-    Long getNumberOfPartitions();
-    Long getNumberOfUsers();
-    Long getEdgeCut();
-    Long getReplicationCount();
-    Map<Long, Set<Long>> getPartitionToUserMap();
+    Integer getNumberOfPartitions();
+    Integer getNumberOfUsers();
+    Integer getEdgeCut();
+    Integer getReplicationCount();
+    Map<Integer, Set<Integer>> getPartitionToUserMap();
 }

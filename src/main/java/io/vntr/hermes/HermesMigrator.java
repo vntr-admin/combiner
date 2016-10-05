@@ -16,10 +16,10 @@ public class HermesMigrator {
         this.gamma = gamma;
     }
 
-    public void migrateOffPartition(Long pid) {
+    public void migrateOffPartition(Integer pid) {
         NavigableSet<Target> preferredTargets = getPreferredTargets(pid);
-        Map<Long, Long> actualTargets = new HashMap<Long, Long>();
-        Map<Long, Integer> userCounts = getUserCounts();
+        Map<Integer, Integer> actualTargets = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> userCounts = getUserCounts();
 
         for(Iterator<Target> iter = preferredTargets.descendingIterator(); iter.hasNext(); ) {
             Target target = iter.next();
@@ -31,26 +31,26 @@ public class HermesMigrator {
         }
 
         for(Target target : preferredTargets) {
-            Long newPid = getPartitionWithFewestUsers(pid, userCounts);
+            Integer newPid = getPartitionWithFewestUsers(pid, userCounts);
             actualTargets.put(target.userId, newPid);
             userCounts.put(newPid, userCounts.get(newPid) + 1);
         }
 
-        for(Long uid : actualTargets.keySet()) {
+        for(Integer uid : actualTargets.keySet()) {
             manager.moveUser(uid, actualTargets.get(uid));
         }
     }
 
-    private Map<Long, Integer> getUserCounts() {
-        Map<Long,Set<Long>> partitionToUserMap = manager.getPartitionToUserMap();
-        Map<Long, Integer> map = new HashMap<Long, Integer>();
-        for(Long pid : partitionToUserMap.keySet()) {
+    private Map<Integer, Integer> getUserCounts() {
+        Map<Integer,Set<Integer>> partitionToUserMap = manager.getPartitionToUserMap();
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        for(Integer pid : partitionToUserMap.keySet()) {
             map.put(pid, partitionToUserMap.get(pid).size());
         }
         return map;
     }
 
-    boolean isOverloaded(Long pid, Map<Long, Integer> userCounts) {
+    boolean isOverloaded(Integer pid, Map<Integer, Integer> userCounts) {
         double numUsers = manager.getNumUsers();
         double numPartitions = manager.getAllPartitionIds().size() - 1;
         double avgUsers = numUsers / numPartitions;
@@ -58,19 +58,19 @@ public class HermesMigrator {
         return userCounts.get(pid) > cutoff;
     }
 
-    NavigableSet<Target> getPreferredTargets(Long pid) {
-        List<Long> options = new LinkedList<Long>(manager.getAllPartitionIds());
+    NavigableSet<Target> getPreferredTargets(Integer pid) {
+        List<Integer> options = new LinkedList<Integer>(manager.getAllPartitionIds());
         options.remove(pid);
         NavigableSet<Target> preferredTargets = new TreeSet<Target>();
-        for(Long uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
+        for(Integer uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
             LogicalUser user = manager.getUser(uid).getLogicalUser(true);
-            long maxFriends = 0L;
-            Long maxPid = null;
-            for(Long friendPid : user.getpToFriendCount().keySet()) {
+            int maxFriends = 0;
+            Integer maxPid = null;
+            for(Integer friendPid : user.getpToFriendCount().keySet()) {
                 if(friendPid.equals(pid)) {
                     continue;
                 }
-                long numFriends = user.getpToFriendCount().get(friendPid);
+                int numFriends = user.getpToFriendCount().get(friendPid);
                 if(numFriends > maxFriends) {
                     maxPid = friendPid;
                     maxFriends = numFriends;
@@ -86,10 +86,10 @@ public class HermesMigrator {
         return preferredTargets;
     }
 
-    Long getPartitionWithFewestUsers(Long pid, Map<Long, Integer> userCounts) {
+    Integer getPartitionWithFewestUsers(Integer pid, Map<Integer, Integer> userCounts) {
         int minUsers = Integer.MAX_VALUE;
-        Long minPartition = null;
-        for(Long newPid : manager.getAllPartitionIds()) {
+        Integer minPartition = null;
+        for(Integer newPid : manager.getAllPartitionIds()) {
             if(newPid.equals(pid)) {
                 continue;
             }

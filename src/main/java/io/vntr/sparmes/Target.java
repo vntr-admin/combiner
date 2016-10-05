@@ -4,12 +4,12 @@ package io.vntr.sparmes;
  * Created by robertlindquist on 9/29/16.
  */
 public class Target implements Comparable<Target> {
-    public final Long uid;
-    public final Long newPid;
-    public final Long oldPid;
+    public final Integer uid;
+    public final Integer newPid;
+    public final Integer oldPid;
     public final Integer gain;
 
-    public Target(Long uid, Long newPid, Long oldPid, Integer gain) {
+    public Target(Integer uid, Integer newPid, Integer oldPid, Integer gain) {
         this.uid = uid;
         this.newPid = newPid;
         this.oldPid = oldPid;

@@ -4,12 +4,12 @@ package io.vntr.hermes;
  * Created by robertlindquist on 9/19/16.
  */
 public class Target implements Comparable<Target> {
-    public final Long userId;
-    public final Long partitionId;
-    public final Long oldPartitionId;
+    public final Integer userId;
+    public final Integer partitionId;
+    public final Integer oldPartitionId;
     public final Integer gain;
 
-    public Target(Long userId, Long partitionId, Long oldPartitionId, Integer gain) {
+    public Target(Integer userId, Integer partitionId, Integer oldPartitionId, Integer gain) {
         this.userId = userId;
         this.partitionId = partitionId;
         this.oldPartitionId = oldPartitionId;
@@ -40,20 +40,19 @@ public class Target implements Comparable<Target> {
 
         Target target = (Target) o;
 
-        if (userId != null ? !userId.equals(target.userId) : target.userId != null) return false;
-        if (partitionId != null ? !partitionId.equals(target.partitionId) : target.partitionId != null) return false;
-        if (oldPartitionId != null ? !oldPartitionId.equals(target.oldPartitionId) : target.oldPartitionId != null)
-            return false;
-        return gain != null ? gain.equals(target.gain) : target.gain == null;
+        if (!userId.equals(target.userId)) return false;
+        if (!partitionId.equals(target.partitionId)) return false;
+        if (!oldPartitionId.equals(target.oldPartitionId)) return false;
+        return gain.equals(target.gain);
 
     }
 
     @Override
     public int hashCode() {
-        int result = userId != null ? userId.hashCode() : 0;
-        result = 31 * result + (partitionId != null ? partitionId.hashCode() : 0);
-        result = 31 * result + (oldPartitionId != null ? oldPartitionId.hashCode() : 0);
-        result = 31 * result + (gain != null ? gain.hashCode() : 0);
+        int result = userId.hashCode();
+        result = 31 * result + partitionId.hashCode();
+        result = 31 * result + oldPartitionId.hashCode();
+        result = 31 * result + gain.hashCode();
         return result;
     }
 

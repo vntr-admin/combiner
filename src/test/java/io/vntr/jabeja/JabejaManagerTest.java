@@ -22,10 +22,10 @@ public class JabejaManagerTest {
         int numRuns = 100000;
         double alpha = 1.1D;
         JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
-        Long pid1 = manager.addPartition();
-        Long pid2 = manager.addPartition();
+        Integer pid1 = manager.addPartition();
+        Integer pid2 = manager.addPartition();
 
-        for(long id=1; id<=numUsers; id++) {
+        for(int id=1; id<=numUsers; id++) {
             manager.addUser(new JabejaUser("User " + id,  id,  id%2 == 1 ? pid1 : pid2, alpha, manager));
         }
 
@@ -54,15 +54,15 @@ public class JabejaManagerTest {
         int numUsers = 1000;
         double alpha = 1.1D;
         JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
-        Long pid1 = manager.addPartition();
-        Long pid2 = manager.addPartition();
+        Integer pid1 = manager.addPartition();
+        Integer pid2 = manager.addPartition();
 
-        for(long id=1; id<=numUsers; id++) {
+        for(int id=1; id<=numUsers; id++) {
             manager.addUser(new JabejaUser("User " + id,  id,  id%2 == 1 ? pid1 : pid2, alpha, manager));
         }
 
 
-        for(long id=1; id<=numUsers; id++) {
+        for(int id=1; id<=numUsers; id++) {
             int numFriends = (int)(Math.random() * numUsers * 0.03);
             Collection<JabejaUser> friends = manager.getRandomSamplingOfUsers(numFriends);
             for(JabejaUser friend : friends) {
@@ -83,19 +83,19 @@ public class JabejaManagerTest {
         double alpha = 1.1D;
         JabejaManager manager = new JabejaManager(alpha, 2D, .2D, 9);
 
-        List<Long> partitionIds = new ArrayList<Long>(numPartitions+1);
+        List<Integer> partitionIds = new ArrayList<Integer>(numPartitions+1);
         for(int i=0; i<numPartitions; i++) {
             partitionIds.add(manager.addPartition());
         }
 
-        for(long id=0; id<numUsers; id++) {
-            Long pid = ProbabilityUtils.getKDistinctValuesFromList(1, partitionIds).iterator().next();
+        for(int id=0; id<numUsers; id++) {
+            Integer pid = ProbabilityUtils.getKDistinctValuesFromList(1, partitionIds).iterator().next();
             manager.addUser(new JabejaUser("User " + id,  id,  pid, alpha, manager));
         }
 
-        Map<Long, Set<Long>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
-        for(Long userId : friendships.keySet()) {
-            for(Long otherUserId : friendships.get(userId)) {
+        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1, 0.1);
+        for(Integer userId : friendships.keySet()) {
+            for(Integer otherUserId : friendships.get(userId)) {
                 manager.befriend(userId, otherUserId);
             }
         }
@@ -109,30 +109,30 @@ public class JabejaManagerTest {
     @Test
     public void testGetEdgeCut() {
         double alpha = 1.1D;
-        Map<Long, Set<Long>> partitions = new HashMap<Long, Set<Long>>();
-        partitions.put(1L, initSet( 1L,  2L,  3L,  4L, 5L));
-        partitions.put(2L, initSet( 6L,  7L,  8L,  9L));
-        partitions.put(3L, initSet(10L, 11L, 12L, 13L));
+        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Long, Set<Long>> friendships = new HashMap<Long, Set<Long>>();
-        for(Long uid1 = 1L; uid1 <= 13L; uid1++) {
-            friendships.put(uid1, new HashSet<Long>());
-            for(Long uid2 = 1L; uid2 <= uid1; uid2++) {
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new HashSet<Integer>());
+            for(Integer uid2 = 1; uid2 <= uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
         JabejaManager manager = initGraph(alpha, 2D, .2D, 9, partitions, friendships);
 
-        Long expectedCut = 56L; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
+        Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);
 
         //Everybody hates 13
-        for(Long uid = 1L; uid <= 12L; uid++) {
-            manager.unfriend(uid, 13L);
+        for(Integer uid = 1; uid <= 12; uid++) {
+            manager.unfriend(uid, 13);
         }
 
-        expectedCut = 47L; //20 between p1 and p2, 15 between p1 and p3, and 12 between p2 and p3
+        expectedCut = 47; //20 between p1 and p2, 15 between p1 and p3, and 12 between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);
     }
 }

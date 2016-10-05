@@ -11,11 +11,11 @@ import java.util.Set;
  * Should be done
  */
 public class SpajaPartition {
-    private Map<Long, SpajaUser> idToMasterMap = new HashMap<Long, SpajaUser>();
-    private Map<Long, SpajaUser> idToReplicaMap = new HashMap<Long, SpajaUser>();
-    private Long id;
+    private Map<Integer, SpajaUser> idToMasterMap = new HashMap<Integer, SpajaUser>();
+    private Map<Integer, SpajaUser> idToReplicaMap = new HashMap<Integer, SpajaUser>();
+    private Integer id;
 
-    public SpajaPartition(Long id) {
+    public SpajaPartition(Integer id) {
         this.id = id;
     }
 
@@ -23,7 +23,7 @@ public class SpajaPartition {
         idToMasterMap.put(user.getId(), user);
     }
 
-    public User removeMaster(Long id) {
+    public User removeMaster(Integer id) {
         return idToMasterMap.remove(id);
     }
 
@@ -31,15 +31,15 @@ public class SpajaPartition {
         idToReplicaMap.put(user.getId(), user);
     }
 
-    public User removeReplica(Long id) {
+    public User removeReplica(Integer id) {
         return idToReplicaMap.remove(id);
     }
 
-    public SpajaUser getMasterById(Long userId) {
+    public SpajaUser getMasterById(Integer userId) {
         return idToMasterMap.get(userId);
     }
 
-    public SpajaUser getReplicaById(Long userId) {
+    public SpajaUser getReplicaById(Integer userId) {
         return idToReplicaMap.get(userId);
     }
 
@@ -51,15 +51,15 @@ public class SpajaPartition {
         return idToReplicaMap.size();
     }
 
-    public Set<Long> getIdsOfMasters() {
+    public Set<Integer> getIdsOfMasters() {
         return idToMasterMap.keySet();
     }
 
-    public Set<Long> getIdsOfReplicas() {
+    public Set<Integer> getIdsOfReplicas() {
         return idToReplicaMap.keySet();
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 }

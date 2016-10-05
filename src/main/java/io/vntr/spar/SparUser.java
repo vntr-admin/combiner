@@ -7,44 +7,44 @@ import java.util.Set;
 import io.vntr.User;
 
 public class SparUser extends User {
-    private Long partitionId;
-    private Long masterPartitionId;
-    private Set<Long> replicaPartitionIds;
+    private Integer partitionId;
+    private Integer masterPartitionId;
+    private Set<Integer> replicaPartitionIds;
 
-    public SparUser(String name, Long id) {
+    public SparUser(String name, Integer id) {
         super(name, id);
-        replicaPartitionIds = new HashSet<Long>();
+        replicaPartitionIds = new HashSet<Integer>();
     }
 
-    public Long getPartitionId() {
+    public Integer getPartitionId() {
         return partitionId;
     }
 
-    public void setPartitionId(Long partitionId) {
+    public void setPartitionId(Integer partitionId) {
         this.partitionId = partitionId;
     }
 
-    public Long getMasterPartitionId() {
+    public Integer getMasterPartitionId() {
         return masterPartitionId;
     }
 
-    public void setMasterPartitionId(Long masterPartitionId) {
+    public void setMasterPartitionId(Integer masterPartitionId) {
         this.masterPartitionId = masterPartitionId;
     }
 
-    public void addReplicaPartitionId(Long replicaPartitionId) {
+    public void addReplicaPartitionId(Integer replicaPartitionId) {
         this.replicaPartitionIds.add(replicaPartitionId);
     }
 
-    public void removeReplicaPartitionId(Long replicaPartitionId) {
+    public void removeReplicaPartitionId(Integer replicaPartitionId) {
         this.replicaPartitionIds.remove(replicaPartitionId);
     }
 
-    public void addReplicaPartitionIds(Collection<Long> replicaPartitionIds) {
+    public void addReplicaPartitionIds(Collection<Integer> replicaPartitionIds) {
         this.replicaPartitionIds.addAll(replicaPartitionIds);
     }
 
-    public Set<Long> getReplicaPartitionIds() {
+    public Set<Integer> getReplicaPartitionIds() {
         return replicaPartitionIds;
     }
 
@@ -54,7 +54,7 @@ public class SparUser extends User {
         user.setPartitionId(partitionId);
         user.setMasterPartitionId(masterPartitionId);
         user.addReplicaPartitionIds(replicaPartitionIds);
-        for (Long friendId : getFriendIDs()) {
+        for (Integer friendId : getFriendIDs()) {
             user.befriend(friendId);
         }
 

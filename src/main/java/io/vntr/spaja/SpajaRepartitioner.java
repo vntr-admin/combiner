@@ -28,9 +28,9 @@ public class SpajaRepartitioner {
 
     public void repartition() {
         for(double t = initialT; t >= 1; t -= deltaT) {
-            List<Long> randomUserList = new LinkedList<Long>(manager.getAllUserIds());
+            List<Integer> randomUserList = new LinkedList<Integer>(manager.getAllUserIds());
             Collections.shuffle(randomUserList);
-            for(Long uid : randomUserList) {
+            for(Integer uid : randomUserList) {
                 SpajaUser user = manager.getUserMasterById(uid);
                 SpajaUser partner = user.findPartner(manager.getUserMastersById(user.getFriendIDs()), t, spajaBefriendingStrategy);
                 if(partner == null) {
@@ -44,7 +44,7 @@ public class SpajaRepartitioner {
     }
 
     public Collection<SpajaUser> getRandomSamplingOfUsers(int n) {
-        Set<Long> ids = getKDistinctValuesFromList(n, manager.getAllUserIds());
+        Set<Integer> ids = getKDistinctValuesFromList(n, manager.getAllUserIds());
         return manager.getUserMastersById(ids);
     }
 }

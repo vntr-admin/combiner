@@ -35,18 +35,18 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Long userId) {
+    public void removeUser(Integer userId) {
         manager.removeUser(userId);
     }
 
     @Override
-    public void befriend(Long smallerUserId, Long largerUserId) {
+    public void befriend(Integer smallerUserId, Integer largerUserId) {
         SparmesUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparmesUser largerUser = manager.getUserMasterById(largerUserId);
         manager.befriend(smallerUser, largerUser);
 
-        Long smallerUserPid = smallerUser.getMasterPartitionId();
-        Long largerUserPid  = largerUser.getMasterPartitionId();
+        Integer smallerUserPid = smallerUser.getMasterPartitionId();
+        Integer largerUserPid  = largerUser.getMasterPartitionId();
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserPid) && largerUser.getReplicaPartitionIds().contains(smallerUserPid);
@@ -56,11 +56,11 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         }
     }
 
-    void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Long smallUid, Long largeUid) {
+    void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
         SparmesUser smallerUser = manager.getUserMasterById(smallUid);
         SparmesUser largerUser = manager.getUserMasterById(largeUid);
-        Long smallerUserPid = smallerUser.getMasterPartitionId();
-        Long largerUserPid = largerUser.getMasterPartitionId();
+        Integer smallerUserPid = smallerUser.getMasterPartitionId();
+        Integer largerUserPid = largerUser.getMasterPartitionId();
 
         if (strategy == NO_CHANGE) {
             if (!smallerUser.getReplicaPartitionIds().contains(largerUserPid)) {
@@ -71,15 +71,15 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             }
         } else {
             SparmesUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
-            Long targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Set<Long> replicasToAddInDestinationPartition = spajaBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
-            Set<Long> replicasToDeleteInSourcePartition = spajaBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
+            Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
+            Set<Integer> replicasToAddInDestinationPartition = spajaBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
+            Set<Integer> replicasToDeleteInSourcePartition = spajaBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
 
     @Override
-    public void unfriend(Long smallerUserId, Long largerUserId) {
+    public void unfriend(Integer smallerUserId, Integer largerUserId) {
         SparmesUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparmesUser largerUser = manager.getUserMasterById(largerUserId);
 
@@ -102,17 +102,17 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void addPartition() { manager.addPartition(); }
 
     @Override
-    public void removePartition(Long partitionId) {
+    public void removePartition(Integer partitionId) {
         //First, determine which users will need more replicas once this partition is kaput
-        Set<Long> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
+        Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
 
         //Second, determine the migration strategy
-        Map<Long, Long> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
+        Map<Integer, Integer> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
 
         //Third, promote replicas to masters as specified in the migration strategy
-        for (Long userId : migrationStrategy.keySet()) {
+        for (Integer userId : migrationStrategy.keySet()) {
             SparmesUser user = manager.getUserMasterById(userId);
-            Long newPartitionId = migrationStrategy.get(userId);
+            Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
@@ -123,7 +123,7 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         }
 
         //Fourth, add replicas as appropriate
-        for (Long userId : usersInNeedOfNewReplicas) {
+        for (Integer userId : usersInNeedOfNewReplicas) {
             SparmesUser user = manager.getUserMasterById(userId);
             manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
         }
@@ -132,19 +132,19 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         manager.removePartition(partitionId);
     }
 
-    Set<Long> determineUsersWhoWillNeedAnAdditionalReplica(Long partitionIdToBeRemoved) {
+    Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
         SparmesPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Long> usersInNeedOfNewReplicas = new HashSet<Long>();
+        Set<Integer> usersInNeedOfNewReplicas = new HashSet<Integer>();
 
         //First, determine which users will need more replicas once this partition is kaput
-        for (Long userId : partition.getIdsOfMasters()) {
+        for (Integer userId : partition.getIdsOfMasters()) {
             SparmesUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
-        for (Long userId : partition.getIdsOfReplicas()) {
+        for (Integer userId : partition.getIdsOfReplicas()) {
             SparmesUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
@@ -154,37 +154,37 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         return usersInNeedOfNewReplicas;
     }
 
-    Long getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user) {
-        Set<Long> potentialReplicaLocations = new HashSet<Long>(manager.getAllPartitionIds());
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user) {
+        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Long> list = new LinkedList<Long>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
 
     @Override
-    public Long getNumberOfPartitions() {
-        return (long) manager.getAllPartitionIds().size();
+    public Integer getNumberOfPartitions() {
+        return (int) manager.getAllPartitionIds().size();
     }
 
     @Override
-    public Long getNumberOfUsers() {
-        return (long) manager.getNumUsers();
+    public Integer getNumberOfUsers() {
+        return (int) manager.getNumUsers();
     }
 
     @Override
-    public Long getEdgeCut() {
+    public Integer getEdgeCut() {
         return manager.getEdgeCut();
     }
 
     @Override
-    public Map<Long, Set<Long>> getPartitionToUserMap() {
+    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         return manager.getPartitionToUserMap();
     }
 
     @Override
-    public Long getReplicationCount() {
+    public Integer getReplicationCount() {
         return manager.getReplicationCount();
     }
 

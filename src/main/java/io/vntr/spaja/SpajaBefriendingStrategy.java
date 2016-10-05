@@ -64,8 +64,8 @@ public class SpajaBefriendingStrategy {
     }
 
     int calcNumReplicasStay(SpajaUser smallerUser, SpajaUser largerUser) {
-        Long smallerPartitionId = smallerUser.getMasterPartitionId();
-        Long largerPartitionId = largerUser.getMasterPartitionId();
+        Integer smallerPartitionId = smallerUser.getMasterPartitionId();
+        Integer largerPartitionId = largerUser.getMasterPartitionId();
         boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPartitionIds().contains(smallerPartitionId);
         boolean smallerReplicaExistsOnLargerMaster = smallerUser.getReplicaPartitionIds().contains(largerPartitionId);
         int deltaReplicas = (largerReplicaExistsOnSmallerMaster ? 0 : 1) + (smallerReplicaExistsOnLargerMaster ? 0 : 1);
@@ -76,12 +76,12 @@ public class SpajaBefriendingStrategy {
     int calcNumReplicasMove(SpajaUser movingUser, SpajaUser stayingUser) {
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser);
-        Set<Long> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
+        Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser);
         boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
-        Set<Long> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition);
+        Set<Integer> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition);
 
         //Calculate net change
         int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
@@ -91,9 +91,9 @@ public class SpajaBefriendingStrategy {
         return curReplicas + deltaReplicas;
     }
 
-    Set<Long> findReplicasToAddToTargetPartition(SpajaUser movingUser, Long targetPartitionId) {
-        Set<Long> replicasToAddInStayingPartition = new HashSet<Long>();
-        for (Long friendId : movingUser.getFriendIDs()) {
+    Set<Integer> findReplicasToAddToTargetPartition(SpajaUser movingUser, Integer targetPartitionId) {
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>();
+        for (Integer friendId : movingUser.getFriendIDs()) {
             SpajaUser friend = manager.getUserMasterById(friendId);
             if (!targetPartitionId.equals(friend.getMasterPartitionId()) && !friend.getReplicaPartitionIds().contains(targetPartitionId)) {
                 replicasToAddInStayingPartition.add(friendId);
@@ -103,7 +103,7 @@ public class SpajaBefriendingStrategy {
         return replicasToAddInStayingPartition;
     }
 
-    boolean shouldDeleteReplicaInTargetPartition(SpajaUser user, Long pid2, int k) {
+    boolean shouldDeleteReplicaInTargetPartition(SpajaUser user, Integer pid2, int k) {
         boolean answer = false;
         if(user.getReplicaPartitionIds().contains(pid2)) {
             boolean addReplicaInCurrentPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(user);
@@ -113,9 +113,9 @@ public class SpajaBefriendingStrategy {
         return answer;
     }
 
-    Set<Long> findReplicasInMovingPartitionToDelete(SpajaUser movingUser, Set<Long> replicasToBeAdded) {
-        Set<Long> replicasInMovingPartitionToDelete = new HashSet<Long>();
-        for (Long replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
+    Set<Integer> findReplicasInMovingPartitionToDelete(SpajaUser movingUser, Set<Integer> replicasToBeAdded) {
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>();
+        for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
             int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPartitionIds().size();
             if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
                 replicasInMovingPartitionToDelete.add(replicaId);
@@ -125,13 +125,13 @@ public class SpajaBefriendingStrategy {
         return replicasInMovingPartitionToDelete;
     }
 
-    Set<Long> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SpajaUser user) {
-        Set<Long> replicasThatWereJustThereForThisUsersSake = new HashSet<Long>();
+    Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SpajaUser user) {
+        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<Integer>();
         outer:
-        for (Long friendId : user.getFriendIDs()) {
+        for (Integer friendId : user.getFriendIDs()) {
             SpajaUser friend = manager.getUserMasterById(friendId);
             if (!friend.getMasterPartitionId().equals(user.getMasterPartitionId())) {
-                for (Long friendOfFriendId : friend.getFriendIDs()) {
+                for (Integer friendOfFriendId : friend.getFriendIDs()) {
                     if (friendOfFriendId.equals(user.getId())) {
                         continue;
                     }
@@ -150,8 +150,8 @@ public class SpajaBefriendingStrategy {
     }
 
     boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SpajaUser movingUser) {
-        for (Long friendId : movingUser.getFriendIDs()) {
-            Long friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
+        for (Integer friendId : movingUser.getFriendIDs()) {
+            Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
             if (movingUser.getMasterPartitionId().equals(friendMasterPartitionId)) {
                 return true;
             }
@@ -175,8 +175,8 @@ public class SpajaBefriendingStrategy {
     boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(SpajaUser movingUser, SpajaUser stayingUser) {
         boolean movingPartitionHasStayingUserReplica = stayingUser.getReplicaPartitionIds().contains(movingUser.getMasterPartitionId());
         boolean stayingUserHasNoOtherFriendMastersInMovingPartition = true; //deleting staying user replica is a possibility, if it exists, subject to balance constraints
-        for (Long friendId : stayingUser.getFriendIDs()) {
-            Long friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
+        for (Integer friendId : stayingUser.getFriendIDs()) {
+            Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
             if (!(friendId.equals(movingUser.getId())) && friendMasterPartitionId.equals(movingUser.getMasterPartitionId())) {
                 stayingUserHasNoOtherFriendMastersInMovingPartition = false;
             }
@@ -187,32 +187,32 @@ public class SpajaBefriendingStrategy {
 
     public SwapChanges getSwapChanges(SpajaUser u1, SpajaUser u2) {
         int k = manager.getMinNumReplicas();
-        Long pid1 = u1.getMasterPartitionId();
-        Long pid2 = u2.getMasterPartitionId();
+        Integer pid1 = u1.getMasterPartitionId();
+        Integer pid2 = u2.getMasterPartitionId();
 
         SwapChanges swapChanges = new SwapChanges();
         swapChanges.setPid1(pid1);
         swapChanges.setPid2(pid2);
 
-        Set<Long> addToP1 = findReplicasToAddToTargetPartition(u2, pid1);
+        Set<Integer> addToP1 = findReplicasToAddToTargetPartition(u2, pid1);
         if(shouldWeAddAReplicaOfMovingUserInMovingPartition(u1)) {
             addToP1.add(u1.getId());
         }
         swapChanges.setAddToP1(addToP1);
 
-        Set<Long> addToP2 = findReplicasToAddToTargetPartition(u1, pid2);
+        Set<Integer> addToP2 = findReplicasToAddToTargetPartition(u1, pid2);
         if(shouldWeAddAReplicaOfMovingUserInMovingPartition(u2)) {
             addToP2.add(u2.getId());
         }
         swapChanges.setAddToP2(addToP2);
 
-        Set<Long> removeFromP1 = findReplicasInMovingPartitionToDelete(u1, addToP1);
+        Set<Integer> removeFromP1 = findReplicasInMovingPartitionToDelete(u1, addToP1);
         if(shouldDeleteReplicaInTargetPartition(u2, pid1, k)) {
             removeFromP1.add(u2.getId());
         }
         swapChanges.setRemoveFromP1(removeFromP1);
 
-        Set<Long> removeFromP2 = findReplicasInMovingPartitionToDelete(u2, addToP2);
+        Set<Integer> removeFromP2 = findReplicasInMovingPartitionToDelete(u2, addToP2);
         if(shouldDeleteReplicaInTargetPartition(u1, pid2, k)) {
             removeFromP2.add(u1.getId());
         }

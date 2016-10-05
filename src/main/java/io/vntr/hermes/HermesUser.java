@@ -11,13 +11,13 @@ import java.util.Set;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesUser extends User {
-    private Long pId;
+    private Integer pId;
     private double gamma;
-    private Long physicalPid;
-    private Long logicalPid;
+    private Integer physicalPid;
+    private Integer logicalPid;
     private HermesManager manager;
 
-    public HermesUser(Long id, String name, Long initialPid, double gamma, HermesManager manager) {
+    public HermesUser(Integer id, String name, Integer initialPid, double gamma, HermesManager manager) {
         super(name, id);
         this.gamma = gamma;
         this.manager = manager;
@@ -25,34 +25,34 @@ public class HermesUser extends User {
         this.logicalPid = initialPid;
     }
 
-    public Long getpId() {
+    public Integer getpId() {
         return pId;
     }
 
-    public void setpId(Long pId) {
+    public void setpId(Integer pId) {
         this.pId = pId;
     }
 
-    public Long getPhysicalPid() {
+    public Integer getPhysicalPid() {
         return physicalPid;
     }
 
-    public void setPhysicalPid(Long physicalPid) {
+    public void setPhysicalPid(Integer physicalPid) {
         this.physicalPid = physicalPid;
     }
 
-    public Long getLogicalPid() {
+    public Integer getLogicalPid() {
         return logicalPid;
     }
 
-    public void setLogicalPid(Long logicalPid) {
+    public void setLogicalPid(Integer logicalPid) {
         this.logicalPid = logicalPid;
     }
 
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
-        Map<Long, Long> pToWeight = new HashMap<Long, Long>();
-        long totalWeight = 0L;
-        for(Long partitionId : manager.getAllPartitionIds()) {
+        Map<Integer, Integer> pToWeight = new HashMap<Integer, Integer>();
+        int totalWeight = 0;
+        for(Integer partitionId : manager.getAllPartitionIds()) {
             int pWeight;
             if(determineWeightsFromPhysicalPartitions) {
                 pWeight = manager.getPartitionById(partitionId).getNumUsers();
@@ -61,28 +61,28 @@ public class HermesUser extends User {
                 pWeight = manager.getPartitionById(partitionId).getNumLogicalUsers();
             }
             totalWeight += pWeight;
-            pToWeight.put(partitionId, (long) pWeight);
+            pToWeight.put(partitionId, (int) pWeight);
         }
         return new LogicalUser(getId(), logicalPid, gamma, getPToFriendCount(), pToWeight, totalWeight);
     }
 
-    Map<Long, Long> getPToFriendCount() {
-        Map<Long, Long> pToFriendCount = new HashMap<Long, Long>();
-        for(Long pid : manager.getAllPartitionIds()) {
-            pToFriendCount.put(pid, 0L);
+    Map<Integer, Integer> getPToFriendCount() {
+        Map<Integer, Integer> pToFriendCount = new HashMap<Integer, Integer>();
+        for(Integer pid : manager.getAllPartitionIds()) {
+            pToFriendCount.put(pid, 0);
         }
-        for(Long friendId : getFriendIDs()) {
-            Long pid = manager.getUser(friendId).getLogicalPid();
-            pToFriendCount.put(pid, pToFriendCount.get(pid) + 1L);
+        for(Integer friendId : getFriendIDs()) {
+            Integer pid = manager.getUser(friendId).getLogicalPid();
+            pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
         }
         return pToFriendCount;
     }
 
-    public void befriend(Long uid) {
+    public void befriend(Integer uid) {
         getFriendIDs().add(uid);
     }
 
-    public void unfriend(Long uid) {
+    public void unfriend(Integer uid) {
         getFriendIDs().remove(uid);
     }
 
@@ -91,25 +91,24 @@ public class HermesUser extends User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        HermesUser that = (HermesUser) o;
+        HermesUser user = (HermesUser) o;
 
-        if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) return false;
-        if (getName() != null ? !getName().equals(that.getName()) : that.getName() != null) return false;
-        if (pId != null ? !pId.equals(that.pId) : that.pId != null) return false;
-        if (physicalPid != null ? !physicalPid.equals(that.physicalPid) : that.physicalPid != null) return false;
-        if (logicalPid != null ? !logicalPid.equals(that.logicalPid) : that.logicalPid != null) return false;
-        return getFriendIDs() != null ? getFriendIDs().equals(that.getFriendIDs()) : that.getFriendIDs() == null;
+        if (Double.compare(user.gamma, gamma) != 0) return false;
+        if (!pId.equals(user.pId)) return false;
+        if (!physicalPid.equals(user.physicalPid)) return false;
+        return logicalPid.equals(user.logicalPid);
 
     }
 
     @Override
     public int hashCode() {
-        int result = getId() != null ? getId().hashCode() : 0;
-        result = 31 * result + (getName() != null ? getName().hashCode() : 0);
-        result = 31 * result + (pId != null ? pId.hashCode() : 0);
-        result = 31 * result + (physicalPid != null ? physicalPid.hashCode() : 0);
-        result = 31 * result + (logicalPid != null ? logicalPid.hashCode() : 0);
-        result = 31 * result + (getFriendIDs() != null ? getFriendIDs().hashCode() : 0);
+        int result;
+        long temp;
+        result = pId.hashCode();
+        temp = Double.doubleToLongBits(gamma);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + physicalPid.hashCode();
+        result = 31 * result + logicalPid.hashCode();
         return result;
     }
 }

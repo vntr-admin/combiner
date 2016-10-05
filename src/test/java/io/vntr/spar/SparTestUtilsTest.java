@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.vntr.spar.SparTestUtils.GraphSpec;
-import io.vntr.spar.SparTestUtils.LongPair;
+import io.vntr.spar.SparTestUtils.IntegerPair;
 
 import org.junit.Test;
 
@@ -16,87 +16,87 @@ import static org.junit.Assert.*;
 public class SparTestUtilsTest {
     @Test
     public void testBuildGraphFromGraphSpec() {
-        Set<Long> allUserIds = new HashSet<Long>(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L));
+        Set<Integer> allUserIds = new HashSet<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
 
-        Map<Long, Set<Long>> partitionIdToMastersMap = new HashMap<Long, Set<Long>>();
-        partitionIdToMastersMap.put(1L, new HashSet<Long>(Arrays.asList(1L, 10L)));
-        partitionIdToMastersMap.put(2L, new HashSet<Long>(Arrays.asList(2L, 3L)));
-        partitionIdToMastersMap.put(3L, new HashSet<Long>(Arrays.asList(4L, 5L)));
-        partitionIdToMastersMap.put(4L, new HashSet<Long>(Arrays.asList(6L, 7L)));
-        partitionIdToMastersMap.put(5L, new HashSet<Long>(Arrays.asList(8L, 9L)));
+        Map<Integer, Set<Integer>> partitionIdToMastersMap = new HashMap<Integer, Set<Integer>>();
+        partitionIdToMastersMap.put(1, new HashSet<Integer>(Arrays.asList(1, 10)));
+        partitionIdToMastersMap.put(2, new HashSet<Integer>(Arrays.asList(2, 3)));
+        partitionIdToMastersMap.put(3, new HashSet<Integer>(Arrays.asList(4, 5)));
+        partitionIdToMastersMap.put(4, new HashSet<Integer>(Arrays.asList(6, 7)));
+        partitionIdToMastersMap.put(5, new HashSet<Integer>(Arrays.asList(8, 9)));
 
-        Map<Long, Set<Long>> partitionIdToReplicasMap = new HashMap<Long, Set<Long>>();
-        partitionIdToReplicasMap.put(1L, new HashSet<Long>(Arrays.asList(3L, 6L, 7L, 8L)));
-        partitionIdToReplicasMap.put(2L, new HashSet<Long>(Arrays.asList(1L, 5L, 8L, 9L)));
-        partitionIdToReplicasMap.put(3L, new HashSet<Long>(Arrays.asList(1L, 10L, 2L, 7L)));
-        partitionIdToReplicasMap.put(4L, new HashSet<Long>(Arrays.asList(2L, 3L, 4L, 9L)));
-        partitionIdToReplicasMap.put(5L, new HashSet<Long>(Arrays.asList(10L, 4L, 5L, 6L)));
+        Map<Integer, Set<Integer>> partitionIdToReplicasMap = new HashMap<Integer, Set<Integer>>();
+        partitionIdToReplicasMap.put(1, new HashSet<Integer>(Arrays.asList(3, 6, 7, 8)));
+        partitionIdToReplicasMap.put(2, new HashSet<Integer>(Arrays.asList(1, 5, 8, 9)));
+        partitionIdToReplicasMap.put(3, new HashSet<Integer>(Arrays.asList(1, 10, 2, 7)));
+        partitionIdToReplicasMap.put(4, new HashSet<Integer>(Arrays.asList(2, 3, 4, 9)));
+        partitionIdToReplicasMap.put(5, new HashSet<Integer>(Arrays.asList(10, 4, 5, 6)));
 
-        Set<LongPair> friendships = new HashSet<SparTestUtils.LongPair>();
-        friendships.add(new LongPair(1L, 2L));
-        friendships.add(new LongPair(1L, 4L));
-        friendships.add(new LongPair(1L, 8L));
-        friendships.add(new LongPair(2L, 5L));
-        friendships.add(new LongPair(3L, 7L));
-        friendships.add(new LongPair(4L, 8L));
-        friendships.add(new LongPair(6L, 9L));
+        Set<IntegerPair> friendships = new HashSet<SparTestUtils.IntegerPair>();
+        friendships.add(new IntegerPair(1, 2));
+        friendships.add(new IntegerPair(1, 4));
+        friendships.add(new IntegerPair(1, 8));
+        friendships.add(new IntegerPair(2, 5));
+        friendships.add(new IntegerPair(3, 7));
+        friendships.add(new IntegerPair(4, 8));
+        friendships.add(new IntegerPair(6, 9));
 
         int minNumReplicas = 2;
 
         GraphSpec spec = new GraphSpec();
 
-        for (Long partitionId : partitionIdToMastersMap.keySet()) {
+        for (Integer partitionId : partitionIdToMastersMap.keySet()) {
             spec.addPartitionMastersPairing(partitionId, partitionIdToMastersMap.get(partitionId));
             spec.addPartitionReplicasPairing(partitionId, partitionIdToReplicasMap.get(partitionId));
         }
 
-        for (LongPair friendship : friendships) {
+        for (IntegerPair friendship : friendships) {
             spec.addFriendship(friendship.val1, friendship.val2);
         }
 
         SparManager manager = SparTestUtils.buildGraphFromGraphSpec(spec, minNumReplicas);
 
         assertTrue(manager.getMinNumReplicas() == minNumReplicas);
-        assertEquals(new HashSet<Long>(partitionIdToMastersMap.keySet()), new HashSet<Long>(manager.getAllPartitionIds()));
-        assertEquals(allUserIds, new HashSet<Long>(manager.getAllUserIds()));
+        assertEquals(new HashSet<Integer>(partitionIdToMastersMap.keySet()), new HashSet<Integer>(manager.getAllPartitionIds()));
+        assertEquals(allUserIds, new HashSet<Integer>(manager.getAllUserIds()));
 
         //Ensure all friendships are present
-        for (LongPair friendship : friendships) {
+        for (IntegerPair friendship : friendships) {
             SparUser user1 = manager.getUserMasterById(friendship.val1);
             SparUser user2 = manager.getUserMasterById(friendship.val2);
             assertTrue(user1.getFriendIDs().contains(friendship.val2));
             assertTrue(user2.getFriendIDs().contains(friendship.val1));
-            for (Long replicaId : user1.getReplicaPartitionIds()) {
+            for (Integer replicaId : user1.getReplicaPartitionIds()) {
                 SparUser user1Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val1);
                 assertTrue(user1Replica.getFriendIDs().contains(friendship.val2));
             }
-            for (Long replicaId : user2.getReplicaPartitionIds()) {
+            for (Integer replicaId : user2.getReplicaPartitionIds()) {
                 SparUser user2Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val2);
                 assertTrue(user2Replica.getFriendIDs().contains(friendship.val1));
             }
         }
 
-        for (Long userId : allUserIds) {
+        for (Integer userId : allUserIds) {
             SparUser user = manager.getUserMasterById(userId);
-            for (Long friendId : user.getFriendIDs()) {
-                assertTrue(friendships.contains(new LongPair(userId, friendId)) || friendships.contains(new LongPair(friendId, userId)));
+            for (Integer friendId : user.getFriendIDs()) {
+                assertTrue(friendships.contains(new IntegerPair(userId, friendId)) || friendships.contains(new IntegerPair(friendId, userId)));
             }
         }
 
         //Ensure that masters and replicas are placed in the correct partition
-        for (Long userId : allUserIds) {
+        for (Integer userId : allUserIds) {
             SparUser user = manager.getUserMasterById(userId);
-            Long masterPartitionId = user.getMasterPartitionId();
+            Integer masterPartitionId = user.getMasterPartitionId();
             assertTrue(partitionIdToMastersMap.get(masterPartitionId).contains(userId));
-            for (Long replicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
                 assertTrue(partitionIdToReplicasMap.get(replicaPartitionId).contains(userId));
             }
         }
 
-        for (Long partitionId : partitionIdToMastersMap.keySet()) {
+        for (Integer partitionId : partitionIdToMastersMap.keySet()) {
             SparPartition partition = manager.getPartitionById(partitionId);
-            assertEquals(new HashSet<Long>(partition.getIdsOfMasters()), partitionIdToMastersMap.get(partitionId));
-            assertEquals(new HashSet<Long>(partition.getIdsOfReplicas()), partitionIdToReplicasMap.get(partitionId));
+            assertEquals(new HashSet<Integer>(partition.getIdsOfMasters()), partitionIdToMastersMap.get(partitionId));
+            assertEquals(new HashSet<Integer>(partition.getIdsOfReplicas()), partitionIdToReplicasMap.get(partitionId));
         }
     }
 }

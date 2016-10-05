@@ -6,25 +6,25 @@ import java.util.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesPartition {
-    private Long id;
+    private Integer id;
     private double gamma;
     private HermesManager manager;
-    private Map<Long, HermesUser> physicalUsers;
-    private Map<Long, LogicalUser> logicalUsers;
+    private Map<Integer, HermesUser> physicalUsers;
+    private Map<Integer, LogicalUser> logicalUsers;
 
-    public HermesPartition(Long id, double gamma, HermesManager manager) {
+    public HermesPartition(Integer id, double gamma, HermesManager manager) {
         this.id = id;
         this.gamma = gamma;
         this.manager = manager;
-        this.physicalUsers = new HashMap<Long, HermesUser>();
-        this.logicalUsers = new HashMap<Long, LogicalUser>();
+        this.physicalUsers = new HashMap<Integer, HermesUser>();
+        this.logicalUsers = new HashMap<Integer, LogicalUser>();
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public HermesUser getUserById(Long uid) {
+    public HermesUser getUserById(Integer uid) {
         return physicalUsers.get(uid);
     }
 
@@ -36,7 +36,7 @@ public class HermesPartition {
         this.logicalUsers.put(logicalUser.getId(), logicalUser);
     }
 
-    public void removeLogicalUser(Long logicalUserId) {
+    public void removeLogicalUser(Integer logicalUserId) {
         this.logicalUsers.remove(logicalUserId);
     }
 
@@ -59,19 +59,19 @@ public class HermesPartition {
     }
 
     /** Returns the users who were copied to this partition. */
-    public Set<Long> physicallyMigrateCopy() {
-        Set<Long> logicalUserSet = new HashSet<Long>(logicalUsers.keySet());
+    public Set<Integer> physicallyMigrateCopy() {
+        Set<Integer> logicalUserSet = new HashSet<Integer>(logicalUsers.keySet());
         logicalUserSet.removeAll(physicalUsers.keySet());
-        for(Long newUserId : logicalUserSet) {
+        for(Integer newUserId : logicalUserSet) {
             physicalUsers.put(newUserId, manager.getUser(newUserId));
         }
         return logicalUserSet;
     }
 
     public void physicallyMigrateDelete() {
-        for(Iterator<Long> iter = physicalUsers.keySet().iterator(); iter.hasNext(); ) {
+        for(Iterator<Integer> iter = physicalUsers.keySet().iterator(); iter.hasNext(); ) {
             HermesUser user = physicalUsers.get(iter.next());
-            Long logicalPid = user.getLogicalPid();
+            Integer logicalPid = user.getLogicalPid();
             if(!logicalPid.equals(id)) {
                 user.setPhysicalPid(logicalPid);
                 iter.remove();
@@ -80,19 +80,19 @@ public class HermesPartition {
     }
 
     public void resetLogicalUsers() {
-        logicalUsers = new HashMap<Long, LogicalUser>();
+        logicalUsers = new HashMap<Integer, LogicalUser>();
         for(HermesUser hermesUser : physicalUsers.values()) {
             logicalUsers.put(hermesUser.getId(), hermesUser.getLogicalUser(true));
         }
     }
 
-    public void updateLogicalUsersPartitionWeights(Map<Long, Long> partitionWeights) {
+    public void updateLogicalUsersPartitionWeights(Map<Integer, Integer> partitionWeights) {
         for(LogicalUser logicalUser : logicalUsers.values()) {
             logicalUser.setpToWeight(partitionWeights);
         }
     }
 
-    public void updateLogicalUsersTotalWeights(Long totalWeight) {
+    public void updateLogicalUsersTotalWeights(Integer totalWeight) {
         for(LogicalUser logicalUser : logicalUsers.values()) {
             logicalUser.setTotalWeight(totalWeight);
         }
@@ -106,16 +106,16 @@ public class HermesPartition {
         physicalUsers.put(hermesUser.getId(), hermesUser);
     }
 
-    public void removeUser(Long userId) {
+    public void removeUser(Integer userId) {
         physicalUsers.remove(userId);
         logicalUsers.remove(userId);
     }
 
-    public Set<Long> getPhysicalUserIds() {
+    public Set<Integer> getPhysicalUserIds() {
         return Collections.unmodifiableSet(physicalUsers.keySet());
     }
 
-    Set<Long> getLogicalUserIds() {
+    Set<Integer> getLogicalUserIds() {
         return Collections.unmodifiableSet(logicalUsers.keySet());
     }
 
@@ -129,7 +129,7 @@ public class HermesPartition {
                 '}';
     }
 
-    public void updateLogicalUserFriendCounts(Long logicalUid, Map<Long, Long> updatedFriendCounts) {
+    public void updateLogicalUserFriendCounts(Integer logicalUid, Map<Integer, Integer> updatedFriendCounts) {
         logicalUsers.get(logicalUid).setPToFriendCount(updatedFriendCounts);
     }
 }

@@ -15,46 +15,46 @@ public class JabejaManager {
     private double initialT;
     private double deltaT;
 
-    private Map<Long, JabejaUser> uMap;
-    private NavigableMap<Long, Set<Long>> partitions;
+    private Map<Integer, JabejaUser> uMap;
+    private NavigableMap<Integer, Set<Integer>> partitions;
 
-    private static final Long defaultInitialPid = 1L;
+    private static final Integer defaultInitialPid = 1;
 
     public JabejaManager(double alpha, double initialT, double deltaT, int k) {
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
         this.k = k;
-        uMap = new HashMap<Long, JabejaUser>();
-        partitions = new TreeMap<Long, Set<Long>>();
+        uMap = new HashMap<Integer, JabejaUser>();
+        partitions = new TreeMap<Integer, Set<Integer>>();
     }
 
-    public Long getPartitionForUser(Long uid) {
+    public Integer getPartitionForUser(Integer uid) {
         return uMap.get(uid).getPid();
     }
 
-    public JabejaUser getUser(Long uid) {
+    public JabejaUser getUser(Integer uid) {
         return uMap.get(uid);
     }
 
-    public Set<Long> getPartition(Long pid) {
+    public Set<Integer> getPartition(Integer pid) {
         return partitions.get(pid);
     }
 
     public Collection<JabejaUser> getRandomSamplingOfUsers(int n) {
         Set<JabejaUser> users = new HashSet<JabejaUser>();
-        Set<Long> ids = ProbabilityUtils.getKDistinctValuesFromList(n, uMap.keySet());
-        for(Long id : ids) {
+        Set<Integer> ids = ProbabilityUtils.getKDistinctValuesFromList(n, uMap.keySet());
+        for(Integer id : ids) {
             users.add(uMap.get(id));
         }
         return users;
     }
 
-    public void swap(Long id1, Long id2) {
+    public void swap(Integer id1, Integer id2) {
         JabejaUser u1 = getUser(id1);
         JabejaUser u2 = getUser(id2);
 
-        Long tempPid = u1.getPid();
+        Integer tempPid = u1.getPid();
         u1.setPid(u2.getPid());
         u2.setPid(tempPid);
 
@@ -65,7 +65,7 @@ public class JabejaManager {
     }
 
     public void addUser(User user) {
-        Long initialPartitionId = getInitialPartitionId();
+        Integer initialPartitionId = getInitialPartitionId();
         JabejaUser jabejaUser = new JabejaUser(user.getName(), user.getId(), initialPartitionId, alpha, this);
         addUser(jabejaUser);
     }
@@ -75,29 +75,29 @@ public class JabejaManager {
         partitions.get(jabejaUser.getPid()).add(jabejaUser.getId());
     }
 
-    public void removeUser(Long uid) {
+    public void removeUser(Integer uid) {
         JabejaUser user = uMap.remove(uid);
-        for(Long friendId : user.getFriendIDs()) {
+        for(Integer friendId : user.getFriendIDs()) {
             getUser(friendId).unfriend(uid);
         }
         partitions.get(user.getPid()).remove(uid);
     }
 
-    public void befriend(Long id1, Long id2) {
+    public void befriend(Integer id1, Integer id2) {
         getUser(id1).befriend(id2);
         getUser(id2).befriend(id1);
     }
 
-    public void unfriend(Long id1, Long id2) {
+    public void unfriend(Integer id1, Integer id2) {
         getUser(id1).unfriend(id2);
         getUser(id2).unfriend(id1);
     }
 
     public void repartition() {
         for(double t = initialT; t >= 1; t -= deltaT) {
-            List<Long> randomUserList = new LinkedList<Long>(uMap.keySet());
+            List<Integer> randomUserList = new LinkedList<Integer>(uMap.keySet());
             Collections.shuffle(randomUserList);
-            for(Long uid : randomUserList) {
+            for(Integer uid : randomUserList) {
                 JabejaUser user = getUser(uid);
                 JabejaUser partner = user.findPartner(user.getFriends(), t);
                 if(partner == null) {
@@ -110,29 +110,29 @@ public class JabejaManager {
         }
     }
 
-    Long getInitialPartitionId() {
+    Integer getInitialPartitionId() {
         return ProbabilityUtils.getKDistinctValuesFromList(1, partitions.keySet()).iterator().next();
     }
 
-    public Long addPartition() {
-        Long pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1L;
+    public Integer addPartition() {
+        Integer pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1;
         addPartition(pid);
         return pid;
     }
 
-    void addPartition(Long pid) {
-        partitions.put(pid, new HashSet<Long>());
+    void addPartition(Integer pid) {
+        partitions.put(pid, new HashSet<Integer>());
     }
 
-    public void removePartition(Long partitionId) {
+    public void removePartition(Integer partitionId) {
         partitions.remove(partitionId);
     }
 
-    public Collection<Long> getPartitionIds() {
+    public Collection<Integer> getPartitionIds() {
         return partitions.keySet();
     }
 
-    public void moveUser(Long uid, Long newPid) {
+    public void moveUser(Integer uid, Integer newPid) {
         JabejaUser user = getUser(uid);
         if(partitions.containsKey(user.getPid())) {
             getPartition(user.getPid()).remove(uid);
@@ -142,19 +142,19 @@ public class JabejaManager {
 
     }
 
-    public Long getNumPartitions() {
-        return (long) partitions.size();
+    public Integer getNumPartitions() {
+        return (int) partitions.size();
     }
 
-    public Long getNumUsers() {
-        return (long) uMap.size();
+    public Integer getNumUsers() {
+        return (int) uMap.size();
     }
 
-    public Long getEdgeCut() {
-        long count = 0L;
+    public Integer getEdgeCut() {
+        int count = 0;
         for(JabejaUser user : uMap.values()) {
             for(JabejaUser friend : user.getFriends()) {
-                if(user.getPid().longValue() < friend.getPid().longValue()) {
+                if(user.getPid().intValue() < friend.getPid().intValue()) {
                     count++;
                 }
             }
@@ -162,15 +162,15 @@ public class JabejaManager {
         return count;
     }
 
-    public Map<Long, Set<Long>> getPartitionToUsers() {
-        Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
-        for(Long pid : partitions.keySet()) {
+    public Map<Integer, Set<Integer>> getPartitionToUsers() {
+        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        for(Integer pid : partitions.keySet()) {
             map.put(pid, Collections.unmodifiableSet(partitions.get(pid)));
         }
         return map;
     }
 
-    public Set<Long> getAllPartitionIds() {
+    public Set<Integer> getAllPartitionIds() {
         return partitions.keySet();
     }
 }

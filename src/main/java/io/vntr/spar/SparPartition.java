@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class SparPartition {
-    private Map<Long, SparUser> idToMasterMap = new HashMap<Long, SparUser>();
-    private Map<Long, SparUser> idToReplicaMap = new HashMap<Long, SparUser>();
-    private Long id;
+    private Map<Integer, SparUser> idToMasterMap = new HashMap<Integer, SparUser>();
+    private Map<Integer, SparUser> idToReplicaMap = new HashMap<Integer, SparUser>();
+    private Integer id;
 
-    public SparPartition(Long id) {
+    public SparPartition(Integer id) {
         this.id = id;
     }
 
@@ -19,7 +19,7 @@ public class SparPartition {
         idToMasterMap.put(user.getId(), user);
     }
 
-    public User removeMaster(Long id) {
+    public User removeMaster(Integer id) {
         return idToMasterMap.remove(id);
     }
 
@@ -27,15 +27,15 @@ public class SparPartition {
         idToReplicaMap.put(user.getId(), user);
     }
 
-    public User removeReplica(Long id) {
+    public User removeReplica(Integer id) {
         return idToReplicaMap.remove(id);
     }
 
-    public SparUser getMasterById(Long userId) {
+    public SparUser getMasterById(Integer userId) {
         return idToMasterMap.get(userId);
     }
 
-    public SparUser getReplicaById(Long userId) {
+    public SparUser getReplicaById(Integer userId) {
         return idToReplicaMap.get(userId);
     }
 
@@ -47,15 +47,15 @@ public class SparPartition {
         return idToReplicaMap.size();
     }
 
-    public Set<Long> getIdsOfMasters() {
+    public Set<Integer> getIdsOfMasters() {
         return idToMasterMap.keySet();
     }
 
-    public Set<Long> getIdsOfReplicas() {
+    public Set<Integer> getIdsOfReplicas() {
         return idToReplicaMap.keySet();
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 }

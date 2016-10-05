@@ -39,14 +39,14 @@ public class Analyzer {
     public void testParsing() throws Exception {
         for(String filename : filenames) {
             System.out.println(filename);
-            Map<Long, Set<Long>> friendships = TestUtils.extractFriendshipsFromFile(filename);
+            Map<Integer, Set<Integer>> friendships = TestUtils.extractFriendshipsFromFile(filename);
 
-            Set<Long> pids = new HashSet<Long>();
-            for(long pid = 0; pid < friendships.size() / USERS_PER_PARTITION; pid++) {
+            Set<Integer> pids = new HashSet<Integer>();
+            for(int pid = 0; pid < friendships.size() / USERS_PER_PARTITION; pid++) {
                 pids.add(pid);
             }
-            Map<Long, Set<Long>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
-            Map<Long, Set<Long>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
+            Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
+            Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
 
 
             System.out.println("Starting Ja-be-Ja");
@@ -67,10 +67,10 @@ public class Analyzer {
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             //TODO: figure out how to hook this up to the above and run it
-            ForestFireGenerator generator = new ForestFireGenerator(.34, .34, new TreeMap<Long, Set<Long>>(friendships));
+            ForestFireGenerator generator = new ForestFireGenerator(.34, .34, new TreeMap<Integer, Set<Integer>>(friendships));
             System.out.println("Starting generator");
-            Map<Long, Set<Long>> newFriendships = generator.run();
-            Long newUid = generator.getV();
+            Map<Integer, Set<Integer>> newFriendships = generator.run();
+            Integer newUid = generator.getV();
             System.out.println("Starting edge cuts");
             List<IMiddlewareAnalyzer> analyzers = Arrays.<IMiddlewareAnalyzer>asList(jabejaMiddleware, hermesMiddleware, sparMiddleware, spajaMiddleware, sparmesMiddleware);
             for(IMiddlewareAnalyzer iMiddlewareAnalyzer : analyzers) {
@@ -81,8 +81,8 @@ public class Analyzer {
             for(IMiddleware iMiddleware : middlewares) {
                 System.out.println(iMiddleware + "\n");
                 iMiddleware.addUser(new User("User " + newUid, newUid));
-                for(Long uid1 : newFriendships.keySet()) {
-                    for(Long uid2 : newFriendships.get(uid1)) {
+                for(Integer uid1 : newFriendships.keySet()) {
+                    for(Integer uid2 : newFriendships.get(uid1)) {
                         iMiddleware.befriend(uid1, uid2);
                     }
                 }
@@ -94,7 +94,7 @@ public class Analyzer {
         }
     }
 
-    private SparManager initSparManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> replicas) {
+    private SparManager initSparManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         return SparTestUtils.initGraph(2, partitions, friendships, replicas);
     }
 
@@ -102,7 +102,7 @@ public class Analyzer {
         return new SparMiddleware(manager);
     }
 
-    private HermesManager initHermesManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions) throws Exception {
+    private HermesManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
         return HermesTestUtils.initGraph(1.2, partitions, friendships);
     }
 
@@ -110,7 +110,7 @@ public class Analyzer {
         return new HermesMiddleware(manager, 1.2);
     }
 
-    private JabejaManager initJabejaManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions) throws Exception {
+    private JabejaManager initJabejaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
         return JabejaTestUtils.initGraph(1.5, 2D, 0.2D, 9, partitions, friendships);
     }
 
@@ -118,7 +118,7 @@ public class Analyzer {
         return new JabejaMiddleware(manager);
     }
 
-    private SpajaManager initSpajaManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> replicas) {
+    private SpajaManager initSpajaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         return SpajaTestUtils.initGraph(2, 1.5, 2D, 0.2D, 9, partitions, friendships, replicas);
     }
 
@@ -126,7 +126,7 @@ public class Analyzer {
         return new SpajaMiddleware(manager);
     }
 
-    private SparmesManager initSparmesManager(Map<Long, Set<Long>> friendships, Map<Long, Set<Long>> partitions, Map<Long, Set<Long>> replicas) {
+    private SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         return SparmesTestUtils.initGraph(2, 1.2, partitions, friendships, replicas);
     }
 

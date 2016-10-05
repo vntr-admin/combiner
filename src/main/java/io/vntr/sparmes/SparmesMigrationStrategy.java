@@ -12,22 +12,22 @@ public class SparmesMigrationStrategy {
         this.manager = manager;
     }
 
-    public Map<Long, Long> getUserMigrationStrategy(Long partitionId) {
+    public Map<Integer, Integer> getUserMigrationStrategy(Integer partitionId) {
         //Reallocate the N/M master nodes hosted in that server to the remaining M-1 servers equally.
         //Decide the server in which a slave replica is promoted to master, based on the ratio of its neighbors that already exist on that server.
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
         //Place the remaining nodes wherever they fit, following simple water-filling strategy.
 
-        Set<Long> partitionIdsToSkip = new HashSet<Long>(Arrays.asList(partitionId));
+        Set<Integer> partitionIdsToSkip = new HashSet<Integer>(Arrays.asList(partitionId));
         final SparmesPartition partition = manager.getPartitionById(partitionId);
-        Set<Long> masterIds = partition.getIdsOfMasters();
+        Set<Integer> masterIds = partition.getIdsOfMasters();
 
         class Score implements Comparable<Score> {
-            public final long userId;
-            public final long partitionId;
+            public final int userId;
+            public final int partitionId;
             public final double score;
 
-            public Score(Long userId, Long partitionId, double score) {
+            public Score(Integer userId, Integer partitionId, double score) {
                 this.userId = userId;
                 this.partitionId = partitionId;
                 this.score = score;
@@ -57,16 +57,26 @@ public class SparmesMigrationStrategy {
 
             @Override
             public boolean equals(Object o) {
-                if (o instanceof Score) {
-                    Score s = (Score) o;
-                    return s.userId == this.userId && s.partitionId == this.partitionId && s.score == this.score;
-                }
-                return false;
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+
+                Score score1 = (Score) o;
+
+                if (userId != score1.userId) return false;
+                if (partitionId != score1.partitionId) return false;
+                return Double.compare(score1.score, score) == 0;
+
             }
 
             @Override
             public int hashCode() {
-                return ((int) userId) << 15 + ((int) partitionId);
+                int result;
+                long temp;
+                result = userId;
+                result = 31 * result + partitionId;
+                temp = Double.doubleToLongBits(score);
+                result = 31 * result + (int) (temp ^ (temp >>> 32));
+                return result;
             }
 
             @Override
@@ -77,16 +87,16 @@ public class SparmesMigrationStrategy {
         }
 
         NavigableSet<Score> scores = new TreeSet<Score>();
-        for (Long userId : masterIds) {
+        for (Integer userId : masterIds) {
             SparmesUser user = manager.getUserMasterById(userId);
-            for (Long replicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
                 scores.add(new Score(userId, replicaPartitionId, scoreReplicaPromotion(user, replicaPartitionId)));
             }
         }
 
-        Map<Long, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(partitionIdsToSkip);
+        Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(partitionIdsToSkip);
 
-        Map<Long, Long> strategy = new HashMap<Long, Long>();
+        Map<Integer, Integer> strategy = new HashMap<Integer, Integer>();
 
         for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
             Score score = iter.next();
@@ -97,30 +107,30 @@ public class SparmesMigrationStrategy {
             }
         }
 
-        Set<Long> usersYetUnplaced = new HashSet<Long>(masterIds);
+        Set<Integer> usersYetUnplaced = new HashSet<Integer>(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
 
-        for (Long uid : usersYetUnplaced) {
+        for (Integer uid : usersYetUnplaced) {
             strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getAllPartitionIds()));
         }
 
         return strategy;
     }
 
-    Long getLeastOverloadedPartitionWhereThisUserHasAReplica(Long uid, Map<Long, Long> strategy, Set<Long> allPids) {
-        Map<Long, Integer> pToStrategyCount = new HashMap<Long, Integer>();
-        for(Long pid : allPids) {
+    Integer getLeastOverloadedPartitionWhereThisUserHasAReplica(Integer uid, Map<Integer, Integer> strategy, Set<Integer> allPids) {
+        Map<Integer, Integer> pToStrategyCount = new HashMap<Integer, Integer>();
+        for(Integer pid : allPids) {
             pToStrategyCount.put(pid, 0);
         }
-        for(Long uid1 : strategy.keySet()) {
-            long pid = strategy.get(uid1);
+        for(Integer uid1 : strategy.keySet()) {
+            int pid = strategy.get(uid1);
             pToStrategyCount.put(pid, pToStrategyCount.get(pid));
         }
 
         SparmesUser user = manager.getUserMasterById(uid);
         int minMasters = Integer.MAX_VALUE;
-        Long minPid = null;
-        for(Long pid : user.getReplicaPartitionIds()) {
+        Integer minPid = null;
+        for(Integer pid : user.getReplicaPartitionIds()) {
             int numMasters = manager.getPartitionById(pid).getNumMasters() + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;
@@ -130,10 +140,10 @@ public class SparmesMigrationStrategy {
         return minPid;
     }
 
-    double scoreReplicaPromotion(SparmesUser user, Long replicaPartitionId) {
+    double scoreReplicaPromotion(SparmesUser user, Integer replicaPartitionId) {
         //based on what they've said, it seems like a decent scoring mechanism is numFriendsOnPartition^2 / numFriendsTotal
         int numFriendsOnPartition = 0;
-        for (Long friendId : user.getFriendIDs()) {
+        for (Integer friendId : user.getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
             if (friend.getMasterPartitionId().equals(replicaPartitionId)) {
                 numFriendsOnPartition++;
@@ -145,7 +155,7 @@ public class SparmesMigrationStrategy {
         return ((double) (numFriendsOnPartition * numFriendsOnPartition)) / (numFriendsTotal);
     }
 
-    Map<Long, Integer> getRemainingSpotsInPartitions(Set<Long> partitionIdsToSkip) {
+    Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {
         int numUsers = manager.getNumUsers();
         int numPartitions = manager.getAllPartitionIds().size() - partitionIdsToSkip.size();
         int maxUsersPerPartition = numUsers / numPartitions;
@@ -153,8 +163,8 @@ public class SparmesMigrationStrategy {
             maxUsersPerPartition++;
         }
 
-        Map<Long, Integer> partitionToNumMastersMap = new HashMap<Long, Integer>();
-        for (Long partitionId : manager.getAllPartitionIds()) {
+        Map<Integer, Integer> partitionToNumMastersMap = new HashMap<Integer, Integer>();
+        for (Integer partitionId : manager.getAllPartitionIds()) {
             if (partitionIdsToSkip.contains(partitionId)) {
                 continue;
             }
@@ -162,8 +172,8 @@ public class SparmesMigrationStrategy {
             partitionToNumMastersMap.put(partition.getId(), partition.getNumMasters());
         }
 
-        Map<Long, Integer> remainingSpotsInPartitions = new HashMap<Long, Integer>();
-        for (Long partitionId : partitionToNumMastersMap.keySet()) {
+        Map<Integer, Integer> remainingSpotsInPartitions = new HashMap<Integer, Integer>();
+        for (Integer partitionId : partitionToNumMastersMap.keySet()) {
             remainingSpotsInPartitions.put(partitionId, maxUsersPerPartition - partitionToNumMastersMap.get(partitionId));
         }
 

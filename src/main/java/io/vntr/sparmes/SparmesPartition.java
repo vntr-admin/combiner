@@ -9,14 +9,14 @@ import java.util.*;
  */
 public class SparmesPartition {
     private final double gamma;
-    private Map<Long, SparmesUser> idToMasterMap = new HashMap<Long, SparmesUser>();
-    private Map<Long, SparmesUser> idToReplicaMap = new HashMap<Long, SparmesUser>();
-    private Map<Long, LogicalUser> logicalUsers = new HashMap<Long, LogicalUser>();
-    private Set<Long> logicalReplicaIds = new HashSet<Long>();
-    private Long id;
+    private Map<Integer, SparmesUser> idToMasterMap = new HashMap<Integer, SparmesUser>();
+    private Map<Integer, SparmesUser> idToReplicaMap = new HashMap<Integer, SparmesUser>();
+    private Map<Integer, LogicalUser> logicalUsers = new HashMap<Integer, LogicalUser>();
+    private Set<Integer> logicalReplicaIds = new HashSet<Integer>();
+    private Integer id;
     private SparmesManager manager;
 
-    public SparmesPartition(Long id, double gamma, SparmesManager manager) {
+    public SparmesPartition(Integer id, double gamma, SparmesManager manager) {
         this.id = id;
         this.manager = manager;
         this.gamma = gamma;
@@ -26,7 +26,7 @@ public class SparmesPartition {
         idToMasterMap.put(user.getId(), user);
     }
 
-    public User removeMaster(Long id) {
+    public User removeMaster(Integer id) {
         return idToMasterMap.remove(id);
     }
 
@@ -34,15 +34,15 @@ public class SparmesPartition {
         idToReplicaMap.put(user.getId(), user);
     }
 
-    public User removeReplica(Long id) {
+    public User removeReplica(Integer id) {
         return idToReplicaMap.remove(id);
     }
 
-    public SparmesUser getMasterById(Long userId) {
+    public SparmesUser getMasterById(Integer userId) {
         return idToMasterMap.get(userId);
     }
 
-    public SparmesUser getReplicaById(Long userId) {
+    public SparmesUser getReplicaById(Integer userId) {
         return idToReplicaMap.get(userId);
     }
 
@@ -54,32 +54,32 @@ public class SparmesPartition {
         return idToReplicaMap.size();
     }
 
-    public Set<Long> getIdsOfMasters() {
+    public Set<Integer> getIdsOfMasters() {
         return idToMasterMap.keySet();
     }
 
-    public Set<Long> getIdsOfReplicas() {
+    public Set<Integer> getIdsOfReplicas() {
         return idToReplicaMap.keySet();
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public Set<Long> getLogicalReplicaIds() {
+    public Set<Integer> getLogicalReplicaIds() {
         return logicalReplicaIds;
     }
 
-    public void removeLogicalReplicaId(Long uid) {
+    public void removeLogicalReplicaId(Integer uid) {
         logicalReplicaIds.remove(uid);
     }
 
-    public void addLogicalReplicaId(Long uid) {
+    public void addLogicalReplicaId(Integer uid) {
         logicalReplicaIds.add(uid);
     }
 
     public void resetLogicalUsers() {
-        logicalUsers = new HashMap<Long, LogicalUser>();
+        logicalUsers = new HashMap<Integer, LogicalUser>();
         for(SparmesUser user : idToMasterMap.values()) {
             logicalUsers.put(user.getId(), user.getLogicalUser(true));
         }
@@ -104,19 +104,19 @@ public class SparmesPartition {
     }
 
 
-    public Set<Long> physicallyMigrateCopy() {
-        Set<Long> logicalUserSet = new HashSet<Long>(logicalUsers.keySet());
-        Set<Long> friendsSet = new HashSet<Long>();
+    public Set<Integer> physicallyMigrateCopy() {
+        Set<Integer> logicalUserSet = new HashSet<Integer>(logicalUsers.keySet());
+        Set<Integer> friendsSet = new HashSet<Integer>();
         logicalUserSet.removeAll(idToMasterMap.keySet());
-        for(Long newUid : logicalUserSet) {
+        for(Integer newUid : logicalUserSet) {
             SparmesUser user = manager.getUserMasterById(newUid);
             idToMasterMap.put(newUid, user);
             friendsSet.addAll(user.getFriendIDs());
         }
 
-        Set<Long> toReplicate = new HashSet<Long>(logicalReplicaIds);
+        Set<Integer> toReplicate = new HashSet<Integer>(logicalReplicaIds);
         toReplicate.removeAll(idToReplicaMap.keySet());
-        for(Long uid : toReplicate) {
+        for(Integer uid : toReplicate) {
             manager.addReplica(manager.getUserMasterById(uid), id);
         }
 
@@ -124,11 +124,11 @@ public class SparmesPartition {
     }
 
     public void physicallyMigrateDelete() {
-        Set<Long> removedUsers = new HashSet<Long>();
-        for(Iterator<Long> iter = idToMasterMap.keySet().iterator(); iter.hasNext(); ) {
-            Long uid = iter.next();
+        Set<Integer> removedUsers = new HashSet<Integer>();
+        for(Iterator<Integer> iter = idToMasterMap.keySet().iterator(); iter.hasNext(); ) {
+            Integer uid = iter.next();
             SparmesUser user = idToMasterMap.get(uid);
-            Long logicalPid = user.getLogicalPid();
+            Integer logicalPid = user.getLogicalPid();
             if(!logicalPid.equals(id)) {
                 user.setMasterPartitionId(logicalPid);
                 removedUsers.add(uid);
@@ -136,9 +136,9 @@ public class SparmesPartition {
             }
         }
 
-        Set<Long> toDereplicate = new HashSet<Long>(idToReplicaMap.keySet());
+        Set<Integer> toDereplicate = new HashSet<Integer>(idToReplicaMap.keySet());
         toDereplicate.removeAll(logicalReplicaIds);
-        for(Long uid : toDereplicate) {
+        for(Integer uid : toDereplicate) {
             manager.removeReplica(manager.getUserMasterById(uid), id);
         }
     }
@@ -147,11 +147,11 @@ public class SparmesPartition {
         return logicalUsers.size();
     }
 
-    public Set<Long> getLogicalUserIds() {
+    public Set<Integer> getLogicalUserIds() {
         return logicalUsers.keySet();
     }
 
-    public void removeLogicalUser(Long userId) {
+    public void removeLogicalUser(Integer userId) {
         logicalUsers.remove(userId);
     }
 
@@ -159,19 +159,19 @@ public class SparmesPartition {
         this.logicalUsers.put(logicalUser.getId(), logicalUser);
     }
 
-    public void updateLogicalUsersPartitionWeights(Map<Long, Long> pToWeight) {
+    public void updateLogicalUsersPartitionWeights(Map<Integer, Integer> pToWeight) {
         for(LogicalUser logicalUser : logicalUsers.values()) {
             logicalUser.setpToWeight(pToWeight);
         }
     }
 
-    public void updateLogicalUsersTotalWeights(Long totalWeight) {
+    public void updateLogicalUsersTotalWeights(Integer totalWeight) {
         for(LogicalUser logicalUser : logicalUsers.values()) {
             logicalUser.setTotalWeight(totalWeight);
         }
     }
 
-    public void updateLogicalUserFriendCounts(Long logicalUid, Map<Long, Long> updatedFriendCounts) {
+    public void updateLogicalUserFriendCounts(Integer logicalUid, Map<Integer, Integer> updatedFriendCounts) {
         logicalUsers.get(logicalUid).setPToFriendCount(updatedFriendCounts);
     }
 

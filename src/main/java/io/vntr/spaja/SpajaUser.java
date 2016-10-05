@@ -12,49 +12,49 @@ import java.util.Set;
  */
 public class SpajaUser extends User {
     private double alpha;
-    private Long partitionId;
-    private Long masterPartitionId;
-    private Set<Long> replicaPartitionIds;
+    private Integer partitionId;
+    private Integer masterPartitionId;
+    private Set<Integer> replicaPartitionIds;
     private SpajaManager manager; //TODO: this is sloppy; replace its usage with passing in the necessary info
     private int k;
 
-    public SpajaUser(String name, Long id, double alpha, int k, SpajaManager manager) {
+    public SpajaUser(String name, Integer id, double alpha, int k, SpajaManager manager) {
         super(name, id);
-        replicaPartitionIds = new HashSet<Long>();
+        replicaPartitionIds = new HashSet<Integer>();
         this.alpha = alpha;
         this.k = k;
         this.manager = manager;
     }
 
-    public Long getPartitionId() {
+    public Integer getPartitionId() {
         return partitionId;
     }
 
-    public void setPartitionId(Long partitionId) {
+    public void setPartitionId(Integer partitionId) {
         this.partitionId = partitionId;
     }
 
-    public Long getMasterPartitionId() {
+    public Integer getMasterPartitionId() {
         return masterPartitionId;
     }
 
-    public void setMasterPartitionId(Long masterPartitionId) {
+    public void setMasterPartitionId(Integer masterPartitionId) {
         this.masterPartitionId = masterPartitionId;
     }
 
-    public void addReplicaPartitionId(Long replicaPartitionId) {
+    public void addReplicaPartitionId(Integer replicaPartitionId) {
         this.replicaPartitionIds.add(replicaPartitionId);
     }
 
-    public void removeReplicaPartitionId(Long replicaPartitionId) {
+    public void removeReplicaPartitionId(Integer replicaPartitionId) {
         this.replicaPartitionIds.remove(replicaPartitionId);
     }
 
-    public void addReplicaPartitionIds(Collection<Long> replicaPartitionIds) {
+    public void addReplicaPartitionIds(Collection<Integer> replicaPartitionIds) {
         this.replicaPartitionIds.addAll(replicaPartitionIds);
     }
 
-    public Set<Long> getReplicaPartitionIds() {
+    public Set<Integer> getReplicaPartitionIds() {
         return replicaPartitionIds;
     }
 
@@ -64,7 +64,7 @@ public class SpajaUser extends User {
         user.setPartitionId(partitionId);
         user.setMasterPartitionId(masterPartitionId);
         user.addReplicaPartitionIds(replicaPartitionIds);
-        for (Long friendId : getFriendIDs()) {
+        for (Integer friendId : getFriendIDs()) {
             user.befriend(friendId);
         }
 

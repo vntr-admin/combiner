@@ -7,19 +7,19 @@ import java.util.Set;
  * Created by robertlindquist on 9/29/16.
  */
 public class LogicalUser {
-    private Long id;
-    private Long pid;
+    private Integer id;
+    private Integer pid;
     private double gamma;
-    private Long totalWeight;
-    private Map<Long, Long> pToFriendCount;
-    private Map<Long, Long> pToWeight;
+    private Integer totalWeight;
+    private Map<Integer, Integer> pToFriendCount;
+    private Map<Integer, Integer> pToWeight;
 
-    private Set<Long> replicaLocations;
-    private Map<Long, Integer> numFriendsToAddInEachPartition;
+    private Set<Integer> replicaLocations;
+    private Map<Integer, Integer> numFriendsToAddInEachPartition;
     private int numFriendReplicasToDeleteInSourcePartition;
     private boolean replicateInSourcePartition;
 
-    public LogicalUser(Long id, Long pid, double gamma, Map<Long, Long> pToFriendCount, Map<Long, Long> pToWeight, Set<Long> replicaLocations, Map<Long, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Long totalWeight) {
+    public LogicalUser(Integer id, Integer pid, double gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Set<Integer> replicaLocations, Map<Integer, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Integer totalWeight) {
         this.id = id;
         this.pid = pid;
         this.gamma = gamma;
@@ -32,62 +32,62 @@ public class LogicalUser {
         this.totalWeight = totalWeight;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public Long getPid() {
+    public Integer getPid() {
         return pid;
     }
 
-    public void setPid(Long pid) {
+    public void setPid(Integer pid) {
         this.pid = pid;
     }
 
-    public Map<Long, Long> getpToFriendCount() {
+    public Map<Integer, Integer> getpToFriendCount() {
         return pToFriendCount;
     }
 
-    public void setpToFriendCount(Map<Long, Long> pToFriendCount) {
+    public void setpToFriendCount(Map<Integer, Integer> pToFriendCount) {
         this.pToFriendCount = pToFriendCount;
     }
 
-    public Map<Long, Long> getpToWeight() {
+    public Map<Integer, Integer> getpToWeight() {
         return pToWeight;
     }
 
-    public void setpToWeight(Map<Long, Long> pToWeight) {
+    public void setpToWeight(Map<Integer, Integer> pToWeight) {
         this.pToWeight = pToWeight;
     }
 
-    public Long getTotalWeight() {
+    public Integer getTotalWeight() {
         return totalWeight;
     }
 
-    public void setTotalWeight(Long totalWeight) {
+    public void setTotalWeight(Integer totalWeight) {
         this.totalWeight = totalWeight;
     }
 
     public Target getTargetPart(boolean firstStage) {
-        if(getImbalanceFactor(pid, -1L) < (2-gamma)) {
+        if(getImbalanceFactor(pid, -1) < (2-gamma)) {
             return new Target(id, null, null, 0);
         }
 
-        Long target = null;
+        Integer target = null;
         Integer maxGain = 0;
 
-        if(getImbalanceFactor(pid, 0L) > gamma) {
+        if(getImbalanceFactor(pid, 0) > gamma) {
             maxGain = Integer.MIN_VALUE;
         }
 
-        for(Long targetPid : pToFriendCount.keySet()) {
+        for(Integer targetPid : pToFriendCount.keySet()) {
             if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
                 int gain = calculateGain(targetPid);
-                if(gain > maxGain && getImbalanceFactor(targetPid, 1L) < gamma) {
+                if(gain > maxGain && getImbalanceFactor(targetPid, 1) < gamma) {
                     target = targetPid;
                     maxGain = gain;
                 }
@@ -97,7 +97,7 @@ public class LogicalUser {
     }
 
     //"Gain" in this instance is the reduction in replicas
-    private int calculateGain(Long targetPid) {
+    private int calculateGain(Integer targetPid) {
         boolean deleteReplicaInTargetPartition = replicaLocations.contains(targetPid);
         int numToDelete = numFriendReplicasToDeleteInSourcePartition + (deleteReplicaInTargetPartition ? 1 : 0);
 
@@ -107,7 +107,7 @@ public class LogicalUser {
         return numToDelete - numToAdd;
     }
 
-    private double getImbalanceFactor(Long pId, Long offset) {
+    private double getImbalanceFactor(Integer pId, Integer offset) {
         double partitionWeight = pToWeight.get(pId) + offset;
         double averageWeight = ((double) totalWeight) / pToWeight.keySet().size();
         return partitionWeight / averageWeight;
@@ -125,11 +125,11 @@ public class LogicalUser {
         if (replicateInSourcePartition != that.replicateInSourcePartition) return false;
         if (!id.equals(that.id)) return false;
         if (!pid.equals(that.pid)) return false;
+        if (!totalWeight.equals(that.totalWeight)) return false;
         if (!pToFriendCount.equals(that.pToFriendCount)) return false;
         if (!pToWeight.equals(that.pToWeight)) return false;
         if (!replicaLocations.equals(that.replicaLocations)) return false;
-        if (!numFriendsToAddInEachPartition.equals(that.numFriendsToAddInEachPartition)) return false;
-        return totalWeight.equals(that.totalWeight);
+        return numFriendsToAddInEachPartition.equals(that.numFriendsToAddInEachPartition);
 
     }
 
@@ -141,17 +141,17 @@ public class LogicalUser {
         result = 31 * result + pid.hashCode();
         temp = Double.doubleToLongBits(gamma);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + totalWeight.hashCode();
         result = 31 * result + pToFriendCount.hashCode();
         result = 31 * result + pToWeight.hashCode();
         result = 31 * result + replicaLocations.hashCode();
         result = 31 * result + numFriendsToAddInEachPartition.hashCode();
         result = 31 * result + numFriendReplicasToDeleteInSourcePartition;
         result = 31 * result + (replicateInSourcePartition ? 1 : 0);
-        result = 31 * result + totalWeight.hashCode();
         return result;
     }
 
-    public void setPToFriendCount(Map<Long, Long> updatedFriendCounts) {
+    public void setPToFriendCount(Map<Integer, Integer> updatedFriendCounts) {
         pToFriendCount = updatedFriendCounts;
     }
 }
