@@ -88,4 +88,14 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void broadcastDowntime() {
         manager.repartition();
     }
+
+    @Override
+    public Map<Integer, Set<Integer>> getFriendships() {
+        return manager.getFriendships();
+    }
+
+    @Override
+    public double calcualteAssortivity() {
+        return ProbabilityUtils.calculateAssortivity(getFriendships());
+    }
 }

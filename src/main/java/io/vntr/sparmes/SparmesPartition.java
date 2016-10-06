@@ -139,6 +139,7 @@ public class SparmesPartition {
         Set<Integer> toDereplicate = new HashSet<Integer>(idToReplicaMap.keySet());
         toDereplicate.removeAll(logicalReplicaIds);
         for(Integer uid : toDereplicate) {
+            SparmesUser user = manager.getUserMasterById(uid);
             manager.removeReplica(manager.getUserMasterById(uid), id);
         }
     }

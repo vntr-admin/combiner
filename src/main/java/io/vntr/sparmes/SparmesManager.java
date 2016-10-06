@@ -148,6 +148,7 @@ public class SparmesManager {
 
         //Actually remove the replica from the partition itself
         pMap.get(removalPartitionId).removeReplica(user.getId());
+
     }
 
     public void befriend(SparmesUser smallerUser, SparmesUser largerUser) {
@@ -219,6 +220,7 @@ public class SparmesManager {
         SparmesPartition partition = pMap.get(partitionId);
         SparmesUser user = partition.getReplicaById(userId);
         user.setMasterPartitionId(partitionId);
+        user.setLogicalPid(partitionId);
         user.removeReplicaPartitionId(partitionId);
         partition.addMaster(user);
         partition.removeReplica(userId);
@@ -307,6 +309,7 @@ public class SparmesManager {
         uMap.put(uid, toPid);
 
         user.setMasterPartitionId(toPid);
+        user.setLogicalPid(toPid);
         user.setPartitionId(toPid);
 
         for (Integer rPid : user.getReplicaPartitionIds()) {
@@ -336,11 +339,12 @@ public class SparmesManager {
             }
         }
 
+        uMap.putAll(usersWhoMoved);
+
         for (SparmesPartition p : pMap.values()) {
             p.physicallyMigrateDelete();
         }
 
-        uMap.putAll(usersWhoMoved);
     }
 
     boolean performStage(boolean firstStage, int k) {
@@ -463,4 +467,11 @@ public class SparmesManager {
         return pToWeight;
     }
 
+    public Map<Integer, Set<Integer>> getFriendships() {
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        for(Integer uid : uMap.keySet()) {
+            friendships.put(uid, getUserMasterById(uid).getFriendIDs());
+        }
+        return friendships;
+    }
 }

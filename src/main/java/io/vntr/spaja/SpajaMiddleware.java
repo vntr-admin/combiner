@@ -3,6 +3,7 @@ package io.vntr.spaja;
 import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
@@ -193,5 +194,15 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public void broadcastDowntime() {
         spajaRepartitioner.repartition();
+    }
+
+    @Override
+    public Map<Integer, Set<Integer>> getFriendships() {
+        return manager.getFriendships();
+    }
+
+    @Override
+    public double calcualteAssortivity() {
+        return ProbabilityUtils.calculateAssortivity(getFriendships());
     }
 }

@@ -364,4 +364,12 @@ public class SpajaManager {
             removeReplica(getUserMasterById(uid), pid2);
         }
     }
+
+    public Map<Integer, Set<Integer>> getFriendships() {
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
+            friendships.put(uid, getUserMasterById(uid).getFriendIDs());
+        }
+        return friendships;
+    }
 }

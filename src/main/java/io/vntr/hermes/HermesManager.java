@@ -105,8 +105,8 @@ public class HermesManager {
             p.resetLogicalUsers();
         }
 
-        logger.warn("Original: " + getPartitionToUserMap());
-        logger.warn("Friends: " + getFriendshipMap());
+//        logger.warn("Original: " + getPartitionToUserMap());
+//        logger.warn("Friends: " + getFriendshipMap());
 
         int iteration = 1;
         boolean stoppingCondition = false;
@@ -243,5 +243,13 @@ public class HermesManager {
         getPartitionById(pid).addUser(user);
         user.setPhysicalPid(pid);
         user.setLogicalPid(pid);
+    }
+
+    public Map<Integer, Set<Integer>> getFriendships() {
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        for(Integer uid : uMap.keySet()) {
+            friendships.put(uid, getUser(uid).getFriendIDs());
+        }
+        return friendships;
     }
 }

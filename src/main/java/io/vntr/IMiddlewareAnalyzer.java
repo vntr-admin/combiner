@@ -11,5 +11,7 @@ public interface IMiddlewareAnalyzer {
     Integer getNumberOfUsers();
     Integer getEdgeCut();
     Integer getReplicationCount();
+    double calcualteAssortivity();
     Map<Integer, Set<Integer>> getPartitionToUserMap();
+    Map<Integer, Set<Integer>> getFriendships();
 }

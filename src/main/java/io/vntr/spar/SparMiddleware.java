@@ -9,6 +9,7 @@ import java.util.Set;
 import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.utils.ProbabilityUtils;
 
 import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
 import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
@@ -194,5 +195,15 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public void broadcastDowntime() {
         //SPAR ignores downtime
+    }
+
+    @Override
+    public Map<Integer, Set<Integer>> getFriendships() {
+        return manager.getFriendships();
+    }
+
+    @Override
+    public double calcualteAssortivity() {
+        return ProbabilityUtils.calculateAssortivity(getFriendships());
     }
 }

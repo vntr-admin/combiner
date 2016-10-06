@@ -99,7 +99,7 @@ public class SparmesUser extends User {
 
     @Override
     public String toString() {
-        return super.toString() + "|masterP:" + masterPartitionId + "|P:" + partitionId + "|Reps:" + replicaPartitionIds.toString();
+        return super.toString() + "|M:" + masterPartitionId + "|P:" + partitionId + "|L:" + logicalPid + "|Reps:" + replicaPartitionIds.toString();
     }
 
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {

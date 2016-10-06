@@ -173,4 +173,12 @@ public class JabejaManager {
     public Set<Integer> getAllPartitionIds() {
         return partitions.keySet();
     }
+
+    public Map<Integer, Set<Integer>> getFriendships() {
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        for(Integer uid : uMap.keySet()) {
+            friendships.put(uid, getUser(uid).getFriendIDs());
+        }
+        return friendships;
+    }
 }
