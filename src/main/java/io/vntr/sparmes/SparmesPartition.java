@@ -83,6 +83,8 @@ public class SparmesPartition {
         for(SparmesUser user : idToMasterMap.values()) {
             logicalUsers.put(user.getId(), user.getLogicalUser(true));
         }
+        logicalReplicaIds.clear();
+        logicalReplicaIds.addAll(idToReplicaMap.keySet());
     }
 
     public Set<Target> getCandidates(boolean firstIteration, int k, boolean probabilistic) {
@@ -103,43 +105,43 @@ public class SparmesPartition {
         return topKCandidates;
     }
 
-
-    public Set<Integer> physicallyMigrateCopy() {
-        Set<Integer> logicalUserSet = new HashSet<Integer>(logicalUsers.keySet());
-        Set<Integer> friendsSet = new HashSet<Integer>();
-        logicalUserSet.removeAll(idToMasterMap.keySet());
-        for(Integer newUid : logicalUserSet) {
+    public Set<Integer> physicallyCopyNewMasters() {
+        Set<Integer> newMasters = new HashSet<Integer>(logicalUsers.keySet());
+        newMasters.removeAll(idToMasterMap.keySet());
+        for(Integer newUid : newMasters) {
             SparmesUser user = manager.getUserMasterById(newUid);
+            user.setLogicalPid(id);
+            user.setMasterPartitionId(id);
+            user.setPartitionId(id);
+            for (Integer rPid : user.getReplicaPartitionIds()) {
+                manager.getPartitionById(rPid).getReplicaById(newUid).setMasterPartitionId(id);
+            }
             idToMasterMap.put(newUid, user);
-            friendsSet.addAll(user.getFriendIDs());
         }
+        return newMasters;
+    }
 
+    public void physicallyCopyNewReplicas() {
         Set<Integer> toReplicate = new HashSet<Integer>(logicalReplicaIds);
         toReplicate.removeAll(idToReplicaMap.keySet());
         for(Integer uid : toReplicate) {
             manager.addReplica(manager.getUserMasterById(uid), id);
         }
-
-        return logicalUserSet;
     }
 
     public void physicallyMigrateDelete() {
-        Set<Integer> removedUsers = new HashSet<Integer>();
-        for(Iterator<Integer> iter = idToMasterMap.keySet().iterator(); iter.hasNext(); ) {
-            Integer uid = iter.next();
-            SparmesUser user = idToMasterMap.get(uid);
-            Integer logicalPid = user.getLogicalPid();
-            if(!logicalPid.equals(id)) {
-                user.setMasterPartitionId(logicalPid);
-                removedUsers.add(uid);
-                iter.remove();
-            }
-        }
+        physicallyDeleteOldMasters();
+        physicallyDeleteOldReplicas();
+    }
 
+    void physicallyDeleteOldMasters() {
+        idToMasterMap.keySet().retainAll(logicalUsers.keySet());
+    }
+
+    void physicallyDeleteOldReplicas() {
         Set<Integer> toDereplicate = new HashSet<Integer>(idToReplicaMap.keySet());
         toDereplicate.removeAll(logicalReplicaIds);
         for(Integer uid : toDereplicate) {
-            SparmesUser user = manager.getUserMasterById(uid);
             manager.removeReplica(manager.getUserMasterById(uid), id);
         }
     }

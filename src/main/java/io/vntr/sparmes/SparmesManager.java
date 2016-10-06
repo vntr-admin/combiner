@@ -333,13 +333,17 @@ public class SparmesManager {
 
         Map<Integer, Integer> usersWhoMoved = new HashMap<Integer, Integer>();
         for (SparmesPartition p : pMap.values()) {
-            Set<Integer> moved = p.physicallyMigrateCopy();
+            Set<Integer> moved = p.physicallyCopyNewMasters();
             for(Integer uid : moved) {
                 usersWhoMoved.put(uid, p.getId());
             }
         }
 
         uMap.putAll(usersWhoMoved);
+
+        for (SparmesPartition p : pMap.values()) {
+            p.physicallyCopyNewReplicas();
+        }
 
         for (SparmesPartition p : pMap.values()) {
             p.physicallyMigrateDelete();
