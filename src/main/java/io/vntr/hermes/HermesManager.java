@@ -45,7 +45,7 @@ public class HermesManager {
     }
 
     public void removeUser(Integer userId) {
-        Set<Integer> friendIds = getUser(userId).getFriendIDs();
+        Set<Integer> friendIds = new HashSet<Integer>(getUser(userId).getFriendIDs());
         for(Integer friendId : friendIds) {
             unfriend(userId, friendId);
         }
