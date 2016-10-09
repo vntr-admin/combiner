@@ -47,13 +47,17 @@ public class HermesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public int addPartition() {
-        return manager.addPartition();
+        int newPid = manager.addPartition();
+        manager.repartition();
+        return newPid;
+
     }
 
     @Override
     public void removePartition(Integer partitionId) {
         migrator.migrateOffPartition(partitionId);
         manager.removePartition(partitionId);
+        manager.repartition();
     }
 
     @Override
@@ -113,5 +117,9 @@ public class HermesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             m.put(pid, new HashSet<Integer>());
         }
         return m;
+    }
+
+    public float getGamma() {
+        return manager.getGamma();
     }
 }

@@ -262,4 +262,8 @@ public class HermesManager {
     public Collection<Integer> getUserIds() {
         return uMap.keySet();
     }
+
+    public float getGamma() {
+        return gamma;
+    }
 }

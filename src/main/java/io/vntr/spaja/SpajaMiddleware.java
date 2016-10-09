@@ -51,6 +51,8 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void befriend(Integer smallerUserId, Integer largerUserId) {
         SpajaUser smallerUser = manager.getUserMasterById(smallerUserId);
         SpajaUser largerUser = manager.getUserMasterById(largerUserId);
+
+        //TODO: on SparMiddleware, we moved the following to the end of the method, so perhaps that's necessary
         manager.befriend(smallerUser, largerUser);
 
         Integer smallerUserPid = smallerUser.getMasterPartitionId();
@@ -135,6 +137,10 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             SpajaUser user = manager.getUserMasterById(userId);
             manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
         }
+
+        //TODO: we added the following step to SparMiddleware
+        // "Fifth, remove references to replicas formerly on this partition"
+        //so maybe do that
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);

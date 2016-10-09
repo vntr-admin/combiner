@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 public class HermesAnalyzer {
     final static Logger logger = Logger.getLogger(HermesAnalyzer.class);
 
-//    @Test
+    @Test
     public void stressTest() throws Exception {
         for(int i=0; i<1000; i++) {
             int numUsers = 500 + (int) (Math.random() * 2000);
@@ -148,7 +148,7 @@ public class HermesAnalyzer {
                 oldFriendships.get(friendship[1]).remove(friendship[0]);
                 assertEquals(oldFriendships, middleware.getFriendships());
             }
-            if(action == FOREST_FIRE) {
+            if(action == FOREST_FIRE && false) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -235,7 +235,6 @@ public class HermesAnalyzer {
         return new HermesMiddleware(manager, 1.2f);
     }
 
-
     private static boolean isMiddlewareInAValidState(HermesMiddleware middleware) {
         boolean valid = true;
         Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -271,6 +270,26 @@ public class HermesAnalyzer {
         allFriendsSeen.removeAll(middleware.getUserIds());
         valid &= (allFriendsSeen.isEmpty());
 
+        double gamma = middleware.getGamma();
+        double avgSize = ((double) middleware.getNumberOfUsers()) / (middleware.getNumberOfPartitions());
+        int overloaded = (int) (gamma * avgSize) + 1;
+
+        double maxImbalance = Double.MIN_VALUE;
+        double minImbalance = Double.MAX_VALUE;
+        for(int pid : partitions.keySet()) {
+            double imbalance = ((double) partitions.get(pid).size()) / (avgSize);
+            if(imbalance < minImbalance) {
+                minImbalance = imbalance;
+            }
+            if(imbalance > maxImbalance) {
+                maxImbalance = imbalance;
+            }
+        }
+        if(maxImbalance > gamma) {
+            logger.warn("Imbalance range: " + minImbalance + " - " + maxImbalance);
+        }
+
         return valid;
     }
+
 }
