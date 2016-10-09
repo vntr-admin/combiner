@@ -55,8 +55,8 @@ public class JabejaAnalyzer {
             logger.warn("friendships:       " + friendships);
             logger.warn("partitions:        " + partitions);
 
-            JabejaManager sparManager = initJabejaManager(friendships, partitions);
-            JabejaMiddleware sparMiddleware = initJabejaMiddleware(sparManager);
+            JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
+            JabejaMiddleware jabejaMiddleware = initJabejaMiddleware(jabejaManager);
 
             Map<Analyzer.ACTIONS, Double> actionsProbability = new HashMap<Analyzer.ACTIONS, Double>();
             actionsProbability.put(ADD_USER,         0.125D);
@@ -74,7 +74,7 @@ public class JabejaAnalyzer {
             }
             script[script.length-1] = DOWNTIME;
 
-            runScriptedTest(sparMiddleware,    script);
+            runScriptedTest(jabejaMiddleware,    script);
         }
     }
 
@@ -85,18 +85,40 @@ public class JabejaAnalyzer {
         for(int i=0; i<script.length; i++) {
             Analyzer.ACTIONS action = script[i];
             if(action == ADD_USER) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
                 logger.warn("(" + i + "): " + ADD_USER + ": pre");
                 int newUid = middleware.addUser();
                 logger.warn("(" + i + "): " + ADD_USER + ": " + newUid);
                 assertTrue(isMiddlewareInAValidState(middleware));
+                assertEquals(pids, middleware.getPartitionIds());
+                oldUids.add(newUid);
+                assertEquals(middleware.getUserIds(), oldUids);
+                oldFriendships.put(newUid, Collections.<Integer>emptySet());
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
             if(action == REMOVE_USER) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getUserIds());
                 logger.warn("(" + i + "): " + REMOVE_USER + ": " + badId);
                 middleware.removeUser(badId);
                 assertTrue(isMiddlewareInAValidState(middleware));
+                assertEquals(pids, middleware.getPartitionIds());
+                oldUids.remove(badId);
+                assertEquals(middleware.getUserIds(), oldUids);
+                oldFriendships.remove(badId);
+                for(int uid : middleware.getUserIds()) {
+                    oldFriendships.get(uid).remove(badId);
+                }
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
             if(action == BEFRIEND) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 int[] nonfriendship = getNonFriendship(middleware.getFriendships());
                 int uid1 = nonfriendship[0];
                 int uid2 = nonfriendship[1];
@@ -104,14 +126,30 @@ public class JabejaAnalyzer {
                 logger.warn("(" + i + "): " + BEFRIEND + ": " + uid1 + "<->" + uid2);
                 middleware.befriend(uid1, uid2);
                 assertTrue(isMiddlewareInAValidState(middleware));
+                assertEquals(uids, middleware.getUserIds());
+                assertEquals(pids, middleware.getPartitionIds());
+                oldFriendships.get(uid1).add(uid2);
+                oldFriendships.get(uid2).add(uid1);
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
             if(action == UNFRIEND) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 int[] friendship = getFriendship(middleware.getFriendships());
                 logger.warn("(" + i + "): " + UNFRIEND + ": " + friendship[0] + "<->" + friendship[1]);
                 middleware.unfriend(friendship[0], friendship[1]);
                 assertTrue(isMiddlewareInAValidState(middleware));
+                assertEquals(uids, middleware.getUserIds());
+                assertEquals(pids, middleware.getPartitionIds());
+                oldFriendships.get(friendship[0]).remove(friendship[1]);
+                oldFriendships.get(friendship[1]).remove(friendship[0]);
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
             if(action == FOREST_FIRE) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(copyMapSet(middleware.getFriendships())));
                 Set<Integer> newUsersFriends = generator.run();
                 int newUid = generator.getV();
@@ -122,8 +160,19 @@ public class JabejaAnalyzer {
                     middleware.befriend(newUid, friend);
                 }
                 assertTrue(isMiddlewareInAValidState(middleware));
+                uids.add(newUid);
+                assertEquals(uids, middleware.getUserIds());
+                assertEquals(pids, middleware.getPartitionIds());
+                oldFriendships.put(newUid, newUsersFriends);
+                for(int friendId : newUsersFriends) {
+                    oldFriendships.get(friendId).add(newUid);
+                }
+//                assertEquals(oldFriendships, middleware.getFriendships());
+
             }
             if(action == ADD_PARTITION) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> oldPids = new HashSet<Integer>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": pre");
                 int newPid = middleware.addPartition();
@@ -133,8 +182,12 @@ public class JabejaAnalyzer {
                 newPids.removeAll(oldPids);
                 assertTrue(newPids.size() == 1);
                 assertTrue(newPids.contains(newPid));
+                assertEquals(uids, middleware.getUserIds());
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
             if(action == REMOVE_PARTITION) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + REMOVE_PARTITION + ": " + badId);
@@ -143,11 +196,19 @@ public class JabejaAnalyzer {
                 pids.removeAll(middleware.getPartitionIds());
                 assertTrue(pids.size() == 1);
                 assertTrue(pids.contains(badId));
+                assertEquals(uids, middleware.getUserIds());
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
             if(action == DOWNTIME) {
+                Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
+                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + DOWNTIME);
                 middleware.broadcastDowntime();
                 assertTrue(isMiddlewareInAValidState(middleware));
+                assertEquals(uids, middleware.getUserIds());
+                assertEquals(pids, middleware.getPartitionIds());
+                assertEquals(oldFriendships, middleware.getFriendships());
             }
         }
     }
