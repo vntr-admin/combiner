@@ -14,26 +14,12 @@ public class JabejaUser extends User {
     private float alpha;
     private Integer pid;
     private JabejaManager manager;
-    private Set<JabejaUser> friends;
 
     public JabejaUser(Integer id, Integer initialPid, float alpha, JabejaManager manager) {
         super(id);
         this.pid = initialPid;
         this.alpha = alpha;
         this.manager = manager;
-        friends = new HashSet<JabejaUser>();
-    }
-
-    @Override
-    public void befriend(Integer friendId) {
-        super.befriend(friendId);
-        friends.add(manager.getUser(friendId));
-    }
-
-    @Override
-    public void unfriend(Integer friendId) {
-        super.unfriend(friendId);
-        friends.remove(manager.getUser(friendId));
     }
 
     public Integer getPid() {
@@ -50,6 +36,9 @@ public class JabejaUser extends User {
 
         for(JabejaUser partner : users) {
             Integer theirPid = partner.getPid();
+            if(theirPid == pid) {
+                continue;
+            }
 
             int myNeighborsOnMine      = this.getNeighborsOnPartition(pid);
             int myNeighborsOnTheirs    = this.getNeighborsOnPartition(theirPid);
@@ -77,7 +66,7 @@ public class JabejaUser extends User {
         return count;
     }
 
-    public Set<JabejaUser> getFriends() {
-        return friends;
+    public String toString() {
+        return super.toString() + "|P:" + pid + "|alpha:" + alpha;
     }
 }

@@ -5,6 +5,8 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
+import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
+
 /**
  * Created by robertlindquist on 9/20/16.
  */
@@ -45,27 +47,31 @@ public class JabejaManager {
         return partitions.get(pid);
     }
 
-    public Collection<JabejaUser> getRandomSamplingOfUsers(int n) {
+    public Set<JabejaUser> getUsers(Collection<Integer> uids) {
         Set<JabejaUser> users = new HashSet<JabejaUser>();
-        Set<Integer> ids = ProbabilityUtils.getKDistinctValuesFromList(n, uMap.keySet());
-        for(Integer id : ids) {
-            users.add(uMap.get(id));
+        for(Integer uid : uids) {
+            users.add(uMap.get(uid));
         }
         return users;
+    }
+
+    public Collection<JabejaUser> getRandomSamplingOfUsers(int n) {
+        return getUsers(getKDistinctValuesFromList(n, uMap.keySet()));
     }
 
     public void swap(Integer id1, Integer id2) {
         JabejaUser u1 = getUser(id1);
         JabejaUser u2 = getUser(id2);
 
-        Integer tempPid = u1.getPid();
-        u1.setPid(u2.getPid());
-        u2.setPid(tempPid);
+        int pid1 = u1.getPid();
+        int pid2 = u2.getPid();
+        u1.setPid(pid2);
+        u2.setPid(pid1);
 
-        getPartition(u1.getPid()).add(u1.getId());
-        getPartition(u2.getPid()).add(u2.getId());
-        getPartition(u1.getPid()).remove(u2.getId());
-        getPartition(u2.getPid()).remove(u1.getId());
+        getPartition(pid2).add(u1.getId());
+        getPartition(pid1).add(u2.getId());
+        getPartition(pid2).remove(u2.getId());
+        getPartition(pid1).remove(u1.getId());
     }
 
     public int addUser() {
@@ -109,11 +115,14 @@ public class JabejaManager {
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {
                 JabejaUser user = getUser(uid);
-                JabejaUser partner = user.findPartner(user.getFriends(), t);
+                JabejaUser partner = user.findPartner(getUsers(user.getFriendIDs()), t);
                 if(partner == null) {
                     partner = user.findPartner(getRandomSamplingOfUsers(k), t);
                 }
                 if(partner != null) {
+                    if(getUser(partner.getId()) == null) {
+                        System.out.println("Hmmnh");
+                    }
                     swap(user.getId(), partner.getId());
                 }
             }
@@ -163,7 +172,8 @@ public class JabejaManager {
     public Integer getEdgeCut() {
         int count = 0;
         for(JabejaUser user : uMap.values()) {
-            for(JabejaUser friend : user.getFriends()) {
+            for(int friendId : user.getFriendIDs()) {
+                JabejaUser friend = getUser(friendId);
                 if(user.getPid().intValue() < friend.getPid().intValue()) {
                     count++;
                 }

@@ -207,17 +207,11 @@ public class SparManager {
         largerUser.befriend(smallerUser.getId());
 
         for (Integer replicaPartitionId : smallerUser.getReplicaPartitionIds()) {
-            SparPartition p = partitionIdToPartitionMap.get(replicaPartitionId);
-            SparUser u = p.getReplicaById(smallerUser.getId());
-            u.befriend(largerUser.getId());
-//            partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
+            partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
         }
 
         for (Integer replicaPartitionId : largerUser.getReplicaPartitionIds()) {
-            SparPartition p = partitionIdToPartitionMap.get(replicaPartitionId);
-            SparUser u = p.getReplicaById(largerUser.getId());
-            u.befriend(smallerUser.getId());
-//            partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
+            partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
         }
     }
 

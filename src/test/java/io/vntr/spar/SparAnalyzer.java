@@ -10,16 +10,9 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import static io.vntr.Analyzer.ACTIONS.*;
-import static io.vntr.Analyzer.ACTIONS.ADD_PARTITION;
-import static io.vntr.Analyzer.ACTIONS.REMOVE_PARTITION;
-import static io.vntr.TestUtils.copyMapSet;
-import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
-import static io.vntr.TestUtils.findKeysForUser;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
-import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static io.vntr.TestUtils.*;
+import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.*;
+import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 10/7/16.
@@ -266,32 +259,6 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
         for(int movedReplicaId : oldReplicas.get(pid)) {
             assertTrue(findKeysForUser(newReplicas, movedReplicaId).size() >= 2);
         }
-    }
-
-    private static int[] getNonFriendship(Map<Integer, Set<Integer>> friendships) {
-        Integer userWhoIsntFriendsWithEveryone = null;
-        while(userWhoIsntFriendsWithEveryone == null) {
-            int chosenOne = ProbabilityUtils.getRandomElement(friendships.keySet());
-            if(friendships.get(chosenOne).size() < friendships.size() - 1) {
-                userWhoIsntFriendsWithEveryone = chosenOne;
-            }
-        }
-        Set<Integer> nonfriends = new HashSet<Integer>(friendships.keySet());
-        nonfriends.removeAll(friendships.get(userWhoIsntFriendsWithEveryone));
-        int friend = ProbabilityUtils.getRandomElement(nonfriends);
-        return new int[] {userWhoIsntFriendsWithEveryone, friend};
-    }
-
-    private static int[] getFriendship(Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> possibilities = new HashSet<Integer>();
-        for(int uid : friendships.keySet()) {
-            if(!friendships.get(uid).isEmpty()) {
-                possibilities.add(uid);
-            }
-        }
-
-        int chosenOne = ProbabilityUtils.getRandomElement(possibilities);
-        return new int[]{chosenOne, ProbabilityUtils.getRandomElement(friendships.get(chosenOne))};
     }
 
     void runScriptedTest(SparMiddleware middleware, Analyzer.ACTIONS[] script) {

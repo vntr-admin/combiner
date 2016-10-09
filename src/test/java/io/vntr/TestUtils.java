@@ -199,4 +199,30 @@ public class TestUtils {
         }
         return keys;
     }
+
+    public static int[] getNonFriendship(Map<Integer, Set<Integer>> friendships) {
+        Integer userWhoIsntFriendsWithEveryone = null;
+        while(userWhoIsntFriendsWithEveryone == null) {
+            int chosenOne = ProbabilityUtils.getRandomElement(friendships.keySet());
+            if(friendships.get(chosenOne).size() < friendships.size() - 1) {
+                userWhoIsntFriendsWithEveryone = chosenOne;
+            }
+        }
+        Set<Integer> nonfriends = new HashSet<Integer>(friendships.keySet());
+        nonfriends.removeAll(friendships.get(userWhoIsntFriendsWithEveryone));
+        int friend = ProbabilityUtils.getRandomElement(nonfriends);
+        return new int[] {userWhoIsntFriendsWithEveryone, friend};
+    }
+
+    public static int[] getFriendship(Map<Integer, Set<Integer>> friendships) {
+        Set<Integer> possibilities = new HashSet<Integer>();
+        for(int uid : friendships.keySet()) {
+            if(!friendships.get(uid).isEmpty()) {
+                possibilities.add(uid);
+            }
+        }
+
+        int chosenOne = ProbabilityUtils.getRandomElement(possibilities);
+        return new int[]{chosenOne, ProbabilityUtils.getRandomElement(friendships.get(chosenOne))};
+    }
 }
