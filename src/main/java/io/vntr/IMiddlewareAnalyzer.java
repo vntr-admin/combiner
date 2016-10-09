@@ -1,5 +1,6 @@
 package io.vntr;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,9 +10,12 @@ import java.util.Set;
 public interface IMiddlewareAnalyzer {
     Integer getNumberOfPartitions();
     Integer getNumberOfUsers();
+    Collection<Integer> getUserIds();
+    Collection<Integer> getPartitionIds();
     Integer getEdgeCut();
     Integer getReplicationCount();
     double calcualteAssortivity();
     Map<Integer, Set<Integer>> getPartitionToUserMap();
+    Map<Integer, Set<Integer>> getPartitionToReplicaMap();
     Map<Integer, Set<Integer>> getFriendships();
 }

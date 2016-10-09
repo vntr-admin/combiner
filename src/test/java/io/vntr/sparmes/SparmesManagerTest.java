@@ -4,7 +4,6 @@ import io.vntr.ForestFireGenerator;
 import io.vntr.TestUtils;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
-import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -40,7 +39,7 @@ public class SparmesManagerTest {
             Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
             Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
 
-            double assortivity = ProbabilityUtils.calculateAssortivity(friendships);
+            double assortivity = ProbabilityUtils.calculateAssortivityCoefficient(friendships);
             int numFriendships = 0;
             for(Integer uid : friendships.keySet()) {
                 numFriendships += friendships.get(uid).size();
@@ -61,12 +60,12 @@ public class SparmesManagerTest {
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             ForestFireGenerator generator = new ForestFireGenerator(.17f, .17f, new TreeMap<Integer, Set<Integer>>(friendships));
-            Map<Integer, Set<Integer>> newFriendships = generator.run();
+            Set<Integer> newFriendships = generator.run();
             runTest(sparmesMiddleware, generator.getV(), newFriendships);
         }
     }
 
-    private static void runTest(SparmesMiddleware t, int newUid, Map<Integer, Set<Integer>> newFriendships) {
+    private static void runTest(SparmesMiddleware t, int newUid, Set<Integer> newFriendships) {
         long start = System.nanoTime();
         System.out.println("Beginning");
         System.out.println("\tEdge cut: " + t.getEdgeCut());
@@ -76,12 +75,8 @@ public class SparmesManagerTest {
         Map<Integer, Set<Integer>> originalPartitions = t.getPartitionToUserMap();
 
         t.addUser(new User(newUid));
-        int numNewFriendships = 0;
-        for (Integer uid1 : newFriendships.keySet()) {
-            for (Integer uid2 : newFriendships.get(uid1)) {
-                t.befriend(uid1, uid2);
-                numNewFriendships++;
-            }
+        for (Integer uid1 : newFriendships) {
+            t.befriend(uid1, newUid);
         }
 
         Map<Integer, Set<Integer>> updatedPartitions = t.getPartitionToUserMap();
@@ -89,7 +84,7 @@ public class SparmesManagerTest {
         long middle = System.nanoTime() - start;
         long middleSeconds = middle / A_BILLION;
         long middleMilliseconds = (middle % A_BILLION) / A_MILLION;
-        System.out.println("After adding a user and " + numNewFriendships + " new friendships (T+" + middleSeconds + "." + middleMilliseconds + "s)");
+        System.out.println("After adding a user and " + newFriendships.size() + " new friendships (T+" + middleSeconds + "." + middleMilliseconds + "s)");
         System.out.println("\tEdge cut: " + t.getEdgeCut());
         System.out.println("\tReplication: " + t.getReplicationCount());
 

@@ -181,4 +181,22 @@ public class TestUtils {
         }
         return idSet;
     }
+
+    public static Map<Integer, Set<Integer>> copyMapSet(Map<Integer, Set<Integer>> m) {
+        Map<Integer, Set<Integer>> copy = new HashMap<Integer, Set<Integer>>();
+        for(Integer key : m.keySet()) {
+            copy.put(key, new HashSet<Integer>(m.get(key)));
+        }
+        return copy;
+    }
+
+    public static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
+        Set<Integer> keys = new HashSet<Integer>();
+        for(int key : m.keySet()) {
+            if(m.get(key).contains(uid)) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
 }

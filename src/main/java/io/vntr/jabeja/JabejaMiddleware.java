@@ -5,10 +5,7 @@ import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -19,6 +16,11 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     public JabejaMiddleware(JabejaManager manager) {
         this.manager = manager;
+    }
+
+    @Override
+    public int addUser() {
+        return manager.addUser();
     }
 
     @Override
@@ -45,8 +47,8 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void addPartition() {
-        manager.addPartition();
+    public int addPartition() {
+        return manager.addPartition();
     }
 
     @Override
@@ -54,7 +56,7 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         Set<Integer> partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
         for(Integer uid : partition) {
-            Integer newPid = ProbabilityUtils.getKDistinctValuesFromList(1, manager.getPartitionIds()).iterator().next();
+            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPartitionIds());
             manager.moveUser(uid, newPid);
         }
     }
@@ -67,6 +69,16 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public Integer getNumberOfUsers() {
         return manager.getNumUsers();
+    }
+
+    @Override
+    public Collection<Integer> getUserIds() {
+        return manager.getUserIds();
+    }
+
+    @Override
+    public Collection<Integer> getPartitionIds() {
+        return manager.getAllPartitionIds();
     }
 
     @Override
@@ -96,6 +108,15 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public double calcualteAssortivity() {
-        return ProbabilityUtils.calculateAssortivity(getFriendships());
+        return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
+    }
+
+    @Override
+    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
+        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        for(int pid : getPartitionIds()) {
+            m.put(pid, new HashSet<Integer>());
+        }
+        return m;
     }
 }

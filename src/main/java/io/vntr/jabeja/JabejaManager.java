@@ -15,7 +15,7 @@ public class JabejaManager {
     private float initialT;
     private float deltaT;
 
-    private Map<Integer, JabejaUser> uMap;
+    private NavigableMap<Integer, JabejaUser> uMap;
     private NavigableMap<Integer, Set<Integer>> partitions;
 
     private static final Integer defaultInitialPid = 1;
@@ -25,12 +25,16 @@ public class JabejaManager {
         this.initialT = initialT;
         this.deltaT = deltaT;
         this.k = k;
-        uMap = new HashMap<Integer, JabejaUser>();
+        uMap = new TreeMap<Integer, JabejaUser>();
         partitions = new TreeMap<Integer, Set<Integer>>();
     }
 
     public Integer getPartitionForUser(Integer uid) {
         return uMap.get(uid).getPid();
+    }
+
+    public Set<Integer> getUserIds() {
+        return uMap.keySet();
     }
 
     public JabejaUser getUser(Integer uid) {
@@ -62,6 +66,12 @@ public class JabejaManager {
         getPartition(u2.getPid()).add(u2.getId());
         getPartition(u1.getPid()).remove(u2.getId());
         getPartition(u2.getPid()).remove(u1.getId());
+    }
+
+    public int addUser() {
+        int newUid = uMap.lastKey() + 1;
+        addUser(new User(newUid));
+        return newUid;
     }
 
     public void addUser(User user) {
@@ -111,7 +121,7 @@ public class JabejaManager {
     }
 
     Integer getInitialPartitionId() {
-        return ProbabilityUtils.getKDistinctValuesFromList(1, partitions.keySet()).iterator().next();
+        return ProbabilityUtils.getRandomElement(partitions.keySet());
     }
 
     public Integer addPartition() {
@@ -181,4 +191,5 @@ public class JabejaManager {
         }
         return friendships;
     }
+
 }

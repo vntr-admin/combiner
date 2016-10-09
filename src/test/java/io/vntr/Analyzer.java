@@ -21,8 +21,10 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
-import static io.vntr.TestUtils.initSet;
+import static io.vntr.Analyzer.ACTIONS.*;
+import static io.vntr.TestUtils.*;
+import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by robertlindquist on 10/4/16.
@@ -59,13 +61,13 @@ public class Analyzer {
             Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
             Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
 
-            double assortivity = ProbabilityUtils.calculateAssortivity(friendships);
+            double assortivity = ProbabilityUtils.calculateAssortivityCoefficient(friendships);
             int numFriendships = 0;
             for(Integer uid : friendships.keySet()) {
                 numFriendships += friendships.get(uid).size();
             }
 
-            logger.warn("numUsers:          " + numUsers);
+            logger.warn("\nnumUsers:          " + numUsers);
             logger.warn("numGroups:         " + numGroups);
             logger.warn("groupProb:         " + groupProb);
             logger.warn("friendProb:        " + friendProb);
@@ -89,31 +91,28 @@ public class Analyzer {
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(friendships));
-            Map<Integer, Set<Integer>> newFriendships = generator.run();
-//            runTest(jabejaMiddleware,  generator.getV(), newFriendships);
-//            runTest(hermesMiddleware,  generator.getV(), newFriendships);
-//            runTest(sparMiddleware,    generator.getV(), newFriendships);
-//            runTest(spajaMiddleware,   generator.getV(), newFriendships);
+            Set<Integer> newFriendships = generator.run();
+            runTest(jabejaMiddleware,  generator.getV(), newFriendships);
+            runTest(hermesMiddleware,  generator.getV(), newFriendships);
+            runTest(sparMiddleware,    generator.getV(), newFriendships);
+            runTest(spajaMiddleware,   generator.getV(), newFriendships);
             runTest(sparmesMiddleware, generator.getV(), newFriendships);
         }
     }
 
-    private static <T extends IMiddleware & IMiddlewareAnalyzer> void runTest(T t, int newUid, Map<Integer, Set<Integer>> newFriendships) {
+    private static <T extends IMiddleware & IMiddlewareAnalyzer> void runTest(T t, int newUid, Set<Integer> newFriendships) {
         long start = System.nanoTime();
-        logger.warn("Beginning");
+        logger.warn("Beginning " + t);
         logger.warn("\tEdge cut: " + t.getEdgeCut());
         logger.warn("\tReplication: " + t.getReplicationCount());
-
 
         Map<Integer, Set<Integer>> originalPartitions = t.getPartitionToUserMap();
 
         t.addUser(new User(newUid));
         int numNewFriendships = 0;
-        for (Integer uid1 : newFriendships.keySet()) {
-            for (Integer uid2 : newFriendships.get(uid1)) {
-                t.befriend(uid1, uid2);
-                numNewFriendships++;
-            }
+        for (Integer friendId : newFriendships) {
+            t.befriend(friendId, newUid);
+            numNewFriendships++;
         }
 
         Map<Integer, Set<Integer>> updatedPartitions = t.getPartitionToUserMap();
@@ -180,7 +179,7 @@ public class Analyzer {
 
             ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(friendships));
             System.out.println("Starting generator");
-            Map<Integer, Set<Integer>> newFriendships = generator.run();
+            Set<Integer> newFriendships = generator.run();
             Integer newUid = generator.getV();
             System.out.println("Starting edge cuts");
             List<IMiddlewareAnalyzer> analyzers = Arrays.<IMiddlewareAnalyzer>asList(jabejaMiddleware, hermesMiddleware, sparMiddleware, spajaMiddleware, sparmesMiddleware);
@@ -193,10 +192,8 @@ public class Analyzer {
             for(IMiddleware iMiddleware : middlewares) {
                 System.out.println(iMiddleware + "\n");
                 iMiddleware.addUser(new User(newUid));
-                for(Integer uid1 : newFriendships.keySet()) {
-                    for(Integer uid2 : newFriendships.get(uid1)) {
-                        iMiddleware.befriend(uid1, uid2);
-                    }
+                for(Integer friendId : newFriendships) {
+                    iMiddleware.befriend(friendId, newUid);
                 }
                 iMiddleware.broadcastDowntime();
             }
@@ -247,4 +244,138 @@ public class Analyzer {
         return new SparmesMiddleware(manager);
     }
 
+    public enum ACTIONS { ADD_USER, REMOVE_USER, BEFRIEND, UNFRIEND, ADD_PARTITION, REMOVE_PARTITION, DOWNTIME, FOREST_FIRE };
+
+    //@Test
+    public void stressTest() throws Exception {
+        for(int i=0; i<1000; i++) {
+            int numUsers = 500 + (int) (Math.random() * 2000);
+            int numGroups = 6 + (int) (Math.random() * 20);
+            float groupProb = 0.03f + (float) (Math.random() * 0.1);
+            float friendProb = 0.03f + (float) (Math.random() * 0.1);
+            Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, numGroups, groupProb, friendProb);
+
+            int usersPerPartition = 50 + (int) (Math.random() * 100);
+
+            Set<Integer> pids = new HashSet<Integer>();
+            for (int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
+                pids.add(pid);
+            }
+
+            Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, friendships.keySet());
+            Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
+
+            double assortivity = ProbabilityUtils.calculateAssortivityCoefficient(friendships);
+            int numFriendships = 0;
+            for (Integer uid : friendships.keySet()) {
+                numFriendships += friendships.get(uid).size();
+            }
+
+            logger.warn("\nnumUsers:          " + numUsers);
+            logger.warn("numGroups:         " + numGroups);
+            logger.warn("groupProb:         " + groupProb);
+            logger.warn("friendProb:        " + friendProb);
+            logger.warn("usersPerPartition: " + usersPerPartition);
+            logger.warn("numFriendships:    " + numFriendships);
+            logger.warn("assortivity:       " + assortivity);
+            logger.warn("friendships:       " + friendships);
+            logger.warn("partitions:        " + partitions);
+            logger.warn("replicas:          " + replicas);
+
+            JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
+            HermesManager hermesManager = initHermesManager(friendships, partitions);
+            SparManager sparManager = initSparManager(friendships, partitions, replicas);
+            SpajaManager spajaManager = initSpajaManager(friendships, partitions, replicas);
+            SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
+
+            JabejaMiddleware jabejaMiddleware = initJabejaMiddleware(jabejaManager);
+            HermesMiddleware hermesMiddleware = initHermesMiddleware(hermesManager);
+            SparMiddleware sparMiddleware = initSparMiddleware(sparManager);
+            SpajaMiddleware spajaMiddleware = initSpajaMiddleware(spajaManager);
+            SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
+
+            Map<ACTIONS, Double> actionsProbability = new HashMap<ACTIONS, Double>();
+            actionsProbability.put(ADD_USER,         0.125D);
+            actionsProbability.put(REMOVE_USER,      0.05D);
+            actionsProbability.put(BEFRIEND,         0.64D);
+            actionsProbability.put(UNFRIEND,         0.05D);
+            actionsProbability.put(FOREST_FIRE,      0.05D);
+            actionsProbability.put(ADD_PARTITION,    0.05D);
+            actionsProbability.put(REMOVE_PARTITION, 0.01D);
+            actionsProbability.put(DOWNTIME,         0.025D);
+
+            ACTIONS[] script = new ACTIONS[10001];
+            for(int j=0; j<script.length-1; j++) {
+                script[j] = getActions(actionsProbability);
+            }
+            script[script.length-1] = DOWNTIME;
+
+            runScriptedTest(sparMiddleware,    script);
+            runScriptedTest(jabejaMiddleware,  script);
+            runScriptedTest(hermesMiddleware,  script);
+            runScriptedTest(spajaMiddleware,   script);
+            runScriptedTest(sparmesMiddleware, script);
+        }
+    }
+
+    <T extends IMiddleware & IMiddlewareAnalyzer> void runScriptedTest(T middleware, ACTIONS[] script) {
+        for(int i=0; i<script.length; i++) {
+            ACTIONS action = script[i];
+            if(action == ADD_USER) {
+                logger.warn("(" + i + ")" + ADD_USER + ": pre");
+                int newUid = middleware.addUser();
+                logger.warn("(" + i + ")" + ADD_USER + ": " + newUid);
+            }
+            if(action == REMOVE_USER) {
+                int badId = ProbabilityUtils.getRandomElement(middleware.getUserIds());
+                logger.warn("(" + i + ")" + REMOVE_USER + ": " + badId);
+                middleware.removeUser(badId);
+            }
+            if(action == BEFRIEND) {
+                Set<Integer> friends = ProbabilityUtils.getKDistinctValuesFromList(2, middleware.getUserIds());
+                List<Integer> friendList = new LinkedList<Integer>(friends);
+                logger.warn("(" + i + ")" + BEFRIEND + ": " + friendList.get(0) + "<->" + friendList.get(1));
+                middleware.befriend(friendList.get(0), friendList.get(1));
+            }
+            if(action == UNFRIEND) {
+                Set<Integer> frenemies = ProbabilityUtils.getKDistinctValuesFromList(2, middleware.getUserIds());
+                List<Integer> frenemyList = new LinkedList<Integer>(frenemies);
+                logger.warn("(" + i + ")" + UNFRIEND + ": " + frenemyList.get(0) + "<->" + frenemyList.get(1));
+                middleware.unfriend(frenemyList.get(0), frenemyList.get(1));
+            }
+            if(action == FOREST_FIRE) {
+                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(middleware.getFriendships()));
+                Set<Integer> newUsersFriends = generator.run();
+                int newUid = generator.getV();
+                logger.warn("(" + i + ")" + FOREST_FIRE + ": " + newUid + "<->" + newUsersFriends);
+                middleware.addUser(new User(newUid));
+                for(Integer friend : newUsersFriends) {
+                    middleware.befriend(newUid, friend);
+                }
+            }
+            if(action == ADD_PARTITION) {
+                logger.warn("(" + i + ")" + ADD_PARTITION + ": pre");
+                int newPid = middleware.addPartition();
+                logger.warn("(" + i + ")" + ADD_PARTITION + ": " + newPid);
+            }
+            if(action == REMOVE_PARTITION) {
+                int badId = ProbabilityUtils.getRandomElement(middleware.getPartitionIds());
+                logger.warn("(" + i + ")" + REMOVE_PARTITION + ": " + badId);
+                middleware.removePartition(badId);
+            }
+        }
+    }
+
+    static ACTIONS getActions(Map<ACTIONS, Double> actionsProbability) {
+        double random = Math.random();
+
+        for(ACTIONS action : ACTIONS.values()) {
+            if(random < actionsProbability.get(action)) {
+                return action;
+            }
+            random -= actionsProbability.get(action);
+        }
+
+        return DOWNTIME;
+    }
 }

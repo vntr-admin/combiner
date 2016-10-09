@@ -33,6 +33,11 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
+    public int addUser() {
+        return manager.addUser();
+    }
+
+    @Override
     public void addUser(User user) {
         manager.addUser(user);
     }
@@ -102,7 +107,7 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public void addPartition() { manager.addPartition(); }
+    public int addPartition() { return manager.addPartition(); }
 
     @Override
     public void removePartition(Integer partitionId) {
@@ -177,6 +182,16 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
+    public Collection<Integer> getUserIds() {
+        return manager.getAllUserIds();
+    }
+
+    @Override
+    public Collection<Integer> getPartitionIds() {
+        return manager.getAllPartitionIds();
+    }
+
+    @Override
     public Integer getEdgeCut() {
         return manager.getEdgeCut();
     }
@@ -203,6 +218,15 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public double calcualteAssortivity() {
-        return ProbabilityUtils.calculateAssortivity(getFriendships());
+        return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
+    }
+
+    @Override
+    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
+        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        for(int pid : getPartitionIds()) {
+            m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
+        }
+        return m;
     }
 }

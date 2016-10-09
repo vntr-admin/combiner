@@ -17,7 +17,7 @@ public class SparmesManager {
 
     private SortedMap<Integer, SparmesPartition> pMap;
 
-    private Map<Integer, Integer> uMap = new HashMap<Integer, Integer>();
+    private NavigableMap<Integer, Integer> uMap = new TreeMap<Integer, Integer>();
 
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
@@ -62,6 +62,13 @@ public class SparmesManager {
 
     public Set<Integer> getAllUserIds() {
         return uMap.keySet();
+    }
+
+
+    public int addUser() {
+        int newUid = uMap.lastKey() + 1;
+        addUser(new User(newUid));
+        return newUid;
     }
 
     public void addUser(User user) {

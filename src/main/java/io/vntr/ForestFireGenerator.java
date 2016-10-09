@@ -1,10 +1,12 @@
 package io.vntr;
 
+import io.vntr.utils.ProbabilityUtils;
 import org.apache.commons.math3.distribution.GeometricDistribution;
 
 import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
+import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 
 /**
  * Created by robertlindquist on 10/2/16.
@@ -14,8 +16,6 @@ public class ForestFireGenerator {
     private GeometricDistribution geoDistY;
     private NavigableMap<Integer, Set<Integer>> friendships;
     private Map<Integer, Set<Integer>> bidirectionalFriendshipSet;
-    private Map<Integer, Set<Integer>> originalFriendships;
-    private Map<Integer, Set<Integer>> newFriendships;
     private Set<Integer> visited;
     private Integer v;
 
@@ -23,8 +23,7 @@ public class ForestFireGenerator {
         v = friendships.lastKey() + 1;
         this.friendships = friendships;
         this.friendships.put(v, new HashSet<Integer>());
-        originalFriendships = cloneFriendships(this.friendships);
-        bidirectionalFriendshipSet = generateBidirectionalFriendshipSet(this.friendships);
+        bidirectionalFriendshipSet = ProbabilityUtils.generateBidirectionalFriendshipSet(this.friendships);
         visited = new HashSet<Integer>();
         geoDistX = new GeometricDistribution(forward / (1-forward));
         geoDistY = new GeometricDistribution(forward*backward / (1-(forward*backward)));
@@ -57,27 +56,13 @@ public class ForestFireGenerator {
         return diff;
     }
 
-    private static Map<Integer, Set<Integer>> generateBidirectionalFriendshipSet(Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> bidirectionalFriendshipSet = new HashMap<Integer, Set<Integer>>();
-        for(Integer uid : friendships.keySet()) {
-            bidirectionalFriendshipSet.put(uid, new HashSet<Integer>());
-        }
-        for(Integer uid1 : friendships.keySet()) {
-            for(Integer uid2 : friendships.get(uid1)) {
-                bidirectionalFriendshipSet.get(uid1).add(uid2);
-                bidirectionalFriendshipSet.get(uid2).add(uid1);
-            }
-        }
-        return bidirectionalFriendshipSet;
-    }
-
-    public Map<Integer, Set<Integer>> run() {
-        Integer w = getKDistinctValuesFromList(1, friendships.keySet()).iterator().next();
+    public Set<Integer> run() {
+        Integer w = getRandomElement(friendships.keySet());
         forestFireBefriend(w);
         visited.add(w);
 
         burn(w);
-        return diffFriendships(originalFriendships, friendships);
+        return bidirectionalFriendshipSet.get(v);
     }
 
     private void burn(Integer w) {

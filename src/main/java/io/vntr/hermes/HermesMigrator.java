@@ -78,7 +78,7 @@ public class HermesMigrator {
             }
 
             if(maxPid == null) {
-                maxPid = ProbabilityUtils.getKDistinctValuesFromList(1, options).iterator().next();
+                maxPid = ProbabilityUtils.getRandomElement(options);
             }
             Target target = new Target(uid, maxPid, pid, maxFriends);
             preferredTargets.add(target);

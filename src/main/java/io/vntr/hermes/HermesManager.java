@@ -13,7 +13,7 @@ public class HermesManager {
     final static Logger logger = Logger.getLogger(HermesManager.class);
 
     private NavigableMap<Integer, HermesPartition> pMap;
-    private Map<Integer, Integer> uMap;
+    private NavigableMap<Integer, Integer> uMap;
     private float gamma;
     private boolean probabilistic;
 
@@ -23,7 +23,13 @@ public class HermesManager {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         pMap = new TreeMap<Integer, HermesPartition>();
-        uMap = new HashMap<Integer, Integer>();
+        uMap = new TreeMap<Integer, Integer>();
+    }
+
+    public int addUser() {
+        int newUid = uMap.lastKey() + 1;
+        addUser(new User(newUid));
+        return newUid;
     }
 
     public void addUser(User user) {
@@ -251,5 +257,9 @@ public class HermesManager {
             friendships.put(uid, getUser(uid).getFriendIDs());
         }
         return friendships;
+    }
+
+    public Collection<Integer> getUserIds() {
+        return uMap.keySet();
     }
 }

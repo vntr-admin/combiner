@@ -1,10 +1,6 @@
 package io.vntr.spar;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
@@ -15,7 +11,7 @@ import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
 import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
 
 public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
-    private SparManager manager;
+    SparManager manager;
     private SparBefriendingStrategy sparBefriendingStrategy;
     private SparMigrationStrategy sparMigrationStrategy;
 
@@ -31,6 +27,11 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         sparMigrationStrategy = new SparMigrationStrategy(manager);
     }
 
+    @Override
+    public int addUser() {
+        return manager.addUser();
+    }
+
     public void addUser(User user) {
         manager.addUser(user);
     }
@@ -42,7 +43,6 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void befriend(Integer smallerUserId, Integer largerUserId) {
         SparUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparUser largerUser = manager.getUserMasterById(largerUserId);
-        manager.befriend(smallerUser, largerUser);
 
         Integer smallerUserPid = smallerUser.getMasterPartitionId();
         Integer largerUserPid  = largerUser.getMasterPartitionId();
@@ -53,6 +53,8 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             BEFRIEND_REBALANCE_STRATEGY strategy = sparBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
             performRebalace(strategy, smallerUserId, largerUserId);
         }
+
+        manager.befriend(smallerUser, largerUser);
     }
 
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
@@ -101,10 +103,10 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         manager.unfriend(smallerUser, largerUser);
     }
 
-    public void addPartition() {
+    public int addPartition() {
         //We use option (2) from the paper:
         //2) let the re-distribution of the masters be the result of the node and edge arrival processes and the load-balancing condition.
-        manager.addPartition();
+        return manager.addPartition();
     }
 
     public void removePartition(Integer partitionId) {
@@ -130,7 +132,19 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
             SparUser user = manager.getUserMasterById(userId);
-            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
+            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
+            manager.addReplica(user, newPid);
+        }
+
+        //Fifth, remove references to replicas formerly on this partition
+        for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
+            SparUser user = manager.getUserMasterById(uid);
+            for (Integer currentReplicaPartitionId : user.getReplicaPartitionIds()) {
+                manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
+            }
+
+            //Delete it from the master's replicaPartitionIds
+            user.removeReplicaPartitionId(partitionId);
         }
 
         //Finally, actually drop partition
@@ -159,8 +173,9 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         return usersInNeedOfNewReplicas;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparUser user) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
+        potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
         List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
@@ -175,6 +190,16 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public Integer getNumberOfUsers() {
         return manager.getNumUsers();
+    }
+
+    @Override
+    public Collection<Integer> getUserIds() {
+        return manager.getAllUserIds();
+    }
+
+    @Override
+    public Collection<Integer> getPartitionIds() {
+        return manager.getAllPartitionIds();
     }
 
     @Override
@@ -204,6 +229,15 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     @Override
     public double calcualteAssortivity() {
-        return ProbabilityUtils.calculateAssortivity(getFriendships());
+        return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
+    }
+
+    @Override
+    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
+        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        for(int pid : getPartitionIds()) {
+            m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
+        }
+        return m;
     }
 }

@@ -1,6 +1,9 @@
 package io.vntr;
 
 public interface IMiddleware {
+
+    int addUser();
+
     void addUser(User user);
 
     void removeUser(Integer userId);
@@ -9,7 +12,7 @@ public interface IMiddleware {
 
     void unfriend(Integer smallerUserId, Integer largerUserId);
 
-    void addPartition();
+    int addPartition();
 
     void removePartition(Integer partitionId);
 

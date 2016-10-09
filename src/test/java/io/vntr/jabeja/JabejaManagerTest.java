@@ -89,7 +89,7 @@ public class JabejaManagerTest {
         }
 
         for(int id=0; id<numUsers; id++) {
-            Integer pid = ProbabilityUtils.getKDistinctValuesFromList(1, partitionIds).iterator().next();
+            Integer pid = ProbabilityUtils.getRandomElement(partitionIds);
             manager.addUser(new JabejaUser(id,  pid, alpha, manager));
         }
 

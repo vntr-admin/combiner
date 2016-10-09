@@ -19,7 +19,7 @@ public class SpajaManager {
 
     private SortedMap<Integer, SpajaPartition> partitionIdToPartitionMap;
 
-    private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<Integer, Integer>();
+    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<Integer, Integer>();
 
     public SpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize) {
         this.minNumReplicas = minNumReplicas;
@@ -371,5 +371,12 @@ public class SpajaManager {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
         return friendships;
+    }
+
+
+    public int addUser() {
+        int newUid = userIdToMasterPartitionIdMap.lastKey() + 1;
+        addUser(new User(newUid));
+        return newUid;
     }
 }

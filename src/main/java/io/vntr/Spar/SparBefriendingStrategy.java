@@ -1,5 +1,7 @@
 package io.vntr.spar;
 
+import org.apache.log4j.Logger;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,12 +22,32 @@ public class SparBefriendingStrategy {
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
         //  3) the opposite of (3)
 
+        Set<Integer> smallerFriends = smallerUser.getFriendIDs();
+        Set<Integer> largerFriends = largerUser.getFriendIDs();
+
         int stay      = calcNumReplicasStay(smallerUser, largerUser);
         int toLarger  = calcNumReplicasMove(smallerUser, largerUser);
         int toSmaller = calcNumReplicasMove(largerUser, smallerUser);
 
         int smallerMasters = manager.getPartitionById(smallerUser.getMasterPartitionId()).getNumMasters();
         int largerMasters  = manager.getPartitionById(largerUser.getMasterPartitionId()).getNumMasters();
+
+//        System.out.println("smallerUser:    " + smallerUser);
+//        System.out.println("largerUser:     " + largerUser);
+
+//        for(int friendId : smallerFriends) {
+//            System.out.println("Friend of smallerUser: " + manager.getUserMasterById(friendId));
+//        }
+//
+//        for(int friendId : largerFriends) {
+//            System.out.println("Friend of largerUser: " + manager.getUserMasterById(friendId));
+//        }
+
+//        System.out.println("stay:           " + stay);
+//        System.out.println("toLarger:       " + toLarger);
+//        System.out.println("toSmaller:      " + toSmaller);
+//        System.out.println("smallerMasters: " + smallerMasters);
+//        System.out.println("largerMasters:  " + largerMasters);
 
         return determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
     }
@@ -73,20 +95,31 @@ public class SparBefriendingStrategy {
     }
 
     int calcNumReplicasMove(SparUser movingUser, SparUser stayingUser) {
+        int curReplicas = manager.getPartitionById(movingUser.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(stayingUser.getMasterPartitionId()).getNumReplicas();
+//        String prefix = "Considering u" + movingUser.getId() + "->p" + stayingUser.getMasterPartitionId() + ".";
+//        System.out.println(prefix);
+
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser);
+//        System.out.println("shouldWeAddAReplicaOfMovingUserInMovingPartition: " + shouldWeAddAReplicaOfMovingUserInMovingPartition);
         Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
+//        System.out.println("replicasToAddInStayingPartition: " + replicasToAddInStayingPartition);
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser);
+//        System.out.println("shouldWeDeleteReplicaOfMovingUserInStayingPartition: " + shouldWeDeleteReplicaOfMovingUserInStayingPartition);
         boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
+//        System.out.println("shouldWeDeleteReplicaOfStayingUserInMovingPartition: " + shouldWeDeleteReplicaOfStayingUserInMovingPartition);
         Set<Integer> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition);
+//        System.out.println("replicasInMovingPartitionToDelete: " + replicasInMovingPartitionToDelete);
 
         //Calculate net change
         int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
         int numReplicasToDelete = replicasInMovingPartitionToDelete.size() + (shouldWeDeleteReplicaOfMovingUserInStayingPartition ? 1 : 0) + (shouldWeDeleteReplicaOfStayingUserInMovingPartition ? 1 : 0);
+
         int deltaReplicas = numReplicasToAdd - numReplicasToDelete;
-        int curReplicas = manager.getPartitionById(movingUser.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(stayingUser.getMasterPartitionId()).getNumReplicas();
+
+//        System.out.println(numReplicasToAdd + " - " + numReplicasToDelete + " = " + deltaReplicas);
         return curReplicas + deltaReplicas;
     }
 
@@ -165,7 +198,8 @@ public class SparBefriendingStrategy {
         boolean movingPartitionHasStayingUserReplica = stayingUser.getReplicaPartitionIds().contains(movingUser.getMasterPartitionId());
         boolean stayingUserHasNoOtherFriendMastersInMovingPartition = true; //deleting staying user replica is a possibility, if it exists, subject to balance constraints
         for (Integer friendId : stayingUser.getFriendIDs()) {
-            Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
+            SparUser friend = manager.getUserMasterById(friendId);
+            Integer friendMasterPartitionId = friend.getMasterPartitionId();
             if (!(friendId.equals(movingUser.getId())) && friendMasterPartitionId.equals(movingUser.getMasterPartitionId())) {
                 stayingUserHasNoOtherFriendMastersInMovingPartition = false;
             }
