@@ -61,6 +61,12 @@ public class SpajaManager {
             if (partition != null) {
                 return partition.getMasterById(id);
             }
+            else {
+                System.out.println("partition is null");
+            }
+        }
+        else {
+            System.out.println("partition id is null");
         }
         return null;
     }
@@ -72,6 +78,7 @@ public class SpajaManager {
         }
         return users;
     }
+
     public int getNumUsers() {
         return userIdToMasterPartitionIdMap.size();
     }
@@ -384,7 +391,11 @@ public class SpajaManager {
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
-            friendships.put(uid, getUserMasterById(uid).getFriendIDs());
+            try {
+                friendships.put(uid, getUserMasterById(uid).getFriendIDs());
+            } catch(NullPointerException npe) {
+                throw npe;
+            }
         }
         return friendships;
     }

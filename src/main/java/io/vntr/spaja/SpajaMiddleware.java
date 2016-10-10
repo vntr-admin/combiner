@@ -124,13 +124,17 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         for (Integer userId : migrationStrategy.keySet()) {
             SpajaUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
+            if(newPartitionId.intValue() == partitionId.intValue()) {
+                System.out.println("Nope.");
+            }
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
                 manager.addReplica(user, newPartitionId);
                 usersInNeedOfNewReplicas.remove(userId);
+                throw new RuntimeException("This shouldn't happen.");
             }
-            manager.promoteReplicaToMaster(userId, migrationStrategy.get(userId));
+            manager.promoteReplicaToMaster(userId, newPartitionId);
         }
 
         //Fourth, add replicas as appropriate
@@ -155,17 +159,12 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
         SpajaPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
+        possibilities.addAll(partition.getIdsOfReplicas());
+
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<Integer>();
-
         //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : partition.getIdsOfMasters()) {
-            SpajaUser user = manager.getUserMasterById(userId);
-            if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        for (Integer userId : partition.getIdsOfReplicas()) {
+        for (Integer userId : possibilities) {
             SpajaUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);

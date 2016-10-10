@@ -22,82 +22,30 @@ public class SpajaMigrationStrategy {
         final SpajaPartition partition = manager.getPartitionById(partitionId);
         Set<Integer> masterIds = partition.getIdsOfMasters();
 
-        class Score implements Comparable<Score> {
-            public final int userId;
-            public final int partitionId;
-            public final float score;
-
-            public Score(Integer userId, Integer partitionId, float score) {
-                this.userId = userId;
-                this.partitionId = partitionId;
-                this.score = score;
-            }
-
-            public int compareTo(Score o) {
-                if (this.score > o.score) {
-                    return 1;
-                } else if (this.score < o.score) {
-                    return -1;
-                } else {
-                    if (this.partitionId > o.partitionId) {
-                        return 1;
-                    } else if (this.partitionId > o.partitionId) {
-                        return -1;
-                    } else {
-                        if (this.userId > o.userId) {
-                            return 1;
-                        } else if (this.userId < o.userId) {
-                            return -1;
-                        }
-
-                        return 0;
-                    }
-                }
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-
-                Score score1 = (Score) o;
-
-                if (userId != score1.userId) return false;
-                if (partitionId != score1.partitionId) return false;
-                return Float.compare(score1.score, score) == 0;
-
-            }
-
-            @Override
-            public int hashCode() {
-                int result = userId;
-                result = 31 * result + partitionId;
-                result = 31 * result + (score != +0.0f ? Float.floatToIntBits(score) : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-//                String scoreStr = String.format("%d: --(%.2f)--> %d", uid, score, newPid);
-                return String.format("%3d: --(%.2f)--> %3d", userId, score, partitionId);//uid + ": --(" + score + ")-->" + newPid;
-            }
-        }
-
         NavigableSet<Score> scores = new TreeSet<Score>();
         for (Integer userId : masterIds) {
             SpajaUser user = manager.getUserMasterById(userId);
             for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
+                if(replicaPartitionId.intValue() == partitionId) {
+                    continue;
+                }
                 scores.add(new Score(userId, replicaPartitionId, scoreReplicaPromotion(user, replicaPartitionId)));
             }
         }
 
         Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(partitionIdsToSkip);
+        if(remainingSpotsInPartitions == null) {
+            System.out.println("Huh?");
+        }
 
         Map<Integer, Integer> strategy = new HashMap<Integer, Integer>();
 
         for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
             Score score = iter.next();
-            int remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
+            Integer remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
+            if(remainingSpotsInPartition == null) {
+                System.out.println("Buh?");
+            }
             if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0 && score.score > 0) {
                 strategy.put(score.userId, score.partitionId);
                 remainingSpotsInPartitions.put(score.partitionId, remainingSpotsInPartition - 1);
@@ -108,7 +56,9 @@ public class SpajaMigrationStrategy {
         usersYetUnplaced.removeAll(strategy.keySet());
 
         for (Integer uid : usersYetUnplaced) {
-            strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getAllPartitionIds()));
+            Set<Integer> acceptablePids = new HashSet<Integer>(manager.getAllPartitionIds());
+            acceptablePids.removeAll(partitionIdsToSkip);
+            strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, acceptablePids));
         }
 
         return strategy;
@@ -128,6 +78,9 @@ public class SpajaMigrationStrategy {
         int minMasters = Integer.MAX_VALUE;
         Integer minPid = null;
         for(Integer pid : user.getReplicaPartitionIds()) {
+            if(!allPids.contains(pid)) {
+                continue;
+            }
             int numMasters = manager.getPartitionById(pid).getNumMasters() + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;
@@ -156,18 +109,17 @@ public class SpajaMigrationStrategy {
     }
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {
+        Set<Integer> possibilities = new HashSet<Integer>(manager.getAllPartitionIds());
+        possibilities.removeAll(partitionIdsToSkip);
         int numUsers = manager.getNumUsers();
-        int numPartitions = manager.getAllPartitionIds().size() - partitionIdsToSkip.size();
+        int numPartitions = possibilities.size();
         int maxUsersPerPartition = numUsers / numPartitions;
         if (numUsers % numPartitions != 0) {
             maxUsersPerPartition++;
         }
 
         Map<Integer, Integer> partitionToNumMastersMap = new HashMap<Integer, Integer>();
-        for (Integer partitionId : manager.getAllPartitionIds()) {
-            if (partitionIdsToSkip.contains(partitionId)) {
-                continue;
-            }
+        for (Integer partitionId : possibilities) {
             SpajaPartition partition = manager.getPartitionById(partitionId);
             partitionToNumMastersMap.put(partition.getId(), partition.getNumMasters());
         }
