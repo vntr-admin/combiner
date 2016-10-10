@@ -34,6 +34,6 @@ public class User {
 
     @Override
     public String toString() {
-        return id + "|friends:" + friendIDs.toString();
+        return id + "|F:" + friendIDs.toString();
     }
 }

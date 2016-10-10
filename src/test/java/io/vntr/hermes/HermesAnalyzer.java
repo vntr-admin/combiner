@@ -11,11 +11,8 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.Analyzer.ACTIONS.*;
-import static io.vntr.Analyzer.ACTIONS.DOWNTIME;
 import static io.vntr.TestUtils.*;
-import static io.vntr.TestUtils.findKeysForUser;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 10/9/16.
@@ -148,7 +145,7 @@ public class HermesAnalyzer {
                 oldFriendships.get(friendship[1]).remove(friendship[0]);
                 assertEquals(oldFriendships, middleware.getFriendships());
             }
-            if(action == FOREST_FIRE && false) {
+            if(action == FOREST_FIRE) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
