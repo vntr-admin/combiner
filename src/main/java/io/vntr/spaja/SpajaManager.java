@@ -347,15 +347,18 @@ public class SpajaManager {
         SpajaUser u1 = getUserMasterById(uid1);
         SpajaUser u2 = getUserMasterById(uid2);
 
+        String u1Str = u1.toString();
+        String u2Str = u2.toString();
+
         Integer pid1 = u1.getMasterPartitionId();
         Integer pid2 = u2.getMasterPartitionId();
 
         //TODO: make sure this adds friend replicas on the new partition
+        SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
 
         moveMasterAndInformReplicas(uid1, pid1, pid2);
         moveMasterAndInformReplicas(uid2, pid2, pid1);
 
-        SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
 
         for(Integer uid : swapChanges.getAddToP1()) {
             addReplica(getUserMasterById(uid), pid1);
@@ -372,6 +375,10 @@ public class SpajaManager {
         for(Integer uid : swapChanges.getRemoveFromP2()) {
             removeReplica(getUserMasterById(uid), pid2);
         }
+
+//        if(!isInAValidState()) {
+//            isInAValidState();
+//        }
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
@@ -387,5 +394,46 @@ public class SpajaManager {
         int newUid = userIdToMasterPartitionIdMap.lastKey() + 1;
         addUser(new User(newUid));
         return newUid;
+    }
+
+//    private boolean isInAValidState() {
+//        boolean isValid = true;
+//
+//        Map<Integer, Set<Integer>> partitions  = getPartitionToUserMap();
+//        Map<Integer, Set<Integer>> replicas    = getPartitionToReplicaMap();
+//        Map<Integer, Set<Integer>> friendships = getFriendships();
+//
+//        //Assert that replicas are consistent with the master in everything except partitionId
+//        for(int uid1 : friendships.keySet()) {
+//            for(int uid2 : friendships.get(uid1)) {
+//                int pid1 = findKeysForUser(partitions, uid1).iterator().next();
+//                int pid2 = findKeysForUser(partitions, uid2).iterator().next();
+//                if(pid1 != pid2) {
+//                    //If they aren't colocated, they have replicas in each other's partitions
+//                    isValid &= (findKeysForUser(replicas, uid1).contains(pid2));
+//                    isValid &= (findKeysForUser(replicas, uid2).contains(pid1));
+//                }
+//            }
+//        }
+//
+//        return isValid;
+//    }
+
+    public static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
+        Set<Integer> keys = new HashSet<Integer>();
+        for(int key : m.keySet()) {
+            if(m.get(key).contains(uid)) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
+
+    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
+        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        for(int pid : partitionIdToPartitionMap.keySet()) {
+            m.put(pid, getPartitionById(pid).getIdsOfReplicas());
+        }
+        return m;
     }
 }

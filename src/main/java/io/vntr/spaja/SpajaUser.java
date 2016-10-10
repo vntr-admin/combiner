@@ -77,7 +77,7 @@ public class SpajaUser extends User {
 
     @Override
     public String toString() {
-        return super.toString() + "|masterP:" + masterPartitionId + "|P:" + partitionId + "|Reps:" + replicaPartitionIds.toString();
+        return super.toString() + "|M:" + masterPartitionId + "|P:" + partitionId + "|R:" + replicaPartitionIds.toString();
     }
 
 
@@ -86,6 +86,10 @@ public class SpajaUser extends User {
         float bestScore = 0;
 
         for(SpajaUser partner : randomSamplingOfUsers) {
+            if(partner.getMasterPartitionId().intValue() == masterPartitionId.intValue()) {
+                continue;
+            }
+
             int replicasOnMine   = manager.getPartitionById(partitionId).getNumReplicas();
             int replicasOnTheirs = manager.getPartitionById(partner.getPartitionId()).getNumReplicas();
 

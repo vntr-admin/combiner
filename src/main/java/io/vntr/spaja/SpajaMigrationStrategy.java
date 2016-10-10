@@ -98,7 +98,7 @@ public class SpajaMigrationStrategy {
         for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
             Score score = iter.next();
             int remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
-            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0) {
+            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0 && score.score > 0) {
                 strategy.put(score.userId, score.partitionId);
                 remainingSpotsInPartitions.put(score.partitionId, remainingSpotsInPartition - 1);
             }
@@ -148,8 +148,11 @@ public class SpajaMigrationStrategy {
         }
 
         int numFriendsTotal = user.getFriendIDs().size();
+        if(numFriendsTotal == 0) {
+            return Float.MIN_VALUE;
+        }
 
-        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / (numFriendsTotal);
+        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / numFriendsTotal;
     }
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {
