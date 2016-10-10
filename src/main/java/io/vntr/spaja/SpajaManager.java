@@ -252,6 +252,13 @@ public class SpajaManager {
             replica.setMasterPartitionId(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
+
+        //Add replicas of friends in partitionId if they don't already exist
+        for(int friendId : user.getFriendIDs()) {
+            if(!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
+                addReplica(getUserMasterById(friendId), partitionId);
+            }
+        }
     }
 
     Integer getPartitionIdWithFewestMasters() {
@@ -342,6 +349,8 @@ public class SpajaManager {
 
         Integer pid1 = u1.getMasterPartitionId();
         Integer pid2 = u2.getMasterPartitionId();
+
+        //TODO: make sure this adds friend replicas on the new partition
 
         moveMasterAndInformReplicas(uid1, pid1, pid2);
         moveMasterAndInformReplicas(uid2, pid2, pid1);

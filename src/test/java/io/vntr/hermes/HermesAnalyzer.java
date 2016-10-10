@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 public class HermesAnalyzer {
     final static Logger logger = Logger.getLogger(HermesAnalyzer.class);
 
-    @Test
+//    @Test
     public void stressTest() throws Exception {
         for(int i=0; i<1000; i++) {
             int numUsers = 500 + (int) (Math.random() * 2000);

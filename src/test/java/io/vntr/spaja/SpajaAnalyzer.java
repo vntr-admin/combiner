@@ -84,7 +84,7 @@ public class SpajaAnalyzer {
 
     void runScriptedTest(SpajaMiddleware middleware, Analyzer.ACTIONS[] script) {
         //TODO: more work on the actual assertions, especially replica-specific ones
-        assertTrue(isMiddlewareInAValidState(middleware));
+        isMiddlewareInAValidState(middleware, 2);
         for(int i=0; i<script.length; i++) {
             Analyzer.ACTIONS action = script[i];
             if(action == ADD_USER) {
@@ -94,7 +94,7 @@ public class SpajaAnalyzer {
                 logger.warn("(" + i + "): " + ADD_USER + ": pre");
                 int newUid = middleware.addUser();
                 logger.warn("(" + i + "): " + ADD_USER + ": " + newUid);
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 assertEquals(pids, middleware.getPartitionIds());
                 oldUids.add(newUid);
                 assertEquals(middleware.getUserIds(), oldUids);
@@ -108,7 +108,7 @@ public class SpajaAnalyzer {
                 int badId = ProbabilityUtils.getRandomElement(middleware.getUserIds());
                 logger.warn("(" + i + "): " + REMOVE_USER + ": " + badId);
                 middleware.removeUser(badId);
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 assertEquals(pids, middleware.getPartitionIds());
                 oldUids.remove(badId);
                 assertEquals(middleware.getUserIds(), oldUids);
@@ -128,7 +128,7 @@ public class SpajaAnalyzer {
 
                 logger.warn("(" + i + "): " + BEFRIEND + ": " + uid1 + "<->" + uid2);
                 middleware.befriend(uid1, uid2);
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 assertEquals(uids, middleware.getUserIds());
                 assertEquals(pids, middleware.getPartitionIds());
                 oldFriendships.get(uid1).add(uid2);
@@ -142,7 +142,7 @@ public class SpajaAnalyzer {
                 int[] friendship = getFriendship(middleware.getFriendships());
                 logger.warn("(" + i + "): " + UNFRIEND + ": " + friendship[0] + "<->" + friendship[1]);
                 middleware.unfriend(friendship[0], friendship[1]);
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 assertEquals(uids, middleware.getUserIds());
                 assertEquals(pids, middleware.getPartitionIds());
                 oldFriendships.get(friendship[0]).remove(friendship[1]);
@@ -158,11 +158,11 @@ public class SpajaAnalyzer {
                 int newUid = generator.getV();
                 logger.warn("(" + i + "): " + FOREST_FIRE + ": " + newUid + "<->" + newUsersFriends);
                 middleware.addUser(new User(newUid));
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 for(Integer friend : newUsersFriends) {
                     middleware.befriend(newUid, friend);
                 }
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 uids.add(newUid);
                 assertEquals(uids, middleware.getUserIds());
                 assertEquals(pids, middleware.getPartitionIds());
@@ -180,7 +180,7 @@ public class SpajaAnalyzer {
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": pre");
                 int newPid = middleware.addPartition();
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": " + newPid);
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 Set<Integer> newPids = new HashSet<Integer>(middleware.getPartitionIds());
                 newPids.removeAll(oldPids);
                 assertTrue(newPids.size() == 1);
@@ -195,7 +195,7 @@ public class SpajaAnalyzer {
                 int badId = ProbabilityUtils.getRandomElement(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + REMOVE_PARTITION + ": " + badId);
                 middleware.removePartition(badId);
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 pids.removeAll(middleware.getPartitionIds());
                 assertTrue(pids.size() == 1);
                 assertTrue(pids.contains(badId));
@@ -208,7 +208,7 @@ public class SpajaAnalyzer {
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + DOWNTIME);
                 middleware.broadcastDowntime();
-                assertTrue(isMiddlewareInAValidState(middleware));
+                isMiddlewareInAValidState(middleware, 2);
                 assertEquals(uids, middleware.getUserIds());
                 assertEquals(pids, middleware.getPartitionIds());
                 assertEquals(oldFriendships, middleware.getFriendships());
@@ -237,25 +237,50 @@ public class SpajaAnalyzer {
         return new SpajaMiddleware(manager);
     }
 
-    private static boolean isMiddlewareInAValidState(SpajaMiddleware middleware) {
+    private static void isMiddlewareInAValidState(SpajaMiddleware middleware, int minNumReplicas) {
         //TODO: add back in the replica-specific stuff
-        boolean valid = true;
         Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
         Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-        valid &= (middleware.getNumberOfPartitions().intValue() == pids.size());
-        valid &= (middleware.getNumberOfUsers().intValue()      == uids.size());
+        assertTrue(middleware.getNumberOfPartitions().intValue() == pids.size());
+        assertTrue(middleware.getNumberOfUsers().intValue()      == uids.size());
 
         Map<Integer, Set<Integer>> partitions  = middleware.getPartitionToUserMap();
+        Map<Integer, Set<Integer>> replicas    = middleware.getPartitionToReplicaMap();
         Map<Integer, Set<Integer>> friendships = middleware.getFriendships();
 
-        valid &= (pids.equals(partitions.keySet()));
-        valid &= (uids.equals(friendships.keySet()));
+        assertTrue(pids.equals(partitions.keySet()));
+        assertTrue(pids.equals(replicas.keySet()));
+        assertTrue(uids.equals(friendships.keySet()));
 
         for(int uid : uids) {
-            try {
-                valid &= (findKeysForUser(partitions, uid).size() == 1);
-            } catch(AssertionError e) {
-                throw e;
+            assertTrue(findKeysForUser(partitions, uid).size() == 1);
+            assertTrue(findKeysForUser(replicas, uid).size() >= minNumReplicas);
+        }
+
+        for(int uid1 : friendships.keySet()) {
+            for(int uid2 : friendships.get(uid1)) {
+                int pid1 = findKeysForUser(partitions, uid1).iterator().next();
+                int pid2 = findKeysForUser(partitions, uid2).iterator().next();
+                if(pid1 != pid2) {
+                    //If they aren't colocated, they have replicas in each other's partitions
+                    assertTrue(findKeysForUser(replicas, uid1).contains(pid2));
+                    assertTrue(findKeysForUser(replicas, uid2).contains(pid1));
+                }
+            }
+        }
+
+        //Assert that replicas are consistent with the master in everything except partitionId
+        for(int uid : friendships.keySet()) {
+            SpajaUser master = middleware.manager.getUserMasterById(uid);
+            Set<Integer> replicaPids = findKeysForUser(replicas, uid);
+            for(int replicaPid : replicaPids) {
+                SpajaUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
+                assertTrue(master.getId().equals(replica.getId()));
+                assertTrue(master.getFriendIDs().equals(replica.getFriendIDs()));
+                assertTrue(master.getMasterPartitionId().equals(replica.getMasterPartitionId()));
+                assertTrue(master.getReplicaPartitionIds().equals(replica.getReplicaPartitionIds()));
+                assertTrue(master.getPartitionId().equals(master.getMasterPartitionId()));
+                assertTrue(replica.getPartitionId().equals((Integer) replicaPid));
             }
         }
 
@@ -264,15 +289,20 @@ public class SpajaAnalyzer {
             allMastersSeen.addAll(partitions.get(pid));
         }
         allMastersSeen.removeAll(middleware.getUserIds());
-        valid &= (allMastersSeen.isEmpty());
+        assertTrue(allMastersSeen.isEmpty());
+
+        Set<Integer> allReplicasSeen = new HashSet<Integer>();
+        for(int pid : replicas.keySet()) {
+            allReplicasSeen.addAll(replicas.get(pid));
+        }
+        allReplicasSeen.removeAll(middleware.getUserIds());
+        assertTrue(allReplicasSeen.isEmpty());
 
         Set<Integer> allFriendsSeen = new HashSet<Integer>();
         for(int pid : friendships.keySet()) {
             allFriendsSeen.addAll(friendships.get(pid));
         }
         allFriendsSeen.removeAll(middleware.getUserIds());
-        valid &= (allFriendsSeen.isEmpty());
-
-        return valid;
+        assertTrue(allFriendsSeen.isEmpty());
     }
 }

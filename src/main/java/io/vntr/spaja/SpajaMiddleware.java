@@ -14,7 +14,7 @@ import static io.vntr.spaja.BEFRIEND_REBALANCE_STRATEGY.*;
  */
 public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
-    private SpajaManager manager;
+    SpajaManager manager;
     private SpajaBefriendingStrategy spajaBefriendingStrategy;
     private SpajaMigrationStrategy spajaMigrationStrategy;
     private SpajaRepartitioner spajaRepartitioner;
@@ -53,7 +53,6 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         SpajaUser largerUser = manager.getUserMasterById(largerUserId);
 
         //TODO: on SparMiddleware, we moved the following to the end of the method, so perhaps that's necessary
-        manager.befriend(smallerUser, largerUser);
 
         Integer smallerUserPid = smallerUser.getMasterPartitionId();
         Integer largerUserPid  = largerUser.getMasterPartitionId();
@@ -64,6 +63,8 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             BEFRIEND_REBALANCE_STRATEGY strategy = spajaBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
             performRebalace(strategy, smallerUserId, largerUserId);
         }
+
+        manager.befriend(smallerUser, largerUser);
     }
 
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
@@ -135,12 +136,18 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
             SpajaUser user = manager.getUserMasterById(userId);
-            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
+            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId)));
         }
 
-        //TODO: we added the following step to SparMiddleware
+        //TODO: the following is copied from SparMiddleware; should it be modified?
         // "Fifth, remove references to replicas formerly on this partition"
-        //so maybe do that
+        for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
+            SpajaUser user = manager.getUserMasterById(uid);
+            for (Integer currentReplicaPartitionId : user.getReplicaPartitionIds()) {
+                manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
+            }
+            user.removeReplicaPartitionId(partitionId);
+        }
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);
@@ -168,8 +175,9 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         return usersInNeedOfNewReplicas;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
+        potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
         List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
