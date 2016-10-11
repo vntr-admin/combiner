@@ -275,9 +275,31 @@ public class SpajaAnalyzer {
         assertTrue(uids.equals(friendships.keySet()));
 
         for(int uid : uids) {
-            assertTrue(findKeysForUser(partitions, uid).size() == 1);
-            assertTrue(findKeysForUser(replicas, uid).size() >= minNumReplicas);
+            int pid = findKeysForUser(partitions, uid).iterator().next();
+            Set<Integer> reps = findKeysForUser(replicas, uid);
+            if(reps.contains(pid)) {
+                logger.warn(uid + " has a master in " + pid + " and replicas in " + reps);
+                assertFalse(true);
+            }
         }
+
+        Set<Integer> insufficientlyReplicatedUsers = new TreeSet<Integer>();
+        for(int uid : uids) {
+            assertTrue(findKeysForUser(partitions, uid).size() == 1);
+            try {
+                assertTrue(findKeysForUser(replicas, uid).size() >= minNumReplicas);
+            } catch(AssertionError e) {
+                insufficientlyReplicatedUsers.add(uid);
+//                logger.warn("Problem: " + uid + " only has " + findKeysForUser(replicas, uid).size() + ".  (" + minNumReplicas + " were expected.)");
+//                throw e;
+            }
+        }
+
+        if(!insufficientlyReplicatedUsers.isEmpty()) {
+            logger.warn("Problem: " + insufficientlyReplicatedUsers + " do not meet the "  + minNumReplicas + "-replication criteria.");
+            assertTrue(insufficientlyReplicatedUsers.isEmpty());
+        }
+        assertTrue(insufficientlyReplicatedUsers.isEmpty());
 
         for(int uid1 : friendships.keySet()) {
             for(int uid2 : friendships.get(uid1)) {

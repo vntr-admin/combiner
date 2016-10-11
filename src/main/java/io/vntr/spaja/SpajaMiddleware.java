@@ -116,22 +116,32 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public void removePartition(Integer partitionId) {
         //First, determine which users will need more replicas once this partition is kaput
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
+        Set<Integer> _usersReplicated = new TreeSet<Integer>(usersInNeedOfNewReplicas);
 
         //Second, determine the migration strategy
         Map<Integer, Integer> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
+        Set<Integer> _usersMigrated = new TreeSet<Integer>(migrationStrategy.keySet());
+
+        if(!migrationStrategy.keySet().equals(manager.getPartitionById(partitionId).getIdsOfMasters())) {
+            throw new RuntimeException("Wrong!");
+        }
+
+        for(int mover : migrationStrategy.keySet()) {
+            if(!manager.getUserMasterById(mover).getReplicaPartitionIds().contains(migrationStrategy.get(mover))) {
+                throw new RuntimeException("Wrong again!");
+            }
+        }
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
             SpajaUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
             if(newPartitionId.intValue() == partitionId.intValue()) {
-                System.out.println("Nope.");
+                throw new RuntimeException("Nope.");
             }
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
-                manager.addReplica(user, newPartitionId);
-                usersInNeedOfNewReplicas.remove(userId);
                 throw new RuntimeException("This shouldn't happen.");
             }
             manager.promoteReplicaToMaster(userId, newPartitionId);
@@ -140,9 +150,11 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
             SpajaUser user = manager.getUserMasterById(userId);
+
             manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId)));
         }
 
+        Set<Integer> _replicasAxed = new TreeSet<Integer>(manager.getPartitionById(partitionId).getIdsOfReplicas());
         //TODO: the following is copied from SparMiddleware; should it be modified?
         // "Fifth, remove references to replicas formerly on this partition"
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
@@ -152,6 +164,10 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             }
             user.removeReplicaPartitionId(partitionId);
         }
+
+        System.out.println("P" + partitionId + " migrated:   " + _usersMigrated);
+        System.out.println("P" + partitionId + " replicated: " + _usersReplicated);
+        System.out.println("P" + partitionId + " axed:       " + _replicasAxed);
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);
