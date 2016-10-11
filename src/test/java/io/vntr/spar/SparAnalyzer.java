@@ -90,6 +90,15 @@ public class SparAnalyzer {
         }
         allFriendsSeen.removeAll(middleware.getUserIds());
         assertTrue(allFriendsSeen.isEmpty());
+
+        for(int uid : uids) {
+            int pid = findKeysForUser(partitions, uid).iterator().next();
+            Set<Integer> reps = findKeysForUser(replicas, uid);
+            if(reps.contains(pid)) {
+                logger.warn(uid + " has a master in " + pid + " and replicas in " + reps);
+                assertFalse(true);
+            }
+        }
     }
 
     private static void assertUserAdded(int uid, int minNumReplicas, Map<Integer, Set<Integer>> oldPartitions, Map<Integer, Set<Integer>> oldReplicas, Map<Integer, Set<Integer>> newPartitions, Map<Integer, Set<Integer>> newReplicas) {

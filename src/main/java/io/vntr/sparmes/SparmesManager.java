@@ -330,13 +330,17 @@ public class SparmesManager {
             p.resetLogicalUsers();
         }
 
+        iteration = 0;
         boolean stoppingCondition = false;
         while (!stoppingCondition) {
             boolean changed = false;
             changed |= performStage(true,  k);
             changed |= performStage(false, k);
             stoppingCondition = !changed;
+            iteration++;
         }
+
+        System.out.println("Number of iterations: " + iteration);
 
         Map<Integer, Integer> usersWhoMoved = new HashMap<Integer, Integer>();
         for (SparmesPartition p : pMap.values()) {
@@ -358,6 +362,8 @@ public class SparmesManager {
 
     }
 
+    static int iteration = 0;
+
     boolean performStage(boolean firstStage, int k) {
         boolean changed = false;
         Map<Integer, Set<Target>> stageTargets = new HashMap<Integer, Set<Target>>();
@@ -365,6 +371,15 @@ public class SparmesManager {
             Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
             stageTargets.put(p.getId(), targets);
             changed |= !targets.isEmpty();
+        }
+
+        if(changed && iteration > 100) {
+            System.out.println("For iteration " + iteration + ", stage " + (firstStage ? "1" : "2"));
+            for(int pid : stageTargets.keySet()) {
+                if(!stageTargets.get(pid).isEmpty()) {
+                    System.out.println(pid + " : " + stageTargets.get(pid));
+                }
+            }
         }
 
         for(Integer pid : pMap.keySet()) {

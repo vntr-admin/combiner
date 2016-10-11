@@ -14,7 +14,7 @@ import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.*;
  */
 public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
-    private SparmesManager manager;
+    SparmesManager manager;
     private SparmesBefriendingStrategy spajaBefriendingStrategy;
     private SparmesMigrationStrategy spajaMigrationStrategy;
 
