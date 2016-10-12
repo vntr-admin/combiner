@@ -16,6 +16,9 @@ import static io.vntr.Analyzer.ACTIONS.REMOVE_PARTITION;
 import static io.vntr.TestUtils.*;
 import static io.vntr.TestUtils.copyMapSet;
 import static io.vntr.TestUtils.getFriendship;
+import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
+import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
+import static io.vntr.sparmes.SparmesBefriendingStrategy.determineStrategy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -89,7 +92,7 @@ public class SparmesAnalyzer {
         assertTrue(isMiddlewareInAValidState(middleware));
         for(int i=0; i<script.length; i++) {
             Analyzer.ACTIONS action = script[i];
-            if(action == ADD_USER) {
+            if(action == ADD_USER && false) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
@@ -103,7 +106,7 @@ public class SparmesAnalyzer {
                 oldFriendships.put(newUid, Collections.<Integer>emptySet());
                 assertEquals(oldFriendships, middleware.getFriendships());
             }
-            if(action == REMOVE_USER) {
+            if(action == REMOVE_USER && false) {
                 Map<Integer, Set<Integer>> oldPartitions = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
@@ -137,7 +140,11 @@ public class SparmesAnalyzer {
                 int uid1 = nonfriendship[0];
                 int uid2 = nonfriendship[1];
 
-                logger.warn("(" + i + "): " + BEFRIEND + ": " + uid1 + "<->" + uid2);
+                int oldPid1 = findKeysForUser(oldMasters, uid1).iterator().next();
+                int oldPid2 = findKeysForUser(oldMasters, uid2).iterator().next();
+                String befriendFormatStr = "(%4d): " + BEFRIEND + ": %4d (on %2d) <-> %4d (on %2d)";
+                String output = String.format(befriendFormatStr, i, uid1, oldPid1, uid2, oldPid2);
+                logger.warn(output);
                 middleware.befriend(uid1, uid2);
                 assertTrue(isMiddlewareInAValidState(middleware));
                 assertEquals(uids, middleware.getUserIds());
@@ -148,9 +155,9 @@ public class SparmesAnalyzer {
                 Map<Integer, Set<Integer>> newMasters   = middleware.getPartitionToUserMap();
                 Map<Integer, Set<Integer>> newReplicas    = middleware.getPartitionToReplicaMap();
                 Map<Integer, Set<Integer>> newFriendships = middleware.getFriendships();
-//                assertProperBefriending(uid1, uid2, oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships); TODO: implement this
+                assertProperBefriending(uid1, uid2, oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships);
             }
-            if(action == UNFRIEND) {
+            if(action == UNFRIEND && false) {
                 Map<Integer, Set<Integer>> oldMasters   = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
@@ -171,7 +178,7 @@ public class SparmesAnalyzer {
                 Map<Integer, Set<Integer>> newFriendships = middleware.getFriendships();
                 assertProperUnfriending(friendship[0], friendship[1], oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships);
             }
-            if(action == FOREST_FIRE) {
+            if(action == FOREST_FIRE && false) {
                 Map<Integer, Set<Integer>> friendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -195,7 +202,7 @@ public class SparmesAnalyzer {
 //                assertEquals(friendships, middleware.getFriendships());
 
             }
-            if(action == ADD_PARTITION) {
+            if(action == ADD_PARTITION && false) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> oldPids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -238,6 +245,90 @@ public class SparmesAnalyzer {
         }
     }
 
+    private void assertProperBefriending(int uid1, int uid2, Map<Integer, Set<Integer>> oldMasters, Map<Integer, Set<Integer>> oldReplicas, Map<Integer, Set<Integer>> oldFriendships, Map<Integer, Set<Integer>> newMasters, Map<Integer, Set<Integer>> newReplicas, Map<Integer, Set<Integer>> newFriendships) {
+        int oldPid1 = findKeysForUser(oldMasters, uid1).iterator().next();
+        Set<Integer> oldReplicas1 = findKeysForUser(oldMasters, uid1);
+        int oldPid2 = findKeysForUser(oldMasters, uid2).iterator().next();
+        Set<Integer> oldReplicas2 = findKeysForUser(oldMasters, uid2);
+
+        boolean uid1ReplicatedOnPid2 = oldReplicas2.contains(oldPid1);
+        boolean uid2ReplicatedOnPid1 = oldReplicas1.contains(oldPid2);
+        boolean colocatedMasters = oldPid1 == oldPid2;
+        boolean colocatedReplicas = uid1ReplicatedOnPid2 && uid2ReplicatedOnPid1;
+        if(!colocatedMasters && !colocatedReplicas) {
+            int originalNumReplicas = oldMasters.get(oldPid1).size() + oldMasters.get(oldPid2).size();
+
+            int stay      = originalNumReplicas + (uid1ReplicatedOnPid2 ? 1 : 0) + (uid2ReplicatedOnPid1 ? 1 : 0);
+            int toLarger  = originalNumReplicas + calcDeltaNumReplicasMove(uid1, uid2, oldPid1, oldPid2, oldMasters, oldReplicas, oldFriendships);
+            int toSmaller = originalNumReplicas + calcDeltaNumReplicasMove(uid2, uid1, oldPid2, oldPid1, oldMasters, oldReplicas, oldFriendships);
+
+            int smallerMasters = oldMasters.get(oldPid1).size();
+            int largerMasters  = oldMasters.get(oldPid2).size();
+
+            BEFRIEND_REBALANCE_STRATEGY strategy = determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
+            if(strategy == NO_CHANGE) {
+                assertEquals(copyMapSetNavigable(oldMasters), copyMapSetNavigable(newMasters));
+            } else if (strategy == SMALL_TO_LARGE) {
+                NavigableMap<Integer, NavigableSet<Integer>> oldMastersCopy = copyMapSetNavigable(oldMasters);
+                oldMastersCopy.get(oldPid1).remove(uid1);
+                oldMastersCopy.get(oldPid2).add(uid1);
+                assertEquals(oldMastersCopy, copyMapSetNavigable(newMasters));
+            } else {
+                NavigableMap<Integer, NavigableSet<Integer>> oldMastersCopy = copyMapSetNavigable(oldMasters);
+                oldMastersCopy.get(oldPid2).remove(uid2);
+                oldMastersCopy.get(oldPid1).add(uid2);
+                assertEquals(oldMastersCopy, copyMapSetNavigable(newMasters));
+            }
+        }
+    }
+
+    private int calcDeltaNumReplicasMove(int mover, int stayer, int sourcePid, int targetPid, Map<Integer, Set<Integer>> masters, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
+        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+
+        //TODO: this is just copied from SpajaAnalyzer
+        Set<Integer> friendsOfMoverInSource = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        friendsOfMoverInSource.retainAll(masters.get(sourcePid));
+        boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = !friendsOfMoverInSource.isEmpty();
+
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        replicasToAddInStayingPartition.removeAll(masters.get(targetPid));
+        replicasToAddInStayingPartition.removeAll(replicas.get(targetPid));
+
+        //Find replicas that should be deleted
+        boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = replicas.get(targetPid).contains(mover) && findKeysForUser(replicas, mover).size() > 2;
+
+        Set<Integer> stayersFriendsOnSource = new HashSet<Integer>(bidirectionalFriendships.get(stayer));
+        stayersFriendsOnSource.retainAll(masters.get(sourcePid));
+        stayersFriendsOnSource.remove(mover);
+        boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = replicas.get(sourcePid).contains(stayer) && stayersFriendsOnSource.isEmpty() && findKeysForUser(replicas, stayer).size() > 2;
+
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        replicasInMovingPartitionToDelete.retainAll(replicas.get(sourcePid));
+        outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(); iter.hasNext(); ) {
+            int candidate = iter.next();
+            int numReplicas = findKeysForUser(replicas, candidate).size();
+            if((numReplicas + (replicasToAddInStayingPartition.contains(candidate) ? 1 : 0)) <= 2) {
+                iter.remove();
+                continue outer;
+            }
+            for(int friendOfCandidate : bidirectionalFriendships.get(candidate)) {
+                if(friendOfCandidate == mover) {
+                    continue;
+                }
+                int friendPid = findKeysForUser(masters, friendOfCandidate).iterator().next();
+                if(friendPid == sourcePid) {
+                    iter.remove();
+                    continue outer;
+                }
+            }
+        }
+
+        //Calculate net change
+        int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
+        int numReplicasToDelete = replicasInMovingPartitionToDelete.size() + (shouldWeDeleteReplicaOfMovingUserInStayingPartition ? 1 : 0) + (shouldWeDeleteReplicaOfStayingUserInMovingPartition ? 1 : 0);
+        return numReplicasToAdd - numReplicasToDelete;
+    }
+
     private SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         return SparmesTestUtils.initGraph(2, 1.2f, true, partitions, friendships, replicas);
     }
@@ -260,7 +351,6 @@ public class SparmesAnalyzer {
     }
 
     private static boolean isMiddlewareInAValidState(SparmesMiddleware middleware) {
-        //TODO: add back in the replica-specific stuff
         boolean valid = true;
         Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
         Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());

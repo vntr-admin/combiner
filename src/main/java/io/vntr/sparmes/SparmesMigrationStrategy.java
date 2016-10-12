@@ -22,67 +22,6 @@ public class SparmesMigrationStrategy {
         final SparmesPartition partition = manager.getPartitionById(partitionId);
         Set<Integer> masterIds = partition.getIdsOfMasters();
 
-        class Score implements Comparable<Score> {
-            public final int userId;
-            public final int partitionId;
-            public final float score;
-
-            public Score(Integer userId, Integer partitionId, float score) {
-                this.userId = userId;
-                this.partitionId = partitionId;
-                this.score = score;
-            }
-
-            public int compareTo(Score o) {
-                if (this.score > o.score) {
-                    return 1;
-                } else if (this.score < o.score) {
-                    return -1;
-                } else {
-                    if (this.partitionId > o.partitionId) {
-                        return 1;
-                    } else if (this.partitionId > o.partitionId) {
-                        return -1;
-                    } else {
-                        if (this.userId > o.userId) {
-                            return 1;
-                        } else if (this.userId < o.userId) {
-                            return -1;
-                        }
-
-                        return 0;
-                    }
-                }
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-
-                Score score1 = (Score) o;
-
-                if (userId != score1.userId) return false;
-                if (partitionId != score1.partitionId) return false;
-                return Float.compare(score1.score, score) == 0;
-
-            }
-
-            @Override
-            public int hashCode() {
-                int result = userId;
-                result = 31 * result + partitionId;
-                result = 31 * result + (score != +0.0f ? Float.floatToIntBits(score) : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-//                String scoreStr = String.format("%d: --(%.2f)--> %d", uid, score, newPid);
-                return String.format("%3d: --(%.2f)--> %3d", userId, score, partitionId);//uid + ": --(" + score + ")-->" + newPid;
-            }
-        }
-
         NavigableSet<Score> scores = new TreeSet<Score>();
         for (Integer userId : masterIds) {
             SparmesUser user = manager.getUserMasterById(userId);
@@ -98,7 +37,7 @@ public class SparmesMigrationStrategy {
         for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
             Score score = iter.next();
             int remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
-            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0) {
+            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0 && score.score > 0) {
                 strategy.put(score.userId, score.partitionId);
                 remainingSpotsInPartitions.put(score.partitionId, remainingSpotsInPartition - 1);
             }
@@ -149,7 +88,11 @@ public class SparmesMigrationStrategy {
 
         int numFriendsTotal = user.getFriendIDs().size();
 
-        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / (numFriendsTotal);
+        if(numFriendsTotal == 0) {
+            return Float.MIN_VALUE;
+        }
+
+        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / numFriendsTotal;
     }
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {

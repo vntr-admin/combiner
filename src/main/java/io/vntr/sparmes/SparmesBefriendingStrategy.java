@@ -75,7 +75,7 @@ public class SparmesBefriendingStrategy {
 
     int calcNumReplicasMove(SparmesUser movingUser, SparmesUser stayingUser) {
         //Find replicas that need to be added
-        boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser);
+        boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser, stayingUser.getMasterPartitionId());
         Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
 
         //Find replicas that should be deleted
@@ -139,7 +139,7 @@ public class SparmesBefriendingStrategy {
         return replicasThatWereJustThereForThisUsersSake;
     }
 
-    boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SparmesUser movingUser) {
+    boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SparmesUser movingUser, int targetPid) {
         for (Integer friendId : movingUser.getFriendIDs()) {
             Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
             if (movingUser.getMasterPartitionId().equals(friendMasterPartitionId)) {
@@ -147,12 +147,19 @@ public class SparmesBefriendingStrategy {
             }
         }
 
+        Set<Integer> replicas = movingUser.getReplicaPartitionIds();
+        if(replicas.size() <= manager.getMinNumReplicas() && replicas.contains(targetPid)) {
+            return true;
+        }
+
         return false;
     }
 
     boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(SparmesUser movingUser, SparmesUser stayingUser) {
-        boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = movingUser.getReplicaPartitionIds().contains(stayingUser.getMasterPartitionId());
-        int redundancyOfMovingUser = movingUser.getReplicaPartitionIds().size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser) ? 1 : 0);
+        int targetPid = stayingUser.getMasterPartitionId();
+        Set<Integer> moversReplicas = movingUser.getReplicaPartitionIds();
+        boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = moversReplicas.contains(targetPid);
+        int redundancyOfMovingUser = moversReplicas.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser, targetPid) ? 1 : 0);
         return couldWeDeleteReplicaOfMovingUserInStayingPartition && redundancyOfMovingUser > manager.getMinNumReplicas();
     }
 

@@ -15,19 +15,19 @@ import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.*;
 public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
 
     SparmesManager manager;
-    private SparmesBefriendingStrategy spajaBefriendingStrategy;
-    private SparmesMigrationStrategy spajaMigrationStrategy;
+    private SparmesBefriendingStrategy sparmesBefriendingStrategy;
+    private SparmesMigrationStrategy sparmesMigrationStrategy;
 
-    public SparmesMiddleware(SparmesManager manager, SparmesBefriendingStrategy spajaBefriendingStrategy, SparmesMigrationStrategy spajaMigrationStrategy) {
+    public SparmesMiddleware(SparmesManager manager, SparmesBefriendingStrategy sparmesBefriendingStrategy, SparmesMigrationStrategy sparmesMigrationStrategy) {
         this.manager = manager;
-        this.spajaBefriendingStrategy = spajaBefriendingStrategy;
-        this.spajaMigrationStrategy = spajaMigrationStrategy;
+        this.sparmesBefriendingStrategy = sparmesBefriendingStrategy;
+        this.sparmesMigrationStrategy = sparmesMigrationStrategy;
     }
 
     public SparmesMiddleware(SparmesManager manager) {
         this.manager = manager;
-        spajaBefriendingStrategy = new SparmesBefriendingStrategy(manager);
-        spajaMigrationStrategy = new SparmesMigrationStrategy(manager);
+        sparmesBefriendingStrategy = new SparmesBefriendingStrategy(manager);
+        sparmesMigrationStrategy = new SparmesMigrationStrategy(manager);
     }
 
     @Override
@@ -50,18 +50,17 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         SparmesUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparmesUser largerUser = manager.getUserMasterById(largerUserId);
 
-        //TODO: on SparMiddleware, we moved the following to the end of the method, so perhaps that's necessary
-        manager.befriend(smallerUser, largerUser);
-
         Integer smallerUserPid = smallerUser.getMasterPartitionId();
         Integer largerUserPid  = largerUser.getMasterPartitionId();
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserPid) && largerUser.getReplicaPartitionIds().contains(smallerUserPid);
         if (!colocatedMasters && !colocatedReplicas) {
-            BEFRIEND_REBALANCE_STRATEGY strategy = spajaBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
+            BEFRIEND_REBALANCE_STRATEGY strategy = sparmesBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
             performRebalace(strategy, smallerUserId, largerUserId);
         }
+
+        manager.befriend(smallerUser, largerUser);
     }
 
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
@@ -80,8 +79,8 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         } else {
             SparmesUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Set<Integer> replicasToAddInDestinationPartition = spajaBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
-            Set<Integer> replicasToDeleteInSourcePartition = spajaBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
+            Set<Integer> replicasToAddInDestinationPartition = sparmesBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
+            Set<Integer> replicasToDeleteInSourcePartition = sparmesBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
@@ -92,8 +91,8 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         SparmesUser largerUser = manager.getUserMasterById(largerUserId);
 
         if (!smallerUser.getMasterPartitionId().equals(largerUser.getMasterPartitionId())) {
-            boolean smallerReplicaWasOnlyThereForLarger = spajaBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
-            boolean largerReplicaWasOnlyThereForSmaller = spajaBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
+            boolean smallerReplicaWasOnlyThereForLarger = sparmesBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
+            boolean largerReplicaWasOnlyThereForSmaller = sparmesBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPartitionIds().size() > manager.getMinNumReplicas()) {
                 manager.removeReplica(smallerUser, largerUser.getMasterPartitionId());
@@ -107,7 +106,11 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     }
 
     @Override
-    public int addPartition() { return manager.addPartition(); }
+    public int addPartition() {
+        int pid = manager.addPartition();
+        manager.repartition();
+        return pid;
+    }
 
     @Override
     public void removePartition(Integer partitionId) {
@@ -115,7 +118,7 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
 
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
+        Map<Integer, Integer> migrationStrategy = sparmesMigrationStrategy.getUserMigrationStrategy(partitionId);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
@@ -127,36 +130,40 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
                 manager.addReplica(user, newPartitionId);
                 usersInNeedOfNewReplicas.remove(userId);
             }
-            manager.promoteReplicaToMaster(userId, migrationStrategy.get(userId));
+            manager.promoteReplicaToMaster(userId, newPartitionId);
         }
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
             SparmesUser user = manager.getUserMasterById(userId);
-            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
+            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId)));
         }
 
-        //TODO: we added the following step to SparMiddleware
-        // "Fifth, remove references to replicas formerly on this partition"
-        //so maybe do that
+        //TODO: ensure this is correct
+        //Fifth, remove references to replicas formerly on this partition
+        for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
+            SparmesUser user = manager.getUserMasterById(uid);
+            for (Integer currentReplicaPartitionId : user.getReplicaPartitionIds()) {
+                manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
+            }
+
+            //Delete it from the master's replicaPartitionIds
+            user.removeReplicaPartitionId(partitionId);
+        }
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);
+
+        manager.repartition();
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
         SparmesPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
+        possibilities.addAll(partition.getIdsOfReplicas());
+
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<Integer>();
-
-        //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : partition.getIdsOfMasters()) {
-            SparmesUser user = manager.getUserMasterById(userId);
-            if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        for (Integer userId : partition.getIdsOfReplicas()) {
+        for (Integer userId : possibilities) {
             SparmesUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
@@ -166,8 +173,9 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         return usersInNeedOfNewReplicas;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
+        potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
         List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);

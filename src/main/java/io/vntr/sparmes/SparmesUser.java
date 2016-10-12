@@ -119,7 +119,7 @@ public class SparmesUser extends User {
         }
 
         int numFriendsToDeleteInCurrentPartition = strat.findReplicasInMovingPartitionToDelete(this, Collections.<Integer>emptySet()).size();
-        boolean replicateInSourcePartition = strat.shouldWeAddAReplicaOfMovingUserInMovingPartition(this);
+        boolean replicateInSourcePartition = strat.shouldWeAddAReplicaOfMovingUserInMovingPartition(this, -1); //TODO: hmmnh
         return new LogicalUser(getId(), partitionId, gamma, pToFriendCount, pToWeight, replicaPartitionIds, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight);
     }
 

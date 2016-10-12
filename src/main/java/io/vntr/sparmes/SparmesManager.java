@@ -74,12 +74,12 @@ public class SparmesManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparmesUser spajaUser = new SparmesUser(user.getId(), masterPartitionId, gamma, this);
+        SparmesUser sparmesUser = new SparmesUser(user.getId(), masterPartitionId, gamma, this);
 
-        addUser(spajaUser, masterPartitionId);
+        addUser(sparmesUser, masterPartitionId);
 
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
-            addReplica(spajaUser, id);
+            addReplica(sparmesUser, id);
         }
     }
 
@@ -238,6 +238,13 @@ public class SparmesManager {
             SparmesUser replica = pMap.get(replicaPartitionId).getReplicaById(userId);
             replica.setMasterPartitionId(partitionId);
             replica.removeReplicaPartitionId(partitionId);
+        }
+
+        //Add replicas of friends in partitionId if they don't already exist
+        for(int friendId : user.getFriendIDs()) {
+            if (!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
+                addReplica(getUserMasterById(friendId), partitionId);
+            }
         }
     }
 
