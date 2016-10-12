@@ -51,9 +51,9 @@ public class SpajaRepartitioner {
                         u2Friends.put(friendId, manager.getUserMasterById(friendId).toString());
                     }
                     manager.swap(user.getId(), partner.getId(), spajaBefriendingStrategy);
-                    if(!isMiddlewareInAValidState(2)) {
-                        isMiddlewareInAValidState(2);
-                    }
+//                    if(!isMiddlewareInAValidState(2)) {
+//                        isMiddlewareInAValidState(2);
+//                    }
                 }
             }
         }

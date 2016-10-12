@@ -182,6 +182,14 @@ public class TestUtils {
         return idSet;
     }
 
+    public static NavigableMap<Integer, NavigableSet<Integer>> copyMapSetNavigable(Map<Integer, Set<Integer>> m) {
+        NavigableMap<Integer, NavigableSet<Integer>> copy = new TreeMap<Integer, NavigableSet<Integer>>();
+        for(Integer key : m.keySet()) {
+            copy.put(key, new TreeSet<Integer>(m.get(key)));
+        }
+        return copy;
+    }
+
     public static Map<Integer, Set<Integer>> copyMapSet(Map<Integer, Set<Integer>> m) {
         Map<Integer, Set<Integer>> copy = new HashMap<Integer, Set<Integer>>();
         for(Integer key : m.keySet()) {
