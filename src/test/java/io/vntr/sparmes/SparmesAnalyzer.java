@@ -290,20 +290,27 @@ public class SparmesAnalyzer {
         }
     }
 
-    private int calcDeltaNumReplicasMove(int mover, int stayer, int sourcePid, int targetPid, Map<Integer, Set<Integer>> masters, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
+    private static int calcDeltaNumReplicasMove(int mover, int stayer, int sourcePid, int targetPid, Map<Integer, Set<Integer>> masters, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
         Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
 
         //TODO: this is just copied from SpajaAnalyzer
         Set<Integer> friendsOfMoverInSource = new HashSet<Integer>(bidirectionalFriendships.get(mover));
         friendsOfMoverInSource.retainAll(masters.get(sourcePid));
-        boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = !friendsOfMoverInSource.isEmpty();
+        boolean moverHasFriendMasterOnMovingPartition = !friendsOfMoverInSource.isEmpty();
+
+        Set<Integer> moverReplicas = findKeysForUser(replicas, mover);
+        boolean moverHasReplicaOnTargetPartitionAndOnlyMinimumRedundancy = replicas.size() <= 2 && moverReplicas.contains(targetPid);
+
+        boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = moverHasFriendMasterOnMovingPartition || moverHasReplicaOnTargetPartitionAndOnlyMinimumRedundancy;
 
         Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>(bidirectionalFriendships.get(mover));
         replicasToAddInStayingPartition.removeAll(masters.get(targetPid));
         replicasToAddInStayingPartition.removeAll(replicas.get(targetPid));
 
         //Find replicas that should be deleted
-        boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = replicas.get(targetPid).contains(mover) && findKeysForUser(replicas, mover).size() > 2;
+        boolean moverHasReplicaOnTargetPartition = replicas.get(targetPid).contains(mover);
+        int effectiveRedundancyOfMover = findKeysForUser(replicas, mover).size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
+        boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = moverHasReplicaOnTargetPartition && effectiveRedundancyOfMover > 2;
 
         Set<Integer> stayersFriendsOnSource = new HashSet<Integer>(bidirectionalFriendships.get(stayer));
         stayersFriendsOnSource.retainAll(masters.get(sourcePid));
