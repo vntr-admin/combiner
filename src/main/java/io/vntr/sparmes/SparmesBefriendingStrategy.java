@@ -28,6 +28,12 @@ public class SparmesBefriendingStrategy {
         int smallerMasters = manager.getPartitionById(smallerUser.getMasterPartitionId()).getNumMasters();
         int largerMasters  = manager.getPartitionById(largerUser.getMasterPartitionId()).getNumMasters();
 
+        System.out.println("(Strategy) stay:           " + stay);
+        System.out.println("(Strategy) toLarger:       " + toLarger);
+        System.out.println("(Strategy) toSmaller:      " + toSmaller);
+        System.out.println("(Strategy) smallerMasters: " + smallerMasters);
+        System.out.println("(Strategy) largerMasters:  " + largerMasters);
+
         return determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
     }
 

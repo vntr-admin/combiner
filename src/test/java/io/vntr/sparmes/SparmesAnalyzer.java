@@ -63,6 +63,7 @@ public class SparmesAnalyzer {
             logger.warn("assortivity:       " + assortivity);
             logger.warn("friendships:       " + friendships);
             logger.warn("partitions:        " + partitions);
+            logger.warn("replicas:          " + replicas);
 
             SparmesManager SparmesManager = initSparmesManager(friendships, partitions, replicas);
             SparmesMiddleware SparmesMiddleware = initSparmesMiddleware(SparmesManager);
@@ -152,7 +153,7 @@ public class SparmesAnalyzer {
                 friendships.get(uid1).add(uid2);
                 friendships.get(uid2).add(uid1);
                 assertEquals(friendships, middleware.getFriendships());
-                Map<Integer, Set<Integer>> newMasters   = middleware.getPartitionToUserMap();
+                Map<Integer, Set<Integer>> newMasters     = middleware.getPartitionToUserMap();
                 Map<Integer, Set<Integer>> newReplicas    = middleware.getPartitionToReplicaMap();
                 Map<Integer, Set<Integer>> newFriendships = middleware.getFriendships();
                 assertProperBefriending(uid1, uid2, oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships);
@@ -247,23 +248,30 @@ public class SparmesAnalyzer {
 
     private void assertProperBefriending(int uid1, int uid2, Map<Integer, Set<Integer>> oldMasters, Map<Integer, Set<Integer>> oldReplicas, Map<Integer, Set<Integer>> oldFriendships, Map<Integer, Set<Integer>> newMasters, Map<Integer, Set<Integer>> newReplicas, Map<Integer, Set<Integer>> newFriendships) {
         int oldPid1 = findKeysForUser(oldMasters, uid1).iterator().next();
-        Set<Integer> oldReplicas1 = findKeysForUser(oldMasters, uid1);
+        Set<Integer> oldReplicas1 = findKeysForUser(oldReplicas, uid1);
         int oldPid2 = findKeysForUser(oldMasters, uid2).iterator().next();
-        Set<Integer> oldReplicas2 = findKeysForUser(oldMasters, uid2);
+        Set<Integer> oldReplicas2 = findKeysForUser(oldReplicas, uid2);
 
         boolean uid1ReplicatedOnPid2 = oldReplicas2.contains(oldPid1);
         boolean uid2ReplicatedOnPid1 = oldReplicas1.contains(oldPid2);
         boolean colocatedMasters = oldPid1 == oldPid2;
         boolean colocatedReplicas = uid1ReplicatedOnPid2 && uid2ReplicatedOnPid1;
         if(!colocatedMasters && !colocatedReplicas) {
-            int originalNumReplicas = oldMasters.get(oldPid1).size() + oldMasters.get(oldPid2).size();
+            logger.warn("Here's the haps: oldPid1=" + oldPid1 + ", oldPid2=" + oldPid2 + ", oldReplicas1=" + oldReplicas1 + ", oldReplicas2=" + oldReplicas2);
+            int originalNumReplicas = oldReplicas.get(oldPid1).size() + oldReplicas.get(oldPid2).size();
 
-            int stay      = originalNumReplicas + (uid1ReplicatedOnPid2 ? 1 : 0) + (uid2ReplicatedOnPid1 ? 1 : 0);
+            int stay      = originalNumReplicas + (uid1ReplicatedOnPid2 ? 0 : 1) + (uid2ReplicatedOnPid1 ? 0 : 1);
             int toLarger  = originalNumReplicas + calcDeltaNumReplicasMove(uid1, uid2, oldPid1, oldPid2, oldMasters, oldReplicas, oldFriendships);
             int toSmaller = originalNumReplicas + calcDeltaNumReplicasMove(uid2, uid1, oldPid2, oldPid1, oldMasters, oldReplicas, oldFriendships);
 
             int smallerMasters = oldMasters.get(oldPid1).size();
             int largerMasters  = oldMasters.get(oldPid2).size();
+
+            System.out.println("(Analyzer) stay:           " + stay);
+            System.out.println("(Analyzer) toLarger:       " + toLarger);
+            System.out.println("(Analyzer) toSmaller:      " + toSmaller);
+            System.out.println("(Analyzer) smallerMasters: " + smallerMasters);
+            System.out.println("(Analyzer) largerMasters:  " + largerMasters);
 
             BEFRIEND_REBALANCE_STRATEGY strategy = determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
             if(strategy == NO_CHANGE) {

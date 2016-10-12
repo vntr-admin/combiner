@@ -53,10 +53,19 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         Integer smallerUserPid = smallerUser.getMasterPartitionId();
         Integer largerUserPid  = largerUser.getMasterPartitionId();
 
+        String question = smallerUserId + "<->" + largerUserId + "? ";
+
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserPid) && largerUser.getReplicaPartitionIds().contains(smallerUserPid);
-        if (!colocatedMasters && !colocatedReplicas) {
+        if(colocatedMasters) {
+            System.out.println(question + " Colocated masters.");
+        }
+        else if(colocatedReplicas) {
+            System.out.println(question + " Colocated replicas.");
+        }
+        else {
             BEFRIEND_REBALANCE_STRATEGY strategy = sparmesBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
+            System.out.println(question + " " + strategy + ".");
             performRebalace(strategy, smallerUserId, largerUserId);
         }
 
