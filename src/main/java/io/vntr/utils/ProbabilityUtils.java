@@ -78,4 +78,20 @@ public class ProbabilityUtils
         return corr;
 	}
 
+	public static int chooseKeyFromMapSetInProportionToSetSize(Map<Integer, Set<Integer>> mapset) {
+        List<Integer> keys = new ArrayList<Integer>(mapset.size() * 100);
+        for(int key : mapset.keySet()) {
+            for(int i=0; i<mapset.get(key).size(); i++) {
+                keys.add(key); //this is intentional: we want mapset.get(key).size() copies of key in there
+            }
+        }
+
+        return ProbabilityUtils.getRandomElement(keys);
+    }
+
+    public static List<Integer> chooseKeyValuePairFromMapSetUniformly(Map<Integer, Set<Integer>> mapset) {
+        int key = chooseKeyFromMapSetInProportionToSetSize(mapset);
+        int value = getRandomElement(mapset.get(key));
+        return Arrays.asList(key, value);
+    }
 }

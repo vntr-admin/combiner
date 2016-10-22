@@ -90,11 +90,16 @@ public class SpajaUser extends User {
                 continue;
             }
 
-            int replicasOnMine   = manager.getPartitionById(partitionId).getNumReplicas();
-            int replicasOnTheirs = manager.getPartitionById(partner.getPartitionId()).getNumReplicas();
+            int mine   = manager.getPartitionById(partitionId).getNumReplicas();
+            int theirs = manager.getPartitionById(partner.getPartitionId()).getNumReplicas();
 
-            float oldScore = (float)(Math.pow(replicasOnMine, alpha) + Math.pow(replicasOnTheirs, alpha));
-            float newScore = getReplicasIfSwappedUsingAlpha(this, partner, strategy);
+            SwapChanges swapChanges = strategy.getSwapChanges(this, partner);
+
+            int deltaMine   = swapChanges.getAddToP1().size() - swapChanges.getRemoveFromP1().size();
+            int deltaTheirs = swapChanges.getAddToP2().size() - swapChanges.getRemoveFromP2().size();
+
+            float oldScore = calcScore(mine,             theirs,               alpha);
+            float newScore = calcScore(mine + deltaMine, theirs + deltaTheirs, alpha);
 
             if(newScore > bestScore && (newScore * t) > oldScore) {
                 bestPartner = partner;
@@ -105,18 +110,7 @@ public class SpajaUser extends User {
         return bestPartner;
     }
 
-    float getReplicasIfSwappedUsingAlpha(SpajaUser u1, SpajaUser u2, SpajaBefriendingStrategy strategy) {
-        SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
-
-        int replicasInP1 = manager.getPartitionById(u1.getPartitionId()).getNumReplicas();
-        int replicasInP2 = manager.getPartitionById(u2.getPartitionId()).getNumReplicas();
-
-        replicasInP1 += swapChanges.getAddToP1().size();
-        replicasInP2 += swapChanges.getAddToP2().size();
-
-        replicasInP1 -= swapChanges.getRemoveFromP1().size();
-        replicasInP2 -= swapChanges.getRemoveFromP2().size();
-
+    static float calcScore(int replicasInP1, int replicasInP2, float alpha) {
         return (float)(Math.pow(replicasInP1, alpha) + Math.pow(replicasInP2, alpha));
     }
 }

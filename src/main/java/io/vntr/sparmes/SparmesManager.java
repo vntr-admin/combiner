@@ -367,11 +367,17 @@ public class SparmesManager {
             p.physicallyMigrateDelete();
         }
 
+        for (SparmesPartition p : pMap.values()) {
+            p.shoreUpReplicas();
+        }
     }
 
     static int iteration = 0;
 
     boolean performStage(boolean firstStage, int k) {
+        if(iteration > 100) {
+            return false; //TODO: remove this once other problems are fixed
+        }
         boolean changed = false;
         Map<Integer, Set<Target>> stageTargets = new HashMap<Integer, Set<Target>>();
         for (SparmesPartition p : pMap.values()) {
@@ -380,7 +386,7 @@ public class SparmesManager {
             changed |= !targets.isEmpty();
         }
 
-        if(changed && iteration > 100) {
+        if(changed){// && iteration > 100) {
             System.out.println("For iteration " + iteration + ", stage " + (firstStage ? "1" : "2"));
             for(int pid : stageTargets.keySet()) {
                 if(!stageTargets.get(pid).isEmpty()) {

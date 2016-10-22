@@ -12,7 +12,7 @@ import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.*;
 /**
  * Created by robertlindquist on 9/28/16.
  */
-public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
+public class SparmesMiddleware implements IMiddlewareAnalyzer {
 
     SparmesManager manager;
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
@@ -108,8 +108,14 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public int addPartition() {
         int pid = manager.addPartition();
-        manager.repartition();
+//        manager.repartition();
         return pid;
+    }
+
+    @Override
+    public void addPartition(Integer partitionId) {
+        manager.addPartition(partitionId);
+//        manager.repartition();
     }
 
     @Override
@@ -154,7 +160,7 @@ public class SparmesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         //Finally, actually drop partition
         manager.removePartition(partitionId);
 
-        manager.repartition();
+//        manager.repartition();
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {

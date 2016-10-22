@@ -10,7 +10,7 @@ import io.vntr.utils.ProbabilityUtils;
 import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
 import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
 
-public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
+public class SparMiddleware implements IMiddlewareAnalyzer {
     SparManager manager;
     private SparBefriendingStrategy sparBefriendingStrategy;
     private SparMigrationStrategy sparMigrationStrategy;
@@ -107,6 +107,11 @@ public class SparMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         //We use option (2) from the paper:
         //2) let the re-distribution of the masters be the result of the node and edge arrival processes and the load-balancing condition.
         return manager.addPartition();
+    }
+
+    @Override
+    public void addPartition(Integer partitionId) {
+        manager.addPartition(partitionId);
     }
 
     public void removePartition(Integer partitionId) {

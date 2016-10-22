@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class HermesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
+public class HermesMiddleware implements IMiddlewareAnalyzer {
     private HermesManager manager;
     private HermesMigrator migrator;
 
@@ -51,6 +51,12 @@ public class HermesMiddleware implements IMiddleware, IMiddlewareAnalyzer {
         manager.repartition();
         return newPid;
 
+    }
+
+    @Override
+    public void addPartition(Integer partitionId) {
+        manager.addPartition(partitionId);
+        manager.repartition();
     }
 
     @Override

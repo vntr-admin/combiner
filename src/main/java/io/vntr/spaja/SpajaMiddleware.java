@@ -12,7 +12,7 @@ import static io.vntr.spaja.BEFRIEND_REBALANCE_STRATEGY.*;
 /**
  * Created by robertlindquist on 9/28/16.
  */
-public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
+public class SpajaMiddleware implements IMiddlewareAnalyzer {
 
     SpajaManager manager;
     private SpajaBefriendingStrategy spajaBefriendingStrategy;
@@ -113,6 +113,11 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     public int addPartition() { return manager.addPartition(); }
 
     @Override
+    public void addPartition(Integer partitionId) {
+        manager.addPartition(partitionId);
+    }
+
+    @Override
     public void removePartition(Integer partitionId) {
         //First, determine which users will need more replicas once this partition is kaput
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
@@ -165,9 +170,9 @@ public class SpajaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
             user.removeReplicaPartitionId(partitionId);
         }
 
-        System.out.println("P" + partitionId + " migrated:   " + _usersMigrated);
-        System.out.println("P" + partitionId + " replicated: " + _usersReplicated);
-        System.out.println("P" + partitionId + " axed:       " + _replicasAxed);
+//        System.out.println("P" + partitionId + " migrated:   " + _usersMigrated);
+//        System.out.println("P" + partitionId + " replicated: " + _usersReplicated);
+//        System.out.println("P" + partitionId + " axed:       " + _replicasAxed);
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);

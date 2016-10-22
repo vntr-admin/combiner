@@ -14,6 +14,8 @@ public interface IMiddleware {
 
     int addPartition();
 
+    void addPartition(Integer partitionId);
+
     void removePartition(Integer partitionId);
 
     void broadcastDowntime();

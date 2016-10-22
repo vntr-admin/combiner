@@ -123,7 +123,7 @@ public class HermesManager {
             stoppingCondition = !changed;
             iteration++;
         }
-        System.out.println("Number of iterations: " + iteration);
+//        System.out.println("Number of iterations: " + iteration);
 
         Map<Integer, Integer> usersWhoMoved = new HashMap<Integer, Integer>();
         for (HermesPartition p : pMap.values()) {

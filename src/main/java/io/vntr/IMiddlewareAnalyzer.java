@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Created by robertlindquist on 9/23/16.
  */
-public interface IMiddlewareAnalyzer {
+public interface IMiddlewareAnalyzer extends IMiddleware {
     Integer getNumberOfPartitions();
     Integer getNumberOfUsers();
     Collection<Integer> getUserIds();

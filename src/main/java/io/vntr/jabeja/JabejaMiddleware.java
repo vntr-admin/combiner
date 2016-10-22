@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
+public class JabejaMiddleware implements IMiddlewareAnalyzer {
 
     private JabejaManager manager;
 
@@ -49,6 +49,11 @@ public class JabejaMiddleware implements IMiddleware, IMiddlewareAnalyzer {
     @Override
     public int addPartition() {
         return manager.addPartition();
+    }
+
+    @Override
+    public void addPartition(Integer partitionId) {
+        manager.addPartition(partitionId);
     }
 
     @Override
