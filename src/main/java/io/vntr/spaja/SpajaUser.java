@@ -83,7 +83,7 @@ public class SpajaUser extends User {
 
     public SpajaUser findPartner(Collection<SpajaUser> randomSamplingOfUsers, float t, SpajaBefriendingStrategy strategy) {
         SpajaUser bestPartner = null;
-        float bestScore = 0;
+        float bestScore = Float.MAX_VALUE;
 
         for(SpajaUser partner : randomSamplingOfUsers) {
             if(partner.getMasterPartitionId().intValue() == masterPartitionId.intValue()) {
@@ -101,7 +101,7 @@ public class SpajaUser extends User {
             float oldScore = calcScore(mine,             theirs,               alpha);
             float newScore = calcScore(mine + deltaMine, theirs + deltaTheirs, alpha);
 
-            if(newScore > bestScore && (newScore * t) > oldScore) {
+            if(newScore < bestScore && (newScore / t) < oldScore) {
                 bestPartner = partner;
                 bestScore = newScore;
             }
