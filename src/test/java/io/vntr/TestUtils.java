@@ -28,6 +28,22 @@ public class TestUtils {
         return set;
     }
 
+    //TODO: test this
+    public static Map<Integer, Set<Integer>> getTopographyForForestFireSocialNetwork(int numUsers, float forwardProbability, float backwardProbability) {
+        NavigableMap<Integer, Set<Integer>> friendships = new TreeMap<Integer, Set<Integer>>();
+        friendships.put(0, new HashSet<Integer>());
+        for(int i=1; i<numUsers; i++) {
+            ForestFireGenerator ffg = new ForestFireGenerator(forwardProbability, backwardProbability, new TreeMap<Integer, Set<Integer>>(copyMapSet(friendships)));
+            Set<Integer> newFriendships = ffg.run();
+            int uid = ffg.getV();
+            for(int friendId : newFriendships) {
+                friendships.get(friendId).add(uid);
+            }
+        }
+        return friendships;
+    }
+
+
     public static Map<Integer, Set<Integer>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
         Map<Integer, Set<Integer>> userIdToFriendIds = new HashMap<Integer, Set<Integer>>();
         for(int id=0; id<numUsers; id++) {

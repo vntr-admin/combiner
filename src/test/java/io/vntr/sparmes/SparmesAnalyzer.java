@@ -11,17 +11,10 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.Analyzer.ACTIONS.*;
-import static io.vntr.Analyzer.ACTIONS.ADD_PARTITION;
-import static io.vntr.Analyzer.ACTIONS.REMOVE_PARTITION;
 import static io.vntr.TestUtils.*;
-import static io.vntr.TestUtils.copyMapSet;
-import static io.vntr.TestUtils.getFriendship;
-import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
-import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
+import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.sparmes.SparmesBefriendingStrategy.determineStrategy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 10/9/16.
@@ -29,10 +22,10 @@ import static org.junit.Assert.assertTrue;
 public class SparmesAnalyzer {
     final static Logger logger = Logger.getLogger(SparmesAnalyzer.class);
 
-//    @Test
+    @Test
     public void stressTest() throws Exception {
         for(int i=0; i<1000; i++) {
-            int numUsers = 1000;//500 + (int) (Math.random() * 2000);
+            int numUsers = 500 + (int) (Math.random() * 2000);
             int numGroups = 6 + (int) (Math.random() * 20);
             float groupProb = 0.03f + (float) (Math.random() * 0.1);
             float friendProb = 0.03f + (float) (Math.random() * 0.1);
@@ -54,7 +47,8 @@ public class SparmesAnalyzer {
                 numFriendships += friendships.get(uid).size();
             }
 
-            logger.warn("\nnumUsers:          " + numUsers);
+            logger.warn("FOR INTERATION:    " + i);
+            logger.warn("numUsers:          " + numUsers);
             logger.warn("numGroups:         " + numGroups);
             logger.warn("groupProb:         " + groupProb);
             logger.warn("friendProb:        " + friendProb);
@@ -130,7 +124,7 @@ public class SparmesAnalyzer {
                 Map<Integer, Set<Integer>> newReplicas    = middleware.getPartitionToReplicaMap();
                 assertUserRemoved(badId, 2, oldPartitions, oldReplicas, newPartitions, newReplicas);
             }
-            if(action == BEFRIEND) {
+            if(action == BEFRIEND && false) {
                 Map<Integer, Set<Integer>> oldMasters   = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
@@ -232,7 +226,9 @@ public class SparmesAnalyzer {
                 assertEquals(uids, middleware.getUserIds());
                 assertEquals(oldFriendships, middleware.getFriendships());
             }
-            if(action == DOWNTIME && false) {
+            if(action == DOWNTIME) {
+                Map<Integer, Set<Integer>> oldMasters   = copyMapSet(middleware.getPartitionToUserMap());
+                Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -257,7 +253,7 @@ public class SparmesAnalyzer {
         boolean colocatedMasters = oldPid1 == oldPid2;
         boolean colocatedReplicas = uid1ReplicatedOnPid2 && uid2ReplicatedOnPid1;
         if(!colocatedMasters && !colocatedReplicas) {
-            logger.warn("Here's the haps: oldPid1=" + oldPid1 + ", oldPid2=" + oldPid2 + ", oldReplicas1=" + oldReplicas1 + ", oldReplicas2=" + oldReplicas2);
+//            logger.warn("Here's the haps: oldPid1=" + oldPid1 + ", oldPid2=" + oldPid2 + ", oldReplicas1=" + oldReplicas1 + ", oldReplicas2=" + oldReplicas2);
             int originalNumReplicas = oldReplicas.get(oldPid1).size() + oldReplicas.get(oldPid2).size();
 
             int stay      = originalNumReplicas + (uid1ReplicatedOnPid2 ? 0 : 1) + (uid2ReplicatedOnPid1 ? 0 : 1);
@@ -267,11 +263,11 @@ public class SparmesAnalyzer {
             int smallerMasters = oldMasters.get(oldPid1).size();
             int largerMasters  = oldMasters.get(oldPid2).size();
 
-            System.out.println("(Analyzer) stay:           " + stay);
-            System.out.println("(Analyzer) toLarger:       " + toLarger);
-            System.out.println("(Analyzer) toSmaller:      " + toSmaller);
-            System.out.println("(Analyzer) smallerMasters: " + smallerMasters);
-            System.out.println("(Analyzer) largerMasters:  " + largerMasters);
+//            System.out.println("(Analyzer) stay:           " + stay);
+//            System.out.println("(Analyzer) toLarger:       " + toLarger);
+//            System.out.println("(Analyzer) toSmaller:      " + toSmaller);
+//            System.out.println("(Analyzer) smallerMasters: " + smallerMasters);
+//            System.out.println("(Analyzer) largerMasters:  " + largerMasters);
 
             BEFRIEND_REBALANCE_STRATEGY strategy = determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
             if(strategy == NO_CHANGE) {
@@ -369,37 +365,16 @@ public class SparmesAnalyzer {
         boolean valid = true;
         Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
         Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-        valid &= (middleware.getNumberOfPartitions().intValue() == pids.size());
-        valid &= (middleware.getNumberOfUsers().intValue()      == uids.size());
+        assertTrue(middleware.getNumberOfPartitions().intValue() == pids.size());
+        assertTrue(middleware.getNumberOfUsers().intValue()      == uids.size());
 
         Map<Integer, Set<Integer>> partitions  = middleware.getPartitionToUserMap();
         Map<Integer, Set<Integer>> friendships = middleware.getFriendships();
         Map<Integer, Set<Integer>> replicas = middleware.getPartitionToReplicaMap();
 
-        valid &= (pids.equals(partitions.keySet()));
-        valid &= (uids.equals(friendships.keySet()));
-        valid &= (pids.equals(replicas.keySet()));
-
-        for(int uid : uids) {
-            try {
-                valid &= (findKeysForUser(partitions, uid).size() == 1);
-                valid &= findKeysForUser(replicas, uid).size() >= middleware.manager.getMinNumReplicas();
-            } catch(AssertionError e) {
-                throw e;
-            }
-        }
-
-        for(int uid1 : friendships.keySet()) {
-            for(int uid2 : friendships.get(uid1)) {
-                int pid1 = findKeysForUser(partitions, uid1).iterator().next();
-                int pid2 = findKeysForUser(partitions, uid2).iterator().next();
-                if(pid1 != pid2) {
-                    //If they aren't colocated, they have replicas in each other's partitions
-                    valid &= (findKeysForUser(replicas, uid1).contains(pid2));
-                    valid &= (findKeysForUser(replicas, uid2).contains(pid1));
-                }
-            }
-        }
+        assertTrue(pids.equals(partitions.keySet()));
+        assertTrue(uids.equals(friendships.keySet()));
+        assertTrue(pids.equals(replicas.keySet()));
 
         //Assert that replicas are consistent with the master in everything except partitionId
         for(int uid : friendships.keySet()) {
@@ -421,7 +396,7 @@ public class SparmesAnalyzer {
             allMastersSeen.addAll(partitions.get(pid));
         }
         allMastersSeen.removeAll(middleware.getUserIds());
-        valid &= (allMastersSeen.isEmpty());
+        assertTrue(allMastersSeen.isEmpty());
 
         Set<Integer> allReplicasSeen = new HashSet<Integer>();
         for(int pid : replicas.keySet()) {
@@ -435,7 +410,35 @@ public class SparmesAnalyzer {
             allFriendsSeen.addAll(friendships.get(pid));
         }
         allFriendsSeen.removeAll(middleware.getUserIds());
-        valid &= (allFriendsSeen.isEmpty());
+        assertTrue(allFriendsSeen.isEmpty());
+
+        Set<Integer> problematicUids = new HashSet<Integer>();
+        int numProblems = 0;
+        int count = 0;
+        for(int uid : uids) {
+            try {
+                assertTrue(findKeysForUser(partitions, uid).size() == 1);
+                assertTrue(findKeysForUser(replicas, uid).size() >= middleware.manager.getMinNumReplicas());
+                count++;
+            } catch(AssertionError e) {
+                problematicUids.add(uid);
+            }
+        }
+        if(!problematicUids.isEmpty()) {
+            throw new RuntimeException("Encountered k-redundancy failures with " + new TreeSet<Integer>(problematicUids));
+        }
+
+        for(int uid1 : friendships.keySet()) {
+            for(int uid2 : friendships.get(uid1)) {
+                int pid1 = findKeysForUser(partitions, uid1).iterator().next();
+                int pid2 = findKeysForUser(partitions, uid2).iterator().next();
+                if(pid1 != pid2) {
+                    //If they aren't colocated, they have replicas in each other's partitions
+                    assertTrue(findKeysForUser(replicas, uid1).contains(pid2));
+                    assertTrue(findKeysForUser(replicas, uid2).contains(pid1));
+                }
+            }
+        }
 
         for(int uid : uids) {
             int pid = findKeysForUser(partitions, uid).iterator().next();

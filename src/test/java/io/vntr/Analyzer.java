@@ -42,7 +42,7 @@ public class Analyzer {
     private static final int USERS_PER_PARTITION = 100;
     private static final int MIN_NUM_REPLICAS = 2;
 
-//    @Test
+    @Test
     public void testSomeStuff() throws Exception {
         for(int i=0; i<1000; i++) {
             int numUsers = 500 + (int) (Math.random() * 2000);
@@ -67,28 +67,28 @@ public class Analyzer {
                 numFriendships += friendships.get(uid).size();
             }
 
-            logger.warn("\nnumUsers:          " + numUsers);
+            logger.warn("numUsers:          " + numUsers);
             logger.warn("numGroups:         " + numGroups);
             logger.warn("groupProb:         " + groupProb);
             logger.warn("friendProb:        " + friendProb);
             logger.warn("usersPerPartition: " + usersPerPartition);
             logger.warn("numFriendships:    " + numFriendships);
             logger.warn("assortivity:       " + assortivity);
-            logger.warn("friendships:       " + friendships);
-            logger.warn("partitions:        " + partitions);
-            logger.warn("replicas:          " + replicas);
+//            logger.warn("friendships:       " + friendships);
+//            logger.warn("partitions:        " + partitions);
+//            logger.warn("replicas:          " + replicas);
 
             JabejaManager  jabejaManager  = initJabejaManager (friendships, partitions);
             HermesManager  hermesManager  = initHermesManager (friendships, partitions);
             SparManager    sparManager    = initSparManager   (friendships, partitions, replicas);
             SpajaManager   spajaManager   = initSpajaManager  (friendships, partitions, replicas);
-            SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
+//            SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
             JabejaMiddleware  jabejaMiddleware  = initJabejaMiddleware (jabejaManager);
             HermesMiddleware  hermesMiddleware  = initHermesMiddleware (hermesManager);
             SparMiddleware    sparMiddleware    = initSparMiddleware   (sparManager);
             SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware  (spajaManager);
-            SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
+//            SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(friendships));
             Set<Integer> newFriendships = generator.run();
@@ -96,7 +96,7 @@ public class Analyzer {
             runTest(hermesMiddleware,  generator.getV(), newFriendships);
             runTest(sparMiddleware,    generator.getV(), newFriendships);
             runTest(spajaMiddleware,   generator.getV(), newFriendships);
-            runTest(sparmesMiddleware, generator.getV(), newFriendships);
+//            runTest(sparmesMiddleware, generator.getV(), newFriendships);
         }
     }
 
