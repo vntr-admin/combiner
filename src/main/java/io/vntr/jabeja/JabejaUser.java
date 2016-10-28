@@ -36,7 +36,7 @@ public class JabejaUser extends User {
 
         for(JabejaUser partner : users) {
             Integer theirPid = partner.getPid();
-            if(theirPid == pid) {
+            if(pid.equals(theirPid)) {
                 continue;
             }
 

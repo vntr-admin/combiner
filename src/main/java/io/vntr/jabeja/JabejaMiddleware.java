@@ -124,4 +124,10 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer {
         }
         return m;
     }
+
+    @Override
+    public String toString() {
+        return manager.toString();
+    }
+
 }

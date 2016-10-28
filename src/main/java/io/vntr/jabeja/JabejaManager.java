@@ -1,11 +1,10 @@
 package io.vntr.jabeja;
 
 import io.vntr.User;
-import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
+import static io.vntr.utils.ProbabilityUtils.*;
 
 /**
  * Created by robertlindquist on 9/20/16.
@@ -65,13 +64,14 @@ public class JabejaManager {
 
         int pid1 = u1.getPid();
         int pid2 = u2.getPid();
+
         u1.setPid(pid2);
         u2.setPid(pid1);
 
-        getPartition(pid2).add(u1.getId());
-        getPartition(pid1).add(u2.getId());
-        getPartition(pid2).remove(u2.getId());
-        getPartition(pid1).remove(u1.getId());
+        getPartition(pid2).add(id1);
+        getPartition(pid1).add(id2);
+        getPartition(pid2).remove(id2);
+        getPartition(pid1).remove(id1);
     }
 
     public int addUser() {
@@ -130,7 +130,7 @@ public class JabejaManager {
     }
 
     Integer getInitialPartitionId() {
-        return ProbabilityUtils.getRandomElement(partitions.keySet());
+        return getRandomElement(partitions.keySet());
     }
 
     public Integer addPartition() {
@@ -200,6 +200,11 @@ public class JabejaManager {
             friendships.put(uid, getUser(uid).getFriendIDs());
         }
         return friendships;
+    }
+
+    @Override
+    public String toString() {
+        return "k:" + k + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
 }
