@@ -266,4 +266,9 @@ public class HermesManager {
     public float getGamma() {
         return gamma;
     }
+
+    @Override
+    public String toString() {
+        return "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
+    }
 }

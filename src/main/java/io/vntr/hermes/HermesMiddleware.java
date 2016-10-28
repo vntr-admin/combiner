@@ -128,4 +128,9 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
     public float getGamma() {
         return manager.getGamma();
     }
+
+    @Override
+    public String toString() {
+        return manager.toString();
+    }
 }

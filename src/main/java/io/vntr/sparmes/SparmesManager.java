@@ -370,6 +370,11 @@ public class SparmesManager {
         for (SparmesPartition p : pMap.values()) {
             p.shoreUpReplicas();
         }
+
+        if(!checkKReplication()) {
+            checkKReplication();
+        }
+
     }
 
     static int iteration = 0;
@@ -512,5 +517,48 @@ public class SparmesManager {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
         return friendships;
+    }
+
+    private static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
+        Set<Integer> keys = new HashSet<Integer>();
+        for(int key : m.keySet()) {
+            if(m.get(key).contains(uid)) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
+
+
+    private boolean checkKReplication() {
+        boolean valid = true;
+        Map<Integer, Set<Integer>> friendships = getFriendships();
+        Map<Integer, Set<Integer>> partitions  = getPartitionToUserMap();
+        Map<Integer, Set<Integer>> replicas    = getPartitionToReplicasMap();
+        for(int uid1 : friendships.keySet()) {
+            for(int uid2 : friendships.get(uid1)) {
+                Set<Integer> uid1Replicas = findKeysForUser(replicas, uid1);
+                Set<Integer> uid2Replicas = findKeysForUser(replicas, uid2);
+                int pid1 = findKeysForUser(partitions, uid1).iterator().next();
+                int pid2 = findKeysForUser(partitions, uid2).iterator().next();
+                if(pid1 != pid2) {
+                    //If they aren't colocated, they have replicas in each other's partitions
+                    valid &= uid1Replicas.contains(pid2);
+                    valid &= uid2Replicas.contains(pid1);
+                    if(!uid1Replicas.contains(pid2)) {
+                        System.out.println("Hrummnh");
+                    }
+                    else if(!uid2Replicas.contains(pid1)) {
+                        System.out.println("Hrummph");
+                    }
+                }
+            }
+        }
+        return valid;
+    }
+
+    @Override
+    public String toString() {
+        return "minNumReplicas:" + minNumReplicas + "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
     }
 }

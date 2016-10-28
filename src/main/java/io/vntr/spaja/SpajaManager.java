@@ -447,4 +447,9 @@ public class SpajaManager {
         }
         return m;
     }
+
+    @Override
+    public String toString() {
+        return "minNumReplicas:" + minNumReplicas + "|k:" + randomSampingSize + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
+    }
 }

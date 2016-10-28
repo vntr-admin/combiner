@@ -386,4 +386,8 @@ public class SparManager {
         return friendships;
     }
 
+    @Override
+    public String toString() {
+        return "minNumReplicas:" + minNumReplicas + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
+    }
 }

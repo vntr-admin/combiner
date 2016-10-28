@@ -37,11 +37,6 @@ public class SpajaRepartitioner {
                     partner = user.findPartner(getRandomSamplingOfUsers(randomSampingSize), t, spajaBefriendingStrategy);
                 }
                 if(partner != null) {
-//                    if(!isMiddlewareInAValidState(2)) {
-//                        isMiddlewareInAValidState(2);
-//                    }
-                    String u1Str = user.toString();
-                    String u2Str = partner.toString();
                     Map<Integer, String> u1Friends = new HashMap<Integer, String>();
                     for(int friendId : user.getFriendIDs()) {
                         u1Friends.put(friendId, manager.getUserMasterById(friendId).toString());
@@ -51,9 +46,6 @@ public class SpajaRepartitioner {
                         u2Friends.put(friendId, manager.getUserMasterById(friendId).toString());
                     }
                     manager.swap(user.getId(), partner.getId(), spajaBefriendingStrategy);
-//                    if(!isMiddlewareInAValidState(2)) {
-//                        isMiddlewareInAValidState(2);
-//                    }
                 }
             }
         }

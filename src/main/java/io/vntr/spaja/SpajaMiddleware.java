@@ -263,4 +263,9 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         }
         return m;
     }
+
+    @Override
+    public String toString() {
+        return manager.toString();
+    }
 }

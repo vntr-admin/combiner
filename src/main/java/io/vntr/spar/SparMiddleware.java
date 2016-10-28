@@ -245,4 +245,9 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         }
         return m;
     }
+
+    @Override
+    public String toString() {
+        return manager.toString();
+    }
 }
