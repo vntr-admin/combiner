@@ -1,6 +1,9 @@
 package io.vntr.hermes;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -54,20 +57,37 @@ public class LogicalUser {
         if(getImbalanceFactor(pid, -1) < (2-gamma)) {
             return new Target(id, null, null, 0);
         }
-        Integer target = null;
+        Set<Integer> targets = new HashSet<Integer>();
         Integer maxGain = 0;
         if(getImbalanceFactor(pid, 0) > gamma) {
             maxGain = Integer.MIN_VALUE;
         }
-        for(Integer targetPid : pToFriendCount.keySet()) {
+        for(Iterator<Integer> iter = pToFriendCount.keySet().iterator(); iter.hasNext(); ) {
+            Integer targetPid = iter.next();
             if(((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) && (!probabilistic || Math.random() < 0.95)) {
                 int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
                 if(gain > maxGain && getImbalanceFactor(targetPid, 1) < gamma) {
-                    target = targetPid;
+                    targets = new HashSet<Integer>();
+                    targets.add(targetPid);
                     maxGain = gain;
+                } else if (gain == maxGain) {
+                    targets.add(targetPid);
                 }
             }
         }
+
+        Integer target = null;
+        if(!targets.isEmpty()) {
+            int minWeightForPartition = Integer.MAX_VALUE;
+            for(int curTarget : targets) {
+                int curWeight = pToWeight.get(curTarget);
+                if(curWeight < minWeightForPartition) {
+                    minWeightForPartition = curWeight;
+                    target = curTarget;
+                }
+            }
+        }
+
         return new Target(id, target, pid, maxGain);
     }
 
@@ -106,5 +126,10 @@ public class LogicalUser {
 
     public void setPToFriendCount(Map<Integer, Integer> updatedFriendCounts) {
         pToFriendCount = updatedFriendCounts;
+    }
+
+    @Override
+    public String toString() {
+        return "u" + id + "|, p" + pid + "|" + pToFriendCount;
     }
 }
