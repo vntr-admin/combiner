@@ -46,7 +46,7 @@ public class SpajaMigrationStrategy {
             if(remainingSpotsInPartition == null) {
                 System.out.println("Buh?");
             }
-            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0 && score.score > 0) {
+            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition != null && remainingSpotsInPartition > 0 && score.score > 0) {
                 strategy.put(score.userId, score.partitionId);
                 remainingSpotsInPartitions.put(score.partitionId, remainingSpotsInPartition - 1);
             }
