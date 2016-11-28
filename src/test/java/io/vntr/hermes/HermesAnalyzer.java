@@ -44,7 +44,7 @@ public class HermesAnalyzer {
                 numFriendships += friendships.get(uid).size();
             }
 
-            logger.warn("\nnumUsers:          " + numUsers);
+            logger.warn("numUsers:          " + numUsers);
             logger.warn("numGroups:         " + numGroups);
             logger.warn("groupProb:         " + groupProb);
             logger.warn("friendProb:        " + friendProb);
@@ -225,11 +225,11 @@ public class HermesAnalyzer {
     }
 
     private HermesManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return HermesTestUtils.initGraph(1.2f, true, partitions, friendships);
+        return HermesTestUtils.initGraph(1.3f, 3, 0.03f, partitions, friendships);
     }
 
     private HermesMiddleware initHermesMiddleware(HermesManager manager) {
-        return new HermesMiddleware(manager, 1.2f);
+        return new HermesMiddleware(manager, 1.3f);
     }
 
     private static boolean isMiddlewareInAValidState(HermesMiddleware middleware) {

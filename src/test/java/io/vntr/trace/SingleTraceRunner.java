@@ -3,18 +3,25 @@ package io.vntr.trace;
 import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.dummy.DummyManager;
+import io.vntr.dummy.DummyMiddleware;
+import io.vntr.dummy.DummyTestUtils;
 import io.vntr.hermes.HermesManager;
 import io.vntr.hermes.HermesMiddleware;
 import io.vntr.hermes.HermesTestUtils;
 import io.vntr.jabeja.JabejaManager;
 import io.vntr.jabeja.JabejaMiddleware;
 import io.vntr.jabeja.JabejaTestUtils;
+import io.vntr.replicadummy.ReplicaDummyManager;
+import io.vntr.replicadummy.ReplicaDummyMiddleware;
+import io.vntr.replicadummy.ReplicaDummyTestUtils;
 import io.vntr.spaja.SpajaManager;
 import io.vntr.spaja.SpajaMiddleware;
 import io.vntr.spaja.SpajaTestUtils;
 import io.vntr.spar.SparManager;
 import io.vntr.spar.SparMiddleware;
 import io.vntr.spar.SparTestUtils;
+import io.vntr.sparmes.SparmesAnalyzer;
 import io.vntr.sparmes.SparmesManager;
 import io.vntr.sparmes.SparmesMiddleware;
 import io.vntr.sparmes.SparmesTestUtils;
@@ -31,13 +38,15 @@ public class SingleTraceRunner {
     public static final String HERMES_TYPE = "HERMES";
     public static final String SPAJA_TYPE = "SPAJA";
     public static final String SPARMES_TYPE = "SPARMES";
-    private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(SPAR_TYPE, JABEJA_TYPE, HERMES_TYPE, SPAJA_TYPE));
+    public static final String DUMMY_TYPE = "DUMMY";
+    public static final String REPLICA_DUMMY_TYPE = "RDUMMY";
+    private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(SPAR_TYPE, JABEJA_TYPE, HERMES_TYPE, SPAJA_TYPE, DUMMY_TYPE, REPLICA_DUMMY_TYPE, SPARMES_TYPE));
 
     private static final String overallFormatStr = "\t%6s | %s | %-27s | Edge Cut = %8d | Replica Count = %8d";
 
     public static void main(String[] args) throws Exception {
-        if(args.length < 4) {
-            throw new IllegalArgumentException("Must have at least 4 arguments!");
+        if(args.length < 3) {
+            throw new IllegalArgumentException("Must have at least 3 arguments!");
         }
         String type = args[0];
         String inputFile = args[1];
@@ -54,9 +63,22 @@ public class SingleTraceRunner {
         IMiddlewareAnalyzer middleware;
 
         if(SPAR_TYPE.equals(type)) {
+            if(args.length != 4) {
+                throw new IllegalArgumentException("SPAR requires 3 arguments");
+            }
             int minNumReplicas = Integer.parseInt(args[3]);
             SparManager sparManager = initSparManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas(), minNumReplicas);
             middleware = initSparMiddleware(sparManager);
+        } else if(SPARMES_TYPE.equals(type)) {
+            SparmesManager sparmesManager = initSparmesManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas());
+            middleware = initSparmesMiddleware(sparmesManager);
+        } else if(REPLICA_DUMMY_TYPE.equals(type)) {
+            if(args.length != 4) {
+                throw new IllegalArgumentException("RDUMMY requires 3 arguments");
+            }
+            int minNumReplicas = Integer.parseInt(args[3]);
+            ReplicaDummyManager sparManager = initReplicaDummyManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas(), minNumReplicas);
+            middleware = initReplicaDummyMiddleware(sparManager);
         } else if(JABEJA_TYPE.equals(type)) {
             if(args.length != 7) {
                 throw new IllegalArgumentException("JABEJA requires 7 arguments");
@@ -68,8 +90,20 @@ public class SingleTraceRunner {
             JabejaManager jabejaManager = initJabejaManager(alpha, initialT, deltaT, k, trace.getFriendships(), trace.getPartitions());
             middleware = initJabejaMiddleware(jabejaManager);
         } else if(HERMES_TYPE.equals(type)) {
+            HermesManager hermesManager;
             float gamma = Float.parseFloat(args[3]);
-            HermesManager hermesManager = initHermesManager(gamma, trace.getFriendships(), trace.getPartitions());
+
+            if(args.length == 6) {
+                float maxIterationToNumUsersRatio = Float.parseFloat(args[4]);
+                int k = Integer.parseInt((args[5]));
+                hermesManager = initHermesManager(gamma, maxIterationToNumUsersRatio, k, trace.getFriendships(), trace.getPartitions());
+            }
+            else if(args.length == 5) {
+                float maxIterationToNumUsersRatio = Float.parseFloat(args[4]);
+                hermesManager = initHermesManager(gamma, maxIterationToNumUsersRatio, 3, trace.getFriendships(), trace.getPartitions());
+            } else {
+                hermesManager = initHermesManager(gamma, trace.getFriendships(), trace.getPartitions());
+            }
             middleware = initHermesMiddleware(hermesManager);
         } else if(SPAJA_TYPE.equals(type)) {
             if(args.length != 8) {
@@ -82,6 +116,9 @@ public class SingleTraceRunner {
             int k = Integer.parseInt(args[7]);
             SpajaManager spajaManager = initSpajaManager(minNumReplicas, alpha, initialT, deltaT, k, trace.getFriendships(), trace.getPartitions(), trace.getReplicas());
             middleware = initSpajaMiddleware(spajaManager);
+        } else if(DUMMY_TYPE.equals(type)){
+            DummyManager dummyManager = initDummyManager(trace.getFriendships(), trace.getPartitions());
+            middleware = initDummyMiddleware(dummyManager);
         } else {
             throw new RuntimeException();
         }
@@ -129,6 +166,12 @@ public class SingleTraceRunner {
             case REMOVE_PARTITION: middleware.removePartition(action.getVal1());                 break;
             case DOWNTIME:         middleware.broadcastDowntime();                               break;
         }
+//        if(middleware instanceof SparmesMiddleware) {
+//            boolean isValid = SparmesAnalyzer.isMiddlewareInAValidState((SparmesMiddleware) middleware);
+//            if(!isValid) {
+//                throw new RuntimeException();
+//            }
+//        }
     }
 
     private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, String next, String type, boolean flush, boolean echo) {
@@ -158,8 +201,12 @@ public class SingleTraceRunner {
         return HermesTestUtils.initGraph(gamma, true, partitions, friendships);
     }
 
+    private static HermesManager initHermesManager(float gamma, float maxIterationToNumUsersRatio, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
+        return HermesTestUtils.initGraph(gamma, k, maxIterationToNumUsersRatio, partitions, friendships);
+    }
+
     private static HermesMiddleware initHermesMiddleware(HermesManager manager) {
-        return new HermesMiddleware(manager, 1.2f);
+        return new HermesMiddleware(manager, manager.getGamma());
     }
 
     private static JabejaManager initJabejaManager(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
@@ -185,4 +232,21 @@ public class SingleTraceRunner {
     private static SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {
         return new SparmesMiddleware(manager);
     }
+
+    private static DummyManager initDummyManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
+        return DummyTestUtils.initGraph(partitions, friendships);
+    }
+
+    private static DummyMiddleware initDummyMiddleware(DummyManager manager) {
+        return new DummyMiddleware(manager);
+    }
+
+    private static ReplicaDummyManager initReplicaDummyManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, int minNumReplicas) {
+        return ReplicaDummyTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+    }
+
+    private static ReplicaDummyMiddleware initReplicaDummyMiddleware(ReplicaDummyManager manager) {
+        return new ReplicaDummyMiddleware(manager);
+    }
+
 }

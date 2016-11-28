@@ -42,7 +42,7 @@ public class Analyzer {
     private static final int USERS_PER_PARTITION = 100;
     private static final int MIN_NUM_REPLICAS = 2;
 
-    @Test
+//    @Test
     public void testSomeStuff() throws Exception {
         for(int i=0; i<1000; i++) {
             int numUsers = 500 + (int) (Math.random() * 2000);

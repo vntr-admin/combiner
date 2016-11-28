@@ -22,13 +22,14 @@ import static org.junit.Assert.*;
 public class SparmesAnalyzer {
     final static Logger logger = Logger.getLogger(SparmesAnalyzer.class);
 
-    @Test
+//    @Test
     public void stressTest() throws Exception {
         for(int i=0; i<1000; i++) {
             int numUsers = 500 + (int) (Math.random() * 2000);
             int numGroups = 6 + (int) (Math.random() * 20);
             float groupProb = 0.03f + (float) (Math.random() * 0.1);
             float friendProb = 0.03f + (float) (Math.random() * 0.1);
+
             Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, numGroups, groupProb, friendProb);
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
@@ -87,7 +88,7 @@ public class SparmesAnalyzer {
         assertTrue(isMiddlewareInAValidState(middleware));
         for(int i=0; i<script.length; i++) {
             Analyzer.ACTIONS action = script[i];
-            if(action == ADD_USER && false) {
+            if(action == ADD_USER) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
                 Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
@@ -101,7 +102,7 @@ public class SparmesAnalyzer {
                 oldFriendships.put(newUid, Collections.<Integer>emptySet());
                 assertEquals(oldFriendships, middleware.getFriendships());
             }
-            if(action == REMOVE_USER && false) {
+            if(action == REMOVE_USER) {
                 Map<Integer, Set<Integer>> oldPartitions = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
@@ -124,7 +125,7 @@ public class SparmesAnalyzer {
                 Map<Integer, Set<Integer>> newReplicas    = middleware.getPartitionToReplicaMap();
                 assertUserRemoved(badId, 2, oldPartitions, oldReplicas, newPartitions, newReplicas);
             }
-            if(action == BEFRIEND && false) {
+            if(action == BEFRIEND) {
                 Map<Integer, Set<Integer>> oldMasters   = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
@@ -152,7 +153,7 @@ public class SparmesAnalyzer {
                 Map<Integer, Set<Integer>> newFriendships = middleware.getFriendships();
                 assertProperBefriending(uid1, uid2, oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships);
             }
-            if(action == UNFRIEND && false) {
+            if(action == UNFRIEND) {
                 Map<Integer, Set<Integer>> oldMasters   = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
@@ -173,7 +174,7 @@ public class SparmesAnalyzer {
                 Map<Integer, Set<Integer>> newFriendships = middleware.getFriendships();
                 assertProperUnfriending(friendship[0], friendship[1], oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships);
             }
-            if(action == FOREST_FIRE && false) {
+            if(action == FOREST_FIRE) {
                 Map<Integer, Set<Integer>> friendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -197,7 +198,7 @@ public class SparmesAnalyzer {
 //                assertEquals(friendships, middleware.getFriendships());
 
             }
-            if(action == ADD_PARTITION && false) {
+            if(action == ADD_PARTITION) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> oldPids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -212,7 +213,7 @@ public class SparmesAnalyzer {
                 assertEquals(uids, middleware.getUserIds());
                 assertEquals(oldFriendships, middleware.getFriendships());
             }
-            if(action == REMOVE_PARTITION && false) {
+            if(action == REMOVE_PARTITION) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
                 Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
@@ -361,7 +362,7 @@ public class SparmesAnalyzer {
         return DOWNTIME;
     }
 
-    private static boolean isMiddlewareInAValidState(SparmesMiddleware middleware) {
+    public static boolean isMiddlewareInAValidState(SparmesMiddleware middleware) {
         boolean valid = true;
         Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
         Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
