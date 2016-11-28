@@ -7,6 +7,7 @@ import java.util.Set;
  * Created by robertlindquist on 9/29/16.
  */
 public class LogicalUser {
+    private int minNumReplicas;
     private Integer id;
     private Integer pid;
     private float gamma;
@@ -19,7 +20,7 @@ public class LogicalUser {
     private int numFriendReplicasToDeleteInSourcePartition;
     private boolean replicateInSourcePartition;
 
-    public LogicalUser(Integer id, Integer pid, float gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Set<Integer> replicaLocations, Map<Integer, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Integer totalWeight) {
+    public LogicalUser(Integer id, Integer pid, float gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Set<Integer> replicaLocations, Map<Integer, Integer> numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, Integer totalWeight, int minNumReplicas) {
         this.id = id;
         this.pid = pid;
         this.gamma = gamma;
@@ -30,6 +31,7 @@ public class LogicalUser {
         this.numFriendReplicasToDeleteInSourcePartition = numFriendReplicasToDeleteInSourcePartition;
         this.replicateInSourcePartition = replicateInSourcePartition;
         this.totalWeight = totalWeight;
+        this.minNumReplicas = minNumReplicas;
     }
 
     public Integer getId() {
@@ -98,7 +100,7 @@ public class LogicalUser {
 
     //"Gain" in this instance is the reduction in replicas
     private int calculateGain(Integer targetPid) {
-        boolean deleteReplicaInTargetPartition = replicaLocations.contains(targetPid);
+        boolean deleteReplicaInTargetPartition = replicaLocations.contains(targetPid) && replicaLocations.size() > minNumReplicas; //TODO: this assumes we won't add other replicas, so it's not tight
         int numToDelete = numFriendReplicasToDeleteInSourcePartition + (deleteReplicaInTargetPartition ? 1 : 0);
 
         int numFriendReplicasToAddInTargetPartition = numFriendsToAddInEachPartition.get(targetPid);

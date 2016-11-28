@@ -178,7 +178,7 @@ public class SparmesPartition {
         logicalUsers.get(logicalUid).setPToFriendCount(updatedFriendCounts);
     }
 
-    public void shoreUpReplicas() {
+    public void shoreUpFriendReplicas() {
         for(SparmesUser user : idToMasterMap.values()) {
             Set<Integer> friends = new HashSet<Integer>(user.getFriendIDs());
             friends.removeAll(idToMasterMap.keySet());

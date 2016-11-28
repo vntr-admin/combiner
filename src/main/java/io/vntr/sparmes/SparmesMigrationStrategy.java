@@ -59,7 +59,10 @@ public class SparmesMigrationStrategy {
             pToStrategyCount.put(pid, 0);
         }
         for(Integer uid1 : strategy.keySet()) {
-            int pid = strategy.get(uid1);
+            Integer pid = strategy.get(uid1);
+            if(pid == null) {
+                System.out.println("Gee willikers");
+            }
             pToStrategyCount.put(pid, pToStrategyCount.get(pid));
         }
 

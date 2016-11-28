@@ -74,7 +74,7 @@ public class SparmesManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparmesUser sparmesUser = new SparmesUser(user.getId(), masterPartitionId, gamma, this);
+        SparmesUser sparmesUser = new SparmesUser(user.getId(), masterPartitionId, gamma, this, minNumReplicas);
 
         addUser(sparmesUser, masterPartitionId);
 
@@ -368,13 +368,40 @@ public class SparmesManager {
         }
 
         for (SparmesPartition p : pMap.values()) {
-            p.shoreUpReplicas();
+            p.shoreUpFriendReplicas();
         }
 
-        if(!checkKReplication()) {
-            checkKReplication();
+        for (int uid : uMap.keySet()) {
+            ensureKReplication(uid);
         }
 
+//        if(!checkKReplication()) {
+//            checkKReplication();
+//        }
+
+    }
+
+    void ensureKReplication(int uid) {
+        SparmesUser user = getUserMasterById(uid);
+        Set<Integer> replicaLocations = user.getReplicaPartitionIds();
+        int deficit = minNumReplicas - replicaLocations.size();
+        if(deficit > 0) {
+            Set<Integer> newLocations = new HashSet<Integer>(pMap.keySet());
+            newLocations.removeAll(replicaLocations);
+            newLocations.remove(user.getMasterPartitionId());
+            for(int rPid : ProbabilityUtils.getKDistinctValuesFromList(deficit, newLocations)) {
+                addReplica(user, rPid);
+            }
+        }
+    }
+
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
+        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(getAllPartitionIds());
+        potentialReplicaLocations.removeAll(pidsToExclude);
+        potentialReplicaLocations.remove(user.getMasterPartitionId());
+        potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
+        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        return list.get((int) (list.size() * Math.random()));
     }
 
     static int iteration = 0;
@@ -392,10 +419,10 @@ public class SparmesManager {
         }
 
         if(changed){// && iteration > 100) {
-            System.out.println("For iteration " + iteration + ", stage " + (firstStage ? "1" : "2"));
+//            System.out.println("For iteration " + iteration + ", stage " + (firstStage ? "1" : "2"));
             for(int pid : stageTargets.keySet()) {
                 if(!stageTargets.get(pid).isEmpty()) {
-                    System.out.println(pid + " : " + stageTargets.get(pid));
+//                    System.out.println(pid + " : " + stageTargets.get(pid));
                 }
             }
         }
@@ -454,6 +481,7 @@ public class SparmesManager {
             removeLogicalReplica(t.uid, t.newPid);
         }
 
+        //TODO: this might not be working properly
         //Second, if we've violated k-constraints, choose another partition at random and replicate this user there
         if(user.getLogicalPartitionIds().size() < minNumReplicas) {
             Set<Integer> potentialReplicaLocations = new HashSet<Integer>(pMap.keySet());
@@ -490,7 +518,7 @@ public class SparmesManager {
                 boolean replicateInSourcePartition = user.shouldReplicateInSourcePartitionLogical();
                 int numFriendsToDeleteInCurrentPartition = user.getNumFriendsToDeleteInCurrentPartitionLogical();
                 Map<Integer, Integer> friendsToAddInEachPartition = user.getFriendsToAddInEachPartitionLogical();
-                LogicalUser luser = new LogicalUser(user.getId(), user.getLogicalPid(), gamma, updatedFriendCounts, pToWeight, user.getLogicalPartitionIds(), friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight);
+                LogicalUser luser = new LogicalUser(user.getId(), user.getLogicalPid(), gamma, updatedFriendCounts, pToWeight, user.getLogicalPartitionIds(), friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
                 p.addLogicalUser(luser);
             }
         }

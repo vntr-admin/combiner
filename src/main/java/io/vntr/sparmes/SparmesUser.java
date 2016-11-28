@@ -15,8 +15,9 @@ public class SparmesUser extends User {
     private Set<Integer> replicaPartitionIds;
     private Set<Integer> logicalPartitionIds;
     private SparmesManager manager;
+    private int minNumReplicas;
 
-    public SparmesUser(Integer id, Integer initialPid, float gamma, SparmesManager manager) {
+    public SparmesUser(Integer id, Integer initialPid, float gamma, SparmesManager manager, int minNumReplicas) {
         super(id);
         replicaPartitionIds = new HashSet<Integer>();
         logicalPartitionIds = new HashSet<Integer>();
@@ -25,6 +26,7 @@ public class SparmesUser extends User {
         this.masterPartitionId = initialPid;
         this.partitionId = initialPid;
         this.logicalPid = initialPid;
+        this.minNumReplicas = minNumReplicas;
     }
 
     public Integer getPartitionId() {
@@ -81,7 +83,7 @@ public class SparmesUser extends User {
 
     @Override
     public SparmesUser clone() {
-        SparmesUser user = new SparmesUser(getId(), masterPartitionId, gamma, manager);
+        SparmesUser user = new SparmesUser(getId(), masterPartitionId, gamma, manager, minNumReplicas);
         user.setMasterPartitionId(masterPartitionId);
         user.setPartitionId(partitionId);
         user.setLogicalPid(logicalPid);
@@ -120,7 +122,7 @@ public class SparmesUser extends User {
 
         int numFriendsToDeleteInCurrentPartition = strat.findReplicasInMovingPartitionToDelete(this, Collections.<Integer>emptySet()).size();
         boolean replicateInSourcePartition = strat.shouldWeAddAReplicaOfMovingUserInMovingPartition(this, -1); //TODO: hmmnh
-        return new LogicalUser(getId(), partitionId, gamma, pToFriendCount, pToWeight, replicaPartitionIds, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight);
+        return new LogicalUser(getId(), partitionId, gamma, pToFriendCount, pToWeight, replicaPartitionIds, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
     }
 
     Map<Integer, Integer> getFriendsToAddInEachPartitionLogical() {
@@ -145,7 +147,6 @@ public class SparmesUser extends User {
 
     boolean shouldReplicateInSourcePartitionLogical() {
         for (Integer friendId : getFriendIDs()) {
-            Integer friendPid = manager.getUserMasterById(friendId).getLogicalPid();
             if (logicalPid.equals(manager.getUserMasterById(friendId).getLogicalPid())) {
                 return true;
             }
