@@ -74,8 +74,7 @@ public class ProbabilityUtils
             }
         }
 
-        double corr = new PearsonsCorrelation().correlation(x, y);
-        return corr;
+        return new PearsonsCorrelation().correlation(x, y);
 	}
 
 	public static int chooseKeyFromMapSetInProportionToSetSize(Map<Integer, Set<Integer>> mapset) {

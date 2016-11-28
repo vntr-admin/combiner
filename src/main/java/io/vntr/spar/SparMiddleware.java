@@ -2,7 +2,6 @@ package io.vntr.spar;
 
 import java.util.*;
 
-import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
@@ -32,14 +31,17 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         return manager.addUser();
     }
 
+    @Override
     public void addUser(User user) {
         manager.addUser(user);
     }
 
+    @Override
     public void removeUser(Integer userId) {
         manager.removeUser(userId);
     }
 
+    @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
         SparUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparUser largerUser = manager.getUserMasterById(largerUserId);
@@ -79,6 +81,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         }
     }
 
+    @Override
     public void unfriend(Integer smallerUserId, Integer largerUserId) {
         //When an edge between smallerUserId and largerUserId disappears,
         //the algorithm removes the replica of smallerUserId in the partition holding the master of node largerUserId
@@ -103,6 +106,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         manager.unfriend(smallerUser, largerUser);
     }
 
+    @Override
     public int addPartition() {
         //We use option (2) from the paper:
         //2) let the re-distribution of the masters be the result of the node and edge arrival processes and the load-balancing condition.
@@ -114,6 +118,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         manager.addPartition(partitionId);
     }
 
+    @Override
     public void removePartition(Integer partitionId) {
         //First, determine which users will need more replicas once this partition is kaput
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);

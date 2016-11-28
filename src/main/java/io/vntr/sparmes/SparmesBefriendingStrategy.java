@@ -148,11 +148,8 @@ public class SparmesBefriendingStrategy {
         }
 
         Set<Integer> replicas = movingUser.getReplicaPartitionIds();
-        if(replicas.size() <= manager.getMinNumReplicas() && replicas.contains(targetPid)) {
-            return true;
-        }
+        return replicas.size() <= manager.getMinNumReplicas() && replicas.contains(targetPid);
 
-        return false;
     }
 
     boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(SparmesUser movingUser, SparmesUser stayingUser) {

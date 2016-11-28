@@ -66,7 +66,7 @@ public class TraceGenerator {
                 case UNFRIEND:         actions.add(handleUnfriend       (mutableFriendships, pids)); break;
                 case ADD_PARTITION:    actions.add(handleAddPartition   (mutableFriendships, pids)); break;
                 case REMOVE_PARTITION: actions.add(handleRemovePartition(mutableFriendships, pids)); break;
-                case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME));                        break;
+                case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME));                   break;
             }
         }
 

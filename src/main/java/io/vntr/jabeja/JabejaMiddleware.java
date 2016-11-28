@@ -1,6 +1,5 @@
 package io.vntr.jabeja;
 
-import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;

@@ -354,9 +354,6 @@ public class SpajaManager {
         SpajaUser u1 = getUserMasterById(uid1);
         SpajaUser u2 = getUserMasterById(uid2);
 
-        String u1Str = u1.toString();
-        String u2Str = u2.toString();
-
         Integer pid1 = u1.getMasterPartitionId();
         Integer pid2 = u2.getMasterPartitionId();
 

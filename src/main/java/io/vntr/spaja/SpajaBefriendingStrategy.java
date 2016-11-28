@@ -157,11 +157,8 @@ public class SpajaBefriendingStrategy {
             }
         }
         Set<Integer> replicas = movingUser.getReplicaPartitionIds();
-        if(replicas.size() <= manager.getMinNumReplicas() && replicas.contains(targetPid)) {
-            return true;
-        }
+        return replicas.size() <= manager.getMinNumReplicas() && replicas.contains(targetPid);
 
-        return false;
     }
 
     boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(SpajaUser movingUser, SpajaUser stayingUser) {
@@ -196,8 +193,6 @@ public class SpajaBefriendingStrategy {
         int k = manager.getMinNumReplicas();
         Integer pid1 = u1.getMasterPartitionId();
         Integer pid2 = u2.getMasterPartitionId();
-        boolean u1HasReplicaOnPid2 = u1.getReplicaPartitionIds().contains(pid2);
-        boolean u2HasReplicaOnPid1 = u2.getReplicaPartitionIds().contains(pid1);
 
         Set<Integer>  mutualFriends = new HashSet<Integer>(u1.getFriendIDs());
         mutualFriends.retainAll(u2.getFriendIDs());

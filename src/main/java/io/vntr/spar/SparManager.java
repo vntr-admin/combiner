@@ -331,12 +331,12 @@ public class SparManager {
         return builder.toString();
     }
 
-    private static final void println(OutputStream out, String str) throws IOException {
+    private static void println(OutputStream out, String str) throws IOException {
         out.write(str.getBytes());
         out.write(NEWLINE_BYTES);
     }
 
-    private static final void print(OutputStream out, String str) throws IOException {
+    private static void print(OutputStream out, String str) throws IOException {
         out.write(str.getBytes());
     }
 

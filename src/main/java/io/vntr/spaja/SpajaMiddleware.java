@@ -1,6 +1,5 @@
 package io.vntr.spaja;
 
-import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
@@ -121,11 +120,9 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     public void removePartition(Integer partitionId) {
         //First, determine which users will need more replicas once this partition is kaput
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
-        Set<Integer> _usersReplicated = new TreeSet<Integer>(usersInNeedOfNewReplicas);
 
         //Second, determine the migration strategy
         Map<Integer, Integer> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
-        Set<Integer> _usersMigrated = new TreeSet<Integer>(migrationStrategy.keySet());
 
         if(!migrationStrategy.keySet().equals(manager.getPartitionById(partitionId).getIdsOfMasters())) {
             throw new RuntimeException("Wrong!");
@@ -159,7 +156,6 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
             manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId)));
         }
 
-        Set<Integer> _replicasAxed = new TreeSet<Integer>(manager.getPartitionById(partitionId).getIdsOfReplicas());
         //TODO: the following is copied from SparMiddleware; should it be modified?
         // "Fifth, remove references to replicas formerly on this partition"
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
@@ -170,9 +166,6 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
             user.removeReplicaPartitionId(partitionId);
         }
 
-//        System.out.println("P" + partitionId + " migrated:   " + _usersMigrated);
-//        System.out.println("P" + partitionId + " replicated: " + _usersReplicated);
-//        System.out.println("P" + partitionId + " axed:       " + _replicasAxed);
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);

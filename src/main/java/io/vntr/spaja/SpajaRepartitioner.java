@@ -112,7 +112,7 @@ public class SpajaRepartitioner {
                 isValid &= (master.getMasterPartitionId().equals(replica.getMasterPartitionId()));
                 isValid &= (master.getReplicaPartitionIds().equals(replica.getReplicaPartitionIds()));
                 isValid &= (master.getPartitionId().equals(master.getMasterPartitionId()));
-                isValid &= (replica.getPartitionId().equals((Integer) replicaPid));
+                isValid &= (replica.getPartitionId().equals(replicaPid));
             }
         }
 

@@ -3,9 +3,7 @@ package io.vntr.hermes;
 import io.vntr.User;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by robertlindquist on 9/19/16.

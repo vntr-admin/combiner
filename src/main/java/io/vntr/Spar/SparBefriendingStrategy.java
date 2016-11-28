@@ -22,32 +22,12 @@ public class SparBefriendingStrategy {
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
         //  3) the opposite of (3)
 
-        Set<Integer> smallerFriends = smallerUser.getFriendIDs();
-        Set<Integer> largerFriends = largerUser.getFriendIDs();
-
         int stay      = calcNumReplicasStay(smallerUser, largerUser);
         int toLarger  = calcNumReplicasMove(smallerUser, largerUser);
         int toSmaller = calcNumReplicasMove(largerUser, smallerUser);
 
         int smallerMasters = manager.getPartitionById(smallerUser.getMasterPartitionId()).getNumMasters();
         int largerMasters  = manager.getPartitionById(largerUser.getMasterPartitionId()).getNumMasters();
-
-//        System.out.println("smallerUser:    " + smallerUser);
-//        System.out.println("largerUser:     " + largerUser);
-
-//        for(int friendId : smallerFriends) {
-//            System.out.println("Friend of smallerUser: " + manager.getUserMasterById(friendId));
-//        }
-//
-//        for(int friendId : largerFriends) {
-//            System.out.println("Friend of largerUser: " + manager.getUserMasterById(friendId));
-//        }
-
-//        System.out.println("stay:           " + stay);
-//        System.out.println("toLarger:       " + toLarger);
-//        System.out.println("toSmaller:      " + toSmaller);
-//        System.out.println("smallerMasters: " + smallerMasters);
-//        System.out.println("largerMasters:  " + largerMasters);
 
         return determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
     }

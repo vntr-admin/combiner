@@ -3,8 +3,6 @@ package io.vntr.jabeja;
 import io.vntr.User;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by robertlindquist on 9/19/16.
