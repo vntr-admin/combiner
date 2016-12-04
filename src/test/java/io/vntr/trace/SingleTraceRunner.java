@@ -64,13 +64,18 @@ public class SingleTraceRunner {
 
         if(SPAR_TYPE.equals(type)) {
             if(args.length != 4) {
-                throw new IllegalArgumentException("SPAR requires 3 arguments");
+                throw new IllegalArgumentException("SPAR requires 4 arguments");
             }
             int minNumReplicas = Integer.parseInt(args[3]);
             SparManager sparManager = initSparManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas(), minNumReplicas);
             middleware = initSparMiddleware(sparManager);
         } else if(SPARMES_TYPE.equals(type)) {
-            SparmesManager sparmesManager = initSparmesManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas());
+            if(args.length != 5) {
+                throw new IllegalArgumentException("SPARMES requires 5 arguments");
+            }
+            int minNumReplicas = Integer.parseInt(args[3]);
+            float gamma = Float.parseFloat(args[4]);
+            SparmesManager sparmesManager = initSparmesManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas(), minNumReplicas, gamma);
             middleware = initSparmesMiddleware(sparmesManager);
         } else if(REPLICA_DUMMY_TYPE.equals(type)) {
             if(args.length != 4) {
@@ -225,8 +230,8 @@ public class SingleTraceRunner {
         return new SpajaMiddleware(manager);
     }
 
-    private static SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SparmesTestUtils.initGraph(2, 1.2f, true, partitions, friendships, replicas);
+    private static SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, int minNumReplicas, float gamma) {
+        return SparmesTestUtils.initGraph(minNumReplicas, gamma, true, partitions, friendships, replicas);
     }
 
     private static SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {
