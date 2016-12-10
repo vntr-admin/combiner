@@ -19,7 +19,7 @@ public class BootstrappedTraceGenerator {
 
     public static void main(String[] args) throws Exception {
         Trace trace = generateTrace(LESKOVEC_FACEBOOK, 10001);
-        TraceUtils.writeTraceToFile("/Users/robertlindquist/Documents/bootstrapped_trace_" + System.nanoTime() + ".txt", trace);
+        TraceUtils.writeTraceToFile("/Users/robertlindquist/Documents/thesis/traces/bootstrapped_" + System.nanoTime() + ".txt", trace);
     }
 
     private static Trace generateTrace(String filename, int numActions) throws Exception {
@@ -52,12 +52,12 @@ public class BootstrappedTraceGenerator {
         List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
         for(int i=0; i<numActions; i++) {
             switch (script[i]) {
-                case ADD_USER:         actions.addAll(handleAddUser        (mutableFriendships, pids)); break;
-                case REMOVE_USER:      actions.addAll(handleRemoveUser     (mutableFriendships, pids)); break;
-                case BEFRIEND:         actions.addAll(handleBefriend       (mutableFriendships, pids)); break;
-                case UNFRIEND:         actions.addAll(handleUnfriend       (mutableFriendships, pids)); break;
-                case REMOVE_PARTITION: actions.addAll(handleRemovePartition(mutableFriendships, pids)); break;
-                case DOWNTIME:         actions.add   (new FullTraceAction(DOWNTIME));                   break;
+                case ADD_USER:         actions.addAll(addU(mutableFriendships, pids)); break;
+                case REMOVE_USER:      actions.addAll(cutU(mutableFriendships, pids)); break;
+                case BEFRIEND:         actions.addAll(addF(mutableFriendships, pids)); break;
+                case UNFRIEND:         actions.addAll(cutF(mutableFriendships, pids)); break;
+                case REMOVE_PARTITION: actions.addAll(cutP(mutableFriendships, pids)); break;
+                case DOWNTIME:         actions.add   (new FullTraceAction(DOWNTIME));  break;
             }
         }
 
@@ -77,7 +77,7 @@ public class BootstrappedTraceGenerator {
         return DOWNTIME;
     }
 
-    static List<FullTraceAction> handleAddUser(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static List<FullTraceAction> addU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
         int newUid = new TreeSet<Integer>(friendships.keySet()).last()+1;
         System.out.println("Adding u" + newUid);
@@ -96,7 +96,7 @@ public class BootstrappedTraceGenerator {
         return actions;
     }
 
-    static List<FullTraceAction> handleRemoveUser(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static List<FullTraceAction> cutU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int userToRemove = getRandomElement(friendships.keySet());
 
         for(int friendId : findKeysForUser(friendships, userToRemove)) {
@@ -108,7 +108,7 @@ public class BootstrappedTraceGenerator {
         return Arrays.asList(new FullTraceAction(REMOVE_USER, userToRemove));
     }
 
-    static List<FullTraceAction> handleBefriend(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static List<FullTraceAction> addF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int uid = chooseKeyFromMapSetInProportionToSetSize(generateBidirectionalFriendshipSet(friendships));
         List<Integer> friendIds = new LinkedList<Integer>(friendships.get(uid));
         friendIds.addAll(findKeysForUser(friendships, uid));
@@ -150,7 +150,7 @@ public class BootstrappedTraceGenerator {
         return new FullTraceAction(BEFRIEND, val1, val2);
     }
 
-    static List<FullTraceAction> handleUnfriend(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static List<FullTraceAction> cutF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         List<Integer> friendship = chooseKeyValuePairFromMapSetUniformly(friendships);
         int val1 = Math.min(friendship.get(0), friendship.get(1));
         int val2 = Math.max(friendship.get(0), friendship.get(1));
@@ -161,7 +161,7 @@ public class BootstrappedTraceGenerator {
         return Arrays.asList(new FullTraceAction(UNFRIEND, val1, val2));
     }
 
-    static List<FullTraceAction> handleRemovePartition(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static List<FullTraceAction> cutP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int partitionToRemove = getRandomElement(pids);
         System.out.println("Removing p" + partitionToRemove);
         pids.remove(partitionToRemove);
@@ -170,7 +170,7 @@ public class BootstrappedTraceGenerator {
         System.out.println("Adding p" + newPid);
         pids.add(newPid);
 
-        return Arrays.asList(new FullTraceAction(REMOVE_PARTITION, partitionToRemove), new FullTraceAction(ADD_PARTITION, newPid));
+        return Arrays.asList(new FullTraceAction(REMOVE_PARTITION, partitionToRemove));
     }
 
 }

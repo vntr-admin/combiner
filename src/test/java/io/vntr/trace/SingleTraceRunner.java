@@ -12,6 +12,9 @@ import io.vntr.hermes.HermesTestUtils;
 import io.vntr.jabeja.JabejaManager;
 import io.vntr.jabeja.JabejaMiddleware;
 import io.vntr.jabeja.JabejaTestUtils;
+import io.vntr.metis.MetisManager;
+import io.vntr.metis.MetisMiddleware;
+import io.vntr.metis.MetisTestUtils;
 import io.vntr.replicadummy.ReplicaDummyManager;
 import io.vntr.replicadummy.ReplicaDummyMiddleware;
 import io.vntr.replicadummy.ReplicaDummyTestUtils;
@@ -40,7 +43,8 @@ public class SingleTraceRunner {
     public static final String SPARMES_TYPE = "SPARMES";
     public static final String DUMMY_TYPE = "DUMMY";
     public static final String REPLICA_DUMMY_TYPE = "RDUMMY";
-    private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(SPAR_TYPE, JABEJA_TYPE, HERMES_TYPE, SPAJA_TYPE, DUMMY_TYPE, REPLICA_DUMMY_TYPE, SPARMES_TYPE));
+    public static final String METIS_TYPE = "METIS";
+    private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(SPAR_TYPE, JABEJA_TYPE, HERMES_TYPE, SPAJA_TYPE, DUMMY_TYPE, REPLICA_DUMMY_TYPE, SPARMES_TYPE, METIS_TYPE));
 
     private static final String overallFormatStr = "\t%6s | %s | %-27s | Edge Cut = %8d | Replica Count = %8d";
 
@@ -124,6 +128,9 @@ public class SingleTraceRunner {
         } else if(DUMMY_TYPE.equals(type)){
             DummyManager dummyManager = initDummyManager(trace.getFriendships(), trace.getPartitions());
             middleware = initDummyMiddleware(dummyManager);
+        } else if(METIS_TYPE.equals(type)){
+            MetisManager manager = initMetisManager(trace.getFriendships(), trace.getPartitions());
+            middleware = initMetisMiddleware(manager);
         } else {
             throw new RuntimeException();
         }
@@ -152,6 +159,7 @@ public class SingleTraceRunner {
 
             log(middleware, pw, "N/A", type, true, true);
             System.out.println("End:");
+            System.out.println(middleware.getFriendships());
         } catch(Exception e) {
             throw e;
         } finally {
@@ -159,6 +167,14 @@ public class SingleTraceRunner {
                 pw.close();
             }
         }
+    }
+
+    private static MetisManager initMetisManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
+        return MetisTestUtils.initGraph(partitions, friendships);
+    }
+
+    private static IMiddlewareAnalyzer initMetisMiddleware(MetisManager manager) {
+        return new MetisMiddleware(manager);
     }
 
     static void runAction(IMiddleware middleware, FullTraceAction action) {

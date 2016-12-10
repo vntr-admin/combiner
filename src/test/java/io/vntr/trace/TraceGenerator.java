@@ -17,9 +17,11 @@ import static io.vntr.utils.ProbabilityUtils.*;
  */
 public class TraceGenerator {
 
+    private static int user_count = 0;
+
     public static void main(String[] args) throws Exception {
         Trace trace = generateTrace(10001);
-        TraceUtils.writeTraceToFile("/Users/robertlindquist/Documents/enhanced_trace_" + System.nanoTime() + ".txt", trace);
+        TraceUtils.writeTraceToFile("/Users/robertlindquist/Documents/thesis/traces/synthetic_u" + user_count + "_" + System.nanoTime() + ".txt", trace);
     }
 
     static Trace generateTrace(int size) {
@@ -28,26 +30,35 @@ public class TraceGenerator {
         int numGroups = 6 + (int) (Math.random() * 20);
         float groupProb = 0.03f + (float) (Math.random() * 0.1);
         float friendProb = 0.03f + (float) (Math.random() * 0.1);
-        Map<Integer, Set<Integer>> mutableFriendships = getTopographyForMultigroupSocialNetwork(numUsers, numGroups, groupProb, friendProb);
+        Map<Integer, Set<Integer>> curFriendships = getTopographyForMultigroupSocialNetwork(numUsers, numGroups, groupProb, friendProb);
 
         int usersPerPartition = 50 + (int) (Math.random() * 100);
 
         Set<Integer> pids = new HashSet<Integer>();
-        for (int pid = 0; pid < mutableFriendships.size() / usersPerPartition; pid++) {
+        for (int pid = 0; pid < curFriendships.size() / usersPerPartition; pid++) {
             pids.add(pid);
         }
 
-        Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, mutableFriendships.keySet());
-        Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(2, partitions, mutableFriendships);
+        Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, curFriendships.keySet());
+        Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(2, partitions, curFriendships);
 
-        Map<Integer, Set<Integer>> friendships = copyMapSet(mutableFriendships);
+        Map<Integer, Set<Integer>> originalFriendships = copyMapSet(curFriendships);
+
+        int numUsersStart = originalFriendships.size();
+        int numPartitionsStart = pids.size();
+        int numFriendshipsStart = 0;
+        for(int uid : curFriendships.keySet()) {
+            numFriendshipsStart += curFriendships.get(uid).size();
+        }
+        numFriendshipsStart /= 2;
+        System.out.println("Start: #U: " + numUsersStart + ", #P: " + numPartitionsStart + ", #F: " + numFriendshipsStart + ", Goal U/P: " + usersPerPartition);
 
         Map<TRACE_ACTION, Double> actionsProbability = new HashMap<TRACE_ACTION, Double>();
         actionsProbability.put(ADD_USER, 0.15D);
         actionsProbability.put(REMOVE_USER, 0.05D);
-        actionsProbability.put(BEFRIEND, 0.665D);
+        actionsProbability.put(BEFRIEND, 0.715D);
         actionsProbability.put(UNFRIEND, 0.05D);
-        actionsProbability.put(ADD_PARTITION, 0.05D);
+        actionsProbability.put(ADD_PARTITION, 0D);
         actionsProbability.put(REMOVE_PARTITION, 0.01D);
         actionsProbability.put(DOWNTIME, 0.025D);
 
@@ -59,28 +70,41 @@ public class TraceGenerator {
 
         List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
         for(int i=0; i<size; i++) {
+            double loadFactor = (((double) curFriendships.size()) / pids.size()) / usersPerPartition;
             switch (script[i]) {
-                case ADD_USER:         actions.add(handleAddUser        (mutableFriendships, pids)); break;
-                case REMOVE_USER:      actions.add(handleRemoveUser     (mutableFriendships, pids)); break;
-                case BEFRIEND:         actions.add(handleBefriend       (mutableFriendships, pids)); break;
-                case UNFRIEND:         actions.add(handleUnfriend       (mutableFriendships, pids)); break;
-                case ADD_PARTITION:    actions.add(handleAddPartition   (mutableFriendships, pids)); break;
-                case REMOVE_PARTITION: actions.add(handleRemovePartition(mutableFriendships, pids)); break;
-                case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME));                   break;
+                case ADD_USER:         actions.add(addU(curFriendships, pids)); if(loadFactor > 1) { actions.add(addP(curFriendships, pids)); } break;
+                case REMOVE_USER:      actions.add(cutU(curFriendships, pids)); break;
+                case BEFRIEND:         actions.add(addF(curFriendships, pids)); break;
+                case UNFRIEND:         actions.add(cutF(curFriendships, pids)); break;
+                case ADD_PARTITION:    actions.add(addP(curFriendships, pids)); break;
+                case REMOVE_PARTITION: actions.add(cutP(curFriendships, pids)); break;
+                case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME)); break;
             }
         }
 
-        return new TraceWithReplicas(friendships, partitions, replicas, actions);
+        int numUsersEnd = curFriendships.size();
+        int numPartitionsEnd = pids.size();
+        int numFriendshipsEnd = 0;
+        for(int uid : curFriendships.keySet()) {
+            numFriendshipsEnd += curFriendships.get(uid).size();
+        }
+        numFriendshipsEnd /= 2;
+
+        System.out.println("End: #U: " + numUsersEnd + ", #P: " + numPartitionsEnd + ", #F: " + numFriendshipsEnd);
+
+        user_count = numUsersEnd;
+
+        return new TraceWithReplicas(originalFriendships, partitions, replicas, actions);
     }
 
-    static FullTraceAction handleAddUser(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction addU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int newUid = new TreeSet<Integer>(friendships.keySet()).last()+1;
         System.out.println("Adding u" + newUid);
         friendships.put(newUid, new HashSet<Integer>());
         return new FullTraceAction(ADD_USER, newUid);
     }
 
-    static FullTraceAction handleRemoveUser(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction cutU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int userToRemove = getRandomElement(friendships.keySet());
 
         for(int friendId : findKeysForUser(friendships, userToRemove)) {
@@ -92,7 +116,7 @@ public class TraceGenerator {
         return new FullTraceAction(REMOVE_USER, userToRemove);
     }
 
-    static FullTraceAction handleBefriend(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction addF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int uid = chooseKeyFromMapSetInProportionToSetSize(generateBidirectionalFriendshipSet(friendships));
         List<Integer> friendIds = new LinkedList<Integer>(friendships.get(uid));
         friendIds.addAll(findKeysForUser(friendships, uid));
@@ -134,7 +158,7 @@ public class TraceGenerator {
         return new FullTraceAction(BEFRIEND, val1, val2);
     }
 
-    static FullTraceAction handleUnfriend(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction cutF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         List<Integer> friendship = chooseKeyValuePairFromMapSetUniformly(friendships);
         int val1 = Math.min(friendship.get(0), friendship.get(1));
         int val2 = Math.max(friendship.get(0), friendship.get(1));
@@ -145,14 +169,14 @@ public class TraceGenerator {
         return new FullTraceAction(UNFRIEND, val1, val2);
     }
 
-    static FullTraceAction handleAddPartition(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction addP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int newPid = new TreeSet<Integer>(pids).last()+1;
-        System.out.println("Adding p" + newPid);
+        System.out.println("Adding p" + newPid + ".  (avg load: " + (((double) friendships.size()) / pids.size()) + ")");
         pids.add(newPid);
         return new FullTraceAction(ADD_PARTITION, newPid);
     }
 
-    static FullTraceAction handleRemovePartition(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction cutP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int partitionToRemove = getRandomElement(pids);
         System.out.println("Removing p" + partitionToRemove);
         pids.remove(partitionToRemove);
