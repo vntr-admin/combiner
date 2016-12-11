@@ -1,5 +1,7 @@
 package io.vntr.utils;
 
+import cern.jet.random.engine.DRand;
+import cern.jet.random.sampling.RandomSampler;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
 import java.util.*;
@@ -28,16 +30,13 @@ public class ProbabilityUtils
 
 	public static Set<Integer> getKDistinctValuesFromList(int k, List<Integer> list)
 	{
-		List<Integer> tempList = new LinkedList<Integer>(list);
-//		Collections.copy(tempList, list);
-		Set<Integer> returnSet = new HashSet<Integer>();
-		for(int i=0; i<k; i++)
-		{
-			int index = (int)(Math.random() * tempList.size());
-			returnSet.add(tempList.get(index));
-			tempList.remove(index);
-		}
+	    long[] indices = new long[k];
+        RandomSampler.sample(k, list.size(), k, 0, indices, 0, new DRand());
 
+		Set<Integer> returnSet = new HashSet<Integer>();
+		for(long index : indices) {
+		    returnSet.add(list.get((int) index));
+        }
 		return returnSet;
 	}
 
