@@ -15,9 +15,12 @@ public class SparmesManager {
 
     private static final Integer defaultStartingId = 1;
 
-    private SortedMap<Integer, SparmesPartition> pMap;
+    private int nextUid = 1;
+    private int nextPid = 1;
 
-    private NavigableMap<Integer, Integer> uMap = new TreeMap<Integer, Integer>();
+    private Map<Integer, SparmesPartition> pMap;
+
+    private Map<Integer, Integer> uMap = new HashMap<Integer, Integer>();
 
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
@@ -25,7 +28,7 @@ public class SparmesManager {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.probabilistic = probabilistic;
-        this.pMap = new TreeMap<Integer, SparmesPartition>();
+        this.pMap = new HashMap<Integer, SparmesPartition>();
         this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
     }
 
@@ -66,7 +69,7 @@ public class SparmesManager {
 
 
     public int addUser() {
-        int newUid = uMap.lastKey() + 1;
+        int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
@@ -84,8 +87,12 @@ public class SparmesManager {
     }
 
     void addUser(SparmesUser user, Integer masterPartitionId) {
+        int uid = user.getId();
         getPartitionById(masterPartitionId).addMaster(user);
-        uMap.put(user.getId(), masterPartitionId);
+        uMap.put(uid, masterPartitionId);
+        if(uid >= nextUid) {
+            nextUid = uid + 1;
+        }
     }
 
     public void removeUser(Integer userId) {
@@ -113,13 +120,16 @@ public class SparmesManager {
     }
 
     public Integer addPartition() {
-        Integer newId = pMap.isEmpty() ? defaultStartingId : pMap.lastKey() + 1;
+        Integer newId = nextPid;
         addPartition(newId);
         return newId;
     }
 
     void addPartition(Integer pid) {
         pMap.put(pid, new SparmesPartition(pid, gamma, this));
+        if(pid >= nextPid) {
+            nextPid = pid + 1;
+        }
     }
 
     public void removePartition(Integer id) {
