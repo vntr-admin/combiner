@@ -18,21 +18,25 @@ public class HermesManager {
 
     private static final String repartitionFormatStr = "#U: %5d | #P: %4d | #F: %7d | #Iter: %4d | Pre-Cut: %7d | Post-Cut: %7d";
 
-    private NavigableMap<Integer, HermesPartition> pMap;
-    private NavigableMap<Integer, Integer> uMap;
+    private Map<Integer, HermesPartition> pMap;
+    private Map<Integer, Integer> uMap;
+    private Map<Integer, Integer> uMapLogical;
     private float gamma;
     private int k;
     private boolean probabilistic;
     private int maxIterations;
     private float maxIterationToNumUsersRatio;
 
-    private static final int defaultStartingPid = 1;
+    private int nextPid = 1;
+    private int nextUid = 1;
+
 
     public HermesManager(float gamma, boolean probabilistic) {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
-        this.pMap = new TreeMap<Integer, HermesPartition>();
-        this.uMap = new TreeMap<Integer, Integer>();
+        this.pMap = new HashMap<Integer, HermesPartition>();
+        this.uMap = new HashMap<Integer, Integer>();
+        this.uMapLogical = new HashMap<Integer, Integer>();
         this.maxIterations = Integer.MAX_VALUE;
         maxIterationToNumUsersRatio = 1f;
     }
@@ -40,8 +44,9 @@ public class HermesManager {
     public HermesManager(float gamma, int maxIterations) {
         this.gamma = gamma;
         this.probabilistic = false;
-        this.pMap = new TreeMap<Integer, HermesPartition>();
-        this.uMap = new TreeMap<Integer, Integer>();
+        this.pMap = new HashMap<Integer, HermesPartition>();
+        this.uMap = new HashMap<Integer, Integer>();
+        this.uMapLogical = new HashMap<Integer, Integer>();
         this.maxIterations = maxIterations;
         maxIterationToNumUsersRatio = 1f;
         this.k=3;
@@ -50,8 +55,9 @@ public class HermesManager {
     public HermesManager(float gamma, float maxIterationToNumUsersRatio) {
         this.gamma = gamma;
         this.probabilistic = false;
-        this.pMap = new TreeMap<Integer, HermesPartition>();
-        this.uMap = new TreeMap<Integer, Integer>();
+        this.pMap = new HashMap<Integer, HermesPartition>();
+        this.uMap = new HashMap<Integer, Integer>();
+        this.uMapLogical = new HashMap<Integer, Integer>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k=3;
@@ -60,29 +66,35 @@ public class HermesManager {
     public HermesManager(float gamma, float maxIterationToNumUsersRatio, int k) {
         this.gamma = gamma;
         this.probabilistic = false;
-        this.pMap = new TreeMap<Integer, HermesPartition>();
-        this.uMap = new TreeMap<Integer, Integer>();
+        this.pMap = new HashMap<Integer, HermesPartition>();
+        this.uMap = new HashMap<Integer, Integer>();
+        this.uMapLogical = new HashMap<Integer, Integer>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
     }
 
     public int addUser() {
-        int newUid = uMap.lastKey() + 1;
+        int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
     public void addUser(User user) {
         Integer initialPid = getInitialPartitionId();
-        HermesUser hermesUser = new HermesUser(user.getId(), initialPid, gamma, this);
+        int uid = user.getId();
+        HermesUser hermesUser = new HermesUser(uid, initialPid, gamma, this);
         addUser(hermesUser);
+        if(uid >= nextUid) {
+            nextUid = uid + 1;
+        }
     }
 
     void addUser(HermesUser user) {
         Integer pid = user.getPhysicalPid();
         getPartitionById(pid).addUser(user);
         uMap.put(user.getId(), pid);
+        uMapLogical.put(user.getId(), pid);
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
         }
@@ -95,6 +107,7 @@ public class HermesManager {
         }
         getPartitionById(getPartitionIdForUser(userId)).removeUser(userId);
         uMap.remove(userId);
+        uMapLogical.remove(userId);
     }
 
     public void befriend(Integer smallerUserId, Integer largerUserId) {
@@ -108,13 +121,16 @@ public class HermesManager {
     }
 
     public Integer addPartition() {
-        Integer pid = pMap.isEmpty() ? defaultStartingPid : pMap.lastKey() + 1;
+        int pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
     void addPartition(Integer id) {
         pMap.put(id, new HermesPartition(id, gamma, this));
+        if(id >= nextPid) {
+            nextPid = id + 1;
+        }
     }
 
     public void removePartition(Integer pid) {
@@ -131,6 +147,10 @@ public class HermesManager {
 
     public Integer getPartitionIdForUser(Integer uid) {
         return uMap.get(uid);
+    }
+
+    public Integer getLogicalPartitionIdForUser(Integer uid) {
+        return uMapLogical.get(uid);
     }
 
     private Map<Integer, Set<Integer>> getFriendshipMap() {
@@ -165,7 +185,7 @@ public class HermesManager {
         }
         int initialCut = getEdgeCut();
 
-        logger.warn(String.format(preRepartitionFormatStr, numUsers, numPartitions, numFriendships, initialCut));
+//        logger.warn(String.format(preRepartitionFormatStr, numUsers, numPartitions, numFriendships, initialCut));
 
         LinkedList<Integer> lastFive = new LinkedList<Integer>();
 
@@ -177,12 +197,12 @@ public class HermesManager {
             changed |= performStage(false, k, probabilistic);
             stoppingCondition = !changed;
             int edgeCut = getEdgeCut();
-            logger.warn(String.format(iterationFormatStr, iteration, edgeCut));
+//            logger.warn(String.format(iterationFormatStr, iteration, edgeCut));
             lastFive.add(edgeCut);
             if(lastFive.size() > 5) {
                 lastFive.pop();
                 if(lastFive.get(0) == edgeCut && lastFive.get(1) == edgeCut && lastFive.get(2) == edgeCut && lastFive.get(3) == edgeCut) {
-                    logger.warn("Five alive!");
+//                    logger.warn("Five alive!");
                     break;
                 }
             }
@@ -202,10 +222,11 @@ public class HermesManager {
         }
 
         uMap.putAll(usersWhoMoved);
+        uMapLogical.putAll(usersWhoMoved);
 
         int finalCut = getEdgeCut();
 //        logger.warn(String.format(repartitionFormatStr, numUsers, numPartitions, numFriendships, iteration, initialCut, finalCut));
-        logger.warn(String.format(postRepartitionFormatStr, numUsers, numPartitions, numFriendships, iteration, finalCut));
+//        logger.warn(String.format(postRepartitionFormatStr, numUsers, numPartitions, numFriendships, iteration, finalCut));
     }
 
     boolean performStage(boolean firstStage, int k, boolean probabilistic) {
@@ -295,7 +316,7 @@ public class HermesManager {
     }
 
     public Map<Integer,Set<Integer>> getPartitionToUserMap() {
-        Map<Integer, Set<Integer>> map = new TreeMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
         for(Integer pid : getAllPartitionIds()) {
             map.put(pid, new TreeSet<Integer>(getPartitionById(pid).getPhysicalUserIds()));
         }
@@ -313,6 +334,7 @@ public class HermesManager {
     public void moveUser(Integer uid, Integer pid) {
         HermesUser user = getUser(uid);
         uMap.put(uid, pid);
+        uMapLogical.put(uid, pid);
         getPartitionById(user.getPhysicalPid()).removeUser(uid);
         getPartitionById(pid).addUser(user);
         user.setPhysicalPid(pid);
@@ -320,7 +342,7 @@ public class HermesManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new TreeMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
         for(Integer uid : uMap.keySet()) {
             friendships.put(uid, new TreeSet<Integer>(getUser(uid).getFriendIDs()));
         }
@@ -338,5 +360,9 @@ public class HermesManager {
     @Override
     public String toString() {
         return "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
+    }
+
+    void updateLogicalPidCache(Integer id, Integer logicalPid) {
+        uMapLogical.put(id, logicalPid);
     }
 }

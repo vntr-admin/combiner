@@ -45,6 +45,7 @@ public class HermesUser extends User {
 
     public void setLogicalPid(Integer logicalPid) {
         this.logicalPid = logicalPid;
+        manager.updateLogicalPidCache(getId(), logicalPid);
     }
 
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
@@ -70,7 +71,7 @@ public class HermesUser extends User {
             pToFriendCount.put(pid, 0);
         }
         for(Integer friendId : getFriendIDs()) {
-            Integer pid = manager.getUser(friendId).getLogicalPid();
+            Integer pid = manager.getLogicalPartitionIdForUser(friendId);
             pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
         }
         return pToFriendCount;
