@@ -17,13 +17,16 @@ public class SpajaManager {
 
     private static final Integer defaultStartingId = 1;
 
-    private SortedMap<Integer, SpajaPartition> partitionIdToPartitionMap;
+    private int nextPid = 1;
+    private int nextUid = 1;
 
-    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<Integer, Integer>();
+    private Map<Integer, SpajaPartition> partitionIdToPartitionMap;
+
+    private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<Integer, Integer>();
 
     public SpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize) {
         this.minNumReplicas = minNumReplicas;
-        this.partitionIdToPartitionMap = new TreeMap<Integer, SpajaPartition>();
+        this.partitionIdToPartitionMap = new HashMap<Integer, SpajaPartition>();
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
@@ -55,20 +58,8 @@ public class SpajaManager {
     }
 
     public SpajaUser getUserMasterById(Integer id) {
-        Integer partitionId = userIdToMasterPartitionIdMap.get(id);
-        if (partitionId != null) {
-            SpajaPartition partition = getPartitionById(partitionId);
-            if (partition != null) {
-                return partition.getMasterById(id);
-            }
-            else {
-                System.out.println("partition is null");
-            }
-        }
-        else {
-            System.out.println("partition id is null");
-        }
-        return null;
+        Integer pid = userIdToMasterPartitionIdMap.get(id);
+        return getPartitionById(pid).getMasterById(id);
     }
 
     public Set<SpajaUser> getUserMastersById(Collection<Integer> ids) {
@@ -103,6 +94,11 @@ public class SpajaManager {
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
             addReplica(spajaUser, id);
         }
+
+        int uid = user.getId();
+        if(uid > nextUid) {
+            nextUid = uid + 1;
+        }
     }
 
     void addUser(SpajaUser user, Integer masterPartitionId) {
@@ -135,13 +131,16 @@ public class SpajaManager {
     }
 
     public Integer addPartition() {
-        Integer newId = partitionIdToPartitionMap.isEmpty() ? defaultStartingId : partitionIdToPartitionMap.lastKey() + 1;
+        Integer newId = nextPid;
         addPartition(newId);
         return newId;
     }
 
     void addPartition(Integer pid) {
         partitionIdToPartitionMap.put(pid, new SpajaPartition(pid));
+        if(pid > nextPid) {
+            nextPid = pid + 1;
+        }
     }
 
     public void removePartition(Integer id) {
@@ -388,18 +387,14 @@ public class SpajaManager {
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
-            try {
-                friendships.put(uid, getUserMasterById(uid).getFriendIDs());
-            } catch(NullPointerException npe) {
-                throw npe;
-            }
+            friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
         return friendships;
     }
 
 
     public int addUser() {
-        int newUid = userIdToMasterPartitionIdMap.lastKey() + 1;
+        int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }

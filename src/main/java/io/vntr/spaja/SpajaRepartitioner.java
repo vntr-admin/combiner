@@ -37,14 +37,14 @@ public class SpajaRepartitioner {
                     partner = user.findPartner(getRandomSamplingOfUsers(randomSampingSize), t, spajaBefriendingStrategy);
                 }
                 if(partner != null) {
-                    Map<Integer, String> u1Friends = new HashMap<Integer, String>();
-                    for(int friendId : user.getFriendIDs()) {
-                        u1Friends.put(friendId, manager.getUserMasterById(friendId).toString());
-                    }
-                    Map<Integer, String> u2Friends = new HashMap<Integer, String>();
-                    for(int friendId : partner.getFriendIDs()) {
-                        u2Friends.put(friendId, manager.getUserMasterById(friendId).toString());
-                    }
+//                    Map<Integer, String> u1Friends = new HashMap<Integer, String>();
+//                    for(int friendId : user.getFriendIDs()) {
+//                        u1Friends.put(friendId, manager.getUserMasterById(friendId).toString());
+//                    }
+//                    Map<Integer, String> u2Friends = new HashMap<Integer, String>();
+//                    for(int friendId : partner.getFriendIDs()) {
+//                        u2Friends.put(friendId, manager.getUserMasterById(friendId).toString());
+//                    }
                     manager.swap(user.getId(), partner.getId(), spajaBefriendingStrategy);
                 }
             }

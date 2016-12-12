@@ -118,42 +118,44 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void removePartition(Integer partitionId) {
-        //First, determine which users will need more replicas once this partition is kaput
-        Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
+        //First, determine which users will be impacted by this action
+        Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
         Map<Integer, Integer> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
 
-        if(!migrationStrategy.keySet().equals(manager.getPartitionById(partitionId).getIdsOfMasters())) {
-            throw new RuntimeException("Wrong!");
-        }
-
-        for(int mover : migrationStrategy.keySet()) {
-            if(!manager.getUserMasterById(mover).getReplicaPartitionIds().contains(migrationStrategy.get(mover))) {
-                throw new RuntimeException("Wrong again!");
-            }
-        }
+//        if(!migrationStrategy.keySet().equals(manager.getPartitionById(partitionId).getIdsOfMasters())) {
+//            throw new RuntimeException("Wrong!");
+//        }
+//
+//        for(int mover : migrationStrategy.keySet()) {
+//            if(!manager.getUserMasterById(mover).getReplicaPartitionIds().contains(migrationStrategy.get(mover))) {
+//                throw new RuntimeException("Wrong again!");
+//            }
+//        }
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
             SpajaUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
-            if(newPartitionId.intValue() == partitionId.intValue()) {
-                throw new RuntimeException("Nope.");
-            }
+//            if(newPartitionId.intValue() == partitionId.intValue()) {
+//                throw new RuntimeException("Nope.");
+//            }
 
             //If this is a simple water-filling one, there might not be a replica in the partition
-            if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
-                throw new RuntimeException("This shouldn't happen.");
-            }
+//            if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
+//                throw new RuntimeException("This shouldn't happen.");
+//            }
             manager.promoteReplicaToMaster(userId, newPartitionId);
         }
 
-        //Fourth, add replicas as appropriate
-        for (Integer userId : usersInNeedOfNewReplicas) {
-            SpajaUser user = manager.getUserMasterById(userId);
+        Set<Integer> usersToReplicate = getUsersToReplicate(affectedUsers, partitionId);
 
-            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId)));
+        //Fourth, add replicas as appropriate
+        for (Integer userId : usersToReplicate) {
+            SpajaUser user = manager.getUserMasterById(userId);
+            Integer newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
+            manager.addReplica(user, newPid);
         }
 
         //TODO: the following is copied from SparMiddleware; should it be modified?
@@ -171,21 +173,37 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         manager.removePartition(partitionId);
     }
 
-    Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
+    Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
+        Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
+        int minReplicas = manager.getMinNumReplicas();
+        Set<Integer> usersToReplicate = new HashSet<Integer>();
+        for(Integer uid : uids) {
+            if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
+                usersToReplicate.add(uid);
+            }
+        }
+        return usersToReplicate;
+    }
+
+    Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(Set<Integer> uids, Integer pid) {
+        Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
+        for(Integer uid : uids) {
+            int count = 0;
+            SpajaUser user = manager.getUserMasterById(uid);
+            count += user.getMasterPartitionId().equals(pid) ? 0 : 1;
+            Set<Integer> replicas = user.getReplicaPartitionIds();
+            int numReplicas = replicas.size();
+            count += replicas.contains(pid) ? numReplicas - 1 : numReplicas;
+            counts.put(uid, count);
+        }
+        return counts;
+    }
+
+    Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
         SpajaPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
-
-        Set<Integer> usersInNeedOfNewReplicas = new HashSet<Integer>();
-        //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : possibilities) {
-            SpajaUser user = manager.getUserMasterById(userId);
-            if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        return usersInNeedOfNewReplicas;
+        return possibilities;
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user, Collection<Integer> pidsToExclude) {
@@ -196,7 +214,6 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
-
 
     @Override
     public Integer getNumberOfPartitions() {
