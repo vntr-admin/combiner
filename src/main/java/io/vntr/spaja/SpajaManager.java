@@ -96,7 +96,7 @@ public class SpajaManager {
         }
 
         int uid = user.getId();
-        if(uid > nextUid) {
+        if(uid >= nextUid) {
             nextUid = uid + 1;
         }
     }
@@ -138,7 +138,7 @@ public class SpajaManager {
 
     void addPartition(Integer pid) {
         partitionIdToPartitionMap.put(pid, new SpajaPartition(pid));
-        if(pid > nextPid) {
+        if(pid >= nextPid) {
             nextPid = pid + 1;
         }
     }
