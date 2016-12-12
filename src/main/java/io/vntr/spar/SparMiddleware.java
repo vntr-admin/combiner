@@ -120,8 +120,8 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void removePartition(Integer partitionId) {
-        //First, determine which users will need more replicas once this partition is kaput
-        Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
+        //First, determine which users will be impacted by this action
+        Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
         Map<Integer, Integer> migrationStrategy = sparMigrationStrategy.getUserMigrationStrategy(partitionId);
@@ -134,13 +134,14 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
                 manager.addReplica(user, newPartitionId);
-                usersInNeedOfNewReplicas.remove(userId);
             }
             manager.promoteReplicaToMaster(userId, migrationStrategy.get(userId));
         }
 
+        Set<Integer> usersToReplicate = getUsersToReplicate(affectedUsers, partitionId);
+
         //Fourth, add replicas as appropriate
-        for (Integer userId : usersInNeedOfNewReplicas) {
+        for (Integer userId : usersToReplicate) {
             SparUser user = manager.getUserMasterById(userId);
             int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
             manager.addReplica(user, newPid);
@@ -181,6 +182,39 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         }
 
         return usersInNeedOfNewReplicas;
+    }
+
+    Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
+        Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
+        int minReplicas = manager.getMinNumReplicas();
+        Set<Integer> usersToReplicate = new HashSet<Integer>();
+        for(Integer uid : uids) {
+            if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
+                usersToReplicate.add(uid);
+            }
+        }
+        return usersToReplicate;
+    }
+
+    Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(Set<Integer> uids, Integer pid) {
+        Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
+        for(Integer uid : uids) {
+            int count = 0;
+            SparUser user = manager.getUserMasterById(uid);
+            count += user.getMasterPartitionId().equals(pid) ? 0 : 1;
+            Set<Integer> replicas = user.getReplicaPartitionIds();
+            int numReplicas = replicas.size();
+            count += replicas.contains(pid) ? numReplicas - 1 : numReplicas;
+            counts.put(uid, count);
+        }
+        return counts;
+    }
+
+    Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
+        SparPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
+        possibilities.addAll(partition.getIdsOfReplicas());
+        return possibilities;
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparUser user, Collection<Integer> pidsToExclude) {
