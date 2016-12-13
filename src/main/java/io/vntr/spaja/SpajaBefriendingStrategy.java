@@ -94,9 +94,12 @@ public class SpajaBefriendingStrategy {
     Set<Integer> findReplicasToAddToTargetPartition(SpajaUser movingUser, Integer targetPartitionId) {
         Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>();
         for (Integer friendId : movingUser.getFriendIDs()) {
-            SpajaUser friend = manager.getUserMasterById(friendId);
-            if (!targetPartitionId.equals(friend.getMasterPartitionId()) && !friend.getReplicaPartitionIds().contains(targetPartitionId)) {
-                replicasToAddInStayingPartition.add(friendId);
+            int friendPid = manager.getMasterPartitionIdForUser(friendId);
+            if(targetPartitionId != friendPid) {
+                SpajaUser friend = manager.getUserMasterById(friendId);
+                if(!friend.getReplicaPartitionIds().contains(targetPartitionId)) {
+                    replicasToAddInStayingPartition.add(friendId);
+                }
             }
         }
 
@@ -126,18 +129,20 @@ public class SpajaBefriendingStrategy {
     }
 
     Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SpajaUser user) {
+        int uid = user.getId();
+        int pid = user.getMasterPartitionId();
         Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<Integer>();
-        outer:
-        for (Integer friendId : user.getFriendIDs()) {
-            SpajaUser friend = manager.getUserMasterById(friendId);
-            if (!friend.getMasterPartitionId().equals(user.getMasterPartitionId())) {
+outer:  for (Integer friendId : user.getFriendIDs()) {
+            int friendPid = manager.getMasterPartitionIdForUser(friendId);
+            if (friendPid != pid) {
+                SpajaUser friend = manager.getUserMasterById(friendId);
                 for (Integer friendOfFriendId : friend.getFriendIDs()) {
-                    if (friendOfFriendId.equals(user.getId())) {
+                    if (friendOfFriendId == uid) {
                         continue;
                     }
 
-                    SpajaUser friendOfFriend = manager.getUserMasterById(friendOfFriendId);
-                    if (friendOfFriend.getMasterPartitionId().equals(user.getMasterPartitionId())) {
+                    Integer friendOfFriendPid = manager.getMasterPartitionIdForUser(friendOfFriendId);
+                    if (friendOfFriendPid == pid) {
                         continue outer;
                     }
                 }

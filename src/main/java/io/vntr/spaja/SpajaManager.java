@@ -57,6 +57,10 @@ public class SpajaManager {
         return partitionIdToPartitionMap.get(id);
     }
 
+    public Integer getMasterPartitionIdForUser(Integer uid) {
+        return userIdToMasterPartitionIdMap.get(uid);
+    }
+
     public SpajaUser getUserMasterById(Integer id) {
         Integer pid = userIdToMasterPartitionIdMap.get(id);
         return getPartitionById(pid).getMasterById(id);
