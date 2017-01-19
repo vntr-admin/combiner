@@ -1,6 +1,7 @@
 package io.vntr.utils;
 
 import cern.jet.random.engine.DRand;
+import cern.jet.random.engine.RandomEngine;
 import cern.jet.random.sampling.RandomSampler;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
@@ -8,6 +9,7 @@ import java.util.*;
 
 public class ProbabilityUtils
 {
+    private static RandomEngine randomEngine = new DRand(((int) System.nanoTime()) >>> 2);
 	public static Set<Integer> getKDistinctValuesBetweenMandNInclusive(int k, int m, int n)
 	{
 		List<Integer> tempList = new LinkedList<Integer>();
@@ -31,7 +33,7 @@ public class ProbabilityUtils
 	public static Set<Integer> getKDistinctValuesFromList(int k, List<Integer> list)
 	{
 	    long[] indices = new long[k];
-        RandomSampler.sample(k, list.size(), k, 0, indices, 0, new DRand());
+        RandomSampler.sample(k, list.size(), k, 0, indices, 0, randomEngine);
 
 		Set<Integer> returnSet = new HashSet<Integer>();
 		for(long index : indices) {
@@ -57,6 +59,7 @@ public class ProbabilityUtils
 	public static double calculateAssortivityCoefficient(Map<Integer, Set<Integer>> friendships) {
 		//We calculate "the Pearson correlation coefficient of the degrees at either ends of an edge"
         //Newman, M. E. (2002). Assortative mixing in networks. Physical review letters, 89(20), 208701.
+        //This is also called "Degree-Centrality Assortativity"
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         int edgeCount = 0;
         for(Set<Integer> friends : friendships.values()) {

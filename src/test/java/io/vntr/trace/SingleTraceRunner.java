@@ -49,6 +49,7 @@ public class SingleTraceRunner {
     private static final String overallFormatStr = "\t%6s | %s | %-27s | Edge Cut = %8d | Replica Count = %8d";
 
     public static void main(String[] args) throws Exception {
+//        Thread.sleep(10000);
         if(args.length < 3) {
             throw new IllegalArgumentException("Must have at least 3 arguments!");
         }
@@ -151,11 +152,17 @@ public class SingleTraceRunner {
             System.out.println("Start:");
             log(middleware, pw, "N/A", type, true, true);
 
+            long startTime = System.nanoTime();
             for (int i = 0; i < trace.getActions().size(); i++) {
                 FullTraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next.toString(), type, true, (i % 50) == 0);
+                log(middleware, pw, next.toString(), type, true, true);//(i % 50) == 0);
                 runAction(middleware, next);
             }
+            long timeElapsed = System.nanoTime() - startTime;
+            long seconds = timeElapsed / 1000000000;
+            long millis  = (timeElapsed % 1000000000) / 1000000;
+
+            System.out.println("Time elapsed: " + seconds + "." + millis + " seconds");
 
             log(middleware, pw, "N/A", type, true, true);
             System.out.println("End:");
