@@ -155,7 +155,7 @@ public class SingleTraceRunner {
             long startTime = System.nanoTime();
             for (int i = 0; i < trace.getActions().size(); i++) {
                 FullTraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next.toString(), type, true, true);//(i % 50) == 0);
+                log(middleware, pw, next.toString(), type, true, (i % 50) == 0);
                 runAction(middleware, next);
             }
             long timeElapsed = System.nanoTime() - startTime;
@@ -165,8 +165,8 @@ public class SingleTraceRunner {
             System.out.println("Time elapsed: " + seconds + "." + millis + " seconds");
 
             log(middleware, pw, "N/A", type, true, true);
-            System.out.println("End:");
-            System.out.println(middleware.getFriendships());
+//            System.out.println("End:");
+//            System.out.println(middleware.getFriendships());
         } catch(Exception e) {
             throw e;
         } finally {

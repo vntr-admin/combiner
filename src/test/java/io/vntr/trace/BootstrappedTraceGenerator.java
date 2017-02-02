@@ -14,11 +14,19 @@ import static io.vntr.utils.ProbabilityUtils.*;
  */
 public class BootstrappedTraceGenerator {
     private static final String LESKOVEC_FACEBOOK_FILENAME = "/Users/robertlindquist/Documents/thesis/data/leskovec_facebook/leskovec-facebook.txt";
+    private static final String ZACHARY_KARATE_FILENAME    = "/Users/robertlindquist/Documents/thesis/data/zachary_karate/karate.txt";
+    private static final String SYNTHETIC_2K_FILENAME      = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u2000_f22723_g18_gp_0_19_fp_0_017_asrt_-0_00001470_20170119181335.txt";
+    private static final String SYNTHETIC_2K_FILENAMEx2    = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u2000_f22155_g18_gp_0_19_fp_0_017_asrt_-0_00001319_20170119193734.txt";
+    private static final String SYNTHETIC_3K_FILENAME      = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u3000_f51487_g20_gp_0_15_fp_0_025_asrt_-0_00000039_20170119181019.txt";
+    private static final String SYNTHETIC_3K_FILENAMEx2    = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u3000_f49864_g20_gp_0_15_fp_0_025_asrt_0_00000083_20170119194131.txt";
+
+
     private static final String OUTPUT_DIR = "/Users/robertlindquist/Documents/thesis/traces/";
 
     private static final int NUM_ACTIONS = 10001;
     private static final int USERS_PER_PARTITION = 150;
     private static final int MIN_NUM_REPLICAS = 2;
+    private static final double PROB_RANDOM_FRIENDSHIP = 0.2;
 
     private static int maxUid = 0;
     private static int maxPid = 0;
@@ -34,18 +42,24 @@ public class BootstrappedTraceGenerator {
         actionsProbability.put(DOWNTIME, 0.005D);
     }
 
+    private static final String INPUT_FILE = SYNTHETIC_2K_FILENAMEx2;
+    private static final String OUTPUT_FILENAME_STUB = OUTPUT_DIR + "synth_2k_";
 
     public static void main(String[] args) throws Exception {
-        Trace trace = generateTrace(LESKOVEC_FACEBOOK_FILENAME, NUM_ACTIONS);
-        TraceUtils.writeTraceToFile(OUTPUT_DIR + "bootstrapped_" + System.nanoTime() + ".txt", trace);
+        Trace trace = generateTrace(INPUT_FILE, NUM_ACTIONS);
+        TraceUtils.writeTraceToFile(OUTPUT_FILENAME_STUB + "bootstrapped_" + System.nanoTime() + ".txt", trace);
     }
 
     private static Trace generateTrace(String filename, int numActions) throws Exception {
         Map<Integer, Set<Integer>> mutableFriendships = TestUtils.extractFriendshipsFromFile(filename);
         Map<Integer, Set<Integer>> friendships = copyMapSet(mutableFriendships);
 
+        int numPids = 1 + (mutableFriendships.size() / USERS_PER_PARTITION);
+        if(numPids < 3 + MIN_NUM_REPLICAS) {
+            numPids = 3 + MIN_NUM_REPLICAS;
+        }
         Set<Integer> pids = new HashSet<Integer>();
-        for (int pid = 0; pid < mutableFriendships.size() / USERS_PER_PARTITION; pid++) {
+        for (int pid = 0; pid < numPids; pid++) {
             pids.add(pid);
         }
 
@@ -61,6 +75,9 @@ public class BootstrappedTraceGenerator {
         maxPid = pids.size();
         maxUid = mutableFriendships.size();
 
+        System.out.print("Starting statistics: ");
+        printStatistics(pids.size(), mutableFriendships);
+
         List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
         for(int i=0; i<numActions; i++) {
             switch (script[i]) {
@@ -72,13 +89,20 @@ public class BootstrappedTraceGenerator {
                 case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME));  break;
             }
 
-            printStatistics(pids.size(), mutableFriendships);
+            if(i != 0 && i%100 == 0) {
+                System.out.printf("Stats for i=%7d: ", i);
+                printStatistics(pids.size(), mutableFriendships);
+            }
 
             double usersPerPartition = ((double) mutableFriendships.size()) / pids.size();
             if(usersPerPartition > USERS_PER_PARTITION) {
                 actions.add(addP(mutableFriendships, pids));
             }
         }
+
+        System.out.print("Ending statistics:   ");
+        printStatistics(pids.size(), mutableFriendships);
+
 
         return new TraceWithReplicas(friendships, partitions, replicas, actions);
     }
@@ -120,7 +144,7 @@ public class BootstrappedTraceGenerator {
 
     static FullTraceAction addU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int newUid = ++maxUid;
-        System.out.println("Adding u" + newUid);
+//        System.out.println("Adding u" + newUid);
         friendships.put(newUid, new HashSet<Integer>());
 
         return new FullTraceAction(ADD_USER, newUid);
@@ -133,7 +157,7 @@ public class BootstrappedTraceGenerator {
             friendships.get(friendId).remove(userToRemove);
         }
 
-        System.out.println("Removing u" + userToRemove);
+//        System.out.println("Removing u" + userToRemove);
         friendships.remove(userToRemove);
         return new FullTraceAction(REMOVE_USER, userToRemove);
     }
@@ -144,7 +168,7 @@ public class BootstrappedTraceGenerator {
         List<Integer> friendIds = new LinkedList<Integer>(bidirectionalFriendships.get(uid));
 
         //Grab a new friend either uniformly from friends of friends, or at random from everyone this user hasn't befriended
-        if(Math.random() > 0.2) {
+        if(Math.random() > PROB_RANDOM_FRIENDSHIP) {
             List<Integer> friendsOfFriends = new LinkedList<Integer>();
             for(int friendId : friendIds) {
                 //We want all friends of this friend, except people who are already friends with uid
@@ -180,7 +204,7 @@ public class BootstrappedTraceGenerator {
     private static FullTraceAction innerBefriend(int oneUid, int theOtherUid, Map<Integer, Set<Integer>> friendships) {
         int val1 = Math.min(oneUid, theOtherUid);
         int val2 = Math.max(oneUid, theOtherUid);
-        System.out.println("Befriending " + val1 + " and " + val2);
+//        System.out.println("Befriending " + val1 + " and " + val2);
         friendships.get(val1).add(val2);
         return new FullTraceAction(BEFRIEND, val1, val2);
     }
@@ -191,21 +215,21 @@ public class BootstrappedTraceGenerator {
         int val2 = Math.max(friendship.get(0), friendship.get(1));
         friendships.get(val1).remove(val2);
 
-        System.out.println("Unfriending " + val1 + " and " + val2);
+//        System.out.println("Unfriending " + val1 + " and " + val2);
 
         return new FullTraceAction(UNFRIEND, val1, val2);
     }
 
     static FullTraceAction addP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int newPid = ++maxPid;
-        System.out.println("Adding p" + newPid);
+//        System.out.println("Adding p" + newPid);
         pids.add(newPid);
         return new FullTraceAction(ADD_PARTITION, newPid);
     }
 
     static FullTraceAction cutP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int partitionToRemove = getRandomElement(pids);
-        System.out.println("Removing p" + partitionToRemove);
+//        System.out.println("Removing p" + partitionToRemove);
         pids.remove(partitionToRemove);
 
         return new FullTraceAction(REMOVE_PARTITION, partitionToRemove);
