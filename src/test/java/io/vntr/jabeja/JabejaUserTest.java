@@ -52,7 +52,7 @@ public class JabejaUserTest {
     public void testGetNeighborsOnPartition()
     {
         float alpha = 1.1f;
-        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 2f, 0.2f, 9);
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
@@ -209,7 +209,7 @@ public class JabejaUserTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        JabejaManager manager = initGraph(alpha, 2f, .2f, 9, partitions, friendships);
+        JabejaManager manager = initGraph(alpha, 2f, .2f, 2f, 0.2f, 9, partitions, friendships);
 
         //Scenarios:
         //    2: ensure that negative gain is impossible with T=1, and possible with T > 1
@@ -254,7 +254,7 @@ public class JabejaUserTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        JabejaManager manager = initGraph(alpha, 2f, .2f, 9, partitions, friendships);
+        JabejaManager manager = initGraph(alpha, 2f, .2f, 2f, 0.2f, 9, partitions, friendships);
 
         //Scenario 2: ensure that non-positive gain is impossible with T=1, and possible with T > 1
         Collection<JabejaUser> col = getUsers(manager, 6, 7, 8, 9);
@@ -268,11 +268,11 @@ public class JabejaUserTest {
         //SICS Technical Report T2013:03
         //ISSN 1100-3154
 
-        JabejaManager fig2aAlpha1     = initGraph(1f,     2f, .2f, 9, fig2aPartitions, fig2aFriendships);
-        JabejaManager fig2aAlpha1_001 = initGraph(1.001f, 2f, .2f, 9, fig2aPartitions, fig2aFriendships);
+        JabejaManager fig2aAlpha1     = initGraph(1f,     2f, .2f, 2f, 0.2f, 9, fig2aPartitions, fig2aFriendships);
+        JabejaManager fig2aAlpha1_001 = initGraph(1.001f, 2f, .2f, 2f, 0.2f, 9, fig2aPartitions, fig2aFriendships);
 
-        JabejaManager fig2bAlpha1     = initGraph(1f,     2f, .2f, 9, fig2bPartitions, fig2bFriendships);
-        JabejaManager fig2bAlpha1_001 = initGraph(1.001f, 2f, .2f, 9, fig2bPartitions, fig2bFriendships);
+        JabejaManager fig2bAlpha1     = initGraph(1f,     2f, .2f, 2f, 0.2f, 9, fig2bPartitions, fig2bFriendships);
+        JabejaManager fig2bAlpha1_001 = initGraph(1.001f, 2f, .2f, 2f, 0.2f, 9, fig2bPartitions, fig2bFriendships);
 
         assertEquals(fig2aAlpha1.getUser    (7), fig2aAlpha1.getUser    (2).findPartner(getUsers(fig2aAlpha1,     7), 1f));
         assertEquals(fig2aAlpha1.getUser    (2), fig2aAlpha1.getUser    (7).findPartner(getUsers(fig2aAlpha1,     2), 1f));

@@ -90,14 +90,16 @@ public class SingleTraceRunner {
             ReplicaDummyManager sparManager = initReplicaDummyManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas(), minNumReplicas);
             middleware = initReplicaDummyMiddleware(sparManager);
         } else if(JABEJA_TYPE.equals(type)) {
-            if(args.length != 7) {
-                throw new IllegalArgumentException("JABEJA requires 7 arguments");
+            if(args.length != 9) {
+                throw new IllegalArgumentException("JABEJA requires 9 arguments");
             }
             float alpha = Float.parseFloat(args[3]);
             float initialT = Float.parseFloat(args[4]);
             float deltaT = Float.parseFloat(args[5]);
-            int k = Integer.parseInt(args[6]);
-            JabejaManager jabejaManager = initJabejaManager(alpha, initialT, deltaT, k, trace.getFriendships(), trace.getPartitions());
+            float befriendInitialT = Float.parseFloat(args[6]);
+            float befriendDeltaT = Float.parseFloat(args[7]);
+            int k = Integer.parseInt(args[8]);
+            JabejaManager jabejaManager = initJabejaManager(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, trace.getFriendships(), trace.getPartitions());
             middleware = initJabejaMiddleware(jabejaManager);
         } else if(HERMES_TYPE.equals(type)) {
             HermesManager hermesManager;
@@ -237,8 +239,8 @@ public class SingleTraceRunner {
         return new HermesMiddleware(manager, manager.getGamma());
     }
 
-    private static JabejaManager initJabejaManager(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return JabejaTestUtils.initGraph(alpha, initialT, deltaT, k, partitions, friendships);
+    private static JabejaManager initJabejaManager(float alpha, float initialT, float deltaT, float befriendInitialT, float befriendDeltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
+        return JabejaTestUtils.initGraph(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, partitions, friendships);
     }
 
     private static JabejaMiddleware initJabejaMiddleware(JabejaManager manager) {

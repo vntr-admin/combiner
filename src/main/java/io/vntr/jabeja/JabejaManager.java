@@ -15,15 +15,19 @@ public class JabejaManager {
     private float alpha;
     private float initialT;
     private float deltaT;
+    private float befriendInitialT;
+    private float befriendDeltaT;
 
     private NavigableMap<Integer, JabejaUser> uMap;
     private NavigableMap<Integer, Set<Integer>> partitions;
 
     private static final Integer defaultInitialPid = 1;
 
-    public JabejaManager(float alpha, float initialT, float deltaT, int k) {
+    public JabejaManager(float alpha, float initialT, float deltaT, float befriendInitialT, float befriendDeltaT, int k) {
         this.alpha = alpha;
         this.initialT = initialT;
+        this.befriendDeltaT = befriendDeltaT;
+        this.befriendInitialT = befriendInitialT;
         this.deltaT = deltaT;
         this.k = k;
         uMap = new TreeMap<Integer, JabejaUser>();
@@ -109,8 +113,10 @@ public class JabejaManager {
         getUser(id2).unfriend(id1);
     }
 
-    public void repartition() {
-        for(float t = initialT; t >= 1; t -= deltaT) {
+    public void repartition(boolean isDowntime) {
+        float effectiveDeltaT = isDowntime ? deltaT : befriendDeltaT;
+        float effectiveInitialT = isDowntime ? initialT : befriendInitialT;
+        for(float t = effectiveInitialT; t >= 1; t -= effectiveDeltaT) {
             List<Integer> randomUserList = new LinkedList<Integer>(uMap.keySet());
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {

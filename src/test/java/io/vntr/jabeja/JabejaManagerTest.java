@@ -21,7 +21,7 @@ public class JabejaManagerTest {
         int numUsers = 20;
         int numRuns = 100000;
         float alpha = 1.1f;
-        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
+        JabejaManager manager = new JabejaManager(alpha, 2f, 0.2f, 2f, .2f, 9);
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
@@ -59,7 +59,7 @@ public class JabejaManagerTest {
     public void testRepartition() {
         int numUsers = 1000;
         float alpha = 1.1f;
-        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 2f, 0.2f, 9);
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
@@ -78,7 +78,8 @@ public class JabejaManagerTest {
 
         System.out.println("---1---");
         System.out.println("Edge cut before: " + manager.getEdgeCut());
-        manager.repartition();
+        manager.repartition(true);
+        manager.repartition(false);
         System.out.println("Edge cut after:  " + manager.getEdgeCut());
     }
 
@@ -87,7 +88,7 @@ public class JabejaManagerTest {
         int numUsers = 1000;
         int numPartitions = 10;
         float alpha = 1.1f;
-        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 9);
+        JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 2f, 0.2f, 9);
 
         List<Integer> partitionIds = new ArrayList<Integer>(numPartitions+1);
         for(int i=0; i<numPartitions; i++) {
@@ -108,7 +109,8 @@ public class JabejaManagerTest {
 
         System.out.println("---2---");
         System.out.println("Edge cut before: " + manager.getEdgeCut());
-        manager.repartition();
+        manager.repartition(true);
+        manager.repartition(false);
         System.out.println("Edge cut after:  " + manager.getEdgeCut());
     }
 
@@ -128,7 +130,7 @@ public class JabejaManagerTest {
             }
         }
 
-        JabejaManager manager = initGraph(alpha, 2f, .2f, 9, partitions, friendships);
+        JabejaManager manager = initGraph(alpha, 2f, .2f, 2f, 0.2f, 9, partitions, friendships);
 
         Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);

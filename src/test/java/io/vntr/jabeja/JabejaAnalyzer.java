@@ -227,7 +227,7 @@ public class JabejaAnalyzer {
     }
 
     private JabejaManager initJabejaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return JabejaTestUtils.initGraph(1.5f, 2f, 0.2f, 9, partitions, friendships);
+        return JabejaTestUtils.initGraph(1.5f, 2f, 0.2f, 2f, 0.2f, 9, partitions, friendships);
     }
 
     private JabejaMiddleware initJabejaMiddleware(JabejaManager manager) {
