@@ -132,4 +132,9 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
     public String toString() {
         return manager.toString();
     }
+
+    @Override
+    public double calculateExpectedQueryDelay() {
+        return ProbabilityUtils.calculateExpectedQueryDelay(getFriendships(), getPartitionToUserMap());
+    }
 }

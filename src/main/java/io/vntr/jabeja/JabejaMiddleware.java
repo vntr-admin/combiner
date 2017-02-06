@@ -36,7 +36,7 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer {
     public void befriend(Integer smallerUserId, Integer largerUserId) {
         manager.befriend(smallerUserId, largerUserId);
         if(Math.random() > .9) {
-            manager.repartition();
+            manager.repartition(false);
         }
     }
 
@@ -102,7 +102,7 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void broadcastDowntime() {
-        manager.repartition();
+        manager.repartition(true);
     }
 
     @Override
@@ -129,4 +129,8 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer {
         return manager.toString();
     }
 
+    @Override
+    public double calculateExpectedQueryDelay() {
+        return ProbabilityUtils.calculateExpectedQueryDelay(getFriendships(), getPartitionToUserMap());
+    }
 }

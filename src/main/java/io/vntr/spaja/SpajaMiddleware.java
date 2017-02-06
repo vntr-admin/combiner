@@ -278,4 +278,9 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     public String toString() {
         return manager.toString();
     }
+
+    @Override
+    public double calculateExpectedQueryDelay() {
+        return 0; //Replica systems are strictly-local by design.
+    }
 }

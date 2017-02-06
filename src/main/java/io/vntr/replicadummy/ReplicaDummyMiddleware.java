@@ -202,4 +202,9 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     public String toString() {
         return manager.toString();
     }
+
+    @Override
+    public double calculateExpectedQueryDelay() {
+        return 0; //replica systems are strictly-local by design
+    }
 }
