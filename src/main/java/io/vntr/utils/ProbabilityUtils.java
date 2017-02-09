@@ -58,6 +58,7 @@ public class ProbabilityUtils
 
     private static final Map<DoublePair, LogNormalDistribution> lndMap = new HashMap<DoublePair, LogNormalDistribution>();
 
+    //http://blog.simiacryptus.com/2015/10/modeling-network-latency.html
     public static double drawKFromLogNormalDistributionAndReturnMax(double mean, double stdDeviation, int k) {
         DoublePair key = new DoublePair(mean, stdDeviation);
         LogNormalDistribution logNormalDistribution;
