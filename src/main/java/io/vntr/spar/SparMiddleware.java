@@ -133,6 +133,9 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
+                if(manager.getMinNumReplicas() > 0) {
+                    throw new RuntimeException("This should never happen with minNumReplicas > 0!");
+                }
                 manager.addReplica(user, newPartitionId);
             }
             manager.promoteReplicaToMaster(userId, migrationStrategy.get(userId));

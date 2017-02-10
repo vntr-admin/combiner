@@ -47,10 +47,41 @@ public class SparmesMigrationStrategy {
         usersYetUnplaced.removeAll(strategy.keySet());
 
         for (Integer uid : usersYetUnplaced) {
-            strategy.put(uid, getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getAllPartitionIds()));
+            Integer leastOverloadedPid = getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getAllPartitionIds());
+            if(leastOverloadedPid != null) {
+                strategy.put(uid, leastOverloadedPid);
+            }
+            else {
+                strategy.put(uid, getLeastOverloadedPartition(manager.getAllPartitionIds(), strategy, partitionId));
+            }
         }
 
         return strategy;
+    }
+
+    Integer getLeastOverloadedPartition(Set<Integer> allPids, Map<Integer, Integer> strategy, Integer pidToDelete) {
+        Map<Integer, Integer> pToStrategyCount = new HashMap<Integer, Integer>();
+        for(Integer pid : allPids) {
+            pToStrategyCount.put(pid, 0);
+        }
+        for(Integer uid1 : strategy.keySet()) {
+            int pid = strategy.get(uid1);
+            pToStrategyCount.put(pid, pToStrategyCount.get(pid));
+        }
+
+        int minMasters = Integer.MAX_VALUE;
+        Integer minPid = null;
+        for(Integer pid : allPids) {
+            if(pid.equals(pidToDelete)) {
+                continue;
+            }
+            int numMasters = manager.getPartitionById(pid).getNumMasters() + pToStrategyCount.get(pid);
+            if(numMasters < minMasters) {
+                minMasters = numMasters;
+                minPid = pid;
+            }
+        }
+        return minPid;
     }
 
     Integer getLeastOverloadedPartitionWhereThisUserHasAReplica(Integer uid, Map<Integer, Integer> strategy, Set<Integer> allPids) {
