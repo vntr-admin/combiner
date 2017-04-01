@@ -20,11 +20,11 @@ public class TraceGenerator {
     private static int user_count = 0;
 
     public static void main(String[] args) throws Exception {
-        Trace trace = generateTrace(10001);
-        TraceUtils.writeTraceToFile("/Users/robertlindquist/Documents/thesis/traces/synthetic_u" + user_count + "_" + System.nanoTime() + ".txt", trace);
+        BaseTrace baseTrace = generateTrace(10001);
+        TraceTestUtils.writeTraceToFile("/Users/robertlindquist/Documents/thesis/traces/synthetic_u" + user_count + "_" + System.nanoTime() + ".txt", baseTrace);
     }
 
-    static Trace generateTrace(int size) {
+    static BaseTrace generateTrace(int size) {
 
         int numUsers = 500 + (int) (Math.random() * 2000);
         int numGroups = 6 + (int) (Math.random() * 20);

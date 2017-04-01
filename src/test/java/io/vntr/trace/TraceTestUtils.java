@@ -7,9 +7,9 @@ import java.util.*;
 /**
  * Created by robertlindquist on 10/20/16.
  */
-public class TraceUtils {
+public class TraceTestUtils {
 
-    //TODO: make this into Trace, not just the List of actions
+    //TODO: make this into BaseTrace, not just the List of actions
     public static List<FullTraceAction> getTraceFromFile(String filename){
         List<FullTraceAction> list = new LinkedList<FullTraceAction>();
         Scanner scanner = null;
@@ -30,7 +30,7 @@ public class TraceUtils {
         return list;
     }
 
-    //TODO: make this into Trace, not just the List of actions
+    //TODO: make this into BaseTrace, not just the List of actions
     public static void writeTraceToFile(String filename, List<FullTraceAction> trace) throws Exception {
         PrintWriter pw = new PrintWriter(new File(filename));
         for(Iterator<FullTraceAction> iter = trace.iterator(); iter.hasNext(); ) {
@@ -44,8 +44,8 @@ public class TraceUtils {
         pw.close();
     }
 
-    public static Trace getFullTraceFromFile(String filename) {
-        Trace trace = null;
+    public static BaseTrace getFullTraceFromFile(String filename) {
+        BaseTrace baseTrace = null;
         List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
         Map<Integer, Set<Integer>> friendships = null;
         Set<Integer> pids = null;
@@ -75,19 +75,19 @@ public class TraceUtils {
                         traceWithReplicas.setReplicas(replicas);
                         traceWithReplicas.setFriendships(friendships);
                         traceWithReplicas.setPartitions(partitions);
-                        trace = traceWithReplicas;
+                        baseTrace = traceWithReplicas;
                     }
                     else if(partitions != null) {
                         TraceWithPartitions traceWithPartitions = new TraceWithPartitions();
                         traceWithPartitions.setPartitions(partitions);
                         traceWithPartitions.setFriendships(friendships);
-                        trace = traceWithPartitions;
+                        baseTrace = traceWithPartitions;
                     }
                     else {
-                        trace = new Trace();
-                        trace.setFriendships(friendships);
+                        baseTrace = new BaseTrace();
+                        baseTrace.setFriendships(friendships);
                     }
-                    trace.setActions(actions);
+                    baseTrace.setActions(actions);
 
                     FullTraceAction action = FullTraceAction.fromString(line.substring(line.indexOf(':')+1).trim());
                     actions.add(action);
@@ -103,7 +103,7 @@ public class TraceUtils {
                 scanner.close();
             }
         }
-        return trace;
+        return baseTrace;
     }
 
     static Map<Integer, Set<Integer>> parseMapSetLine(String line) {
@@ -143,24 +143,24 @@ public class TraceUtils {
     }
 
 
-    public static void writeTraceToFile(String filename, Trace trace) throws Exception {
+    public static void writeTraceToFile(String filename, BaseTrace baseTrace) throws Exception {
         PrintWriter pw = new PrintWriter(new File(filename));
-        pw.println("F: " + trace.getFriendships());
+        pw.println("F: " + baseTrace.getFriendships());
         pw.flush();
-        pw.println("PIDS: " + trace.getPids());
-        if(trace instanceof TraceWithPartitions) {
-            pw.println("P: " + ((TraceWithPartitions) trace).getPartitions());
+        pw.println("PIDS: " + baseTrace.getPids());
+        if(baseTrace instanceof TraceWithPartitions) {
+            pw.println("P: " + ((TraceWithPartitions) baseTrace).getPartitions());
             pw.flush();
         }
-        if(trace instanceof TraceWithReplicas) {
-            pw.println("R: " + ((TraceWithReplicas) trace).getReplicas());
+        if(baseTrace instanceof TraceWithReplicas) {
+            pw.println("R: " + ((TraceWithReplicas) baseTrace).getReplicas());
             pw.flush();
         }
-        double log10 = Math.log10(trace.getActions().size());
+        double log10 = Math.log10(baseTrace.getActions().size());
         int log10Rounded = (int) Math.ceil(log10);
         String formatStr = "A%-" + log10Rounded + "d: %s";
-        for(int i=0; i<trace.getActions().size(); i++) {
-            pw.println(String.format(formatStr, i, trace.getActions().get(i)));
+        for(int i = 0; i< baseTrace.getActions().size(); i++) {
+            pw.println(String.format(formatStr, i, baseTrace.getActions().get(i)));
         }
         pw.flush();
         pw.close();

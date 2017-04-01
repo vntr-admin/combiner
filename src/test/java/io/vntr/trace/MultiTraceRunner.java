@@ -28,7 +28,7 @@ import java.util.Set;
 public class MultiTraceRunner {
     public static void main(String[] args) throws Exception {
         String filename = "/Users/robertlindquist/Documents/enhanced_trace_251072845977020.txt";
-        TraceWithReplicas trace = (TraceWithReplicas) TraceUtils.getFullTraceFromFile(filename);
+        TraceWithReplicas trace = (TraceWithReplicas) TraceTestUtils.getFullTraceFromFile(filename);
         System.out.println("numUsers: " + trace.getFriendships().size());
         System.out.println("numPartitions: " + trace.getPids().size());
         System.out.println("First action: " + trace.getActions().get(0));

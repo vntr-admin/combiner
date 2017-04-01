@@ -9,14 +9,18 @@ import java.util.*;
  * Created by robertlindquist on 12/5/16.
  */
 public class MetisRepartitioner {
+    private final String commandLiteral;
+    private final String tempDir;
 
-    private static final String temp_dir = "/Users/robertlindquist/Desktop/metistemp/";
-    private static final String command_name = "/Users/robertlindquist/Downloads/metis-5.1.0/build/Darwin-x86_64/programs/gpmetis";
+    public MetisRepartitioner(String commandLiteral, String tempDir) {
+        this.commandLiteral = commandLiteral;
+        this.tempDir = tempDir;
+    }
 
-    public static Map<Integer, Integer> partition(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    public Map<Integer, Integer> partition(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int numPartitions = pids.size();
         try {
-            String inputFile = temp_dir + "e_pluribus_unum__" + System.nanoTime() + ".txt";
+            String inputFile = tempDir + File.separator + "e_pluribus_unum__" + System.nanoTime() + ".txt";
             String outputFile = inputFile + ".part." + numPartitions;
 
             Map<Integer, Integer> reverseUidMap = new HashMap<Integer, Integer>();
@@ -46,8 +50,8 @@ public class MetisRepartitioner {
         return reversePidMap;
     }
 
-    private static Map<Integer, Integer> innerPartition(String outputFile, String inputFile, int numPartitions) throws Exception {
-        ProcessBuilder pb = new ProcessBuilder(command_name, inputFile, "" + numPartitions);
+    private Map<Integer, Integer> innerPartition(String outputFile, String inputFile, int numPartitions) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(commandLiteral, inputFile, "" + numPartitions);
         Process p = pb.start();
         p.waitFor();
         Scanner scanner = new Scanner(new File(outputFile));
@@ -121,7 +125,7 @@ public class MetisRepartitioner {
 
     static String formatLine(Set<Integer> friends) {
         StringBuilder builder = new StringBuilder();
-        for(Iterator<Integer> iter = new TreeSet<Integer>(friends).iterator(); iter.hasNext(); ) {
+        for(Iterator<Integer> iter = new TreeSet<>(friends).iterator(); iter.hasNext(); ) {
             builder.append((iter.next()));
             if(iter.hasNext()) {
                 builder.append(' ');

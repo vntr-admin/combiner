@@ -24,7 +24,6 @@ import io.vntr.spaja.SpajaTestUtils;
 import io.vntr.spar.SparManager;
 import io.vntr.spar.SparMiddleware;
 import io.vntr.spar.SparTestUtils;
-import io.vntr.sparmes.SparmesAnalyzer;
 import io.vntr.sparmes.SparmesManager;
 import io.vntr.sparmes.SparmesMiddleware;
 import io.vntr.sparmes.SparmesTestUtils;
@@ -61,7 +60,7 @@ public class SingleTraceRunner {
             throw new IllegalArgumentException("arg[0] must be one of " + allowedTypes);
         }
 
-        TraceWithReplicas trace = (TraceWithReplicas) TraceUtils.getFullTraceFromFile(inputFile);
+        TraceWithReplicas trace = (TraceWithReplicas) TraceTestUtils.getFullTraceFromFile(inputFile);
 
         List<String> thingsToLog = new LinkedList<String>();
 

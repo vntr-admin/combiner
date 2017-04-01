@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * Created by robertlindquist on 10/20/16.
  */
-public class TraceWithPartitions extends Trace {
+public class TraceWithPartitions extends BaseTrace {
     private Map<Integer, Set<Integer>> partitions;
 
     public TraceWithPartitions() {

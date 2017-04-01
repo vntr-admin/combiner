@@ -25,7 +25,7 @@ public class BootstrappedTraceGenerator {
 
     private static final int NUM_ACTIONS = 10001;
     private static final int USERS_PER_PARTITION = 150;
-    private static final int MIN_NUM_REPLICAS = 2;
+    private static final int MIN_NUM_REPLICAS = 0;
     private static final double PROB_RANDOM_FRIENDSHIP = 0.2;
 
     private static int maxUid = 0;
@@ -42,15 +42,15 @@ public class BootstrappedTraceGenerator {
         actionsProbability.put(DOWNTIME, 0.005D);
     }
 
-    private static final String INPUT_FILE = SYNTHETIC_2K_FILENAMEx2;
-    private static final String OUTPUT_FILENAME_STUB = OUTPUT_DIR + "synth_2k_";
+    private static final String INPUT_FILE = LESKOVEC_FACEBOOK_FILENAME;
+    private static final String OUTPUT_FILENAME_STUB = OUTPUT_DIR + "facebook_0_";
 
     public static void main(String[] args) throws Exception {
-        Trace trace = generateTrace(INPUT_FILE, NUM_ACTIONS);
-        TraceUtils.writeTraceToFile(OUTPUT_FILENAME_STUB + "bootstrapped_" + System.nanoTime() + ".txt", trace);
+        BaseTrace baseTrace = generateTrace(INPUT_FILE, NUM_ACTIONS);
+        TraceTestUtils.writeTraceToFile(OUTPUT_FILENAME_STUB + "bootstrapped_" + System.nanoTime() + ".txt", baseTrace);
     }
 
-    private static Trace generateTrace(String filename, int numActions) throws Exception {
+    private static BaseTrace generateTrace(String filename, int numActions) throws Exception {
         Map<Integer, Set<Integer>> mutableFriendships = TestUtils.extractFriendshipsFromFile(filename);
         Map<Integer, Set<Integer>> friendships = copyMapSet(mutableFriendships);
 

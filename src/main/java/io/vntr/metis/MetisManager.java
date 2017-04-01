@@ -14,12 +14,14 @@ public class MetisManager {
 
     private NavigableMap<Integer, MetisUser> uMap;
     private NavigableMap<Integer, Set<Integer>> partitions;
+    private MetisRepartitioner repartitioner;
 
     private static final Integer defaultInitialPid = 1;
 
-    public MetisManager() {
+    public MetisManager(String gpmetisLocation, String gpmetisTempdir) {
         uMap = new TreeMap<Integer, MetisUser>();
         partitions = new TreeMap<Integer, Set<Integer>>();
+        this.repartitioner = new MetisRepartitioner(gpmetisLocation, gpmetisTempdir);
     }
 
     public Integer getPartitionForUser(Integer uid) {
@@ -102,7 +104,7 @@ public class MetisManager {
     }
 
     public void repartition() {
-        Map<Integer, Integer> newPartitioning = MetisRepartitioner.partition(getFriendships(), partitions.keySet());
+        Map<Integer, Integer> newPartitioning = repartitioner.partition(getFriendships(), partitions.keySet());
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);
             if(newPid != getUser(uid).getPid()) {
