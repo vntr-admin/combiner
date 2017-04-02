@@ -42,21 +42,27 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.6.0</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>my-execution</id>
+            <id>create-my-bundle</id>
             <phase>package</phase>
             <goals>
-              <goal>java</goal>
+              <goal>single</goal>
             </goals>
+            <configuration>
+              <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
+              <archive>
+                <manifest>
+                  <mainClass>io.vntr.trace.TraceRunner</mainClass>
+                </manifest>
+              </archive>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <mainClass>io.vntr.trace.TraceRunner</mainClass>
-        </configuration>
       </plugin>
     </plugins>
   </build>
