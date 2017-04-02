@@ -2,13 +2,11 @@ package io.vntr.hermes;
 
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by robertlindquist on 9/20/16.
@@ -50,14 +48,20 @@ public class HermesPartitionTest {
             manager.getPartitionById(pid).resetLogicalUsers();
         }
 
+        Set<Target> oneUp   = initSet(new Target(1, 2, 1, 1));
+        Set<Target> oneDown = Collections.emptySet(); //1 is the smallest PID, so there's no down
+
+        Set<Target> twoUp   = Collections.emptySet(); //the gains are all non-positive
         Set<Target> twoDown = initSet(new Target(8, 1, 2, 2), new Target(12, 1, 2, 2), new Target(14, 1, 2, 1));
+
+        Set<Target> threeUp = Collections.emptySet(); //3 is the largest PID, so there's no up
         Set<Target> threeDown = initSet(new Target(16, 1, 3, 1), new Target(18, 1, 3, 1), new Target(20, 1, 3, 1));
 
-        assertEquals(initSet(new Target(1, 2, 1, 1)), manager.getPartitionById(1).getCandidates(true,  3, false));
-        assertEquals(Collections.emptySet(), manager.getPartitionById(1).getCandidates(false, 3, false));
-        assertEquals(Collections.emptySet(), manager.getPartitionById(2).getCandidates(true,  3, false));
-        assertEquals(twoDown, manager.getPartitionById(2).getCandidates(false, 3, false));
-        assertEquals(Collections.emptySet(), manager.getPartitionById(3).getCandidates(true,  3, false));
+        assertEquals(oneUp,     manager.getPartitionById(1).getCandidates(true,  3, false));
+        assertEquals(oneDown,   manager.getPartitionById(1).getCandidates(false, 3, false));
+        assertEquals(twoUp,     manager.getPartitionById(2).getCandidates(true,  3, false));
+        assertEquals(twoDown,   manager.getPartitionById(2).getCandidates(false, 3, false));
+        assertEquals(threeUp,   manager.getPartitionById(3).getCandidates(true,  3, false));
         assertEquals(threeDown, manager.getPartitionById(3).getCandidates(false, 3, false));
     }
 
@@ -88,14 +92,20 @@ public class HermesPartitionTest {
             manager.getPartitionById(pid).resetLogicalUsers();
         }
 
-        Set<Target> oneUp = initSet(new Target(3, 2, 1, -1), new Target(5, 3, 1, -1), new Target(7, 2, 1, 0));
-
-        assertEquals(oneUp, manager.getPartitionById(1).getCandidates(true,  3, false));
         assertEquals(Collections.emptySet(), manager.getPartitionById(1).getCandidates(false, 3, false));
         assertEquals(Collections.emptySet(), manager.getPartitionById(2).getCandidates(true,  3, false));
         assertEquals(Collections.emptySet(), manager.getPartitionById(2).getCandidates(false, 3, false));
         assertEquals(Collections.emptySet(), manager.getPartitionById(3).getCandidates(true,  3, false));
         assertEquals(Collections.emptySet(), manager.getPartitionById(3).getCandidates(false, 3, false));
+
+        Target bestTarget = new Target(7, 2, 1, 0);
+        Set<Target> secondPlaceTargets = initSet(new Target(1, 2, 1, -1), new Target(3, 2, 1, -1), new Target(3, 3, 1, -1), new Target(5, 3, 1, -1));
+
+        Set<Target> results = manager.getPartitionById(1).getCandidates(true,  3, false);
+        assertTrue(results.size() == 3);
+        assertTrue(results.contains(bestTarget));
+        secondPlaceTargets.retainAll(results);
+        assertTrue(secondPlaceTargets.size() == 2);
     }
 
     @Test

@@ -59,7 +59,8 @@ public class LogicalUser {
         }
         Set<Integer> targets = new HashSet<Integer>();
         Integer maxGain = 0;
-        if(getImbalanceFactor(pid, 0) > gamma) {
+        boolean imbalanced = getImbalanceFactor(pid, 0) > gamma;
+        if(imbalanced) {
             maxGain = Integer.MIN_VALUE;
         }
         for(Iterator<Integer> iter = pToFriendCount.keySet().iterator(); iter.hasNext(); ) {
@@ -70,7 +71,7 @@ public class LogicalUser {
                     targets = new HashSet<Integer>();
                     targets.add(targetPid);
                     maxGain = gain;
-                } else if (gain == maxGain) {
+                } else if (gain == maxGain && (imbalanced || gain > 0)) {
                     targets.add(targetPid);
                 }
             }
