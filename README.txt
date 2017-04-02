@@ -71,8 +71,8 @@ Metis: Uses Karypis et alia's METIS algorithm (provided for comparison with high
         [none]
 
 To run, use the following command:
-    mvn exec:java -Dexec.args="[filename in inputDirectory] [Type] [arguments]"
+    java -jar target/vntr.jar [filename in inputDirectory] [Type] [arguments]
 
-    For example, running Sparmes with minNumReplicas=0 and gamma=1.01:
-        mvn exec:java -Dexec.args="facebook_0_R.txt SPARMES 0 1.01"
+    For example, running Hermes with gamma=1.15, iterationCutoffRatio=0.0025 and k=3:
+        java -jar target/vntr.jar facebook_0_R.txt HERMES 1.15 0.0025 3
 
