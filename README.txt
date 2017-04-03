@@ -1,9 +1,70 @@
 Welcome to combiner, a simulation of a graph database partition manager.
 
-To build, ensure that you have maven installed, as well as Java 7 or later.
-Open src/main/resources/log4j.properties and edit log4j.appender.file.File to have an acceptable logging location on your computer
-Type "mvn clean package".
-Edit the config.properties file to contain the input and output directories.  Optionally, if you wish to run METIS for comparison, edit the file to indicate where gpmetis can be found, and a directory it can use to write temporary files.
+****************************************************************************
+************************ CONFIGURATION AND BUILDING ************************
+****************************************************************************
+
+First ensure that you have maven installed, as well as Java 7 or later.
+
+Configuration:
+
+    [checkout_location]/src/main/resources/log4j.properties
+        log4j.appender.file.File: set to an acceptable logging
+        location on your computer
+
+    [checkout_location]/config.properties
+        input.folder: set it to where you have your datasets
+            Note: if you only use absolute paths in your run targets,
+            you can skip this.
+        output.folder: set it to where you want the output stored
+
+Building:
+    From the [checkout_location] directory, run the following:
+        mvn clean package
+
+METIS-specific Configuration (Optional)
+
+Downloading and building METIS:
+    http://glaros.dtc.umn.edu/gkhome/metis/metis/download
+    Note: You'll need a C99-compatible compiler and cmake.
+    Note: We do not provide any support for this process.
+
+Configuration:
+    [checkout_location]/config.properties
+        gpmetis.location: the location of the gpmetis executable.
+        gpmetis.tempdir: a directory it can use to write temporary files.
+
+
+****************************************************************************
+********************************* RUNNING **********************************
+****************************************************************************
+
+To run, use the following command:
+    java -jar target/vntr.jar filename type [flags] [parameters]
+
+Arguments
+    filename: the name of the input file
+        If not an absolute path, it will in the input.folder directory as
+        specified in config.properties.  Otherwise, loads the absolute path.
+
+    type: one of JABEJA, HERMES, SPAR, SPAJA, SPARMES or METIS
+
+    flags: currenly just -n numActions, which limits the run to the first
+        numActions actions (so you needn't run the whole trace).
+
+    parameters: type-specific parameters (see next section).
+
+    For example, running Spar with minNumReplicas=0:
+        java -jar target/vntr.jar facebook_0_R.txt SPAR 0
+
+    Running METIS on the first 999 actions with an absolute path:
+        java -jar target/vntr.jar /home/root/karate_1_S.txt METIS -n 999
+
+
+****************************************************************************
+************************* TYPE-SPECIFIC PARAMETERS *************************
+****************************************************************************
+
 
 There are six types of partition managers you can simulate, and their details are below:
 
@@ -70,10 +131,4 @@ Metis: Uses Karypis et alia's METIS algorithm (provided for comparison with high
     Type name: METIS
     Arguments:
         [none]
-
-To run, use the following command:
-    java -jar target/vntr.jar [filename in inputDirectory] [Type] [arguments]
-
-    For example, running Hermes with gamma=1.15, iterationCutoffRatio=0.0025 and k=3:
-        java -jar target/vntr.jar facebook_0_R.txt HERMES 1.15 0.0025 3
 

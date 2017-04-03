@@ -56,7 +56,13 @@ public class TraceRunner {
             throw new IllegalArgumentException("Must have at least 2 arguments!");
         }
 
-        String inputFile = inputFolder + File.separator + args[0];
+        String inputFile;
+        if(args[0].contains(File.separator)) {
+            inputFile = args[0];
+        } else {
+            inputFile = inputFolder + File.separator + args[0];
+        }
+
         String type = args[1];
         String outputFile = outputFolder + File.separator + generateFilename(args);
 
@@ -69,15 +75,26 @@ public class TraceRunner {
         System.out.println("Output file: " + outputFile);
         Trace trace = TraceUtils.getFullTraceFromFile(inputFile);
 
+        int traceLengthLimit;
+        boolean hasLengthOverride = ( args.length >= 4 && "-n".equals(args[2]) );
+        if(hasLengthOverride) {
+            traceLengthLimit = Integer.parseInt(args[3]);
+        } else {
+            traceLengthLimit = trace.getActions().size();
+        }
+
+        String[] middlewareArgs = new String[hasLengthOverride ? args.length - 4 : args.length - 2];
+        System.arraycopy(args, hasLengthOverride ? 4 : 2, middlewareArgs, 0, middlewareArgs.length);
+
         IMiddlewareAnalyzer middleware;
 
         switch (type) {
-            case JABEJA_TYPE:  middleware = initJabejaMiddleware (trace, args, prop); break;
-            case HERMES_TYPE:  middleware = initHermesMiddleware (trace, args, prop); break;
-            case SPAR_TYPE:    middleware = initSparMiddleware   (trace, args, prop); break;
-            case SPAJA_TYPE:   middleware = initSpajaMiddleware  (trace, args, prop); break;
-            case SPARMES_TYPE: middleware = initSparmesMiddleware(trace, args, prop); break;
-            case METIS_TYPE:   middleware = initMetisMiddleware  (trace, args, prop); break;
+            case JABEJA_TYPE:  middleware = initJabejaMiddleware (trace, middlewareArgs, prop); break;
+            case HERMES_TYPE:  middleware = initHermesMiddleware (trace, middlewareArgs, prop); break;
+            case SPAR_TYPE:    middleware = initSparMiddleware   (trace, middlewareArgs, prop); break;
+            case SPAJA_TYPE:   middleware = initSpajaMiddleware  (trace, middlewareArgs, prop); break;
+            case SPARMES_TYPE: middleware = initSparmesMiddleware(trace, middlewareArgs, prop); break;
+            case METIS_TYPE:   middleware = initMetisMiddleware  (trace, middlewareArgs, prop); break;
             default: throw new RuntimeException("Must be one of " + allowedTypes);
         }
 
@@ -100,7 +117,7 @@ public class TraceRunner {
 
             long startTime = System.nanoTime();
 
-            for (int i = 0; i < trace.getActions().size(); i++) {
+            for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
                 log(middleware, pw, next.toString(), type, true, (i % 50) == 0);
                 runAction(middleware, next);
@@ -171,30 +188,34 @@ public class TraceRunner {
     }
 
     static JabejaMiddleware initJabejaMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 8) {
-            throw new IllegalArgumentException("JABEJA requires 8 arguments");
+        if(args.length != 6) {
+            throw new IllegalArgumentException("JABEJA requires 6 arguments");
         }
-        float alpha = Float.parseFloat(args[2]);
-        float initialT = Float.parseFloat(args[3]);
-        float deltaT = Float.parseFloat(args[4]);
-        float befriendInitialT = Float.parseFloat(args[5]);
-        float befriendDeltaT = Float.parseFloat(args[6]);
-        int k = Integer.parseInt(args[7]);
+        float alpha = Float.parseFloat(args[0]);
+        float initialT = Float.parseFloat(args[1]);
+        float deltaT = Float.parseFloat(args[2]);
+        float befriendInitialT = Float.parseFloat(args[3]);
+        float befriendDeltaT = Float.parseFloat(args[4]);
+        int k = Integer.parseInt(args[5]);
         JabejaManager jabejaManager = JabejaInitUtils.initGraph(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, trace.getPartitions(), trace.getFriendships());
         return new JabejaMiddleware(jabejaManager);
     }
 
     static HermesMiddleware initHermesMiddleware(Trace trace, String[] args, Properties prop) {
-        HermesManager hermesManager;
-        float gamma = Float.parseFloat(args[2]);
+        if(args.length > 3 || args.length < 1) {
+            throw new IllegalArgumentException("HERMES requires 1-3 arguments");
+        }
 
-        if(args.length == 5) {
-            float maxIterationToNumUsersRatio = Float.parseFloat(args[3]);
-            int k = Integer.parseInt((args[4]));
+        HermesManager hermesManager;
+        float gamma = Float.parseFloat(args[0]);
+
+        if(args.length == 3) {
+            float maxIterationToNumUsersRatio = Float.parseFloat(args[1]);
+            int k = Integer.parseInt((args[2]));
             hermesManager = HermesInitUtils.initGraph(gamma, k, maxIterationToNumUsersRatio, trace.getPartitions(), trace.getFriendships());
         }
-        else if(args.length == 4) {
-            float maxIterationToNumUsersRatio = Float.parseFloat(args[3]);
+        else if(args.length == 2) {
+            float maxIterationToNumUsersRatio = Float.parseFloat(args[1]);
             hermesManager = HermesInitUtils.initGraph(gamma, 3, maxIterationToNumUsersRatio, trace.getPartitions(), trace.getFriendships());
         } else {
             hermesManager = HermesInitUtils.initGraph(gamma, true, trace.getPartitions(), trace.getFriendships());
@@ -204,33 +225,33 @@ public class TraceRunner {
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 3) {
-            throw new IllegalArgumentException("SPAR requires 3 arguments");
+        if(args.length != 1) {
+            throw new IllegalArgumentException("SPAR requires 1 argument");
         }
-        int minNumReplicas = Integer.parseInt(args[2]);
+        int minNumReplicas = Integer.parseInt(args[0]);
         SparManager manager = SparInitUtils.initGraph(minNumReplicas, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
         return new SparMiddleware(manager);
     }
 
     static SpajaMiddleware initSpajaMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 7) {
-            throw new IllegalArgumentException("SPAJA requires 7 arguments");
+        if(args.length != 5) {
+            throw new IllegalArgumentException("SPAJA requires 5 arguments");
         }
-        int minNumReplicas = Integer.parseInt(args[2]);
-        float alpha = Float.parseFloat(args[3]);
-        float initialT = Float.parseFloat(args[4]);
-        float deltaT = Float.parseFloat(args[5]);
-        int k = Integer.parseInt(args[6]);
+        int minNumReplicas = Integer.parseInt(args[0]);
+        float alpha = Float.parseFloat(args[1]);
+        float initialT = Float.parseFloat(args[2]);
+        float deltaT = Float.parseFloat(args[3]);
+        int k = Integer.parseInt(args[4]);
         SpajaManager spajaManager = SpajaInitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
         return new SpajaMiddleware(spajaManager);
     }
 
     static SparmesMiddleware initSparmesMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 4) {
-            throw new IllegalArgumentException("SPARMES requires 4 arguments");
+        if(args.length != 2) {
+            throw new IllegalArgumentException("SPARMES requires 2 arguments");
         }
-        int minNumReplicas = Integer.parseInt(args[2]);
-        float gamma = Float.parseFloat(args[3]);
+        int minNumReplicas = Integer.parseInt(args[0]);
+        float gamma = Float.parseFloat(args[1]);
         SparmesManager sparmesManager = SparmesInitUtils.initGraph(minNumReplicas, gamma, true, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
 
         return new SparmesMiddleware(sparmesManager);
