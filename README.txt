@@ -1,6 +1,7 @@
 Welcome to combiner, a simulation of a graph database partition manager.
 
 To build, ensure that you have maven installed, as well as Java 7 or later.
+Open src/main/resources/log4j.properties and edit log4j.appender.file.File to have an acceptable logging location on your computer
 Type "mvn clean package".
 Edit the config.properties file to contain the input and output directories.  Optionally, if you wish to run METIS for comparison, edit the file to indicate where gpmetis can be found, and a directory it can use to write temporary files.
 
