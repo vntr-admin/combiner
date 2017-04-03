@@ -40,7 +40,7 @@ public class TraceRunner {
     public static final String METIS_TYPE = "METIS";
     private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(JABEJA_TYPE, HERMES_TYPE, SPAR_TYPE, SPAJA_TYPE, SPARMES_TYPE, METIS_TYPE));
 
-    private static final String overallFormatStr = "\t%7s | %s | %-25s | Edge Cut = %7d | Replica Count = %7d";
+    private static final String overallFormatStr = "    %7s | %s | %-25s | Edge Cut = %7d | Replica Count = %7d";
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -157,10 +157,10 @@ public class TraceRunner {
         StringBuilder builder = new StringBuilder();
         for(int i=0; i<args.length; i++) {
             builder.append(sanitize(args[i]));
-            builder.append('_');
+            builder.append("__");
         }
         builder.append(new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(now));
-        builder.append('_');
+        builder.append("__");
         builder.append(nanoTime);
         builder.append(".txt");
         return builder.toString();

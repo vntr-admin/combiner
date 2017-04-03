@@ -1191,8 +1191,15 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        SparPartition movingPartition = manager.getPartitionById(SparTestUtils.getPartitionIdsWithNMasters(manager, 2).iterator().next());
-        //Got a NoSuchElementException on the following line once
+        //We want to move from a partition that has two masters and at least one replica
+        SparPartition movingPartition = null;
+        for(Integer pid : SparTestUtils.getPartitionIdsWithNMasters(manager, 2)) {
+            SparPartition tempPartition = manager.getPartitionById(pid);
+            if(!tempPartition.getIdsOfReplicas().isEmpty()) {
+                movingPartition = tempPartition;
+            }
+        }
+
         SparUser stayingUser = manager.getUserMasterById(movingPartition.getIdsOfReplicas().iterator().next());
         SparUser movingUser = manager.getUserMasterById(movingPartition.getIdsOfMasters().iterator().next());
 
