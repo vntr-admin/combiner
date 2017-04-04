@@ -5,102 +5,148 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-import static io.vntr.TestUtils.copyMapSet;
-import static io.vntr.TestUtils.findKeysForUser;
-import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
+import static io.vntr.TestUtils.*;
 import static io.vntr.trace.TRACE_ACTION.*;
-import static io.vntr.trace.TRACE_ACTION.DOWNTIME;
 import static io.vntr.utils.ProbabilityUtils.*;
 
 /**
- * Created by robertlindquist on 10/21/16.
+ * Created by robertlindquist on 10/29/16.
  */
-public class TraceGenerator {
+public class BootstrappedTraceGenerator {
+    private static final String LESKOVEC_FACEBOOK_FILENAME = "/Users/robertlindquist/Documents/thesis/data/leskovec_facebook/leskovec-facebook.txt";
+    private static final String ZACHARY_KARATE_FILENAME    = "/Users/robertlindquist/Documents/thesis/data/zachary_karate/karate.txt";
+    private static final String SYNTHETIC_2K_FILENAME      = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u2000_f22723_g18_gp_0_19_fp_0_017_asrt_-0_00001470_20170119181335.txt";
+    private static final String SYNTHETIC_2K_FILENAMEx2    = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u2000_f22155_g18_gp_0_19_fp_0_017_asrt_-0_00001319_20170119193734.txt";
+    private static final String SYNTHETIC_3K_FILENAME      = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u3000_f51487_g20_gp_0_15_fp_0_025_asrt_-0_00000039_20170119181019.txt";
+    private static final String SYNTHETIC_3K_FILENAMEx2    = "/Users/robertlindquist/Documents/thesis/data/synthetic/synth_u3000_f49864_g20_gp_0_15_fp_0_025_asrt_0_00000083_20170119194131.txt";
 
-    private static int user_count = 0;
 
-    public static void main(String[] args) throws Exception {
-        BaseTrace baseTrace = generateTrace(10001);
-        TraceTestUtils.writeTraceToFile("/Users/robertlindquist/Documents/thesis/traces/synthetic_u" + user_count + "_" + System.nanoTime() + ".txt", baseTrace);
+    private static final String OUTPUT_DIR = "/Users/robertlindquist/Documents/thesis/traces/";
+
+    private static final int NUM_ACTIONS = 10001;
+    private static final int USERS_PER_PARTITION = 150;
+    private static final int MIN_NUM_REPLICAS = 0;
+    private static final double PROB_RANDOM_FRIENDSHIP = 0.2;
+
+    private static int maxUid = 0;
+    private static int maxPid = 0;
+
+    private static final Map<TRACE_ACTION, Double> actionsProbability = new HashMap<TRACE_ACTION, Double>();
+    static {
+        actionsProbability.put(ADD_USER, 0.1D);
+        actionsProbability.put(REMOVE_USER, 0.01D);
+        actionsProbability.put(BEFRIEND, 0.8D);
+        actionsProbability.put(UNFRIEND, 0.08D);
+        actionsProbability.put(ADD_PARTITION, 0D);  //this should be triggered by adding users or removing partitions...
+        actionsProbability.put(REMOVE_PARTITION, 0.005D);
+        actionsProbability.put(DOWNTIME, 0.005D);
     }
 
-    static BaseTrace generateTrace(int size) {
+    private static final String INPUT_FILE = LESKOVEC_FACEBOOK_FILENAME;
+    private static final String OUTPUT_FILENAME_STUB = OUTPUT_DIR + "facebook_0_";
 
-        int numUsers = 500 + (int) (Math.random() * 2000);
-        int numGroups = 6 + (int) (Math.random() * 20);
-        float groupProb = 0.03f + (float) (Math.random() * 0.1);
-        float friendProb = 0.03f + (float) (Math.random() * 0.1);
-        Map<Integer, Set<Integer>> curFriendships = getTopographyForMultigroupSocialNetwork(numUsers, numGroups, groupProb, friendProb);
+    public static void main(String[] args) throws Exception {
+        BaseTrace baseTrace = generateTrace(INPUT_FILE, NUM_ACTIONS);
+        TraceTestUtils.writeTraceToFile(OUTPUT_FILENAME_STUB + "bootstrapped_" + System.nanoTime() + ".txt", baseTrace);
+    }
 
-        int usersPerPartition = 50 + (int) (Math.random() * 100);
+    private static BaseTrace generateTrace(String filename, int numActions) throws Exception {
+        Map<Integer, Set<Integer>> mutableFriendships = TestUtils.extractFriendshipsFromFile(filename);
+        Map<Integer, Set<Integer>> friendships = copyMapSet(mutableFriendships);
 
+        int numPids = 1 + (mutableFriendships.size() / USERS_PER_PARTITION);
+        if(numPids < 3 + MIN_NUM_REPLICAS) {
+            numPids = 3 + MIN_NUM_REPLICAS;
+        }
         Set<Integer> pids = new HashSet<Integer>();
-        for (int pid = 0; pid < curFriendships.size() / usersPerPartition; pid++) {
+        for (int pid = 0; pid < numPids; pid++) {
             pids.add(pid);
         }
 
-        Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, curFriendships.keySet());
-        Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(2, partitions, curFriendships);
+        Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, mutableFriendships.keySet());
+        Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, mutableFriendships);
 
-        Map<Integer, Set<Integer>> originalFriendships = copyMapSet(curFriendships);
-
-        int numUsersStart = originalFriendships.size();
-        int numPartitionsStart = pids.size();
-        int numFriendshipsStart = 0;
-        for(int uid : curFriendships.keySet()) {
-            numFriendshipsStart += curFriendships.get(uid).size();
-        }
-        numFriendshipsStart /= 2;
-        System.out.println("Start: #U: " + numUsersStart + ", #P: " + numPartitionsStart + ", #F: " + numFriendshipsStart + ", Goal U/P: " + usersPerPartition);
-
-        Map<TRACE_ACTION, Double> actionsProbability = new HashMap<TRACE_ACTION, Double>();
-        actionsProbability.put(ADD_USER, 0.15D);
-        actionsProbability.put(REMOVE_USER, 0.05D);
-        actionsProbability.put(BEFRIEND, 0.715D);
-        actionsProbability.put(UNFRIEND, 0.05D);
-        actionsProbability.put(ADD_PARTITION, 0D);
-        actionsProbability.put(REMOVE_PARTITION, 0.01D);
-        actionsProbability.put(DOWNTIME, 0.025D);
-
-        TRACE_ACTION[] script = new TRACE_ACTION[size];
-        for (int j = 0; j < size - 1; j++) {
+        TRACE_ACTION[] script = new TRACE_ACTION[numActions];
+        for (int j = 0; j < numActions - 1; j++) {
             script[j] = getActions(actionsProbability);
         }
-        script[size - 1] = DOWNTIME;
+        script[numActions - 1] = DOWNTIME;
+
+        maxPid = pids.size();
+        maxUid = mutableFriendships.size();
+
+        System.out.print("Starting statistics: ");
+        printStatistics(pids.size(), mutableFriendships);
 
         List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
-        for(int i=0; i<size; i++) {
-            double loadFactor = (((double) curFriendships.size()) / pids.size()) / usersPerPartition;
+        for(int i=0; i<numActions; i++) {
             switch (script[i]) {
-                case ADD_USER:         actions.add(addU(curFriendships, pids)); if(loadFactor > 1) { actions.add(addP(curFriendships, pids)); } break;
-                case REMOVE_USER:      actions.add(cutU(curFriendships, pids)); break;
-                case BEFRIEND:         actions.add(addF(curFriendships, pids)); break;
-                case UNFRIEND:         actions.add(cutF(curFriendships, pids)); break;
-                case ADD_PARTITION:    actions.add(addP(curFriendships, pids)); break;
-                case REMOVE_PARTITION: actions.add(cutP(curFriendships, pids)); break;
-                case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME)); break;
+                case ADD_USER:         actions.add(addU(mutableFriendships, pids)); break;
+                case REMOVE_USER:      actions.add(cutU(mutableFriendships, pids)); break;
+                case BEFRIEND:         actions.add(addF(mutableFriendships, pids)); break;
+                case UNFRIEND:         actions.add(cutF(mutableFriendships, pids)); break;
+                case REMOVE_PARTITION: actions.add(cutP(mutableFriendships, pids)); break;
+                case DOWNTIME:         actions.add(new FullTraceAction(DOWNTIME));  break;
+            }
+
+            if(i != 0 && i%100 == 0) {
+                System.out.printf("Stats for i=%7d: ", i);
+                printStatistics(pids.size(), mutableFriendships);
+            }
+
+            double usersPerPartition = ((double) mutableFriendships.size()) / pids.size();
+            if(usersPerPartition > USERS_PER_PARTITION) {
+                actions.add(addP(mutableFriendships, pids));
             }
         }
 
-        int numUsersEnd = curFriendships.size();
-        int numPartitionsEnd = pids.size();
-        int numFriendshipsEnd = 0;
-        for(int uid : curFriendships.keySet()) {
-            numFriendshipsEnd += curFriendships.get(uid).size();
+        System.out.print("Ending statistics:   ");
+        printStatistics(pids.size(), mutableFriendships);
+
+
+        return new TraceWithReplicas(friendships, partitions, replicas, actions);
+    }
+
+    static void printStatistics(int numP, Map<Integer, Set<Integer>> friendships) {
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+
+        int numU = friendships.size();
+        int numF = 0;
+        NavigableSet<Integer> numFriends = new TreeSet<Integer>();
+        for(int uid : friendships.keySet()) {
+            numF += friendships.get(uid).size();
+            numFriends.add(bidirectionalFriendships.get(uid).size());
         }
-        numFriendshipsEnd /= 2;
+        double assortivity = ProbabilityUtils.calculateAssortivityCoefficient(friendships);
 
-        System.out.println("End: #U: " + numUsersEnd + ", #P: " + numPartitionsEnd + ", #F: " + numFriendshipsEnd);
+        Iterator<Integer> descNumFriendsIter = numFriends.descendingIterator();
+        int highestNumFriendships = descNumFriendsIter.next();
+        int secondHighestNumFriendships = descNumFriendsIter.next();
+        int thirdHighestNumFriendships = descNumFriendsIter.next();
 
-        user_count = numUsersEnd;
+        String statisticsPrintFormat = "#P: %3d, #U: %5d, #F: %6d, Assortivity: %1.8f, top 3 friendships: (%4d, %4d, %4d)%n";
 
-        return new TraceWithReplicas(originalFriendships, partitions, replicas, actions);
+        System.out.printf(statisticsPrintFormat, numP, numU, numF, assortivity, highestNumFriendships, secondHighestNumFriendships, thirdHighestNumFriendships);
+    }
+
+    static TRACE_ACTION getActions(Map<TRACE_ACTION, Double> actionsProbability) {
+        double random = Math.random();
+
+        for(TRACE_ACTION TRACEAction : TRACE_ACTION.values()) {
+            if(random < actionsProbability.get(TRACEAction)) {
+                return TRACEAction;
+            }
+            random -= actionsProbability.get(TRACEAction);
+        }
+
+        return DOWNTIME;
     }
 
     static FullTraceAction addU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
-        int newUid = new TreeSet<Integer>(friendships.keySet()).last()+1;
-        System.out.println("Adding u" + newUid);
+        int newUid = ++maxUid;
+//        System.out.println("Adding u" + newUid);
         friendships.put(newUid, new HashSet<Integer>());
+
         return new FullTraceAction(ADD_USER, newUid);
     }
 
@@ -111,18 +157,18 @@ public class TraceGenerator {
             friendships.get(friendId).remove(userToRemove);
         }
 
-        System.out.println("Removing u" + userToRemove);
+//        System.out.println("Removing u" + userToRemove);
         friendships.remove(userToRemove);
         return new FullTraceAction(REMOVE_USER, userToRemove);
     }
 
     static FullTraceAction addF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
-        int uid = chooseKeyFromMapSetInProportionToSetSize(generateBidirectionalFriendshipSet(friendships));
-        List<Integer> friendIds = new LinkedList<Integer>(friendships.get(uid));
-        friendIds.addAll(findKeysForUser(friendships, uid));
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        int uid = chooseKeyFromMapSetInProportionToSetSize(bidirectionalFriendships);
+        List<Integer> friendIds = new LinkedList<Integer>(bidirectionalFriendships.get(uid));
 
         //Grab a new friend either uniformly from friends of friends, or at random from everyone this user hasn't befriended
-        if(Math.random() > 0.5) {
+        if(Math.random() > PROB_RANDOM_FRIENDSHIP) {
             List<Integer> friendsOfFriends = new LinkedList<Integer>();
             for(int friendId : friendIds) {
                 //We want all friends of this friend, except people who are already friends with uid
@@ -138,6 +184,7 @@ public class TraceGenerator {
             }
         }
 
+        //TODO: figure out how to select a nonFriendId with a preference towards those with a similar number of friends
         Set<Integer> nonFriendIds = new HashSet<Integer>(friendships.keySet());
         nonFriendIds.removeAll(friendIds);
         nonFriendIds.remove(uid);
@@ -146,14 +193,18 @@ public class TraceGenerator {
             throw new RuntimeException("User " + uid + " is friends with everyone!");
         }
 
-        int friendId = ProbabilityUtils.getRandomElement(nonFriendIds);
+        Map<Integer, Set<Integer>> bidirectionalNonFriends = copyMapSet(bidirectionalFriendships);
+        bidirectionalNonFriends.keySet().retainAll(nonFriendIds);
+
+        int friendId = chooseKeyFromMapSetWithCorrelationToSizeOfNode(bidirectionalNonFriends, bidirectionalFriendships.get(uid).size());
+
         return innerBefriend(uid, friendId, friendships);
     }
 
     private static FullTraceAction innerBefriend(int oneUid, int theOtherUid, Map<Integer, Set<Integer>> friendships) {
         int val1 = Math.min(oneUid, theOtherUid);
         int val2 = Math.max(oneUid, theOtherUid);
-        System.out.println("Befriending " + val1 + " and " + val2);
+//        System.out.println("Befriending " + val1 + " and " + val2);
         friendships.get(val1).add(val2);
         return new FullTraceAction(BEFRIEND, val1, val2);
     }
@@ -164,36 +215,44 @@ public class TraceGenerator {
         int val2 = Math.max(friendship.get(0), friendship.get(1));
         friendships.get(val1).remove(val2);
 
-        System.out.println("Unfriending " + val1 + " and " + val2);
+//        System.out.println("Unfriending " + val1 + " and " + val2);
 
         return new FullTraceAction(UNFRIEND, val1, val2);
     }
 
     static FullTraceAction addP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
-        int newPid = new TreeSet<Integer>(pids).last()+1;
-        System.out.println("Adding p" + newPid + ".  (avg load: " + (((double) friendships.size()) / pids.size()) + ")");
+        int newPid = ++maxPid;
+//        System.out.println("Adding p" + newPid);
         pids.add(newPid);
         return new FullTraceAction(ADD_PARTITION, newPid);
     }
 
     static FullTraceAction cutP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int partitionToRemove = getRandomElement(pids);
-        System.out.println("Removing p" + partitionToRemove);
+//        System.out.println("Removing p" + partitionToRemove);
         pids.remove(partitionToRemove);
+
         return new FullTraceAction(REMOVE_PARTITION, partitionToRemove);
     }
 
-    static TRACE_ACTION getActions(Map<TRACE_ACTION, Double> actionsProbability) {
-        double random = Math.random();
-
-        for(TRACE_ACTION TRACEAction : TRACE_ACTION.values()) {
-            if(random < actionsProbability.get(TRACEAction)) {
-                return TRACEAction;
+    static int chooseKeyFromMapSetWithCorrelationToSizeOfNode(Map<Integer, Set<Integer>> mapset, int numFriendsOfUser) {
+        double numFriendsOfUserDouble = (double) numFriendsOfUser;
+        List<Integer> keys = new ArrayList<Integer>(mapset.size() * 100);
+        for(int key : mapset.keySet()) {
+            int numEntries = getNumEntries((double) mapset.get(key).size(), numFriendsOfUserDouble);
+            for(int i=0; i<numEntries; i++) {
+                keys.add(key); //this is intentional: we want numEntries copies of key in there
             }
-            random -= actionsProbability.get(TRACEAction);
         }
 
-        return DOWNTIME;
+        return ProbabilityUtils.getRandomElement(keys);
+    }
+
+    static int getNumEntries(double thisSize, double comparisonSize) {
+        double lesser  = Math.min(thisSize, comparisonSize);
+        double greater = Math.max(thisSize, comparisonSize);
+        double similarity = Math.pow(lesser/greater, 2);
+        return 1 + (int) (9 * similarity);
     }
 
 }

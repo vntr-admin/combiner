@@ -150,6 +150,16 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
+    public Integer getNumberOfFriendships() {
+        int numFriendships=0;
+        Map<Integer, Set<Integer>> friendships = getFriendships();
+        for(Integer uid : friendships.keySet()) {
+            numFriendships += friendships.get(uid).size();
+        }
+        return numFriendships / 2; //TODO: make sure this is correct
+    }
+
+    @Override
     public Collection<Integer> getUserIds() {
         return manager.getAllUserIds();
     }

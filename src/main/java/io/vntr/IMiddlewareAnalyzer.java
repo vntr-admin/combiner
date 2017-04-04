@@ -10,6 +10,7 @@ import java.util.Set;
 public interface IMiddlewareAnalyzer extends IMiddleware {
     Integer getNumberOfPartitions();
     Integer getNumberOfUsers();
+    Integer getNumberOfFriendships();
     Collection<Integer> getUserIds();
     Collection<Integer> getPartitionIds();
     Integer getEdgeCut();
