@@ -113,13 +113,13 @@ public class TraceRunner {
             log(pw, "Num partitions:  " + trace.getPids().size(),        true, true);
 
             System.out.println("Start:");
-            log(middleware, pw, "N/A", type, true, true);
+            log(middleware, pw, null, type, true, true);
 
             long startTime = System.nanoTime();
 
             for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next.toString(), type, true, (i % 50) == 0);
+                log(middleware, pw, next, type, true, (i % 50) == 0);
                 runAction(middleware, next);
             }
 
@@ -129,7 +129,7 @@ public class TraceRunner {
 
             System.out.println("Time elapsed: " + seconds + "." + millis + " seconds");
 
-            log(middleware, pw, "N/A", type, true, true);
+            log(middleware, pw, null, type, true, true);
 
         }catch(Exception e) {
             throw e;
@@ -142,7 +142,7 @@ public class TraceRunner {
     }
 
     static void runAction(IMiddleware middleware, TraceAction action) {
-        switch (action.getTRACEAction()) {
+        switch (action.getAction()) {
             case ADD_USER:         middleware.addUser(new User(action.getVal1()));          break;
             case REMOVE_USER:      middleware.removeUser(action.getVal1());                 break;
             case BEFRIEND:         middleware.befriend(action.getVal1(), action.getVal2()); break;
@@ -153,9 +153,16 @@ public class TraceRunner {
         }
     }
 
-    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, String next, String type, boolean flush, boolean echo) {
-        String str = String.format(overallFormatStr, type, new Date().toString(), next, middleware.getEdgeCut(), middleware.getReplicationCount());
-        log(pw, str, flush, echo);
+    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, boolean flush, boolean echo) {
+        int numU = middleware.getNumberOfUsers();
+        int numF = middleware.getNumberOfFriendships();
+        int numP = middleware.getNumberOfPartitions();
+        int cut  = middleware.getEdgeCut();
+        int reps = middleware.getReplicationCount();
+        double asrt = middleware.calcualteAssortivity();
+        String nextAction = next != null ? next.toAbbreviatedString() : "N/A";
+        String compressedStr = formatCompressed(type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps);
+        log(pw, compressedStr, flush, echo);
     }
 
     private static void log(PrintWriter pw, String str, boolean flush, boolean echo) {
@@ -262,5 +269,36 @@ public class TraceRunner {
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
         MetisManager manager = MetisInitUtils.initGraph(trace.getPartitions(), trace.getFriendships(), gpmetisLocation, gpmetisTempdir);
         return new MetisMiddleware(manager);
+    }
+
+    private static final String compressedFormatStr = "#%7s | %19s | %-14s | P=%-3d | U=%-5d | F=%-7d | ASRT=%-6s | Cut=%-7s | Reps=%-7s";
+
+    static String formatCompressed(String type, Date date, String nextAction, int numP, int numU, int numF, double asrt, int cut, int reps) {
+
+        String formattedDate = sdf.format(date);
+
+        String asrtString = "" + asrt;
+        if(asrtString.startsWith("0")) {
+            asrtString = asrtString.substring(1);
+        }
+        else if(asrtString.startsWith("-0")) {
+            asrtString = "-" + asrtString.substring(2);
+        }
+        if(asrtString.length() > 6) {
+            asrtString = asrtString.substring(0,6);
+        }
+
+        String result = String.format(compressedFormatStr,
+                type,
+                formattedDate,
+                nextAction,
+                numP,
+                numU,
+                numF,
+                asrtString,
+                cut,
+                reps);
+
+        return result;
     }
 }

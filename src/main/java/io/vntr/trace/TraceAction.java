@@ -6,7 +6,17 @@ package io.vntr.trace;
 public class TraceAction {
 
     public enum ACTION {
-        ADD_USER, REMOVE_USER, BEFRIEND, UNFRIEND, ADD_PARTITION, REMOVE_PARTITION, DOWNTIME, FOREST_FIRE;
+        ADD_USER("+U"), REMOVE_USER("-U"), BEFRIEND("+F"), UNFRIEND("-F"), ADD_PARTITION("+P"), REMOVE_PARTITION("-P"), DOWNTIME("DT");
+
+        private final String abbreviation;
+
+        ACTION(String abbreviation) {
+            this.abbreviation = abbreviation;
+        }
+
+        public String getAbbreviation() {
+            return abbreviation;
+        }
 
         public static ACTION fromName(String name) {
             for(ACTION TRACEAction : ACTION.values()) {
@@ -19,34 +29,34 @@ public class TraceAction {
         }
     }
 
-    private ACTION TRACEAction;
+    private ACTION action;
     private int val1 = -1;
     private int val2 = -1;
 
     public TraceAction() {
     }
 
-    public TraceAction(ACTION TRACEAction) {
-        this.TRACEAction = TRACEAction;
+    public TraceAction(ACTION action) {
+        this.action = action;
     }
 
-    public TraceAction(ACTION TRACEAction, int val1) {
-        this.TRACEAction = TRACEAction;
+    public TraceAction(ACTION action, int val1) {
+        this.action = action;
         this.val1 = val1;
     }
 
-    public TraceAction(ACTION TRACEAction, int val1, int val2) {
-        this.TRACEAction = TRACEAction;
+    public TraceAction(ACTION action, int val1, int val2) {
+        this.action = action;
         this.val1 = val1;
         this.val2 = val2;
     }
 
-    public ACTION getTRACEAction() {
-        return TRACEAction;
+    public ACTION getAction() {
+        return action;
     }
 
-    public void setTRACEAction(ACTION TRACEAction) {
-        this.TRACEAction = TRACEAction;
+    public void setAction(ACTION action) {
+        this.action = action;
     }
 
     public int getVal1() {
@@ -67,8 +77,10 @@ public class TraceAction {
 
     @Override
     public String toString() {
-        return TRACEAction + " " + val1 + " " + val2;
+        return action + " " + val1 + " " + val2;
     }
+
+    public String toAbbreviatedString() { return action.getAbbreviation() + " " + val1 + " " + val2; }
 
     public static TraceAction fromString(String str) {
         try {
@@ -91,12 +103,12 @@ public class TraceAction {
 
         if (val1 != that.val1) return false;
         if (val2 != that.val2) return false;
-        return TRACEAction == that.TRACEAction;
+        return action == that.action;
     }
 
     @Override
     public int hashCode() {
-        int result = TRACEAction != null ? TRACEAction.hashCode() : 0;
+        int result = action != null ? action.hashCode() : 0;
         result = 31 * result + val1;
         result = 31 * result + val2;
         return result;
