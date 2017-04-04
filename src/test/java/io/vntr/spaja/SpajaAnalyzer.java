@@ -6,15 +6,11 @@ import io.vntr.TestUtils;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 import org.apache.log4j.Logger;
-import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.Analyzer.ACTIONS.*;
-import static io.vntr.Analyzer.ACTIONS.DOWNTIME;
 import static io.vntr.TestUtils.*;
-import static io.vntr.TestUtils.copyMapSet;
-import static io.vntr.TestUtils.getFriendship;
 import static io.vntr.spaja.BEFRIEND_REBALANCE_STRATEGY.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,7 +33,7 @@ public class SpajaAnalyzer {
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for (int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
                 pids.add(pid);
             }
@@ -64,7 +60,7 @@ public class SpajaAnalyzer {
             SpajaManager SpajaManager = initSpajaManager(friendships, partitions, replicas);
             SpajaMiddleware SpajaMiddleware = initSpajaMiddleware(SpajaManager);
 
-            Map<Analyzer.ACTIONS, Double> actionsProbability = new HashMap<Analyzer.ACTIONS, Double>();
+            Map<Analyzer.ACTIONS, Double> actionsProbability = new HashMap<>();
             actionsProbability.put(ADD_USER,         0.125D);
             actionsProbability.put(REMOVE_USER,      0.05D);
             actionsProbability.put(BEFRIEND,         0.64D);
@@ -91,8 +87,8 @@ public class SpajaAnalyzer {
             Analyzer.ACTIONS action = script[i];
             if(action == ADD_USER) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-                Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+                Set<Integer> oldUids = new HashSet<>(middleware.getUserIds());
                 logger.warn("(" + i + "): " + ADD_USER + ": pre");
                 int newUid = middleware.addUser();
                 logger.warn("(" + i + "): " + ADD_USER + ": " + newUid);
@@ -107,8 +103,8 @@ public class SpajaAnalyzer {
                 Map<Integer, Set<Integer>> oldPartitions = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> oldUids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getUserIds());
                 logger.warn("(" + i + "): " + REMOVE_USER + ": " + badId);
                 middleware.removeUser(badId);
@@ -130,8 +126,8 @@ public class SpajaAnalyzer {
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Map<Integer, Set<Integer>> friendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int[] nonfriendship = getNonFriendship(middleware.getFriendships());
                 int uid1 = nonfriendship[0];
                 int uid2 = nonfriendship[1];
@@ -155,8 +151,8 @@ public class SpajaAnalyzer {
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
                 Map<Integer, Set<Integer>> friendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int[] friendship = getFriendship(middleware.getFriendships());
                 logger.warn("(" + i + "): " + UNFRIEND + ": " + friendship[0] + "<->" + friendship[1]);
                 middleware.unfriend(friendship[0], friendship[1]);
@@ -173,9 +169,9 @@ public class SpajaAnalyzer {
             }
             if(action == FOREST_FIRE) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(copyMapSet(middleware.getFriendships())));
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(copyMapSet(middleware.getFriendships())));
                 Set<Integer> newUsersFriends = generator.run();
                 int newUid = generator.getV();
                 logger.warn("(" + i + "): " + FOREST_FIRE + ": " + newUid + "<->" + newUsersFriends);
@@ -197,13 +193,13 @@ public class SpajaAnalyzer {
             }
             if(action == ADD_PARTITION) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> oldPids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> oldPids = new HashSet<>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": pre");
                 int newPid = middleware.addPartition();
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": " + newPid);
                 isMiddlewareInAValidState(middleware, 2);
-                Set<Integer> newPids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> newPids = new HashSet<>(middleware.getPartitionIds());
                 newPids.removeAll(oldPids);
                 assertTrue(newPids.size() == 1);
                 assertTrue(newPids.contains(newPid));
@@ -212,8 +208,8 @@ public class SpajaAnalyzer {
             }
             if(action == REMOVE_PARTITION) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + REMOVE_PARTITION + ": " + badId);
                 middleware.removePartition(badId);
@@ -226,8 +222,8 @@ public class SpajaAnalyzer {
             }
             if(action == DOWNTIME) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + DOWNTIME);
                 middleware.broadcastDowntime();
                 isMiddlewareInAValidState(middleware, 2);
@@ -261,10 +257,10 @@ public class SpajaAnalyzer {
 
     private static void isMiddlewareInAValidState(SpajaMiddleware middleware, int minNumReplicas) {
         //TODO: add back in the replica-specific stuff
-        Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-        Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-        assertTrue(middleware.getNumberOfPartitions().intValue() == pids.size());
-        assertTrue(middleware.getNumberOfUsers().intValue()      == uids.size());
+        Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+        Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+        assertTrue(middleware.getNumberOfPartitions() == pids.size());
+        assertTrue(middleware.getNumberOfUsers()      == uids.size());
 
         Map<Integer, Set<Integer>> partitions  = middleware.getPartitionToUserMap();
         Map<Integer, Set<Integer>> replicas    = middleware.getPartitionToReplicaMap();
@@ -283,7 +279,7 @@ public class SpajaAnalyzer {
             }
         }
 
-        Set<Integer> insufficientlyReplicatedUsers = new TreeSet<Integer>();
+        Set<Integer> insufficientlyReplicatedUsers = new TreeSet<>();
         for(int uid : uids) {
             assertTrue(findKeysForUser(partitions, uid).size() == 1);
             try {
@@ -324,25 +320,25 @@ public class SpajaAnalyzer {
                 assertTrue(master.getMasterPartitionId().equals(replica.getMasterPartitionId()));
                 assertTrue(master.getReplicaPartitionIds().equals(replica.getReplicaPartitionIds()));
                 assertTrue(master.getPartitionId().equals(master.getMasterPartitionId()));
-                assertTrue(replica.getPartitionId().equals((Integer) replicaPid));
+                assertTrue(replica.getPartitionId().equals(replicaPid));
             }
         }
 
-        Set<Integer> allMastersSeen = new HashSet<Integer>();
+        Set<Integer> allMastersSeen = new HashSet<>();
         for(int pid : partitions.keySet()) {
             allMastersSeen.addAll(partitions.get(pid));
         }
         allMastersSeen.removeAll(middleware.getUserIds());
         assertTrue(allMastersSeen.isEmpty());
 
-        Set<Integer> allReplicasSeen = new HashSet<Integer>();
+        Set<Integer> allReplicasSeen = new HashSet<>();
         for(int pid : replicas.keySet()) {
             allReplicasSeen.addAll(replicas.get(pid));
         }
         allReplicasSeen.removeAll(middleware.getUserIds());
         assertTrue(allReplicasSeen.isEmpty());
 
-        Set<Integer> allFriendsSeen = new HashSet<Integer>();
+        Set<Integer> allFriendsSeen = new HashSet<>();
         for(int pid : friendships.keySet()) {
             allFriendsSeen.addAll(friendships.get(pid));
         }
@@ -397,7 +393,7 @@ public class SpajaAnalyzer {
                 assertTrue (newMasters.get(maxPid).contains(minUid));
                 assertFalse(newReplicas.get(maxPid).contains(minUid));
 
-                Set<Integer> friendsOfMinUidToVerify = new HashSet<Integer>(bidirectionalFriendships.get(minUid));
+                Set<Integer> friendsOfMinUidToVerify = new HashSet<>(bidirectionalFriendships.get(minUid));
                 friendsOfMinUidToVerify.removeAll(newMasters.get(maxPid));
                 friendsOfMinUidToVerify.removeAll(newReplicas.get(maxPid));
                 assertTrue(friendsOfMinUidToVerify.isEmpty());
@@ -406,7 +402,7 @@ public class SpajaAnalyzer {
                 assertTrue (newMasters.get(minPid).contains(maxUid));
                 assertFalse(newReplicas.get(minPid).contains(maxUid));
 
-                Set<Integer> friendsOfMaxUidToVerify = new HashSet<Integer>(bidirectionalFriendships.get(maxUid));
+                Set<Integer> friendsOfMaxUidToVerify = new HashSet<>(bidirectionalFriendships.get(maxUid));
                 friendsOfMaxUidToVerify.removeAll(newMasters.get(minPid));
                 friendsOfMaxUidToVerify.removeAll(newReplicas.get(minPid));
                 assertTrue(friendsOfMaxUidToVerify.isEmpty());
@@ -418,30 +414,30 @@ public class SpajaAnalyzer {
         //Find replicas that need to be added
         Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
 
-        Set<Integer> friendsOfMoverInSource = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        Set<Integer> friendsOfMoverInSource = new HashSet<>(bidirectionalFriendships.get(mover));
         friendsOfMoverInSource.retainAll(masters.get(sourcePid));
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = !friendsOfMoverInSource.isEmpty();
 
-        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<>(bidirectionalFriendships.get(mover));
         replicasToAddInStayingPartition.removeAll(masters.get(targetPid));
         replicasToAddInStayingPartition.removeAll(replicas.get(targetPid));
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = replicas.get(targetPid).contains(mover) && findKeysForUser(replicas, mover).size() > 2;
 
-        Set<Integer> stayersFriendsOnSource = new HashSet<Integer>(bidirectionalFriendships.get(stayer));
+        Set<Integer> stayersFriendsOnSource = new HashSet<>(bidirectionalFriendships.get(stayer));
         stayersFriendsOnSource.retainAll(masters.get(sourcePid));
         stayersFriendsOnSource.remove(mover);
         boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = replicas.get(sourcePid).contains(stayer) && stayersFriendsOnSource.isEmpty() && findKeysForUser(replicas, stayer).size() > 2;
 
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>(bidirectionalFriendships.get(mover));
         replicasInMovingPartitionToDelete.retainAll(replicas.get(sourcePid));
         outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(); iter.hasNext(); ) {
             int candidate = iter.next();
             int numReplicas = findKeysForUser(replicas, candidate).size();
             if((numReplicas + (replicasToAddInStayingPartition.contains(candidate) ? 1 : 0)) <= 2) {
                 iter.remove();
-                continue outer;
+                continue;
             }
             for(int friendOfCandidate : bidirectionalFriendships.get(candidate)) {
                 if(friendOfCandidate == mover) {
@@ -479,12 +475,12 @@ public class SpajaAnalyzer {
             boolean minUidHasExtraReplicas = findKeysForUser(oldReplicas, minUid).size() > 2;
             boolean maxUidHasExtraReplicas = findKeysForUser(oldReplicas, maxUid).size() > 2;
 
-            Set<Integer> friendsOfMaxUidOnMinPid = new HashSet<Integer>(bidirectionalFriendships.get(maxUid));
+            Set<Integer> friendsOfMaxUidOnMinPid = new HashSet<>(bidirectionalFriendships.get(maxUid));
             friendsOfMaxUidOnMinPid.retainAll(oldMasters.get(minPid));
             friendsOfMaxUidOnMinPid.remove(minUid);
             boolean maxUidHasOtherFriendsOnMinPid = !friendsOfMaxUidOnMinPid.isEmpty();
 
-            Set<Integer> friendsOfMinUidOnMaxPid = new HashSet<Integer>(bidirectionalFriendships.get(minUid));
+            Set<Integer> friendsOfMinUidOnMaxPid = new HashSet<>(bidirectionalFriendships.get(minUid));
             friendsOfMinUidOnMaxPid.retainAll(oldMasters.get(maxPid));
             friendsOfMinUidOnMaxPid.remove(maxUid);
             boolean minUidHasOtherFriendsOnMaxPid = !friendsOfMinUidOnMaxPid.isEmpty();

@@ -12,7 +12,7 @@ import java.util.Set;
  */
 public class SpajaTestUtils {
     public static SpajaManager initGraph(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize, int numPartitions, Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> pids = new HashSet<Integer>();
+        Set<Integer> pids = new HashSet<>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);
         }
@@ -53,7 +53,7 @@ public class SpajaTestUtils {
     }
 
     private static Map<Integer, Integer> getUToMasterMap(Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
                 map.put(uid, pid);
@@ -63,7 +63,7 @@ public class SpajaTestUtils {
     }
 
     private static Map<Integer, Set<Integer>> getUToReplicasMap(Map<Integer, Set<Integer>> replicaPartitions, Set<Integer> allUids) {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer uid : allUids) {
             map.put(uid, new HashSet<Integer>());
         }

@@ -15,13 +15,13 @@ public class SparMiddlewareTest {
     @Test
     public void testPerformRebalace() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -43,7 +43,7 @@ public class SparMiddlewareTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, initSet( 6,  8,  9, 10, 12, 14, 15, 16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 11, 14, 16, 18, 19, 20));
         replicaPartitions.put(3, initSet( 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 16, 17));
@@ -178,13 +178,13 @@ public class SparMiddlewareTest {
     @Test
     public void testUnfriend() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -206,7 +206,7 @@ public class SparMiddlewareTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 11, 18, 19));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
@@ -238,13 +238,13 @@ public class SparMiddlewareTest {
 //    @Test TODO: reenable this
     public void testRemovePartition() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -266,7 +266,7 @@ public class SparMiddlewareTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 19));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
@@ -279,7 +279,7 @@ public class SparMiddlewareTest {
 
         middleware.removePartition(1);
 
-        Map<Integer, Set<Integer>> expectedPMap = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> expectedPMap = new HashMap<>();
         expectedPMap.put(2, initSet( 6,  7,  8,  9, 10,  1,  4,  5));
         expectedPMap.put(3, initSet(11, 12, 13, 14, 15,  2));
         expectedPMap.put(4, initSet(16, 17, 18, 19, 20,  3));
@@ -292,13 +292,13 @@ public class SparMiddlewareTest {
     @Test
     public void testDetermineUsersWhoWillNeedAnAdditionalReplica() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -320,7 +320,7 @@ public class SparMiddlewareTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 19));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
@@ -335,13 +335,13 @@ public class SparMiddlewareTest {
     @Test
     public void testGetRandomPartitionIdWhereThisUserIsNotPresent() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -363,7 +363,7 @@ public class SparMiddlewareTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10));

@@ -11,7 +11,7 @@ public class SpajaRepartitioner {
     private SpajaManager manager;
     private SpajaBefriendingStrategy spajaBefriendingStrategy;
     private int k;
-    private int randomSampingSize;
+    private int randomSamplingSize;
     private float alpha;
     private float initialT;
     private float deltaT;
@@ -23,28 +23,20 @@ public class SpajaRepartitioner {
         this.deltaT = manager.getDeltaT();
         this.manager = manager;
         this.spajaBefriendingStrategy = spajaBefriendingStrategy;
-        this.randomSampingSize = manager.getRandomSampingSize();
+        this.randomSamplingSize = manager.getRandomSamplingSize();
     }
 
     public void repartition() {
         for(float t = initialT; t >= 1; t -= deltaT) {
-            List<Integer> randomUserList = new LinkedList<Integer>(manager.getAllUserIds());
+            List<Integer> randomUserList = new LinkedList<>(manager.getAllUserIds());
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {
                 SpajaUser user = manager.getUserMasterById(uid);
                 SpajaUser partner = user.findPartner(manager.getUserMastersById(user.getFriendIDs()), t, spajaBefriendingStrategy);
                 if(partner == null) {
-                    partner = user.findPartner(getRandomSamplingOfUsers(randomSampingSize), t, spajaBefriendingStrategy);
+                    partner = user.findPartner(getRandomSamplingOfUsers(randomSamplingSize), t, spajaBefriendingStrategy);
                 }
                 if(partner != null) {
-//                    Map<Integer, String> u1Friends = new HashMap<Integer, String>();
-//                    for(int friendId : user.getFriendIDs()) {
-//                        u1Friends.put(friendId, manager.getUserMasterById(friendId).toString());
-//                    }
-//                    Map<Integer, String> u2Friends = new HashMap<Integer, String>();
-//                    for(int friendId : partner.getFriendIDs()) {
-//                        u2Friends.put(friendId, manager.getUserMasterById(friendId).toString());
-//                    }
                     manager.swap(user.getId(), partner.getId(), spajaBefriendingStrategy);
                 }
             }
@@ -53,24 +45,19 @@ public class SpajaRepartitioner {
 
     private boolean isMiddlewareInAValidState(int minNumReplicas) {
         //TODO: add back in the replica-specific stuff
-        boolean isValid = true;
-        Set<Integer> pids = new HashSet<Integer>(manager.getAllPartitionIds());
-        Set<Integer> uids = new HashSet<Integer>(manager.getAllUserIds());
+        boolean isValid;
+        Set<Integer> pids = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> uids = new HashSet<>(manager.getAllUserIds());
 
         Map<Integer, Set<Integer>> partitions  = manager.getPartitionToUserMap();
         Map<Integer, Set<Integer>> replicas    = manager.getPartitionToReplicaMap();
         Map<Integer, Set<Integer>> friendships = manager.getFriendships();
 
-        isValid &= (pids.equals(partitions.keySet()));
+        isValid  = (pids.equals(partitions.keySet()));
         isValid &= (pids.equals(replicas.keySet()));
         isValid &= (uids.equals(friendships.keySet()));
 
         for(int uid : uids) {
-            int numMasters = findKeysForUser(partitions, uid).size();
-            int numReplicas = findKeysForUser(replicas, uid).size();
-            if(numMasters != 1 || numReplicas < minNumReplicas) {
-                System.out.println("Blork");
-            }
             isValid &= (findKeysForUser(partitions, uid).size() == 1);
             isValid &= (findKeysForUser(replicas, uid).size() >= minNumReplicas);
         }
@@ -91,9 +78,6 @@ public class SpajaRepartitioner {
                 if(pid1 != pid2) {
                     boolean pid2HasUid1 = findKeysForUser(replicas, uid1).contains(pid2);
                     boolean pid1HasUid2 = findKeysForUser(replicas, uid2).contains(pid1);
-                    if(!pid1HasUid2 || !pid2HasUid1) {
-                        System.out.println("Blork");
-                    }
                     //If they aren't colocated, they have replicas in each other's partitions
                     isValid &= (findKeysForUser(replicas, uid1).contains(pid2));
                     isValid &= (findKeysForUser(replicas, uid2).contains(pid1));
@@ -116,21 +100,21 @@ public class SpajaRepartitioner {
             }
         }
 
-        Set<Integer> allMastersSeen = new HashSet<Integer>();
+        Set<Integer> allMastersSeen = new HashSet<>();
         for(int pid : partitions.keySet()) {
             allMastersSeen.addAll(partitions.get(pid));
         }
         allMastersSeen.removeAll(manager.getAllUserIds());
         isValid &= (allMastersSeen.isEmpty());
 
-        Set<Integer> allReplicasSeen = new HashSet<Integer>();
+        Set<Integer> allReplicasSeen = new HashSet<>();
         for(int pid : replicas.keySet()) {
             allReplicasSeen.addAll(replicas.get(pid));
         }
         allReplicasSeen.removeAll(manager.getAllUserIds());
         isValid &= (allReplicasSeen.isEmpty());
 
-        Set<Integer> allFriendsSeen = new HashSet<Integer>();
+        Set<Integer> allFriendsSeen = new HashSet<>();
         for(int pid : friendships.keySet()) {
             allFriendsSeen.addAll(friendships.get(pid));
         }
@@ -140,7 +124,7 @@ public class SpajaRepartitioner {
     }
 
     private static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
-        Set<Integer> keys = new HashSet<Integer>();
+        Set<Integer> keys = new HashSet<>();
         for(int key : m.keySet()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);

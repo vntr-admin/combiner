@@ -12,28 +12,24 @@ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
  */
 public class TestUtils {
     public static <T> Set<T> initSet(T... args) {
-        Set<T> set = new HashSet<T>();
-        for(T t : args) {
-            set.add(t);
-        }
+        Set<T> set = new HashSet<>();
+        Collections.addAll(set, args);
         return set;
     }
 
     public static <T> Set<T> initSet(Set<T> initialSet, T... args) {
-        Set<T> set = new HashSet<T>();
+        Set<T> set = new HashSet<>();
         set.addAll(initialSet);
-        for(T t : args) {
-            set.add(t);
-        }
+        Collections.addAll(set, args);
         return set;
     }
 
     //TODO: test this
     public static Map<Integer, Set<Integer>> getTopographyForForestFireSocialNetwork(int numUsers, float forwardProbability, float backwardProbability) {
-        NavigableMap<Integer, Set<Integer>> friendships = new TreeMap<Integer, Set<Integer>>();
+        NavigableMap<Integer, Set<Integer>> friendships = new TreeMap<>();
         friendships.put(0, new HashSet<Integer>());
         for(int i=1; i<numUsers; i++) {
-            ForestFireGenerator ffg = new ForestFireGenerator(forwardProbability, backwardProbability, new TreeMap<Integer, Set<Integer>>(copyMapSet(friendships)));
+            ForestFireGenerator ffg = new ForestFireGenerator(forwardProbability, backwardProbability, new TreeMap<>(copyMapSet(friendships)));
             Set<Integer> newFriendships = ffg.run();
             int uid = ffg.getV();
             for(int friendId : newFriendships) {
@@ -45,12 +41,12 @@ public class TestUtils {
 
 
     public static Map<Integer, Set<Integer>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
-        Map<Integer, Set<Integer>> userIdToFriendIds = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> userIdToFriendIds = new HashMap<>();
         for(int id=0; id<numUsers; id++) {
             userIdToFriendIds.put(id, new HashSet<Integer>());
         }
 
-        Map<Integer, Set<Integer>> groupIdToUserIds = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> groupIdToUserIds = new HashMap<>();
         for(int id=0; id<numGroups; id++) {
             groupIdToUserIds.put(id, new HashSet<Integer>());
         }
@@ -80,17 +76,17 @@ public class TestUtils {
     }
 
     public static Map<Integer, Set<Integer>> getInitialReplicasObeyingKReplication(int minNumReplicas, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> replicas = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicas = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             replicas.put(pid, new HashSet<Integer>());
         }
 
-        Map<Integer, Set<Integer>> replicaLocations = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaLocations = new HashMap<>();
         for(Integer uid : friendships.keySet()) {
             replicaLocations.put(uid, new HashSet<Integer>());
         }
 
-        Map<Integer, Integer> uMap = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> uMap = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
                 uMap.put(uid, pid);
@@ -115,7 +111,7 @@ public class TestUtils {
         for(Integer uid : replicaLocations.keySet()) {
             int numShort = minNumReplicas - replicaLocations.get(uid).size();
             if(numShort > 0) {
-                Set<Integer> possibilities = new HashSet<Integer>(partitions.keySet());
+                Set<Integer> possibilities = new HashSet<>(partitions.keySet());
                 possibilities.removeAll(replicaLocations.get(uid));
                 possibilities.remove(uMap.get(uid));
                 Set<Integer> newReplicas = getKDistinctValuesFromList(numShort, possibilities);
@@ -129,13 +125,13 @@ public class TestUtils {
     }
 
     public static Map<Integer, Set<Integer>> getRandomPartitioning(Set<Integer> pids, Set<Integer> uids) {
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
-        Set<Integer> pidCopies = new HashSet<Integer>(pids);
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        Set<Integer> pidCopies = new HashSet<>(pids);
         int numPartitions = pidCopies.size();
         int numUsers = uids.size();
         int usersPerPartition = numUsers / numPartitions;
         int numRemainderUsers = numUsers % numPartitions;
-        Set<Integer> remainingUids = new HashSet<Integer>(uids);
+        Set<Integer> remainingUids = new HashSet<>(uids);
         while(remainingUids.size() > 0) {
             int k = usersPerPartition;
             if(numRemainderUsers > 0) {
@@ -152,10 +148,10 @@ public class TestUtils {
     }
 
     public static Map<Integer, Set<Integer>> extractFriendshipsFromFile(String filename) throws Exception {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         File file = new File(filename);
         Scanner scanner = new Scanner(file);
-        Set<Integer> allUids = new HashSet<Integer>();
+        Set<Integer> allUids = new HashSet<>();
         while(scanner.hasNextLine()) {
             String line = scanner.nextLine();
             Integer uid = extractIdFromLine(line);
@@ -191,7 +187,7 @@ public class TestUtils {
             return null;
         }
         String[] ids = mainPart.split(", ");
-        Set<Integer> idSet = new HashSet<Integer>();
+        Set<Integer> idSet = new HashSet<>();
         for(String id : ids) {
             idSet.add(Integer.parseInt(id));
         }
@@ -199,23 +195,23 @@ public class TestUtils {
     }
 
     public static NavigableMap<Integer, NavigableSet<Integer>> copyMapSetNavigable(Map<Integer, Set<Integer>> m) {
-        NavigableMap<Integer, NavigableSet<Integer>> copy = new TreeMap<Integer, NavigableSet<Integer>>();
+        NavigableMap<Integer, NavigableSet<Integer>> copy = new TreeMap<>();
         for(Integer key : m.keySet()) {
-            copy.put(key, new TreeSet<Integer>(m.get(key)));
+            copy.put(key, new TreeSet<>(m.get(key)));
         }
         return copy;
     }
 
     public static Map<Integer, Set<Integer>> copyMapSet(Map<Integer, Set<Integer>> m) {
-        Map<Integer, Set<Integer>> copy = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> copy = new HashMap<>();
         for(Integer key : m.keySet()) {
-            copy.put(key, new HashSet<Integer>(m.get(key)));
+            copy.put(key, new HashSet<>(m.get(key)));
         }
         return copy;
     }
 
     public static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
-        Set<Integer> keys = new HashSet<Integer>();
+        Set<Integer> keys = new HashSet<>();
         for(int key : m.keySet()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
@@ -232,14 +228,14 @@ public class TestUtils {
                 userWhoIsntFriendsWithEveryone = chosenOne;
             }
         }
-        Set<Integer> nonfriends = new HashSet<Integer>(friendships.keySet());
+        Set<Integer> nonfriends = new HashSet<>(friendships.keySet());
         nonfriends.removeAll(friendships.get(userWhoIsntFriendsWithEveryone));
         int friend = ProbabilityUtils.getRandomElement(nonfriends);
         return new int[] {userWhoIsntFriendsWithEveryone, friend};
     }
 
     public static int[] getFriendship(Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> possibilities = new HashSet<Integer>();
+        Set<Integer> possibilities = new HashSet<>();
         for(int uid : friendships.keySet()) {
             if(!friendships.get(uid).isEmpty()) {
                 possibilities.add(uid);

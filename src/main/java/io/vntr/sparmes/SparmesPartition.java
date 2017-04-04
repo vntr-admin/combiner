@@ -9,10 +9,10 @@ import java.util.*;
  */
 public class SparmesPartition {
     private final float gamma;
-    private Map<Integer, SparmesUser> idToMasterMap = new HashMap<Integer, SparmesUser>();
-    private Map<Integer, SparmesUser> idToReplicaMap = new HashMap<Integer, SparmesUser>();
-    private Map<Integer, LogicalUser> logicalUsers = new HashMap<Integer, LogicalUser>();
-    private Set<Integer> logicalReplicaIds = new HashSet<Integer>();
+    private Map<Integer, SparmesUser> idToMasterMap = new HashMap<>();
+    private Map<Integer, SparmesUser> idToReplicaMap = new HashMap<>();
+    private Map<Integer, LogicalUser> logicalUsers = new HashMap<>();
+    private Set<Integer> logicalReplicaIds = new HashSet<>();
     private Integer id;
     private SparmesManager manager;
 
@@ -79,7 +79,7 @@ public class SparmesPartition {
     }
 
     public void resetLogicalUsers() {
-        logicalUsers = new HashMap<Integer, LogicalUser>();
+        logicalUsers = new HashMap<>();
         for(SparmesUser user : idToMasterMap.values()) {
             logicalUsers.put(user.getId(), user.getLogicalUser(true));
         }
@@ -88,7 +88,7 @@ public class SparmesPartition {
     }
 
     public Set<Target> getCandidates(boolean firstIteration, int k, boolean probabilistic) {
-        NavigableSet<Target> candidates = new TreeSet<Target>();
+        NavigableSet<Target> candidates = new TreeSet<>();
         for(LogicalUser luser : logicalUsers.values()) {
             Target target = luser.getTargetPart(firstIteration, probabilistic);
             if(target.newPid != null) {
@@ -96,7 +96,7 @@ public class SparmesPartition {
             }
         }
 
-        Set<Target> topKCandidates = new HashSet<Target>();
+        Set<Target> topKCandidates = new HashSet<>();
         int i=0;
         for(Iterator<Target> iter = candidates.descendingIterator(); iter.hasNext() && i++<k; ) {
             topKCandidates.add(iter.next());
@@ -106,7 +106,7 @@ public class SparmesPartition {
     }
 
     public Set<Integer> physicallyCopyNewMasters() {
-        Set<Integer> newMasters = new HashSet<Integer>(logicalUsers.keySet());
+        Set<Integer> newMasters = new HashSet<>(logicalUsers.keySet());
         newMasters.removeAll(idToMasterMap.keySet());
         for(Integer newUid : newMasters) {
             SparmesUser user = manager.getUserMasterById(newUid);
@@ -122,7 +122,7 @@ public class SparmesPartition {
     }
 
     public void physicallyCopyNewReplicas() {
-        Set<Integer> toReplicate = new HashSet<Integer>(logicalReplicaIds);
+        Set<Integer> toReplicate = new HashSet<>(logicalReplicaIds);
         toReplicate.removeAll(idToReplicaMap.keySet());
         for(Integer uid : toReplicate) {
             manager.addReplica(manager.getUserMasterById(uid), id);
@@ -139,7 +139,7 @@ public class SparmesPartition {
     }
 
     void physicallyDeleteOldReplicas() {
-        Set<Integer> toDereplicate = new HashSet<Integer>(idToReplicaMap.keySet());
+        Set<Integer> toDereplicate = new HashSet<>(idToReplicaMap.keySet());
         toDereplicate.removeAll(logicalReplicaIds);
         for(Integer uid : toDereplicate) {
             manager.removeReplica(manager.getUserMasterById(uid), id);
@@ -180,7 +180,7 @@ public class SparmesPartition {
 
     public void shoreUpFriendReplicas() {
         for(SparmesUser user : idToMasterMap.values()) {
-            Set<Integer> friends = new HashSet<Integer>(user.getFriendIDs());
+            Set<Integer> friends = new HashSet<>(user.getFriendIDs());
             friends.removeAll(idToMasterMap.keySet());
             friends.removeAll(idToReplicaMap.keySet());
             for(int friendId : friends) {

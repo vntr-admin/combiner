@@ -49,7 +49,7 @@ Arguments
 
     type: one of JABEJA, HERMES, SPAR, SPAJA, SPARMES or METIS
 
-    flags: currenly just -n numActions, which limits the run to the first
+    flags: currently just -n numActions, which limits the run to the first
         numActions actions (so you needn't run the whole trace).
 
     parameters: type-specific parameters (see next section).

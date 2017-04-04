@@ -92,7 +92,7 @@ public class SpajaBefriendingStrategy {
     }
 
     Set<Integer> findReplicasToAddToTargetPartition(SpajaUser movingUser, Integer targetPartitionId) {
-        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>();
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<>();
         for (Integer friendId : movingUser.getFriendIDs()) {
             int friendPid = manager.getMasterPartitionIdForUser(friendId);
             if(targetPartitionId != friendPid) {
@@ -117,7 +117,7 @@ public class SpajaBefriendingStrategy {
     }
 
     Set<Integer> findReplicasInMovingPartitionToDelete(SpajaUser movingUser, Set<Integer> replicasToBeAdded) {
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>();
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
         for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
             int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPartitionIds().size();
             if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
@@ -131,7 +131,7 @@ public class SpajaBefriendingStrategy {
     Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SpajaUser user) {
         int uid = user.getId();
         int pid = user.getMasterPartitionId();
-        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<Integer>();
+        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
 outer:  for (Integer friendId : user.getFriendIDs()) {
             int friendPid = manager.getMasterPartitionIdForUser(friendId);
             if (friendPid != pid) {
@@ -199,7 +199,7 @@ outer:  for (Integer friendId : user.getFriendIDs()) {
         Integer pid1 = u1.getMasterPartitionId();
         Integer pid2 = u2.getMasterPartitionId();
 
-        Set<Integer>  mutualFriends = new HashSet<Integer>(u1.getFriendIDs());
+        Set<Integer>  mutualFriends = new HashSet<>(u1.getFriendIDs());
         mutualFriends.retainAll(u2.getFriendIDs());
 
         SwapChanges swapChanges = new SwapChanges();

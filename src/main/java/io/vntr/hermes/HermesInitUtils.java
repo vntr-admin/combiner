@@ -1,6 +1,5 @@
 package io.vntr.hermes;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 

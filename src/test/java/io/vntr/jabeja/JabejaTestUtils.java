@@ -25,7 +25,7 @@ public class JabejaTestUtils {
     }
 
     public static List<JabejaUser> getUsers(JabejaManager manager, Integer... uids) {
-        List<JabejaUser> list = new LinkedList<JabejaUser>();
+        List<JabejaUser> list = new LinkedList<>();
         for(Integer uid : uids) {
             list.add(manager.getUser(uid));
         }
@@ -33,7 +33,7 @@ public class JabejaTestUtils {
     }
 
     public static JabejaManager initGraph(float alpha, float initialT, float deltaT, float befriendInitialT, float befriendDeltaT, int k, int numPartitions, Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> pids = new HashSet<Integer>();
+        Set<Integer> pids = new HashSet<>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);
         }

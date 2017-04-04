@@ -9,44 +9,9 @@ import java.util.*;
  */
 public class TraceTestUtils {
 
-    //TODO: make this into BaseTrace, not just the List of actions
-    public static List<FullTraceAction> getTraceFromFile(String filename){
-        List<FullTraceAction> list = new LinkedList<FullTraceAction>();
-        Scanner scanner = null;
-
-        try {
-            scanner = new Scanner(new File(filename));
-            while(scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                FullTraceAction fullTraceAction = FullTraceAction.fromString(line);
-                list.add(fullTraceAction);
-            }
-        } catch(Exception e) {
-        } finally {
-            if(scanner != null) {
-                scanner.close();
-            }
-        }
-        return list;
-    }
-
-    //TODO: make this into BaseTrace, not just the List of actions
-    public static void writeTraceToFile(String filename, List<FullTraceAction> trace) throws Exception {
-        PrintWriter pw = new PrintWriter(new File(filename));
-        for(Iterator<FullTraceAction> iter = trace.iterator(); iter.hasNext(); ) {
-            FullTraceAction fullTraceAction = iter.next();
-            pw.println(fullTraceAction.toString());
-            if(Math.random() > .99) {
-                pw.flush();
-            }
-        }
-        pw.flush();
-        pw.close();
-    }
-
     public static BaseTrace getFullTraceFromFile(String filename) {
         BaseTrace baseTrace = null;
-        List<FullTraceAction> actions = new LinkedList<FullTraceAction>();
+        List<FullTraceAction> actions = new LinkedList<>();
         Map<Integer, Set<Integer>> friendships = null;
         Set<Integer> pids = null;
         Map<Integer, Set<Integer>> partitions = null;
@@ -109,7 +74,7 @@ public class TraceTestUtils {
     static Map<Integer, Set<Integer>> parseMapSetLine(String line) {
         String tempLine = line.substring(1, line.length()-1);
         String[] chunks = tempLine.split("\\], ");
-        Map<Integer, Set<Integer>> mapSet = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> mapSet = new HashMap<>();
         for(int i=0; i<chunks.length; i++) {
             String chunk = chunks[i];
             if(i==chunks.length-1) {
@@ -118,7 +83,7 @@ public class TraceTestUtils {
             int equalsIndex = chunk.indexOf('=');
             int key = Integer.parseInt(chunk.substring(0, equalsIndex));
             String[] values = chunk.substring(equalsIndex+2).split(", ");
-            Set<Integer> set = new HashSet<Integer>();
+            Set<Integer> set = new HashSet<>();
             for(String value : values) {
                 if(!value.isEmpty()) {
                     set.add(Integer.parseInt(value));
@@ -133,7 +98,7 @@ public class TraceTestUtils {
 
     static Set<Integer> parseSetLine(String line) {
         String[] values = line.substring(line.indexOf('[')+1, line.indexOf(']')).split(", ");
-        Set<Integer> set = new HashSet<Integer>();
+        Set<Integer> set = new HashSet<>();
         for(String value : values) {
             if(!value.isEmpty()) {
                 set.add(Integer.parseInt(value));
@@ -141,7 +106,6 @@ public class TraceTestUtils {
         }
         return set;
     }
-
 
     public static void writeTraceToFile(String filename, BaseTrace baseTrace) throws Exception {
         PrintWriter pw = new PrintWriter(new File(filename));

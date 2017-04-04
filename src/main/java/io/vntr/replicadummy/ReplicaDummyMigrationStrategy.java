@@ -13,10 +13,10 @@ public class ReplicaDummyMigrationStrategy {
     }
 
     public Map<Integer, Integer> getUserMigrationStrategy(Integer partitionId) {
-        List<Integer> masterIds = new LinkedList<Integer>(manager.getPartitionById(partitionId).getIdsOfMasters());
+        List<Integer> masterIds = new LinkedList<>(manager.getPartitionById(partitionId).getIdsOfMasters());
         Collections.shuffle(masterIds);
         Map<Integer, Integer> pWeightMap = getPWeightMap(partitionId);
-        Map<Integer, Integer> strategy = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> strategy = new HashMap<>();
 
         for(int masterId : masterIds) {
             Integer minReplica = getLightestReplicaPid(masterId, pWeightMap);
@@ -28,7 +28,7 @@ public class ReplicaDummyMigrationStrategy {
     }
 
     Map<Integer, Integer> getPWeightMap(Integer partitionId) {
-        Map<Integer, Integer> pWeightMap = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pWeightMap = new HashMap<>();
         for(int pid : manager.getAllPartitionIds()) {
             if(pid != partitionId) {
                 pWeightMap.put(pid, manager.getPartitionById(pid).getNumMasters());

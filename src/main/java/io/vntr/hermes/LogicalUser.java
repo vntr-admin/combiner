@@ -57,7 +57,7 @@ public class LogicalUser {
         if(getImbalanceFactor(pid, -1) < (2-gamma)) {
             return new Target(id, null, null, 0);
         }
-        Set<Integer> targets = new HashSet<Integer>();
+        Set<Integer> targets = new HashSet<>();
         Integer maxGain = 0;
         boolean imbalanced = getImbalanceFactor(pid, 0) > gamma;
         if(imbalanced) {
@@ -68,7 +68,7 @@ public class LogicalUser {
             if(((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) && (!probabilistic || Math.random() < 0.95)) {
                 int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
                 if(gain > maxGain && getImbalanceFactor(targetPid, 1) < gamma) {
-                    targets = new HashSet<Integer>();
+                    targets = new HashSet<>();
                     targets.add(targetPid);
                     maxGain = gain;
                 } else if (gain == maxGain && (imbalanced || gain > 0)) {

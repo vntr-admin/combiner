@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class SparPartition {
-    private Map<Integer, SparUser> idToMasterMap = new HashMap<Integer, SparUser>();
-    private Map<Integer, SparUser> idToReplicaMap = new HashMap<Integer, SparUser>();
+    private Map<Integer, SparUser> idToMasterMap = new HashMap<>();
+    private Map<Integer, SparUser> idToReplicaMap = new HashMap<>();
     private Integer id;
 
     public SparPartition(Integer id) {

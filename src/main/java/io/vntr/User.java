@@ -9,7 +9,7 @@ public class User {
 
     public User(Integer id) {
         this.id = id;
-        this.friendIDs = new HashSet<Integer>();
+        this.friendIDs = new HashSet<>();
     }
 
     public Integer getId() {

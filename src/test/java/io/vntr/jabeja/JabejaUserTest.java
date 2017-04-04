@@ -20,10 +20,10 @@ public class JabejaUserTest {
 
     @Before
     public void init() {
-        fig2aPartitions  = new HashMap<Integer, Set<Integer>>();
-        fig2aFriendships = new HashMap<Integer, Set<Integer>>();
-        fig2bPartitions  = new HashMap<Integer, Set<Integer>>();
-        fig2bFriendships = new HashMap<Integer, Set<Integer>>();
+        fig2aPartitions  = new HashMap<>();
+        fig2aFriendships = new HashMap<>();
+        fig2bPartitions  = new HashMap<>();
+        fig2bFriendships = new HashMap<>();
 
         fig2aPartitions.put(1, initSet(1, 2, 3, 4, 5));
         fig2aPartitions.put(2, initSet(6, 7));
@@ -189,12 +189,12 @@ public class JabejaUserTest {
     @Test
     public void testFindPartnerPrimary() {
         float alpha = 1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -234,12 +234,12 @@ public class JabejaUserTest {
     @Test
     public void testFindPartnerEffectOfT() {
         float alpha = 1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));

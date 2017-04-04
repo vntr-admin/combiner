@@ -16,8 +16,8 @@ public class HermesPartition {
         this.id = id;
         this.gamma = gamma;
         this.manager = manager;
-        this.physicalUsers = new HashMap<Integer, HermesUser>();
-        this.logicalUsers = new HashMap<Integer, LogicalUser>();
+        this.physicalUsers = new HashMap<>();
+        this.logicalUsers = new HashMap<>();
     }
 
     public Integer getId() {
@@ -41,7 +41,7 @@ public class HermesPartition {
     }
 
     public Set<Target> getCandidates(boolean firstIteration, int k, boolean probabilistic) {
-        NavigableSet<Target> candidates = new TreeSet<Target>();
+        NavigableSet<Target> candidates = new TreeSet<>();
         for(LogicalUser luser : logicalUsers.values()) {
             Target target = luser.getTargetPart(firstIteration, probabilistic);
             if(target.partitionId != null) {
@@ -49,7 +49,7 @@ public class HermesPartition {
             }
         }
 
-        Set<Target> topKCandidates = new HashSet<Target>();
+        Set<Target> topKCandidates = new HashSet<>();
         int i=0;
         for(Iterator<Target> iter = candidates.descendingIterator(); iter.hasNext() && i++<k; ) {
             topKCandidates.add(iter.next());
@@ -60,7 +60,7 @@ public class HermesPartition {
 
     /** Returns the users who were copied to this partition. */
     public Set<Integer> physicallyMigrateCopy() {
-        Set<Integer> logicalUserSet = new HashSet<Integer>(logicalUsers.keySet());
+        Set<Integer> logicalUserSet = new HashSet<>(logicalUsers.keySet());
         logicalUserSet.removeAll(physicalUsers.keySet());
         for(Integer newUserId : logicalUserSet) {
             physicalUsers.put(newUserId, manager.getUser(newUserId));
@@ -80,7 +80,7 @@ public class HermesPartition {
     }
 
     public void resetLogicalUsers() {
-        logicalUsers = new HashMap<Integer, LogicalUser>();
+        logicalUsers = new HashMap<>();
         for(HermesUser hermesUser : physicalUsers.values()) {
             logicalUsers.put(hermesUser.getId(), hermesUser.getLogicalUser(true));
         }

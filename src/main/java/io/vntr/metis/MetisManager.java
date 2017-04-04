@@ -19,8 +19,8 @@ public class MetisManager {
     private static final Integer defaultInitialPid = 1;
 
     public MetisManager(String gpmetisLocation, String gpmetisTempdir) {
-        uMap = new TreeMap<Integer, MetisUser>();
-        partitions = new TreeMap<Integer, Set<Integer>>();
+        uMap = new TreeMap<>();
+        partitions = new TreeMap<>();
         this.repartitioner = new MetisRepartitioner(gpmetisLocation, gpmetisTempdir);
     }
 
@@ -41,7 +41,7 @@ public class MetisManager {
     }
 
     public Set<MetisUser> getUsers(Collection<Integer> uids) {
-        Set<MetisUser> users = new HashSet<MetisUser>();
+        Set<MetisUser> users = new HashSet<>();
         for(Integer uid : uids) {
             users.add(uMap.get(uid));
         }
@@ -140,10 +140,6 @@ public class MetisManager {
         if(partitions.containsKey(user.getPid())) {
             getPartition(user.getPid()).remove(uid);
         }
-        if(!partitions.containsKey(newPid)) {
-            System.out.println("Chicka boo, chicka boo, chicka boo boo boo");
-            throw new RuntimeException("You messed up - there's no partition " + newPid);
-        }
         getPartition(newPid).add(uid);
         user.setPid(newPid);
 
@@ -162,7 +158,7 @@ public class MetisManager {
         for(MetisUser user : uMap.values()) {
             for(int friendId : user.getFriendIDs()) {
                 MetisUser friend = getUser(friendId);
-                if(user.getPid().intValue() < friend.getPid().intValue()) {
+                if(user.getPid() < friend.getPid()) {
                     count++;
                 }
             }
@@ -171,7 +167,7 @@ public class MetisManager {
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             map.put(pid, Collections.unmodifiableSet(partitions.get(pid)));
         }
@@ -183,7 +179,7 @@ public class MetisManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
             friendships.put(uid, getUser(uid).getFriendIDs());
         }

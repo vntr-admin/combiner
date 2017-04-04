@@ -45,7 +45,7 @@ public class ReplicaDummyTestUtils {
     }
 
     private static Map<Integer, Integer> getUToMasterMap(Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
                 map.put(uid, pid);
@@ -55,7 +55,7 @@ public class ReplicaDummyTestUtils {
     }
 
     private static Map<Integer, Set<Integer>> getUToReplicasMap(Map<Integer, Set<Integer>> replicaPartitions, Set<Integer> allUids) {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer uid : allUids) {
             map.put(uid, new HashSet<Integer>());
         }

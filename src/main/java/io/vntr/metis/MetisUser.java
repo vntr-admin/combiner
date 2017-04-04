@@ -2,8 +2,6 @@ package io.vntr.metis;
 
 import io.vntr.User;
 
-import java.util.Collection;
-
 /**
  * Created by robertlindquist on 12/5/16.
  */

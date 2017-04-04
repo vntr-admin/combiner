@@ -24,7 +24,7 @@ public class ForestFireGenerator {
         this.friendships = friendships;
         this.friendships.put(v, new HashSet<Integer>());
         bidirectionalFriendshipSet = ProbabilityUtils.generateBidirectionalFriendshipSet(this.friendships);
-        visited = new HashSet<Integer>();
+        visited = new HashSet<>();
         geoDistX = new GeometricDistribution(forward / (1-forward));
         geoDistY = new GeometricDistribution(forward*backward / (1-(forward*backward)));
     }
@@ -34,18 +34,18 @@ public class ForestFireGenerator {
     }
 
     private static Map<Integer, Set<Integer>> cloneFriendships(NavigableMap<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> clone = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> clone = new HashMap<>();
         for(Integer key : friendships.keySet()) {
-            clone.put(key, new HashSet<Integer>(friendships.get(key)));
+            clone.put(key, new HashSet<>(friendships.get(key)));
         }
         return clone;
     }
 
     private static Map<Integer, Set<Integer>> diffFriendships(Map<Integer, Set<Integer>> oldFriendships, Map<Integer, Set<Integer>> newFriendships) {
-        Map<Integer, Set<Integer>> diff = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> diff = new HashMap<>();
         for(Integer key : newFriendships.keySet()) {
             if(oldFriendships.containsKey(key)) {
-                Set<Integer> setDiff = new HashSet<Integer>(newFriendships.get(key));
+                Set<Integer> setDiff = new HashSet<>(newFriendships.get(key));
                 setDiff.removeAll(oldFriendships.get(key));
                 diff.put(key, setDiff);
             }

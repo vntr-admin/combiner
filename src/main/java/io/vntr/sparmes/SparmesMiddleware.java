@@ -107,22 +107,18 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     @Override
     public int addPartition() {
         int pid = manager.addPartition();
-//        manager.repartition();
         return pid;
     }
 
     @Override
     public void addPartition(Integer partitionId) {
         manager.addPartition(partitionId);
-//        manager.repartition();
     }
 
     @Override
     public void removePartition(Integer partitionId) {
         //First, determine which users will be impacted by this action
         Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
-//        //First, determine which users will need more replicas once this partition is kaput
-//        Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
 
         //Second, determine the migration strategy
         Map<Integer, Integer> migrationStrategy = sparmesMigrationStrategy.getUserMigrationStrategy(partitionId);
@@ -165,14 +161,12 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
 
         //Finally, actually drop partition
         manager.removePartition(partitionId);
-
-//        manager.repartition();
     }
 
     Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
         Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
         int minReplicas = manager.getMinNumReplicas();
-        Set<Integer> usersToReplicate = new HashSet<Integer>();
+        Set<Integer> usersToReplicate = new HashSet<>();
         for(Integer uid : uids) {
             if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
                 usersToReplicate.add(uid);
@@ -182,7 +176,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     }
 
     Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(Set<Integer> uids, Integer pid) {
-        Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> counts = new HashMap<>();
         for(Integer uid : uids) {
             int count = 0;
             SparmesUser user = manager.getUserMasterById(uid);
@@ -197,17 +191,17 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
         SparmesPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
+        Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
         return possibilities;
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
         SparmesPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
+        Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
 
-        Set<Integer> usersInNeedOfNewReplicas = new HashSet<Integer>();
+        Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
         for (Integer userId : possibilities) {
             SparmesUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
@@ -219,11 +213,11 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
@@ -284,13 +278,13 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public double calcualteAssortivity() {
+    public double calculateAssortivity() {
         return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
     }
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
             m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
         }

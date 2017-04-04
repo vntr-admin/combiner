@@ -30,8 +30,8 @@ public class JabejaManager {
         this.befriendInitialT = befriendInitialT;
         this.deltaT = deltaT;
         this.k = k;
-        uMap = new TreeMap<Integer, JabejaUser>();
-        partitions = new TreeMap<Integer, Set<Integer>>();
+        uMap = new TreeMap<>();
+        partitions = new TreeMap<>();
     }
 
     public Integer getPartitionForUser(Integer uid) {
@@ -51,7 +51,7 @@ public class JabejaManager {
     }
 
     public Set<JabejaUser> getUsers(Collection<Integer> uids) {
-        Set<JabejaUser> users = new HashSet<JabejaUser>();
+        Set<JabejaUser> users = new HashSet<>();
         for(Integer uid : uids) {
             users.add(uMap.get(uid));
         }
@@ -117,7 +117,7 @@ public class JabejaManager {
         float effectiveDeltaT = isDowntime ? deltaT : befriendDeltaT;
         float effectiveInitialT = isDowntime ? initialT : befriendInitialT;
         for(float t = effectiveInitialT; t >= 1; t -= effectiveDeltaT) {
-            List<Integer> randomUserList = new LinkedList<Integer>(uMap.keySet());
+            List<Integer> randomUserList = new LinkedList<>(uMap.keySet());
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {
                 JabejaUser user = getUser(uid);
@@ -126,9 +126,6 @@ public class JabejaManager {
                     partner = user.findPartner(getRandomSamplingOfUsers(k), t);
                 }
                 if(partner != null) {
-                    if(getUser(partner.getId()) == null) {
-                        System.out.println("Hmmnh");
-                    }
                     swap(user.getId(), partner.getId());
                 }
             }
@@ -180,7 +177,7 @@ public class JabejaManager {
         for(JabejaUser user : uMap.values()) {
             for(int friendId : user.getFriendIDs()) {
                 JabejaUser friend = getUser(friendId);
-                if(user.getPid().intValue() < friend.getPid().intValue()) {
+                if(user.getPid() < friend.getPid()) {
                     count++;
                 }
             }
@@ -189,7 +186,7 @@ public class JabejaManager {
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             map.put(pid, Collections.unmodifiableSet(partitions.get(pid)));
         }
@@ -201,7 +198,7 @@ public class JabejaManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
             friendships.put(uid, getUser(uid).getFriendIDs());
         }

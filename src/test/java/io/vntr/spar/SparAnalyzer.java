@@ -7,7 +7,6 @@ import java.util.*;
 
 import io.vntr.Analyzer.ACTIONS;
 import org.apache.log4j.Logger;
-import org.junit.Test;
 
 import static io.vntr.Analyzer.ACTIONS.*;
 import static io.vntr.TestUtils.*;
@@ -21,10 +20,10 @@ public class SparAnalyzer {
     final static Logger logger = Logger.getLogger(SparAnalyzer.class);
 
     private static void assertMiddlewareIsInAValidState(SparMiddleware middleware, int minNumReplicas) {
-        Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-        Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-        assertTrue(middleware.getNumberOfPartitions().intValue() == pids.size());
-        assertTrue(middleware.getNumberOfUsers().intValue()      == uids.size());
+        Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+        Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+        assertTrue(middleware.getNumberOfPartitions() == pids.size());
+        assertTrue(middleware.getNumberOfUsers()      == uids.size());
 
         Map<Integer, Set<Integer>> partitions  = middleware.getPartitionToUserMap();
         Map<Integer, Set<Integer>> replicas    = middleware.getPartitionToReplicaMap();
@@ -70,21 +69,21 @@ public class SparAnalyzer {
             }
         }
 
-        Set<Integer> allMastersSeen = new HashSet<Integer>();
+        Set<Integer> allMastersSeen = new HashSet<>();
         for(int pid : partitions.keySet()) {
             allMastersSeen.addAll(partitions.get(pid));
         }
         allMastersSeen.removeAll(middleware.getUserIds());
         assertTrue(allMastersSeen.isEmpty());
 
-        Set<Integer> allReplicasSeen = new HashSet<Integer>();
+        Set<Integer> allReplicasSeen = new HashSet<>();
         for(int pid : replicas.keySet()) {
             allReplicasSeen.addAll(replicas.get(pid));
         }
         allReplicasSeen.removeAll(middleware.getUserIds());
         assertTrue(allReplicasSeen.isEmpty());
 
-        Set<Integer> allFriendsSeen = new HashSet<Integer>();
+        Set<Integer> allFriendsSeen = new HashSet<>();
         for(int pid : friendships.keySet()) {
             allFriendsSeen.addAll(friendships.get(pid));
         }
@@ -155,7 +154,7 @@ public class SparAnalyzer {
                 assertTrue (newMasters.get(maxPid).contains(minUid));
                 assertFalse(newReplicas.get(maxPid).contains(minUid));
 
-                Set<Integer> friendsOfMinUidToVerify = new HashSet<Integer>(bidirectionalFriendships.get(minUid));
+                Set<Integer> friendsOfMinUidToVerify = new HashSet<>(bidirectionalFriendships.get(minUid));
                 friendsOfMinUidToVerify.removeAll(newMasters.get(maxPid));
                 friendsOfMinUidToVerify.removeAll(newReplicas.get(maxPid));
                 assertTrue(friendsOfMinUidToVerify.isEmpty());
@@ -164,7 +163,7 @@ public class SparAnalyzer {
                 assertTrue (newMasters.get(minPid).contains(maxUid));
                 assertFalse(newReplicas.get(minPid).contains(maxUid));
 
-                Set<Integer> friendsOfMaxUidToVerify = new HashSet<Integer>(bidirectionalFriendships.get(maxUid));
+                Set<Integer> friendsOfMaxUidToVerify = new HashSet<>(bidirectionalFriendships.get(maxUid));
                 friendsOfMaxUidToVerify.removeAll(newMasters.get(minPid));
                 friendsOfMaxUidToVerify.removeAll(newReplicas.get(minPid));
                 assertTrue(friendsOfMaxUidToVerify.isEmpty());
@@ -176,32 +175,32 @@ public class SparAnalyzer {
         //Find replicas that need to be added
         Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
 
-        Set<Integer> friendsOfMoverInSource = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        Set<Integer> friendsOfMoverInSource = new HashSet<>(bidirectionalFriendships.get(mover));
         friendsOfMoverInSource.retainAll(masters.get(sourcePid));
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = !friendsOfMoverInSource.isEmpty();
 
-        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<>(bidirectionalFriendships.get(mover));
         replicasToAddInStayingPartition.removeAll(masters.get(targetPid));
         replicasToAddInStayingPartition.removeAll(replicas.get(targetPid));
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = replicas.get(targetPid).contains(mover) && findKeysForUser(replicas, mover).size() > 2;
 
-        Set<Integer> stayersFriendsOnSource = new HashSet<Integer>(bidirectionalFriendships.get(stayer));
+        Set<Integer> stayersFriendsOnSource = new HashSet<>(bidirectionalFriendships.get(stayer));
         stayersFriendsOnSource.retainAll(masters.get(sourcePid));
         stayersFriendsOnSource.remove(mover);
         //TODO: this disagrees with the results from SparBefriendingStrategy
         boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = replicas.get(sourcePid).contains(stayer) && stayersFriendsOnSource.isEmpty() && findKeysForUser(replicas, stayer).size() > 2;
 
         //TODO: this disagrees with the results from SparBefriendingStrategy
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>(bidirectionalFriendships.get(mover));
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>(bidirectionalFriendships.get(mover));
         replicasInMovingPartitionToDelete.retainAll(replicas.get(sourcePid));
 outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(); iter.hasNext(); ) {
             int candidate = iter.next();
             int numReplicas = findKeysForUser(replicas, candidate).size();
             if((numReplicas + (replicasToAddInStayingPartition.contains(candidate) ? 1 : 0)) <= 2) {
                 iter.remove();
-                continue outer;
+                continue;
             }
             for(int friendOfCandidate : bidirectionalFriendships.get(candidate)) {
                 if(friendOfCandidate == mover) {
@@ -239,12 +238,12 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
             boolean minUidHasExtraReplicas = findKeysForUser(oldReplicas, minUid).size() > 2;
             boolean maxUidHasExtraReplicas = findKeysForUser(oldReplicas, maxUid).size() > 2;
 
-            Set<Integer> friendsOfMaxUidOnMinPid = new HashSet<Integer>(bidirectionalFriendships.get(maxUid));
+            Set<Integer> friendsOfMaxUidOnMinPid = new HashSet<>(bidirectionalFriendships.get(maxUid));
             friendsOfMaxUidOnMinPid.retainAll(oldMasters.get(minPid));
             friendsOfMaxUidOnMinPid.remove(minUid);
             boolean maxUidHasOtherFriendsOnMinPid = !friendsOfMaxUidOnMinPid.isEmpty();
 
-            Set<Integer> friendsOfMinUidOnMaxPid = new HashSet<Integer>(bidirectionalFriendships.get(minUid));
+            Set<Integer> friendsOfMinUidOnMaxPid = new HashSet<>(bidirectionalFriendships.get(minUid));
             friendsOfMinUidOnMaxPid.retainAll(oldMasters.get(maxPid));
             friendsOfMinUidOnMaxPid.remove(maxUid);
             boolean minUidHasOtherFriendsOnMaxPid = !friendsOfMinUidOnMaxPid.isEmpty();
@@ -328,7 +327,7 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
                 assertProperUnfriending(friendship[0], friendship[1], oldMasters, oldReplicas, oldFriendships, newMasters, newReplicas, newFriendships);
             }
             if(action == FOREST_FIRE) {
-                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(copyMapSet(middleware.getFriendships())));
+                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(copyMapSet(middleware.getFriendships())));
                 Set<Integer> newUsersFriends = generator.run();
                 int newUid = generator.getV();
                 logger.warn("(" + i + "): " + FOREST_FIRE + ": " + newUid + "<->" + newUsersFriends);
@@ -340,18 +339,18 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
                 assertMiddlewareIsInAValidState(middleware, 2);
             }
             if(action == ADD_PARTITION) {
-                Set<Integer> oldPids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> oldPids = new HashSet<>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": pre");
                 int newPid = middleware.addPartition();
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": " + newPid);
                 assertMiddlewareIsInAValidState(middleware, 2);
-                Set<Integer> newPids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> newPids = new HashSet<>(middleware.getPartitionIds());
                 newPids.removeAll(oldPids);
                 assertTrue(newPids.size() == 1);
                 assertTrue(newPids.contains(newPid));
             }
             if(action == REMOVE_PARTITION) {
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getPartitionIds());
                 Map<Integer, Set<Integer>> oldMasters   = copyMapSet(middleware.getPartitionToUserMap());
                 Map<Integer, Set<Integer>> oldReplicas   = copyMapSet(middleware.getPartitionToReplicaMap());
@@ -384,7 +383,7 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for (int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
                 pids.add(pid);
             }
@@ -412,7 +411,7 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
             SparManager sparManager = initSparManager(friendships, partitions, replicas);
             SparMiddleware sparMiddleware = initSparMiddleware(sparManager);
 
-            Map<ACTIONS, Double> actionsProbability = new HashMap<ACTIONS, Double>();
+            Map<ACTIONS, Double> actionsProbability = new HashMap<>();
             actionsProbability.put(ADD_USER,         0.125D);
             actionsProbability.put(REMOVE_USER,      0.05D);
             actionsProbability.put(BEFRIEND,         0.64D);

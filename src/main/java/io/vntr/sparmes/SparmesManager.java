@@ -20,7 +20,7 @@ public class SparmesManager {
 
     private Map<Integer, SparmesPartition> pMap;
 
-    private Map<Integer, Integer> uMap = new HashMap<Integer, Integer>();
+    private Map<Integer, Integer> uMap = new HashMap<>();
 
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
@@ -28,7 +28,7 @@ public class SparmesManager {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.probabilistic = probabilistic;
-        this.pMap = new HashMap<Integer, SparmesPartition>();
+        this.pMap = new HashMap<>();
         this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
     }
 
@@ -274,21 +274,21 @@ public class SparmesManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(pMap.keySet());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
     Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<Integer>(pMap.keySet());
+        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(pMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
@@ -296,7 +296,7 @@ public class SparmesManager {
     }
 
     Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
@@ -350,16 +350,14 @@ public class SparmesManager {
         iteration = 0;
         boolean stoppingCondition = false;
         while (!stoppingCondition) {
-            boolean changed = false;
-            changed |= performStage(true,  k);
+            boolean changed;
+            changed  = performStage(true,  k);
             changed |= performStage(false, k);
             stoppingCondition = !changed;
             iteration++;
         }
 
-        System.out.println("Number of iterations: " + iteration);
-
-        Map<Integer, Integer> usersWhoMoved = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> usersWhoMoved = new HashMap<>();
         for (SparmesPartition p : pMap.values()) {
             Set<Integer> moved = p.physicallyCopyNewMasters();
             for(Integer uid : moved) {
@@ -396,7 +394,7 @@ public class SparmesManager {
         Set<Integer> replicaLocations = user.getReplicaPartitionIds();
         int deficit = minNumReplicas - replicaLocations.size();
         if(deficit > 0) {
-            Set<Integer> newLocations = new HashSet<Integer>(pMap.keySet());
+            Set<Integer> newLocations = new HashSet<>(pMap.keySet());
             newLocations.removeAll(replicaLocations);
             newLocations.remove(user.getMasterPartitionId());
             for(int rPid : ProbabilityUtils.getKDistinctValuesFromList(deficit, newLocations)) {
@@ -406,11 +404,11 @@ public class SparmesManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(getAllPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
@@ -418,23 +416,14 @@ public class SparmesManager {
 
     boolean performStage(boolean firstStage, int k) {
         if(iteration > 100) {
-            return false; //TODO: remove this once other problems are fixed
+            return false;
         }
         boolean changed = false;
-        Map<Integer, Set<Target>> stageTargets = new HashMap<Integer, Set<Target>>();
+        Map<Integer, Set<Target>> stageTargets = new HashMap<>();
         for (SparmesPartition p : pMap.values()) {
             Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
             stageTargets.put(p.getId(), targets);
             changed |= !targets.isEmpty();
-        }
-
-        if(changed){// && iteration > 100) {
-//            System.out.println("For iteration " + iteration + ", stage " + (firstStage ? "1" : "2"));
-            for(int pid : stageTargets.keySet()) {
-                if(!stageTargets.get(pid).isEmpty()) {
-//                    System.out.println(pid + " : " + stageTargets.get(pid));
-                }
-            }
         }
 
         for(Integer pid : pMap.keySet()) {
@@ -494,20 +483,20 @@ public class SparmesManager {
         //TODO: this might not be working properly
         //Second, if we've violated k-constraints, choose another partition at random and replicate this user there
         if(user.getLogicalPartitionIds().size() < minNumReplicas) {
-            Set<Integer> potentialReplicaLocations = new HashSet<Integer>(pMap.keySet());
+            Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
             potentialReplicaLocations.remove(user.getLogicalPid());
             potentialReplicaLocations.removeAll(user.getLogicalPartitionIds());
-            List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+            List<Integer> list = new LinkedList<>(potentialReplicaLocations);
             Integer newReplicaPid = list.get((int) (list.size() * Math.random()));
             addLogicalReplica(t.uid, newReplicaPid);
         }
 
         //Third, remove friends replicas from old partition if they weren't being used for any other reason and don't violate k-replication
-        Set<Integer> friendReplicasToRemove = new HashSet<Integer>(user.getFriendIDs());
+        Set<Integer> friendReplicasToRemove = new HashSet<>(user.getFriendIDs());
         friendReplicasToRemove.retainAll(oldPart.getLogicalReplicaIds());
         for(Integer friendId : friendReplicasToRemove) {
             SparmesUser friend = getUserMasterById(friendId);
-            Set<Integer> friendsOfFriend = new HashSet<Integer>(friend.getFriendIDs());
+            Set<Integer> friendsOfFriend = new HashSet<>(friend.getFriendIDs());
             friendsOfFriend.retainAll(oldPart.getLogicalUserIds());
             if(friendsOfFriend.isEmpty() && friend.getLogicalPartitionIds().size() > minNumReplicas) {
                 oldPart.removeLogicalReplicaId(friendId);
@@ -535,7 +524,7 @@ public class SparmesManager {
     }
 
     Map<Integer, Integer> getPToWeight(boolean determineWeightsFromPhysicalPartitions) {
-        Map<Integer, Integer> pToWeight = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToWeight = new HashMap<>();
         for(Integer partitionId : getAllPartitionIds()) {
             int pWeight;
             if(determineWeightsFromPhysicalPartitions) {
@@ -550,7 +539,7 @@ public class SparmesManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
@@ -558,7 +547,7 @@ public class SparmesManager {
     }
 
     private static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
-        Set<Integer> keys = new HashSet<Integer>();
+        Set<Integer> keys = new HashSet<>();
         for(int key : m.keySet()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
@@ -583,12 +572,6 @@ public class SparmesManager {
                     //If they aren't colocated, they have replicas in each other's partitions
                     valid &= uid1Replicas.contains(pid2);
                     valid &= uid2Replicas.contains(pid1);
-                    if(!uid1Replicas.contains(pid2)) {
-                        System.out.println("Hrummnh");
-                    }
-                    else if(!uid2Replicas.contains(pid1)) {
-                        System.out.println("Hrummph");
-                    }
                 }
             }
         }

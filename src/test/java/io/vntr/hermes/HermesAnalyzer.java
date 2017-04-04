@@ -6,7 +6,6 @@ import io.vntr.TestUtils;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 import org.apache.log4j.Logger;
-import org.junit.Test;
 
 import java.util.*;
 
@@ -31,7 +30,7 @@ public class HermesAnalyzer {
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for (int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
                 pids.add(pid);
             }
@@ -57,7 +56,7 @@ public class HermesAnalyzer {
             HermesManager hermesManager = initHermesManager(friendships, partitions);
             HermesMiddleware hermesMiddleware = initHermesMiddleware(hermesManager);
 
-            Map<Analyzer.ACTIONS, Double> actionsProbability = new HashMap<Analyzer.ACTIONS, Double>();
+            Map<Analyzer.ACTIONS, Double> actionsProbability = new HashMap<>();
             actionsProbability.put(ADD_USER,         0.125D);
             actionsProbability.put(REMOVE_USER,      0.05D);
             actionsProbability.put(BEFRIEND,         0.64D);
@@ -85,8 +84,8 @@ public class HermesAnalyzer {
             Analyzer.ACTIONS action = script[i];
             if(action == ADD_USER) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-                Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+                Set<Integer> oldUids = new HashSet<>(middleware.getUserIds());
                 logger.warn("(" + i + "): " + ADD_USER + ": pre");
                 int newUid = middleware.addUser();
                 logger.warn("(" + i + "): " + ADD_USER + ": " + newUid);
@@ -99,8 +98,8 @@ public class HermesAnalyzer {
             }
             if(action == REMOVE_USER) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> oldUids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> oldUids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getUserIds());
                 logger.warn("(" + i + "): " + REMOVE_USER + ": " + badId);
                 middleware.removeUser(badId);
@@ -116,8 +115,8 @@ public class HermesAnalyzer {
             }
             if(action == BEFRIEND) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int[] nonfriendship = getNonFriendship(middleware.getFriendships());
                 int uid1 = nonfriendship[0];
                 int uid2 = nonfriendship[1];
@@ -133,8 +132,8 @@ public class HermesAnalyzer {
             }
             if(action == UNFRIEND) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int[] friendship = getFriendship(middleware.getFriendships());
                 logger.warn("(" + i + "): " + UNFRIEND + ": " + friendship[0] + "<->" + friendship[1]);
                 middleware.unfriend(friendship[0], friendship[1]);
@@ -147,9 +146,9 @@ public class HermesAnalyzer {
             }
             if(action == FOREST_FIRE) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(copyMapSet(middleware.getFriendships())));
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(copyMapSet(middleware.getFriendships())));
                 Set<Integer> newUsersFriends = generator.run();
                 int newUid = generator.getV();
                 logger.warn("(" + i + "): " + FOREST_FIRE + ": " + newUid + "<->" + newUsersFriends);
@@ -170,13 +169,13 @@ public class HermesAnalyzer {
             }
             if(action == ADD_PARTITION) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> oldPids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> oldPids = new HashSet<>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": pre");
                 int newPid = middleware.addPartition();
                 logger.warn("(" + i + "): " + ADD_PARTITION + ": " + newPid);
                 assertTrue(isMiddlewareInAValidState(middleware));
-                Set<Integer> newPids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> newPids = new HashSet<>(middleware.getPartitionIds());
                 newPids.removeAll(oldPids);
                 assertTrue(newPids.size() == 1);
                 assertTrue(newPids.contains(newPid));
@@ -185,8 +184,8 @@ public class HermesAnalyzer {
             }
             if(action == REMOVE_PARTITION) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 int badId = ProbabilityUtils.getRandomElement(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + REMOVE_PARTITION + ": " + badId);
                 middleware.removePartition(badId);
@@ -199,8 +198,8 @@ public class HermesAnalyzer {
             }
             if(action == DOWNTIME) {
                 Map<Integer, Set<Integer>> oldFriendships = copyMapSet(middleware.getFriendships());
-                Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-                Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
+                Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+                Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
                 logger.warn("(" + i + "): " + DOWNTIME);
                 middleware.broadcastDowntime();
                 assertTrue(isMiddlewareInAValidState(middleware));
@@ -234,10 +233,10 @@ public class HermesAnalyzer {
 
     private static boolean isMiddlewareInAValidState(HermesMiddleware middleware) {
         boolean valid = true;
-        Set<Integer> pids = new HashSet<Integer>(middleware.getPartitionIds());
-        Set<Integer> uids = new HashSet<Integer>(middleware.getUserIds());
-        valid &= (middleware.getNumberOfPartitions().intValue() == pids.size());
-        valid &= (middleware.getNumberOfUsers().intValue()      == uids.size());
+        Set<Integer> pids = new HashSet<>(middleware.getPartitionIds());
+        Set<Integer> uids = new HashSet<>(middleware.getUserIds());
+        valid &= (middleware.getNumberOfPartitions() == pids.size());
+        valid &= (middleware.getNumberOfUsers()      == uids.size());
 
         Map<Integer, Set<Integer>> partitions  = middleware.getPartitionToUserMap();
         Map<Integer, Set<Integer>> friendships = middleware.getFriendships();
@@ -253,14 +252,14 @@ public class HermesAnalyzer {
             }
         }
 
-        Set<Integer> allMastersSeen = new HashSet<Integer>();
+        Set<Integer> allMastersSeen = new HashSet<>();
         for(int pid : partitions.keySet()) {
             allMastersSeen.addAll(partitions.get(pid));
         }
         allMastersSeen.removeAll(middleware.getUserIds());
         valid &= (allMastersSeen.isEmpty());
 
-        Set<Integer> allFriendsSeen = new HashSet<Integer>();
+        Set<Integer> allFriendsSeen = new HashSet<>();
         for(int pid : friendships.keySet()) {
             allFriendsSeen.addAll(friendships.get(pid));
         }

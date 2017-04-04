@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class SpajaManager {
     private int minNumReplicas;
-    private int randomSampingSize;
+    private int randomSamplingSize;
     private float alpha;
     private float initialT;
     private float deltaT;
@@ -22,15 +22,15 @@ public class SpajaManager {
 
     private Map<Integer, SpajaPartition> partitionIdToPartitionMap;
 
-    private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<Integer, Integer>();
+    private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<>();
 
-    public SpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSampingSize) {
+    public SpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSamplingSize) {
         this.minNumReplicas = minNumReplicas;
-        this.partitionIdToPartitionMap = new HashMap<Integer, SpajaPartition>();
+        this.partitionIdToPartitionMap = new HashMap<>();
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
-        this.randomSampingSize = randomSampingSize;
+        this.randomSamplingSize = randomSamplingSize;
     }
 
     public int getMinNumReplicas() {
@@ -49,8 +49,8 @@ public class SpajaManager {
         return deltaT;
     }
 
-    public int getRandomSampingSize() {
-        return randomSampingSize;
+    public int getRandomSamplingSize() {
+        return randomSamplingSize;
     }
 
     public SpajaPartition getPartitionById(Integer id) {
@@ -67,7 +67,7 @@ public class SpajaManager {
     }
 
     public Set<SpajaUser> getUserMastersById(Collection<Integer> ids) {
-        Set<SpajaUser> users = new HashSet<SpajaUser>();
+        Set<SpajaUser> users = new HashSet<>();
         for(Integer uid : ids) {
             users.add(getUserMasterById(uid));
         }
@@ -287,21 +287,21 @@ public class SpajaManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(partitionIdToPartitionMap.keySet());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(partitionIdToPartitionMap.keySet());
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
     Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<Integer>(partitionIdToPartitionMap.keySet());
+        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(partitionIdToPartitionMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
@@ -309,7 +309,7 @@ public class SpajaManager {
     }
 
     Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
@@ -389,7 +389,7 @@ public class SpajaManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
@@ -427,7 +427,7 @@ public class SpajaManager {
 //    }
 
     public static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
-        Set<Integer> keys = new HashSet<Integer>();
+        Set<Integer> keys = new HashSet<>();
         for(int key : m.keySet()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
@@ -437,7 +437,7 @@ public class SpajaManager {
     }
 
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : partitionIdToPartitionMap.keySet()) {
             m.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
@@ -446,6 +446,6 @@ public class SpajaManager {
 
     @Override
     public String toString() {
-        return "minNumReplicas:" + minNumReplicas + "|k:" + randomSampingSize + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
+        return "minNumReplicas:" + minNumReplicas + "|k:" + randomSamplingSize + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
     }
 }

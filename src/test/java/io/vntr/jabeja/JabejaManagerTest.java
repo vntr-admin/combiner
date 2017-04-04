@@ -36,7 +36,7 @@ public class JabejaManagerTest {
             Collection<JabejaUser> users = manager.getRandomSamplingOfUsers(howMany);
             totalCount += howMany;
             for(JabejaUser user : users) {
-                int intId = user.getId().intValue() - 1;
+                int intId = user.getId() - 1;
                 count[intId]++;
             }
         }
@@ -90,7 +90,7 @@ public class JabejaManagerTest {
         float alpha = 1.1f;
         JabejaManager manager = new JabejaManager(alpha, 2f, .2f, 2f, 0.2f, 9);
 
-        List<Integer> partitionIds = new ArrayList<Integer>(numPartitions+1);
+        List<Integer> partitionIds = new ArrayList<>(numPartitions + 1);
         for(int i=0; i<numPartitions; i++) {
             partitionIds.add(manager.addPartition());
         }
@@ -117,12 +117,12 @@ public class JabejaManagerTest {
     @Test
     public void testGetEdgeCut() {
         float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
             friendships.put(uid1, new HashSet<Integer>());
             for(Integer uid2 = 1; uid2 <= uid1; uid2++) {

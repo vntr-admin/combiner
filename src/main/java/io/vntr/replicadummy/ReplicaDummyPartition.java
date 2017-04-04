@@ -10,8 +10,8 @@ import java.util.Set;
  * Created by robertlindquist on 11/23/16.
  */
 public class ReplicaDummyPartition {
-    private Map<Integer, ReplicaDummyUser> idToMasterMap = new HashMap<Integer, ReplicaDummyUser>();
-    private Map<Integer, ReplicaDummyUser> idToReplicaMap = new HashMap<Integer, ReplicaDummyUser>();
+    private Map<Integer, ReplicaDummyUser> idToMasterMap = new HashMap<>();
+    private Map<Integer, ReplicaDummyUser> idToReplicaMap = new HashMap<>();
     private Integer id;
 
     public ReplicaDummyPartition(Integer id) {

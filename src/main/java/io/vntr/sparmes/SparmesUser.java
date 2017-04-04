@@ -19,8 +19,8 @@ public class SparmesUser extends User {
 
     public SparmesUser(Integer id, Integer initialPid, float gamma, SparmesManager manager, int minNumReplicas) {
         super(id);
-        replicaPartitionIds = new HashSet<Integer>();
-        logicalPartitionIds = new HashSet<Integer>();
+        replicaPartitionIds = new HashSet<>();
+        logicalPartitionIds = new HashSet<>();
         this.gamma = gamma;
         this.manager = manager;
         this.masterPartitionId = initialPid;
@@ -115,7 +115,7 @@ public class SparmesUser extends User {
 
         SparmesBefriendingStrategy strat = manager.getSparmesBefriendingStrategy();
 
-        Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<>();
         for(Integer pid : manager.getAllPartitionIds()) {
             friendsToAddInEachPartition.put(pid, strat.findReplicasToAddToTargetPartition(this, pid).size());
         }
@@ -126,7 +126,7 @@ public class SparmesUser extends User {
     }
 
     Map<Integer, Integer> getFriendsToAddInEachPartitionLogical() {
-        Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<>();
         for(Integer pid : manager.getAllPartitionIds()) {
             friendsToAddInEachPartition.put(pid, findReplicasToAddToPartition(pid).size());
         }
@@ -134,7 +134,7 @@ public class SparmesUser extends User {
     }
 
     Set<Integer> findReplicasToAddToPartition(Integer targetPid) {
-        Set<Integer> toReplicate = new HashSet<Integer>();
+        Set<Integer> toReplicate = new HashSet<>();
         for (Integer friendId : getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
             if (!targetPid.equals(friend.getLogicalPid()) && !friend.getLogicalPartitionIds().contains(targetPid)) {
@@ -156,7 +156,7 @@ public class SparmesUser extends User {
     }
 
     Map<Integer, Integer> getPToFriendCountLogical() {
-        Map<Integer, Integer> pToFriendCount = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToFriendCount = new HashMap<>();
         for(Integer pid : manager.getAllPartitionIds()) {
             pToFriendCount.put(pid, 0);
         }
@@ -179,7 +179,7 @@ public class SparmesUser extends User {
     }
 
     Set<Integer> findDeletionCandidatesLogical() {
-        Set<Integer> deletionCandidates = new HashSet<Integer>();
+        Set<Integer> deletionCandidates = new HashSet<>();
 outer:  for (Integer friendId : getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
             if (!friend.getLogicalPid().equals(logicalPid)) {

@@ -92,7 +92,7 @@ public class SparmesBefriendingStrategy {
     }
 
     Set<Integer> findReplicasToAddToTargetPartition(SparmesUser movingUser, Integer targetPartitionId) {
-        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>();
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<>();
         for (Integer friendId : movingUser.getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
             if (!targetPartitionId.equals(friend.getMasterPartitionId()) && !friend.getReplicaPartitionIds().contains(targetPartitionId)) {
@@ -104,7 +104,7 @@ public class SparmesBefriendingStrategy {
     }
 
     Set<Integer> findReplicasInMovingPartitionToDelete(SparmesUser movingUser, Set<Integer> replicasToBeAdded) {
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>();
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
         for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
             int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPartitionIds().size();
             if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
@@ -116,7 +116,7 @@ public class SparmesBefriendingStrategy {
     }
 
     Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SparmesUser user) {
-        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<Integer>();
+        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
         outer:
         for (Integer friendId : user.getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);

@@ -17,7 +17,7 @@ public class ReplicaDummyUser extends User {
 
     public ReplicaDummyUser(Integer id) {
         super(id);
-        replicaPartitionIds = new HashSet<Integer>();
+        replicaPartitionIds = new HashSet<>();
     }
 
     public Integer getPartitionId() {

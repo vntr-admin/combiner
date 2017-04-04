@@ -108,7 +108,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
         ReplicaDummyPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Integer> usersInNeedOfNewReplicas = new HashSet<Integer>();
+        Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
 
         //First, determine which users will need more replicas once this partition is kaput
         for (Integer userId : partition.getIdsOfMasters()) {
@@ -129,11 +129,11 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(ReplicaDummyUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
@@ -195,13 +195,13 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public double calcualteAssortivity() {
+    public double calculateAssortivity() {
         return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
     }
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
             m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
         }

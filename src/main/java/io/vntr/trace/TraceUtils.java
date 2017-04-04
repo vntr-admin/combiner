@@ -59,7 +59,7 @@ public class TraceUtils {
     static Map<Integer, Set<Integer>> parseMapSetLine(String line) {
         String tempLine = line.substring(1, line.length()-1);
         String[] chunks = tempLine.split("\\], ");
-        Map<Integer, Set<Integer>> mapSet = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> mapSet = new HashMap<>();
         for(int i=0; i<chunks.length; i++) {
             String chunk = chunks[i];
             if(i==chunks.length-1) {
@@ -68,7 +68,7 @@ public class TraceUtils {
             int equalsIndex = chunk.indexOf('=');
             int key = Integer.parseInt(chunk.substring(0, equalsIndex));
             String[] values = chunk.substring(equalsIndex+2).split(", ");
-            Set<Integer> set = new HashSet<Integer>();
+            Set<Integer> set = new HashSet<>();
             for(String value : values) {
                 if(!value.isEmpty()) {
                     set.add(Integer.parseInt(value));
@@ -83,7 +83,7 @@ public class TraceUtils {
 
     static Set<Integer> parseSetLine(String line) {
         String[] values = line.substring(line.indexOf('[')+1, line.indexOf(']')).split(", ");
-        Set<Integer> set = new HashSet<Integer>();
+        Set<Integer> set = new HashSet<>();
         for(String value : values) {
             if(!value.isEmpty()) {
                 set.add(Integer.parseInt(value));

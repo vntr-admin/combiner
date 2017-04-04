@@ -17,14 +17,11 @@ import io.vntr.sparmes.SparmesMiddleware;
 import io.vntr.sparmes.SparmesTestUtils;
 import io.vntr.utils.ProbabilityUtils;
 import org.apache.log4j.Logger;
-import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.Analyzer.ACTIONS.*;
 import static io.vntr.TestUtils.*;
-import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by robertlindquist on 10/4/16.
@@ -53,7 +50,7 @@ public class Analyzer {
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for(int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
                 pids.add(pid);
             }
@@ -90,7 +87,7 @@ public class Analyzer {
             SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware  (spajaManager);
 //            SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
-            ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(friendships));
+            ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(friendships));
             Set<Integer> newFriendships = generator.run();
             runTest(jabejaMiddleware,  generator.getV(), newFriendships);
             runTest(hermesMiddleware,  generator.getV(), newFriendships);
@@ -137,7 +134,7 @@ public class Analyzer {
     //TODO: commit this reenabled once it all works
 //    @Test
     public void testParsing() throws Exception {
-        List<Map<Integer, Set<Integer>>> friendshipsList = new ArrayList<Map<Integer, Set<Integer>>>(10);
+        List<Map<Integer, Set<Integer>>> friendshipsList = new ArrayList<>(10);
         friendshipsList.add(getTopographyForMultigroupSocialNetwork(1000, 12, 0.1f, 0.1f));
         friendshipsList.add(getTopographyForMultigroupSocialNetwork(1300, 14, 0.09f, 0.09f));
         friendshipsList.add(getTopographyForMultigroupSocialNetwork(1600, 16, 0.09f, 0.09f));
@@ -152,7 +149,7 @@ public class Analyzer {
         for(Map<Integer, Set<Integer>> friendships : friendshipsList) {
             System.out.println("\nSize: " + friendships.size());
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for(int pid = 0; pid < friendships.size() / USERS_PER_PARTITION; pid++) {
                 pids.add(pid);
             }
@@ -177,12 +174,12 @@ public class Analyzer {
             SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware(spajaManager);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
-            ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(friendships));
+            ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(friendships));
             System.out.println("Starting generator");
             Set<Integer> newFriendships = generator.run();
             Integer newUid = generator.getV();
             System.out.println("Starting edge cuts");
-            List<IMiddlewareAnalyzer> analyzers = Arrays.<IMiddlewareAnalyzer>asList(jabejaMiddleware, hermesMiddleware, sparMiddleware, spajaMiddleware, sparmesMiddleware);
+            List<IMiddlewareAnalyzer> analyzers = Arrays.asList(jabejaMiddleware, hermesMiddleware, sparMiddleware, spajaMiddleware, sparmesMiddleware);
             for(IMiddlewareAnalyzer iMiddlewareAnalyzer : analyzers) {
                 long timeDiff = System.nanoTime() - start;
                 System.out.println((timeDiff / 1000000) + "." + (timeDiff % 1000000) + "ms\n\t" + iMiddlewareAnalyzer + "\n\t\t" + iMiddlewareAnalyzer.getEdgeCut() + "\n\t\t" + iMiddlewareAnalyzer.getReplicationCount() + "\n");
@@ -244,7 +241,7 @@ public class Analyzer {
         return new SparmesMiddleware(manager);
     }
 
-    public enum ACTIONS { ADD_USER, REMOVE_USER, BEFRIEND, UNFRIEND, ADD_PARTITION, REMOVE_PARTITION, DOWNTIME, FOREST_FIRE };
+    public enum ACTIONS { ADD_USER, REMOVE_USER, BEFRIEND, UNFRIEND, ADD_PARTITION, REMOVE_PARTITION, DOWNTIME, FOREST_FIRE }
 
     //@Test
     public void stressTest() throws Exception {
@@ -257,7 +254,7 @@ public class Analyzer {
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for (int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
                 pids.add(pid);
             }
@@ -294,7 +291,7 @@ public class Analyzer {
             SpajaMiddleware spajaMiddleware = initSpajaMiddleware(spajaManager);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
-            Map<ACTIONS, Double> actionsProbability = new HashMap<ACTIONS, Double>();
+            Map<ACTIONS, Double> actionsProbability = new HashMap<>();
             actionsProbability.put(ADD_USER,         0.125D);
             actionsProbability.put(REMOVE_USER,      0.05D);
             actionsProbability.put(BEFRIEND,         0.64D);
@@ -333,18 +330,18 @@ public class Analyzer {
             }
             if(action == BEFRIEND) {
                 Set<Integer> friends = ProbabilityUtils.getKDistinctValuesFromList(2, middleware.getUserIds());
-                List<Integer> friendList = new LinkedList<Integer>(friends);
+                List<Integer> friendList = new LinkedList<>(friends);
                 logger.warn("(" + i + ")" + BEFRIEND + ": " + friendList.get(0) + "<->" + friendList.get(1));
                 middleware.befriend(friendList.get(0), friendList.get(1));
             }
             if(action == UNFRIEND) {
                 Set<Integer> frenemies = ProbabilityUtils.getKDistinctValuesFromList(2, middleware.getUserIds());
-                List<Integer> frenemyList = new LinkedList<Integer>(frenemies);
+                List<Integer> frenemyList = new LinkedList<>(frenemies);
                 logger.warn("(" + i + ")" + UNFRIEND + ": " + frenemyList.get(0) + "<->" + frenemyList.get(1));
                 middleware.unfriend(frenemyList.get(0), frenemyList.get(1));
             }
             if(action == FOREST_FIRE) {
-                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<Integer, Set<Integer>>(middleware.getFriendships()));
+                ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(middleware.getFriendships()));
                 Set<Integer> newUsersFriends = generator.run();
                 int newUid = generator.getV();
                 logger.warn("(" + i + ")" + FOREST_FIRE + ": " + newUid + "<->" + newUsersFriends);

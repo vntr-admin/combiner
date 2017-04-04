@@ -43,7 +43,7 @@ public class SingleTraceRunner {
     public static final String DUMMY_TYPE = "DUMMY";
     public static final String REPLICA_DUMMY_TYPE = "RDUMMY";
     public static final String METIS_TYPE = "METIS";
-    private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(SPAR_TYPE, JABEJA_TYPE, HERMES_TYPE, SPAJA_TYPE, DUMMY_TYPE, REPLICA_DUMMY_TYPE, SPARMES_TYPE, METIS_TYPE));
+    private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(SPAR_TYPE, JABEJA_TYPE, HERMES_TYPE, SPAJA_TYPE, DUMMY_TYPE, REPLICA_DUMMY_TYPE, SPARMES_TYPE, METIS_TYPE));
 
     private static final String overallFormatStr = "\t%6s | %s | %-27s | Edge Cut = %8d | Replica Count = %8d";
 
@@ -62,7 +62,7 @@ public class SingleTraceRunner {
 
         TraceWithReplicas trace = (TraceWithReplicas) TraceTestUtils.getFullTraceFromFile(inputFile);
 
-        List<String> thingsToLog = new LinkedList<String>();
+        List<String> thingsToLog = new LinkedList<>();
 
         IMiddlewareAnalyzer middleware;
 

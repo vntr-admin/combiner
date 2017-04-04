@@ -18,11 +18,11 @@ public class SpajaMigrationStrategy {
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
         //Place the remaining nodes wherever they fit, following simple water-filling strategy.
 
-        Set<Integer> partitionIdsToSkip = new HashSet<Integer>(Arrays.asList(partitionId));
+        Set<Integer> partitionIdsToSkip = new HashSet<>(Arrays.asList(partitionId));
         final SpajaPartition partition = manager.getPartitionById(partitionId);
         Set<Integer> masterIds = partition.getIdsOfMasters();
 
-        NavigableSet<Score> scores = new TreeSet<Score>();
+        NavigableSet<Score> scores = new TreeSet<>();
         for (Integer userId : masterIds) {
             SpajaUser user = manager.getUserMasterById(userId);
             for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
@@ -34,29 +34,22 @@ public class SpajaMigrationStrategy {
         }
 
         Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(partitionIdsToSkip);
-        if(remainingSpotsInPartitions == null) {
-            System.out.println("Huh?");
-        }
-
-        Map<Integer, Integer> strategy = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> strategy = new HashMap<>();
 
         for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
             Score score = iter.next();
             Integer remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
-            if(remainingSpotsInPartition == null) {
-                System.out.println("Buh?");
-            }
             if (!strategy.containsKey(score.userId) && remainingSpotsInPartition != null && remainingSpotsInPartition > 0 && score.score > 0) {
                 strategy.put(score.userId, score.partitionId);
                 remainingSpotsInPartitions.put(score.partitionId, remainingSpotsInPartition - 1);
             }
         }
 
-        Set<Integer> usersYetUnplaced = new HashSet<Integer>(masterIds);
+        Set<Integer> usersYetUnplaced = new HashSet<>(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
 
         for (Integer uid : usersYetUnplaced) {
-            Set<Integer> acceptablePids = new HashSet<Integer>(manager.getAllPartitionIds());
+            Set<Integer> acceptablePids = new HashSet<>(manager.getAllPartitionIds());
             acceptablePids.removeAll(partitionIdsToSkip);
             Integer leastOverloadedPid = getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, acceptablePids);
             if(leastOverloadedPid != null) {
@@ -71,7 +64,7 @@ public class SpajaMigrationStrategy {
     }
 
     Integer getLeastOverloadedPartition(Set<Integer> allPids, Map<Integer, Integer> strategy, Integer pidToDelete) {
-        Map<Integer, Integer> pToStrategyCount = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToStrategyCount = new HashMap<>();
         for(Integer pid : allPids) {
             pToStrategyCount.put(pid, 0);
         }
@@ -96,7 +89,7 @@ public class SpajaMigrationStrategy {
     }
 
     Integer getLeastOverloadedPartitionWhereThisUserHasAReplica(Integer uid, Map<Integer, Integer> strategy, Set<Integer> allPids) {
-        Map<Integer, Integer> pToStrategyCount = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToStrategyCount = new HashMap<>();
         for(Integer pid : allPids) {
             pToStrategyCount.put(pid, 0);
         }
@@ -140,7 +133,7 @@ public class SpajaMigrationStrategy {
     }
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {
-        Set<Integer> possibilities = new HashSet<Integer>(manager.getAllPartitionIds());
+        Set<Integer> possibilities = new HashSet<>(manager.getAllPartitionIds());
         possibilities.removeAll(partitionIdsToSkip);
         int numUsers = manager.getNumUsers();
         int numPartitions = possibilities.size();
@@ -149,13 +142,13 @@ public class SpajaMigrationStrategy {
             maxUsersPerPartition++;
         }
 
-        Map<Integer, Integer> partitionToNumMastersMap = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> partitionToNumMastersMap = new HashMap<>();
         for (Integer partitionId : possibilities) {
             SpajaPartition partition = manager.getPartitionById(partitionId);
             partitionToNumMastersMap.put(partition.getId(), partition.getNumMasters());
         }
 
-        Map<Integer, Integer> remainingSpotsInPartitions = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> remainingSpotsInPartitions = new HashMap<>();
         for (Integer partitionId : partitionToNumMastersMap.keySet()) {
             remainingSpotsInPartitions.put(partitionId, maxUsersPerPartition - partitionToNumMastersMap.get(partitionId));
         }

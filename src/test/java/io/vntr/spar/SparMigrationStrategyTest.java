@@ -21,7 +21,7 @@ public class SparMigrationStrategyTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -77,7 +77,7 @@ public class SparMigrationStrategyTest {
         Integer friendPartitionId = manager.getUserMasterById(sparUser6.getFriendIDs().iterator().next()).getMasterPartitionId();
 
         assertTrue(strategy.scoreReplicaPromotion(sparUser6, friendPartitionId) == 1f);
-        Set<Integer> replicaPartitionIds = new HashSet<Integer>(sparUser6.getReplicaPartitionIds());
+        Set<Integer> replicaPartitionIds = new HashSet<>(sparUser6.getReplicaPartitionIds());
         replicaPartitionIds.remove(friendPartitionId);
         Integer nonFriendPartitionId = replicaPartitionIds.iterator().next();
         assertTrue(strategy.scoreReplicaPromotion(sparUser6, nonFriendPartitionId) == 0f);
@@ -89,7 +89,7 @@ public class SparMigrationStrategyTest {
             userIdToUserMap.put(userIdArray[i], user);
         }
 
-        Set<SparUser> usersOnNonFriendPartition = new HashSet<SparUser>();
+        Set<SparUser> usersOnNonFriendPartition = new HashSet<>();
         for (Integer userId : userIdToUserMap.keySet()) {
             SparUser sparUser = manager.getUserMasterById(userId);
             if (sparUser.getMasterPartitionId().equals(nonFriendPartitionId)) {
@@ -117,7 +117,7 @@ public class SparMigrationStrategyTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer[] userIdArray = {3, 4, 5, 6, 8, 10, 11, 12};
         for (int i = 0; i < 8; i++) {
             User user = new User(userIdArray[i]);
@@ -125,7 +125,7 @@ public class SparMigrationStrategyTest {
             userIdToUserMap.put(userIdArray[i], user);
         }
 
-        Set<Integer> partitionsWithOnlyOneMaster = new HashSet<Integer>();
+        Set<Integer> partitionsWithOnlyOneMaster = new HashSet<>();
         for (Integer partitionId : manager.getAllPartitionIds()) {
             if (manager.getPartitionById(partitionId).getNumMasters() == 1) {
                 partitionsWithOnlyOneMaster.add(partitionId);
@@ -135,14 +135,14 @@ public class SparMigrationStrategyTest {
         Map<Integer, Integer> remainingSpotsInPartitions = strategy.getRemainingSpotsInPartitions(new HashSet<Integer>());
         for (Integer partitionId : manager.getAllPartitionIds()) {
             if (partitionsWithOnlyOneMaster.contains(partitionId)) {
-                assertTrue(remainingSpotsInPartitions.get(partitionId).intValue() == 1);
+                assertTrue(remainingSpotsInPartitions.get(partitionId) == 1);
             } else {
-                assertTrue(remainingSpotsInPartitions.get(partitionId).intValue() == 0);
+                assertTrue(remainingSpotsInPartitions.get(partitionId) == 0);
             }
         }
 
         Integer partitionIdToRob = partitionsWithOnlyOneMaster.iterator().next();
-        Set<Integer> partitionsWithTwoMasters = new HashSet<Integer>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithTwoMasters = new HashSet<>(manager.getAllPartitionIds());
         partitionsWithTwoMasters.removeAll(partitionsWithOnlyOneMaster);
         Integer partitionIdToSendTo = partitionsWithTwoMasters.iterator().next();
 
@@ -153,13 +153,13 @@ public class SparMigrationStrategyTest {
 
         for (Integer partitionId : manager.getAllPartitionIds()) {
             if (partitionIdToRob.equals(partitionId)) {
-                assertTrue(remainingSpotsInPartitions2.get(partitionId).intValue() == 2);
+                assertTrue(remainingSpotsInPartitions2.get(partitionId) == 2);
             } else if (partitionIdToSendTo.equals(partitionId)) {
-                assertTrue(remainingSpotsInPartitions2.get(partitionId).intValue() == -1);
+                assertTrue(remainingSpotsInPartitions2.get(partitionId) == -1);
             } else if (partitionsWithOnlyOneMaster.contains(partitionId)) {
-                assertTrue(remainingSpotsInPartitions2.get(partitionId).intValue() == 1);
+                assertTrue(remainingSpotsInPartitions2.get(partitionId) == 1);
             } else if (partitionsWithTwoMasters.contains(partitionId)) {
-                assertTrue(remainingSpotsInPartitions2.get(partitionId).intValue() == 0);
+                assertTrue(remainingSpotsInPartitions2.get(partitionId) == 0);
             }
         }
 
@@ -171,7 +171,7 @@ public class SparMigrationStrategyTest {
             }
         }
 
-        Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(new HashSet<Integer>(Arrays.asList(partitionIdWithTwoMasters)));
+        Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(new HashSet<>(Arrays.asList(partitionIdWithTwoMasters)));
         for (Integer partitionId : manager.getAllPartitionIds()) {
             if (!partitionId.equals(partitionIdWithTwoMasters)) {
                 int numMasters = manager.getPartitionById(partitionId).getNumMasters();
@@ -184,13 +184,13 @@ public class SparMigrationStrategyTest {
     @Test
     public void testGetUserMigrationStrategy() {
         int minNumReplicas = 2;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -212,7 +212,7 @@ public class SparMigrationStrategyTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, initSet( 6,  7,  8,  9, 10, 16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 11, 12, 13, 14, 15));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10, 16, 17, 18, 19, 20));
@@ -220,7 +220,7 @@ public class SparMigrationStrategyTest {
 
         SparManager manager = SparTestUtils.initGraph(minNumReplicas+1, partitions, friendships, replicaPartitions);
 
-        Map<Integer, Integer> expectedMigrationStrategy = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> expectedMigrationStrategy = new HashMap<>();
         expectedMigrationStrategy.put( 6, 1);
         expectedMigrationStrategy.put( 7, 1);
         expectedMigrationStrategy.put( 8, 3);

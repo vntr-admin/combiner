@@ -37,8 +37,8 @@ public class HermesManagerTest {
 
         Map<Integer, Set<Integer>> pMap = manager.getPartitionToUserMap();
         assertTrue(pMap.size() == 2);
-        assertTrue(pMap.get(pid1).equals(new HashSet<Integer>(Arrays.asList(1, 3, 5))));
-        assertTrue(pMap.get(pid2).equals(new HashSet<Integer>(Arrays.asList(2, 4, 6))));
+        assertTrue(pMap.get(pid1).equals(new HashSet<>(Arrays.asList(1, 3, 5))));
+        assertTrue(pMap.get(pid2).equals(new HashSet<>(Arrays.asList(2, 4, 6))));
 
         assertEquals(user1, manager.getUser(1));
         assertEquals(user2, manager.getUser(2));
@@ -108,7 +108,7 @@ public class HermesManagerTest {
 
             float gamma = 1.5f;
             Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 20, 0.1f, 0.1f);
-            Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+            Map<Integer, Set<Integer>> partitions = new HashMap<>();
             for(int pid=0; pid<numPartitions; pid++) {
                 partitions.put(pid, new HashSet<Integer>());
             }
@@ -128,7 +128,7 @@ public class HermesManagerTest {
 //    @Test
     public void specialDeadlockTest() {
         float gamma = 1.5f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(0, initSet(0, 770, 260, 520, 10, 780, 270, 530, 20, 790, 280, 540, 30, 800, 290, 550, 40, 810, 300, 560, 50, 820, 310, 570, 60, 830, 320, 580, 70, 840, 330, 590, 80, 850, 340, 600, 90, 860, 350, 610, 100, 870, 360, 620, 110, 880, 370, 630, 120, 890, 380, 640, 130, 900, 390, 650, 140, 910, 400, 660, 150, 920, 410, 670, 160, 930, 420, 680, 170, 940, 430, 690, 180, 950, 440, 700, 190, 960, 450, 710, 200, 970, 460, 720, 210, 980, 470, 730, 220, 990, 480, 740, 230, 490, 750, 240, 500, 760, 250, 510));
         partitions.put(1, initSet(1, 771, 261, 521, 11, 781, 271, 531, 21, 791, 281, 541, 31, 801, 291, 551, 41, 811, 301, 561, 51, 821, 311, 571, 61, 831, 321, 581, 71, 841, 331, 591, 81, 851, 341, 601, 91, 861, 351, 611, 101, 871, 361, 621, 111, 881, 371, 631, 121, 891, 381, 641, 131, 901, 391, 651, 141, 911, 401, 661, 151, 921, 411, 671, 161, 931, 421, 681, 171, 941, 431, 691, 181, 951, 441, 701, 191, 961, 451, 711, 201, 971, 461, 721, 211, 981, 471, 731, 221, 991, 481, 741, 231, 491, 751, 241, 501, 761, 251, 511));
         partitions.put(2, initSet(512, 2, 772, 262, 522, 12, 782, 272, 532, 22, 792, 282, 542, 32, 802, 292, 552, 42, 812, 302, 562, 52, 822, 312, 572, 62, 832, 322, 582, 72, 842, 332, 592, 82, 852, 342, 602, 92, 862, 352, 612, 102, 872, 362, 622, 112, 882, 372, 632, 122, 892, 382, 642, 132, 902, 392, 652, 142, 912, 402, 662, 152, 922, 412, 672, 162, 932, 422, 682, 172, 942, 432, 692, 182, 952, 442, 702, 192, 962, 452, 712, 202, 972, 462, 722, 212, 982, 472, 732, 222, 992, 482, 742, 232, 492, 752, 242, 502, 762, 252));
@@ -140,7 +140,7 @@ public class HermesManagerTest {
         partitions.put(8, initSet(768, 258, 518, 8, 778, 268, 528, 18, 788, 278, 538, 28, 798, 288, 548, 38, 808, 298, 558, 48, 818, 308, 568, 58, 828, 318, 578, 68, 838, 328, 588, 78, 848, 338, 598, 88, 858, 348, 608, 98, 868, 358, 618, 108, 878, 368, 628, 118, 888, 378, 638, 128, 898, 388, 648, 138, 908, 398, 658, 148, 918, 408, 668, 158, 928, 418, 678, 168, 938, 428, 688, 178, 948, 438, 698, 188, 958, 448, 708, 198, 968, 458, 718, 208, 978, 468, 728, 218, 988, 478, 738, 228, 998, 488, 748, 238, 498, 758, 248, 508));
         partitions.put(9, initSet(769, 259, 519, 9, 779, 269, 529, 19, 789, 279, 539, 29, 799, 289, 549, 39, 809, 299, 559, 49, 819, 309, 569, 59, 829, 319, 579, 69, 839, 329, 589, 79, 849, 339, 599, 89, 859, 349, 609, 99, 869, 359, 619, 109, 879, 369, 629, 119, 889, 379, 639, 129, 899, 389, 649, 139, 909, 399, 659, 149, 919, 409, 669, 159, 929, 419, 679, 169, 939, 429, 689, 179, 949, 439, 699, 189, 959, 449, 709, 199, 969, 459, 719, 209, 979, 469, 729, 219, 989, 479, 739, 229, 999, 489, 749, 239, 499, 759, 249, 509));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.putAll(getFirst300ines());
         friendships.putAll(getRemainingLines());
 
@@ -152,7 +152,7 @@ public class HermesManagerTest {
     }
 
     private Map<Integer, Set<Integer>> getFirst300ines() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         m.put(0, initSet(384, 257, 134, 135, 200, 905, 138, 844, 145, 81, 658, 914, 281, 476, 605, 543, 800, 737, 551, 620, 109, 942, 302, 820, 185, 701, 765));
         m.put(1, initSet(832, 5, 647, 523, 207, 595, 723, 920, 90, 670, 671, 799, 98, 164, 422, 809, 937, 490, 491, 364, 52, 245, 187, 317, 190));
         m.put(2, initSet(896, 417, 579, 708, 840, 970, 268, 112, 464, 529, 594, 308, 117, 344, 763, 414, 446, 95));
@@ -457,7 +457,7 @@ public class HermesManagerTest {
     }
 
     private Map<Integer, Set<Integer>> getRemainingLines() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         m.put(300, initSet(332, 845, 400, 595, 726, 982, 470, 535, 664, 920, 988, 860, 798, 992, 546, 355, 483, 804, 742, 875, 365, 498, 627, 373, 508, 381));
         m.put(301, Collections.<Integer>emptySet());
         m.put(302, initSet(324, 454, 966, 975, 847, 849, 530, 850, 789, 597, 856, 415, 800, 993, 481, 353, 613, 421, 998, 425, 362, 875, 812, 621, 622, 814, 563, 499, 883, 826, 890, 443, 315, 510));
@@ -1164,12 +1164,12 @@ public class HermesManagerTest {
 //    @Test
     public void testToyExample() {
         float gamma = 1.5f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26));
         partitions.put(4, initSet(27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40));
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
 
         friendships.put( 1, initSet( 2,  3,  4,  5,  6,  7,  8,  9, 10));
         friendships.put( 2, initSet( 3,  4,  5,  6,  7,  8,  9, 10));

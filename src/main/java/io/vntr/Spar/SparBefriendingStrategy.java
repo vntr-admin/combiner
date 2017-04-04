@@ -1,7 +1,5 @@
 package io.vntr.spar;
 
-import org.apache.log4j.Logger;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -76,22 +74,15 @@ public class SparBefriendingStrategy {
 
     int calcNumReplicasMove(SparUser movingUser, SparUser stayingUser) {
         int curReplicas = manager.getPartitionById(movingUser.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(stayingUser.getMasterPartitionId()).getNumReplicas();
-//        String prefix = "Considering u" + movingUser.getId() + "->p" + stayingUser.getMasterPartitionId() + ".";
-//        System.out.println(prefix);
 
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser);
-//        System.out.println("shouldWeAddAReplicaOfMovingUserInMovingPartition: " + shouldWeAddAReplicaOfMovingUserInMovingPartition);
         Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
-//        System.out.println("replicasToAddInStayingPartition: " + replicasToAddInStayingPartition);
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser);
-//        System.out.println("shouldWeDeleteReplicaOfMovingUserInStayingPartition: " + shouldWeDeleteReplicaOfMovingUserInStayingPartition);
         boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
-//        System.out.println("shouldWeDeleteReplicaOfStayingUserInMovingPartition: " + shouldWeDeleteReplicaOfStayingUserInMovingPartition);
         Set<Integer> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition);
-//        System.out.println("replicasInMovingPartitionToDelete: " + replicasInMovingPartitionToDelete);
 
         //Calculate net change
         int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
@@ -99,12 +90,11 @@ public class SparBefriendingStrategy {
 
         int deltaReplicas = numReplicasToAdd - numReplicasToDelete;
 
-//        System.out.println(numReplicasToAdd + " - " + numReplicasToDelete + " = " + deltaReplicas);
         return curReplicas + deltaReplicas;
     }
 
     Set<Integer> findReplicasToAddToTargetPartition(SparUser movingUser, Integer targetPartitionId) {
-        Set<Integer> replicasToAddInStayingPartition = new HashSet<Integer>();
+        Set<Integer> replicasToAddInStayingPartition = new HashSet<>();
         for (Integer friendId : movingUser.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);
             if (!targetPartitionId.equals(friend.getMasterPartitionId()) && !friend.getReplicaPartitionIds().contains(targetPartitionId)) {
@@ -116,7 +106,7 @@ public class SparBefriendingStrategy {
     }
 
     Set<Integer> findReplicasInMovingPartitionToDelete(SparUser movingUser, Set<Integer> replicasToBeAdded) {
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<Integer>();
+        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
         for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
             int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPartitionIds().size();
             if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
@@ -128,7 +118,7 @@ public class SparBefriendingStrategy {
     }
 
     Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SparUser user) {
-        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<Integer>();
+        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
         outer:
         for (Integer friendId : user.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);

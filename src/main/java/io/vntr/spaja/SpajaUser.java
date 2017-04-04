@@ -20,7 +20,7 @@ public class SpajaUser extends User {
 
     public SpajaUser(Integer id, float alpha, int k, SpajaManager manager) {
         super(id);
-        replicaPartitionIds = new HashSet<Integer>();
+        replicaPartitionIds = new HashSet<>();
         this.alpha = alpha;
         this.k = k;
         this.manager = manager;

@@ -1,11 +1,8 @@
 package io.vntr.dummy;
 
 import io.vntr.User;
-import io.vntr.jabeja.JabejaUser;
 
 import java.util.*;
-
-import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 
 /**
  * Created by robertlindquist on 11/23/16.
@@ -17,8 +14,8 @@ public class DummyManager {
     private static final Integer defaultInitialPid = 1;
 
     public DummyManager() {
-        this.partitions = new TreeMap<Integer, Set<Integer>>();
-        this.uMap = new TreeMap<Integer, DummyUser>();
+        this.partitions = new TreeMap<>();
+        this.uMap = new TreeMap<>();
     }
 
     public Integer getPartitionForUser(Integer uid) {
@@ -124,7 +121,7 @@ public class DummyManager {
         for(DummyUser user : uMap.values()) {
             for(int friendId : user.getFriendIDs()) {
                 DummyUser friend = getUser(friendId);
-                if(user.getPid().intValue() < friend.getPid().intValue()) {
+                if(user.getPid() < friend.getPid()) {
                     count++;
                 }
             }
@@ -133,7 +130,7 @@ public class DummyManager {
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             map.put(pid, Collections.unmodifiableSet(partitions.get(pid)));
         }
@@ -145,7 +142,7 @@ public class DummyManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
             friendships.put(uid, getUser(uid).getFriendIDs());
         }

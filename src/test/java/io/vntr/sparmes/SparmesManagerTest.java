@@ -31,7 +31,7 @@ public class SparmesManagerTest {
 
             int usersPerPartition = 50 + (int) (Math.random() * 100);
 
-            Set<Integer> pids = new HashSet<Integer>();
+            Set<Integer> pids = new HashSet<>();
             for(int pid = 0; pid < friendships.size() / usersPerPartition; pid++) {
                 pids.add(pid);
             }
@@ -59,7 +59,7 @@ public class SparmesManagerTest {
             SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
-            ForestFireGenerator generator = new ForestFireGenerator(.17f, .17f, new TreeMap<Integer, Set<Integer>>(friendships));
+            ForestFireGenerator generator = new ForestFireGenerator(.17f, .17f, new TreeMap<>(friendships));
             Set<Integer> newFriendships = generator.run();
             runTest(sparmesMiddleware, generator.getV(), newFriendships);
         }

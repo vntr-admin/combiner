@@ -73,12 +73,12 @@ public class SparTestUtils {
         private boolean isInitialized = false;
 
         public GraphSpec() {
-            partitionToMastersMap = new HashMap<Integer, Set<Integer>>();
-            partitionToReplicasMap = new HashMap<Integer, Set<Integer>>();
-            friendships = new LinkedList<IntegerPair>();
-            userIdToMasterPartitionIdMap = new HashMap<Integer, Integer>();
-            userIdToReplicaPartitionIdsMap = new HashMap<Integer, Set<Integer>>();
-            userIdToFriendIdsMap = new HashMap<Integer, Set<Integer>>();
+            partitionToMastersMap = new HashMap<>();
+            partitionToReplicasMap = new HashMap<>();
+            friendships = new LinkedList<>();
+            userIdToMasterPartitionIdMap = new HashMap<>();
+            userIdToReplicaPartitionIdsMap = new HashMap<>();
+            userIdToFriendIdsMap = new HashMap<>();
         }
 
         public void init() {
@@ -203,7 +203,7 @@ public class SparTestUtils {
     }
 
     public static Set<Integer> getUserIdsNotInPartition(SparManager manager, Integer partitionId) {
-        Set<Integer> userIdsNotInPartition = new HashSet<Integer>();
+        Set<Integer> userIdsNotInPartition = new HashSet<>();
         SparPartition partition = manager.getPartitionById(partitionId);
         for (Integer userId : manager.getAllUserIds()) {
             if (!partition.getIdsOfMasters().contains(userId) && !partition.getIdsOfReplicas().contains(userId)) {
@@ -215,17 +215,17 @@ public class SparTestUtils {
     }
 
     public static Set<Integer> getColocatedUserIds(SparManager manager, Integer userId) {
-        Set<Integer> userIds = new HashSet<Integer>(manager.getAllUserIds());
+        Set<Integer> userIds = new HashSet<>(manager.getAllUserIds());
         userIds.removeAll(getNonColocatedUserIds(manager, userId));
         return userIds;
     }
 
     public static Set<Integer> getNonColocatedUserIds(SparManager manager, Integer userId) {
-        Set<Integer> nonColocatedUserIds = new HashSet<Integer>();
+        Set<Integer> nonColocatedUserIds = new HashSet<>();
 
         Set<Integer> otherUsersPartitions = getPartitionsWithAPresence(manager, userId);
         for (Integer curUserId : manager.getAllUserIds()) {
-            Set<Integer> distinctPartitions = new HashSet<Integer>(otherUsersPartitions);
+            Set<Integer> distinctPartitions = new HashSet<>(otherUsersPartitions);
             int initialSize = distinctPartitions.size();
             distinctPartitions.removeAll(getPartitionsWithAPresence(manager, curUserId));
             int currentSize = distinctPartitions.size();
@@ -239,13 +239,13 @@ public class SparTestUtils {
 
     public static Set<Integer> getPartitionsWithAPresence(SparManager manager, Integer userId) {
         SparUser user = manager.getUserMasterById(userId);
-        Set<Integer> partitionsWithAPresence = new HashSet<Integer>(user.getReplicaPartitionIds());
+        Set<Integer> partitionsWithAPresence = new HashSet<>(user.getReplicaPartitionIds());
         partitionsWithAPresence.add(user.getMasterPartitionId());
         return partitionsWithAPresence;
     }
 
     public static Set<Integer> getPartitionsWithNoPresence(SparManager manager, Integer userId) {
-        Set<Integer> partitionsWithoutAPresence = new HashSet<Integer>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAPresence = new HashSet<>(manager.getAllPartitionIds());
         partitionsWithoutAPresence.removeAll(getPartitionsWithAPresence(manager, userId));
         return partitionsWithoutAPresence;
     }
@@ -257,7 +257,7 @@ public class SparTestUtils {
     }
 
     public static Set<Integer> getPartitionIdsWithNMasters(SparManager manager, int n) {
-        Set<Integer> partitionIdsWithNMasters = new HashSet<Integer>();
+        Set<Integer> partitionIdsWithNMasters = new HashSet<>();
         for (Integer partitionId : manager.getAllPartitionIds()) {
             if (manager.getPartitionById(partitionId).getNumMasters() == n) {
                 partitionIdsWithNMasters.add(partitionId);
@@ -268,7 +268,7 @@ public class SparTestUtils {
     }
 
     public static SparManager initGraph(int minNumReplicas, int numPartitions, Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> pids = new HashSet<Integer>();
+        Set<Integer> pids = new HashSet<>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);
         }
@@ -313,7 +313,7 @@ public class SparTestUtils {
     }
 
     private static Map<Integer, Integer> getUToMasterMap(Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
                 map.put(uid, pid);
@@ -323,7 +323,7 @@ public class SparTestUtils {
     }
 
     private static Map<Integer, Set<Integer>> getUToReplicasMap(Map<Integer, Set<Integer>> replicaPartitions, Set<Integer> allUids) {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer uid : allUids) {
             map.put(uid, new HashSet<Integer>());
         }

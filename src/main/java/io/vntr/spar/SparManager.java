@@ -14,11 +14,11 @@ public class SparManager {
 
     private SortedMap<Integer, SparPartition> partitionIdToPartitionMap;
 
-    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<Integer, Integer>();
+    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<>();
 
     public SparManager(int minNumReplicas) {
         this.minNumReplicas = minNumReplicas;
-        this.partitionIdToPartitionMap = new TreeMap<Integer, SparPartition>();
+        this.partitionIdToPartitionMap = new TreeMap<>();
     }
 
     public int getMinNumReplicas() {
@@ -268,80 +268,21 @@ public class SparManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparUser user) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(partitionIdToPartitionMap.keySet());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(partitionIdToPartitionMap.keySet());
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
     Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<Integer>(partitionIdToPartitionMap.keySet());
+        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(partitionIdToPartitionMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
-    public static final String MASTER_SECTION_HEADER = "#MASTERS";
-    public static final String REPLICAS_SECTION_HEADER = "#REPLICAS";
-    public static final String FRIENSHIPS_SECTION_HEADER = "#FRIENSHIPS";
-    public static final String NEWLINE = System.getProperty("line.separator");
-    private static final byte[] NEWLINE_BYTES = NEWLINE.getBytes();
-    private static final int friendshipsPerLine = 1000;
-
-    public void export(OutputStream out) throws IOException {
-        println(out, MASTER_SECTION_HEADER);
-        for (Integer partitionId : partitionIdToPartitionMap.keySet()) {
-            Set<Integer> masters = getPartitionById(partitionId).getIdsOfMasters();
-            println(out, partitionId + ": " + intSetToCSVString(masters));
-        }
-
-        println(out, "");
-        println(out, REPLICAS_SECTION_HEADER);
-        for (Integer partitionId : partitionIdToPartitionMap.keySet()) {
-            Set<Integer> replicas = getPartitionById(partitionId).getIdsOfReplicas();
-            println(out, partitionId + ": " + intSetToCSVString(replicas));
-        }
-
-        println(out, "");
-        println(out, FRIENSHIPS_SECTION_HEADER);
-        int count = 0;
-        for (Integer userId : userIdToMasterPartitionIdMap.keySet()) {
-            Set<Integer> friendIds = getUserMasterById(userId).getFriendIDs();
-            for (Integer friendId : friendIds) {
-                if (userId.compareTo(friendId) < 0) {
-                    print(out, userId + "_" + friendId + ",");
-                    if (++count % friendshipsPerLine == 0) {
-                        println(out, "");
-                    }
-                }
-            }
-        }
-
-        out.close();
-    }
-
-    private static String intSetToCSVString(Set<Integer> set) {
-        StringBuilder builder = new StringBuilder();
-        for (Iterator<Integer> iter = set.iterator(); iter.hasNext(); ) {
-            builder.append(iter.next());
-            if (iter.hasNext()) {
-                builder.append(",");
-            }
-        }
-        return builder.toString();
-    }
-
-    private static void println(OutputStream out, String str) throws IOException {
-        out.write(str.getBytes());
-        out.write(NEWLINE_BYTES);
-    }
-
-    private static void print(OutputStream out, String str) throws IOException {
-        out.write(str.getBytes());
-    }
-
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
@@ -349,7 +290,7 @@ public class SparManager {
     }
 
     Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
@@ -379,7 +320,7 @@ public class SparManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }

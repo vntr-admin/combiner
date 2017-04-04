@@ -11,8 +11,8 @@ import java.util.Set;
  * Should be done
  */
 public class SpajaPartition {
-    private Map<Integer, SpajaUser> idToMasterMap = new HashMap<Integer, SpajaUser>();
-    private Map<Integer, SpajaUser> idToReplicaMap = new HashMap<Integer, SpajaUser>();
+    private Map<Integer, SpajaUser> idToMasterMap = new HashMap<>();
+    private Map<Integer, SpajaUser> idToReplicaMap = new HashMap<>();
     private Integer id;
 
     public SpajaPartition(Integer id) {

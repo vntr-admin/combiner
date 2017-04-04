@@ -49,7 +49,7 @@ public class HermesUser extends User {
     }
 
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
-        Map<Integer, Integer> pToWeight = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToWeight = new HashMap<>();
         int totalWeight = 0;
         for(Integer partitionId : manager.getAllPartitionIds()) {
             int pWeight;
@@ -66,7 +66,7 @@ public class HermesUser extends User {
     }
 
     Map<Integer, Integer> getPToFriendCount() {
-        Map<Integer, Integer> pToFriendCount = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToFriendCount = new HashMap<>();
         for(Integer pid : manager.getAllPartitionIds()) {
             pToFriendCount.put(pid, 0);
         }

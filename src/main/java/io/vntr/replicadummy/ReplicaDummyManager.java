@@ -16,11 +16,11 @@ public class ReplicaDummyManager {
 
     private SortedMap<Integer, ReplicaDummyPartition> partitionIdToPartitionMap;
 
-    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<Integer, Integer>();
+    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<>();
 
     public ReplicaDummyManager(int minNumReplicas) {
         this.minNumReplicas = minNumReplicas;
-        partitionIdToPartitionMap = new TreeMap<Integer, ReplicaDummyPartition>();
+        partitionIdToPartitionMap = new TreeMap<>();
     }
 
     public int getMinNumReplicas() {
@@ -270,21 +270,21 @@ public class ReplicaDummyManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(ReplicaDummyUser user) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(partitionIdToPartitionMap.keySet());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(partitionIdToPartitionMap.keySet());
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
     Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<Integer>(partitionIdToPartitionMap.keySet());
+        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(partitionIdToPartitionMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
@@ -292,7 +292,7 @@ public class ReplicaDummyManager {
     }
 
     Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
@@ -322,7 +322,7 @@ public class ReplicaDummyManager {
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }

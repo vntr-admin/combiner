@@ -121,13 +121,13 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public double calcualteAssortivity() {
+    public double calculateAssortivity() {
         return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
     }
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
             m.put(pid, new HashSet<Integer>());
         }

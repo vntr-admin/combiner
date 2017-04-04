@@ -13,7 +13,7 @@ public class SparUser extends User {
 
     public SparUser(Integer id) {
         super(id);
-        replicaPartitionIds = new HashSet<Integer>();
+        replicaPartitionIds = new HashSet<>();
     }
 
     public Integer getPartitionId() {

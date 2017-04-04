@@ -41,7 +41,7 @@ public class HermesTestUtils {
     }
 
     public static HermesManager initGraph(float gamma, boolean probabilistic, int numPartitions, Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> pids = new HashSet<Integer>();
+        Set<Integer> pids = new HashSet<>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);
         }

@@ -18,12 +18,12 @@ public class HermesUserTest {
     @Test
     public void testGetLogicalUser() {
         float gamma = 1.5f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
         partitions.put(3, initSet(15, 16, 17, 18,  19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -50,12 +50,12 @@ public class HermesUserTest {
             manager.getPartitionById(pid).resetLogicalUsers();
         }
 
-        Map<Integer, Integer> pToFriendCount = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToFriendCount = new HashMap<>();
         pToFriendCount.put(1, 4);
         pToFriendCount.put(2, 2);
         pToFriendCount.put(3, 0);
 
-        Map<Integer, Integer> pToWeight = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> pToWeight = new HashMap<>();
         pToWeight.put(1, 7);
         pToWeight.put(2, 7);
         pToWeight.put(3, 6);
@@ -68,7 +68,7 @@ public class HermesUserTest {
         pToFriendCount.put(1, 3);
         pToFriendCount.put(2, 2);
         pToFriendCount.put(3, 1);
-        Map<Integer, Integer> logicalPToWeight = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> logicalPToWeight = new HashMap<>();
         logicalPToWeight.put(1, 6);
         logicalPToWeight.put(2, 7);
         logicalPToWeight.put(3, 7);

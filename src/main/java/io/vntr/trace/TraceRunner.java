@@ -38,7 +38,7 @@ public class TraceRunner {
     public static final String SPAJA_TYPE = "SPAJA";
     public static final String SPARMES_TYPE = "SPARMES";
     public static final String METIS_TYPE = "METIS";
-    private static final Set<String> allowedTypes = new HashSet<String>(Arrays.asList(JABEJA_TYPE, HERMES_TYPE, SPAR_TYPE, SPAJA_TYPE, SPARMES_TYPE, METIS_TYPE));
+    private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(JABEJA_TYPE, HERMES_TYPE, SPAR_TYPE, SPAJA_TYPE, SPARMES_TYPE, METIS_TYPE));
 
     private static final String overallFormatStr = "    %7s | %s | %-25s | Edge Cut = %7d | Replica Count = %7d";
 
@@ -98,21 +98,18 @@ public class TraceRunner {
             default: throw new RuntimeException("Must be one of " + allowedTypes);
         }
 
-        int numFriendships = 0;
-        for(int uid : trace.getFriendships().keySet()) {
-            numFriendships += trace.getFriendships().get(uid).size();
-        }
         PrintWriter pw = null;
         try {
             pw = new PrintWriter(outputFile);
 
-            log(pw, type, true, true);
-            log(pw, middleware.toString(), true, true);
-            log(pw, "Num users:       " + trace.getFriendships().size(), true, true);
-            log(pw, "Num friendships: " + numFriendships,                true, true);
-            log(pw, "Num partitions:  " + trace.getPids().size(),        true, true);
-
-            System.out.println("Start:");
+            StringBuilder builder = new StringBuilder();
+            for(int i=0; i<args.length; i++) {
+                builder.append(args[i]);
+                if(i< args.length-1) {
+                    builder.append(' ');
+                }
+            }
+            log(pw, "Arguments: " + builder.toString(), true, true);
             log(middleware, pw, null, type, true, true);
 
             long startTime = System.nanoTime();
@@ -159,7 +156,7 @@ public class TraceRunner {
         int numP = middleware.getNumberOfPartitions();
         int cut  = middleware.getEdgeCut();
         int reps = middleware.getReplicationCount();
-        double asrt = middleware.calcualteAssortivity();
+        double asrt = middleware.calculateAssortivity();
         String nextAction = next != null ? next.toAbbreviatedString() : "N/A";
         String compressedStr = formatCompressed(type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps);
         log(pw, compressedStr, flush, echo);
@@ -190,7 +187,7 @@ public class TraceRunner {
         return builder.toString();
     }
 
-    private static final String sanitize(String str) {
+    private static String sanitize(String str) {
         return str.replaceAll("\\W", "-");
     }
 

@@ -56,7 +56,7 @@ public class ProbabilityUtils
         }
     }
 
-    private static final Map<DoublePair, LogNormalDistribution> lndMap = new HashMap<DoublePair, LogNormalDistribution>();
+    private static final Map<DoublePair, LogNormalDistribution> lndMap = new HashMap<>();
 
     //http://blog.simiacryptus.com/2015/10/modeling-network-latency.html
     public static double drawKFromLogNormalDistributionAndReturnMax(double mean, double stdDeviation, int k) {
@@ -85,7 +85,7 @@ public class ProbabilityUtils
 
 	public static Set<Integer> getKDistinctValuesBetweenMandNInclusive(int k, int m, int n)
 	{
-		List<Integer> tempList = new LinkedList<Integer>();
+		List<Integer> tempList = new LinkedList<>();
 		for(int i = m; i <= n; i++)
 		{
 			tempList.add(i);
@@ -95,12 +95,12 @@ public class ProbabilityUtils
 	}
 
 	public static int getRandomElement(Collection<Integer> set) {
-        return getKDistinctValuesFromList(1, new LinkedList<Integer>(set)).iterator().next();
+        return getKDistinctValuesFromList(1, new LinkedList<>(set)).iterator().next();
     }
 
 	public static Set<Integer> getKDistinctValuesFromList(int k, Collection<Integer> set)
 	{
-		return getKDistinctValuesFromList(k, new LinkedList<Integer>(set));
+		return getKDistinctValuesFromList(k, new LinkedList<>(set));
 	}
 
 	public static Set<Integer> getKDistinctValuesFromList(int k, List<Integer> list)
@@ -108,7 +108,7 @@ public class ProbabilityUtils
 	    long[] indices = new long[k];
         RandomSampler.sample(k, list.size(), k, 0, indices, 0, randomEngine);
 
-		Set<Integer> returnSet = new HashSet<Integer>();
+		Set<Integer> returnSet = new HashSet<>();
 		for(long index : indices) {
 		    returnSet.add(list.get((int) index));
         }
@@ -116,7 +116,7 @@ public class ProbabilityUtils
 	}
 
     public static Map<Integer, Set<Integer>> generateBidirectionalFriendshipSet(Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> bidirectionalFriendshipSet = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> bidirectionalFriendshipSet = new HashMap<>();
         for(Integer uid : friendships.keySet()) {
             bidirectionalFriendshipSet.put(uid, new HashSet<Integer>());
         }
@@ -181,7 +181,7 @@ public class ProbabilityUtils
     };
 
     private static Map<Integer, Integer> invertPartitions(Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> inverse = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> inverse = new HashMap<>();
         for(int pid : partitions.keySet()) {
             for(int uid : partitions.get(pid)) {
                 inverse.put(uid, pid);
@@ -193,7 +193,7 @@ public class ProbabilityUtils
 
     public static double calculateExpectedQueryDelay(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
         Map<Integer, Integer> uidToPidMap = invertPartitions(partitions);
-        Map<Integer, Set<Integer>> uidToFriendPidsMap = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> uidToFriendPidsMap = new HashMap<>();
         for(int uid : friendships.keySet()) {
             uidToFriendPidsMap.put(uid, new HashSet<Integer>());
         }
@@ -240,7 +240,7 @@ public class ProbabilityUtils
 	}
 
 	public static int chooseKeyFromMapSetInProportionToSetSize(Map<Integer, Set<Integer>> mapset) {
-        List<Integer> keys = new ArrayList<Integer>(mapset.size() * 100);
+        List<Integer> keys = new ArrayList<>(mapset.size() * 100);
         for(int key : mapset.keySet()) {
             for(int i=0; i<mapset.get(key).size(); i++) {
                 keys.add(key); //this is intentional: we want mapset.get(key).size() copies of key in there

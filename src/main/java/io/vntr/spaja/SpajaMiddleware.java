@@ -124,23 +124,10 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         //Second, determine the migration strategy
         Map<Integer, Integer> migrationStrategy = spajaMigrationStrategy.getUserMigrationStrategy(partitionId);
 
-//        if(!migrationStrategy.keySet().equals(manager.getPartitionById(partitionId).getIdsOfMasters())) {
-//            throw new RuntimeException("Wrong!");
-//        }
-//
-//        for(int mover : migrationStrategy.keySet()) {
-//            if(!manager.getUserMasterById(mover).getReplicaPartitionIds().contains(migrationStrategy.get(mover))) {
-//                throw new RuntimeException("Wrong again!");
-//            }
-//        }
-
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
             SpajaUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
-//            if(newPartitionId.intValue() == partitionId.intValue()) {
-//                throw new RuntimeException("Nope.");
-//            }
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
@@ -179,7 +166,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
         Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
         int minReplicas = manager.getMinNumReplicas();
-        Set<Integer> usersToReplicate = new HashSet<Integer>();
+        Set<Integer> usersToReplicate = new HashSet<>();
         for(Integer uid : uids) {
             if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
                 usersToReplicate.add(uid);
@@ -189,7 +176,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     }
 
     Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(Set<Integer> uids, Integer pid) {
-        Map<Integer, Integer> counts = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> counts = new HashMap<>();
         for(Integer uid : uids) {
             int count = 0;
             SpajaUser user = manager.getUserMasterById(uid);
@@ -204,17 +191,17 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
         SpajaPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Integer> possibilities = new HashSet<Integer>(partition.getIdsOfMasters());
+        Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
         return possibilities;
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<Integer>(manager.getAllPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getMasterPartitionId());
         potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
-        List<Integer> list = new LinkedList<Integer>(potentialReplicaLocations);
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
@@ -274,13 +261,13 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public double calcualteAssortivity() {
+    public double calculateAssortivity() {
         return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
     }
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
             m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
         }

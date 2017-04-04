@@ -27,7 +27,7 @@ public class SparManagerTest {
 
         assertTrue(manager.getNumUsers() == 0);
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -135,7 +135,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -252,7 +252,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -307,7 +307,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -353,7 +353,7 @@ public class SparManagerTest {
             assertTrue(containsReplica == shouldContainReplica);
         }
 
-        Set<Integer> replicaSetCopy = new HashSet<Integer>(sparUser1.getReplicaPartitionIds());
+        Set<Integer> replicaSetCopy = new HashSet<>(sparUser1.getReplicaPartitionIds());
         replicaSetCopy.remove(newPartitionId);
         Integer replicaPartitionToRemove = replicaSetCopy.iterator().next();
 
@@ -378,7 +378,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -418,7 +418,7 @@ public class SparManagerTest {
         }
 
         Integer newPartitionId = manager.getPartitionIdWithFewestMasters();
-        Set<Integer> replicasToAddInDestinationPartition = new HashSet<Integer>();
+        Set<Integer> replicasToAddInDestinationPartition = new HashSet<>();
         for (Integer friendId : sparUser1.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);
             if (!friend.getMasterPartitionId().equals(newPartitionId) && !friend.getReplicaPartitionIds().contains(newPartitionId)) {
@@ -427,11 +427,11 @@ public class SparManagerTest {
         }
 
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
-        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<Integer>(strategy.findReplicasInMovingPartitionToDelete(sparUser1, replicasToAddInDestinationPartition));
+        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<>(strategy.findReplicasInMovingPartitionToDelete(sparUser1, replicasToAddInDestinationPartition));
         manager.moveUser(sparUser1, newPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
 
         SparUser sparUser1Again = manager.getUserMasterById(userId1);
-        Set<Integer> expectedReplicaIds = new HashSet<Integer>(oldReplicaIds);
+        Set<Integer> expectedReplicaIds = new HashSet<>(oldReplicaIds);
         expectedReplicaIds.remove(newPartitionId);
         assertEquals(expectedReplicaIds, sparUser1Again.getReplicaPartitionIds());
         assertEquals(newPartitionId, sparUser1Again.getMasterPartitionId());
@@ -462,7 +462,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -509,7 +509,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -589,7 +589,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -607,7 +607,7 @@ public class SparManagerTest {
 
         SparUser sparUser1 = manager.getUserMasterById(userId1);
         Integer user1OriginalMasterPartitionId = sparUser1.getMasterPartitionId();
-        Set<Integer> user1OriginalReplicaIds = new HashSet<Integer>(sparUser1.getReplicaPartitionIds());
+        Set<Integer> user1OriginalReplicaIds = new HashSet<>(sparUser1.getReplicaPartitionIds());
 
         for (Integer partitionId : sparUser1.getReplicaPartitionIds()) {
             SparUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
@@ -619,7 +619,7 @@ public class SparManagerTest {
         assertNotEquals(user1NewMasterPartitionId, user1OriginalMasterPartitionId);
         manager.promoteReplicaToMaster(userId1, user1NewMasterPartitionId);
 
-        Set<Integer> user1NewReplicaIds = new HashSet<Integer>(user1OriginalReplicaIds);
+        Set<Integer> user1NewReplicaIds = new HashSet<>(user1OriginalReplicaIds);
         user1NewReplicaIds.remove(user1NewMasterPartitionId);
         SparUser sparUser1Again = manager.getUserMasterById(userId1);
         assertEquals(sparUser1Again.getMasterPartitionId(), user1NewMasterPartitionId);
@@ -646,7 +646,7 @@ public class SparManagerTest {
         manager.addPartition();
         manager.addPartition();
 
-        Map<Integer, User> userIdToUserMap = new HashMap<Integer, User>();
+        Map<Integer, User> userIdToUserMap = new HashMap<>();
         Integer userId1 = 23;
         User user1 = new User(userId1);
         manager.addUser(user1);
@@ -662,7 +662,7 @@ public class SparManagerTest {
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
-        Set<Integer> partitionsWithoutThisUser = new HashSet<Integer>();
+        Set<Integer> partitionsWithoutThisUser = new HashSet<>();
         for (Integer partitionId : manager.getAllPartitionIds()) {
             SparPartition partition = manager.getPartitionById(partitionId);
             if (!partition.getIdsOfMasters().contains(userId1) && !partition.getIdsOfReplicas().contains(userId1)) {
@@ -696,12 +696,12 @@ public class SparManagerTest {
     @Test
     public void testGetEdgeCut() {
         int minNumReplicas = 0;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
         partitions.put(3, initSet(15, 16, 17, 18,  19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -723,7 +723,7 @@ public class SparManagerTest {
         friendships.put(19, initSet(20));
         friendships.put(20, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
         replicaPartitions.put(1, Collections.<Integer>emptySet());
         replicaPartitions.put(2, Collections.<Integer>emptySet());
         replicaPartitions.put(3, Collections.<Integer>emptySet());

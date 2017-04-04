@@ -18,7 +18,7 @@ public class HermesMigrator {
 
     public void migrateOffPartition(Integer pid) {
         NavigableSet<Target> preferredTargets = getPreferredTargets(pid);
-        Map<Integer, Integer> actualTargets = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> actualTargets = new HashMap<>();
         Map<Integer, Integer> userCounts = getUserCounts();
 
         for(Iterator<Target> iter = preferredTargets.descendingIterator(); iter.hasNext(); ) {
@@ -43,7 +43,7 @@ public class HermesMigrator {
 
     private Map<Integer, Integer> getUserCounts() {
         Map<Integer,Set<Integer>> partitionToUserMap = manager.getPartitionToUserMap();
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> map = new HashMap<>();
         for(Integer pid : partitionToUserMap.keySet()) {
             map.put(pid, partitionToUserMap.get(pid).size());
         }
@@ -59,9 +59,9 @@ public class HermesMigrator {
     }
 
     NavigableSet<Target> getPreferredTargets(Integer pid) {
-        List<Integer> options = new LinkedList<Integer>(manager.getAllPartitionIds());
+        List<Integer> options = new LinkedList<>(manager.getAllPartitionIds());
         options.remove(pid);
-        NavigableSet<Target> preferredTargets = new TreeSet<Target>();
+        NavigableSet<Target> preferredTargets = new TreeSet<>();
         for(Integer uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
             LogicalUser user = manager.getUser(uid).getLogicalUser(true);
             int maxFriends = 0;

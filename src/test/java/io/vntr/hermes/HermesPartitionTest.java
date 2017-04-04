@@ -16,12 +16,12 @@ public class HermesPartitionTest {
     @Test
     public void testGetCandidatesNoUnderweightNoOverweight() {
         float gamma = 1.5f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
         partitions.put(3, initSet(15, 16, 17, 18,  19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -68,12 +68,12 @@ public class HermesPartitionTest {
     @Test
     public void testGetCandidatesUnderweightOverweight() {
         float gamma = 1.3f; //underweight is < 2.8, overweight is > 5.2
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11));
         partitions.put(3, initSet(11, 12));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12));
         friendships.put( 2, initSet( 3,  6,  9, 12));
         friendships.put( 3, initSet( 4,  8, 12));
@@ -111,12 +111,12 @@ public class HermesPartitionTest {
     @Test
     public void testPhysicallyMigrateCopyAndDelete() {
         float gamma = 1.5f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
         partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
         partitions.put(3, initSet(15, 16, 17, 18,  19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<Integer, Set<Integer>>();
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
