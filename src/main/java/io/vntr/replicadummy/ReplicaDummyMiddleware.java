@@ -175,6 +175,11 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
+    public Long getMigrationTally() {
+        return 0L; //Replica Dummy doesn't migrate users
+    }
+
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         return manager.getPartitionToUserMap();
     }

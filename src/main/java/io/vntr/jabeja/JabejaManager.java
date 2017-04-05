@@ -17,6 +17,7 @@ public class JabejaManager {
     private float deltaT;
     private float befriendInitialT;
     private float befriendDeltaT;
+    private long migrationTally;
 
     private NavigableMap<Integer, JabejaUser> uMap;
     private NavigableMap<Integer, Set<Integer>> partitions;
@@ -76,6 +77,7 @@ public class JabejaManager {
         getPartition(pid1).add(id2);
         getPartition(pid2).remove(id2);
         getPartition(pid1).remove(id1);
+        increaseMigrationTally(2);
     }
 
     public int addUser() {
@@ -161,7 +163,6 @@ public class JabejaManager {
         }
         getPartition(newPid).add(uid);
         user.setPid(newPid);
-
     }
 
     public Integer getNumPartitions() {
@@ -210,4 +211,15 @@ public class JabejaManager {
         return "k:" + k + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
+    public Long getMigrationTally() {
+        return migrationTally;
+    }
+
+    void incrementMigrationTally() {
+        increaseMigrationTally(1);
+    }
+
+    void increaseMigrationTally(int amount) {
+        migrationTally += amount;
+    }
 }

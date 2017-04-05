@@ -19,6 +19,7 @@ public class SpajaManager {
 
     private int nextPid = 1;
     private int nextUid = 1;
+    private long migrationTally;
 
     private Map<Integer, SpajaPartition> partitionIdToPartitionMap;
 
@@ -245,6 +246,8 @@ public class SpajaManager {
         for (Integer replicaIdToDelete : replicasToDeleteInSourcePartition) {
             removeReplica(getUserMasterById(replicaIdToDelete), fromPid);
         }
+
+        increaseMigrationTally(1);
     }
 
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
@@ -383,6 +386,8 @@ public class SpajaManager {
             removeReplica(getUserMasterById(uid), pid2);
         }
 
+        increaseMigrationTally(2);
+
 //        if(!isInAValidState()) {
 //            isInAValidState();
 //        }
@@ -442,6 +447,14 @@ public class SpajaManager {
             m.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
         return m;
+    }
+
+    public long getMigrationTally() {
+        return migrationTally;
+    }
+
+    void increaseMigrationTally(int amount) {
+        migrationTally += amount;
     }
 
     @Override

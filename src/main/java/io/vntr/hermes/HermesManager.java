@@ -27,6 +27,8 @@ public class HermesManager {
     private int maxIterations;
     private float maxIterationToNumUsersRatio;
 
+    private long migrationTally;
+
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -206,6 +208,7 @@ public class HermesManager {
 
         uMap.putAll(usersWhoMoved);
         uMapLogical.putAll(usersWhoMoved);
+        increaseTally(usersWhoMoved.size());
     }
 
     boolean performStage(boolean firstStage, int k, boolean probabilistic) {
@@ -335,6 +338,16 @@ public class HermesManager {
     public float getGamma() {
         return gamma;
     }
+
+    public long getMigrationTally() {
+        return migrationTally;
+    }
+
+    void increaseTally(int amount) {
+        migrationTally += amount;
+    }
+
+
 
     @Override
     public String toString() {

@@ -16,6 +16,8 @@ public class MetisManager {
     private NavigableMap<Integer, Set<Integer>> partitions;
     private MetisRepartitioner repartitioner;
 
+    private long migrationTally;
+
     private static final Integer defaultInitialPid = 1;
 
     public MetisManager(String gpmetisLocation, String gpmetisTempdir) {
@@ -142,7 +144,7 @@ public class MetisManager {
         }
         getPartition(newPid).add(uid);
         user.setPid(newPid);
-
+        increaseMigrationTally(1);
     }
 
     public Integer getNumPartitions() {
@@ -184,6 +186,14 @@ public class MetisManager {
             friendships.put(uid, getUser(uid).getFriendIDs());
         }
         return friendships;
+    }
+
+    public long getMigrationTally() {
+        return migrationTally;
+    }
+
+    void increaseMigrationTally(int amount) {
+        migrationTally += amount;
     }
 
     @Override

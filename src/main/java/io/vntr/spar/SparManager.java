@@ -12,6 +12,8 @@ public class SparManager {
 
     private static final Integer defaultStartingId = 1;
 
+    private long migrationTally;
+
     private SortedMap<Integer, SparPartition> partitionIdToPartitionMap;
 
     private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<>();
@@ -185,6 +187,8 @@ public class SparManager {
         for (Integer replicaIdToDelete : replicasToDeleteInSourcePartition) {
             removeReplica(getUserMasterById(replicaIdToDelete), fromPid);
         }
+
+        incrementMigrationTally();
     }
 
     void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
@@ -325,6 +329,14 @@ public class SparManager {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
         return friendships;
+    }
+
+    public long getMigrationTally() {
+        return migrationTally;
+    }
+
+    void incrementMigrationTally() {
+        migrationTally++;
     }
 
     @Override

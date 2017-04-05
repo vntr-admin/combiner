@@ -101,6 +101,11 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
+    public Long getMigrationTally() {
+        return manager.getMigrationTally();
+    }
+
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         return manager.getPartitionToUsers();
     }

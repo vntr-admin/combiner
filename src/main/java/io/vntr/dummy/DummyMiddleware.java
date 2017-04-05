@@ -97,6 +97,11 @@ public class DummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
+    public Long getMigrationTally() {
+        return 0L; //No migration in dummy
+    }
+
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         return manager.getPartitionToUsers();
     }

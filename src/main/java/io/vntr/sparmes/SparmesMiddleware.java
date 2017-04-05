@@ -81,6 +81,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
             Set<Integer> replicasToAddInDestinationPartition = sparmesBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
             Set<Integer> replicasToDeleteInSourcePartition = sparmesBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
+            manager.increaseMigrationTally(1);
         }
     }
 
@@ -255,6 +256,11 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     @Override
     public Integer getEdgeCut() {
         return manager.getEdgeCut();
+    }
+
+    @Override
+    public Long getMigrationTally() {
+        return manager.getMigrationTally();
     }
 
     @Override

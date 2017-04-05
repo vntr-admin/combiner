@@ -17,6 +17,8 @@ public class SparmesManager {
 
     private int nextUid = 1;
     private int nextPid = 1;
+    private long migrationTally;
+
 
     private Map<Integer, SparmesPartition> pMap;
 
@@ -383,6 +385,7 @@ public class SparmesManager {
             ensureKReplication(uid);
         }
 
+        increaseMigrationTally(usersWhoMoved.size());
 //        if(!checkKReplication()) {
 //            checkKReplication();
 //        }
@@ -556,6 +559,13 @@ public class SparmesManager {
         return keys;
     }
 
+    public long getMigrationTally() {
+        return migrationTally;
+    }
+
+    void increaseMigrationTally(int amount) {
+        migrationTally += amount;
+    }
 
     private boolean checkKReplication() {
         boolean valid = true;

@@ -15,6 +15,7 @@ public interface IMiddlewareAnalyzer extends IMiddleware {
     Collection<Integer> getPartitionIds();
     Integer getEdgeCut();
     Integer getReplicationCount();
+    Long getMigrationTally();
     double calculateAssortivity();
     double calculateExpectedQueryDelay();
     Map<Integer, Set<Integer>> getPartitionToUserMap();
