@@ -42,7 +42,7 @@ public class TraceRunner {
 
     private static final String overallFormatStr = "    %7s | %s | %-25s | Edge Cut = %7d | Replica Count = %7d";
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     public static void main(String[] args) throws Exception {
 
@@ -110,13 +110,14 @@ public class TraceRunner {
                 }
             }
             log(pw, "Arguments: " + builder.toString(), true, true);
-            log(middleware, pw, null, type, true, true);
+            log(pw, HEADER, true, true);
+            log(middleware, pw, null, type, -1, true, true);
 
             long startTime = System.nanoTime();
 
             for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next, type, true, (i % 50) == 0);
+                log(middleware, pw, next, type, i, true, (i % 50) == 0);
                 runAction(middleware, next);
             }
 
@@ -126,7 +127,7 @@ public class TraceRunner {
 
             System.out.println("Time elapsed: " + seconds + "." + millis + " seconds");
 
-            log(middleware, pw, null, type, true, true);
+            log(middleware, pw, null, type, -1, true, true);
 
         }catch(Exception e) {
             throw e;
@@ -134,6 +135,200 @@ public class TraceRunner {
         finally {
             if(pw != null) {
                 pw.close();
+            }
+        }
+    }
+
+    static ParsedArgs parseArgs(String[] args, Properties props) {
+
+        ParsedArgs parsedArgs = new ParsedArgs();
+
+        String inputFolder = props.getProperty("input.folder");
+        String outputFolder = props.getProperty("output.folder");
+
+        if(args.length < 2) {
+            throw new IllegalArgumentException("Must have at least 2 arguments!");
+        }
+
+        if(args.length % 2 == 1) {
+            throw new IllegalArgumentException("Must have an even number of arguments!");
+        }
+
+        if(args[0].contains(File.separator)) {
+            parsedArgs.setInputFile(args[0]);
+        } else {
+            parsedArgs.setInputFile(inputFolder + File.separator + args[0]);
+        }
+
+        parsedArgs.setType(args[1]);
+        parsedArgs.setOutputFile(outputFolder + File.separator + generateFilename(args));
+
+        if(!allowedTypes.contains(parsedArgs.getType())) {
+            throw new IllegalArgumentException("arg[1] must be one of " + allowedTypes);
+        }
+
+        for(int i=2; i<args.length; i += 2) {
+            parsedArgs.setFlag(args[i], args[i+1]);
+        }
+
+        return parsedArgs;
+    }
+
+    static class ParsedArgs {
+        private String type;
+        private String inputFile;
+        private String outputFile;
+        private Integer numActions;
+        private Float alpha;
+        private Float initialT;
+        private Float deltaT;
+        private Float befriendInitialT;
+        private Float befriendDeltaT;
+        private Integer jaK;
+        private Float gamma;
+        private Float iterationCutoffRatio;
+        private Integer hermesK;
+        private Integer minNumReplicas;
+
+        public ParsedArgs() {
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getInputFile() {
+            return inputFile;
+        }
+
+        public void setInputFile(String inputFile) {
+            this.inputFile = inputFile;
+        }
+
+        public String getOutputFile() {
+            return outputFile;
+        }
+
+        public void setOutputFile(String outputFile) {
+            this.outputFile = outputFile;
+        }
+
+        public Integer getNumActions() {
+            return numActions;
+        }
+
+        public void setNumActions(Integer numActions) {
+            this.numActions = numActions;
+        }
+
+        public Float getAlpha() {
+            return alpha;
+        }
+
+        public void setAlpha(Float alpha) {
+            this.alpha = alpha;
+        }
+
+        public Float getInitialT() {
+            return initialT;
+        }
+
+        public void setInitialT(Float initialT) {
+            this.initialT = initialT;
+        }
+
+        public Float getDeltaT() {
+            return deltaT;
+        }
+
+        public void setDeltaT(Float deltaT) {
+            this.deltaT = deltaT;
+        }
+
+        public Float getBefriendInitialT() {
+            return befriendInitialT;
+        }
+
+        public void setBefriendInitialT(Float befriendInitialT) {
+            this.befriendInitialT = befriendInitialT;
+        }
+
+        public Float getBefriendDeltaT() {
+            return befriendDeltaT;
+        }
+
+        public void setBefriendDeltaT(Float befriendDeltaT) {
+            this.befriendDeltaT = befriendDeltaT;
+        }
+
+        public Integer getJaK() {
+            return jaK;
+        }
+
+        public void setJaK(Integer jaK) {
+            this.jaK = jaK;
+        }
+
+        public Float getGamma() {
+            return gamma;
+        }
+
+        public void setGamma(Float gamma) {
+            this.gamma = gamma;
+        }
+
+        public Float getIterationCutoffRatio() {
+            return iterationCutoffRatio;
+        }
+
+        public void setIterationCutoffRatio(Float iterationCutoffRatio) {
+            this.iterationCutoffRatio = iterationCutoffRatio;
+        }
+
+        public Integer getHermesK() {
+            return hermesK;
+        }
+
+        public void setHermesK(Integer hermesK) {
+            this.hermesK = hermesK;
+        }
+
+        public Integer getMinNumReplicas() {
+            return minNumReplicas;
+        }
+
+        public void setMinNumReplicas(Integer minNumReplicas) {
+            this.minNumReplicas = minNumReplicas;
+        }
+
+        public static final String REPLICAS_FLAG = "-minReps";
+        public static final String GAMMA_FLAG = "-gamma";
+        public static final String ALPHA_FLAG = "-alpha";
+        public static final String INITIAL_T_FLAG = "-initT";
+        public static final String DELTA_T_FLAG = "-deltaT";
+        public static final String NEIGHBORHOOD_FLAG = "-nbhd";
+        public static final String MAX_MOVES_FLAG = "-maxMove";
+        public static final String CUTOFF_FLAG = "-cutoff";
+        public static final String INITIAL_T_BEFRIEND_FLAG = "-initTfriend";
+        public static final String DELTA_T_BEFRIEND_FLAG = "-deltaTfriend";
+
+        public void setFlag(String flag, String rawValue) {
+            switch(flag) {
+                case REPLICAS_FLAG:            setMinNumReplicas(Integer.parseInt(rawValue));       break;
+                case GAMMA_FLAG:               setGamma(Float.parseFloat(rawValue));                break;
+                case ALPHA_FLAG:               setAlpha(Float.parseFloat(rawValue));                break;
+                case INITIAL_T_FLAG:           setInitialT(Float.parseFloat(rawValue));             break;
+                case DELTA_T_FLAG:             setDeltaT(Float.parseFloat(rawValue));               break;
+                case NEIGHBORHOOD_FLAG:        setJaK(Integer.parseInt(rawValue));                  break;
+                case MAX_MOVES_FLAG:           setHermesK(Integer.parseInt(rawValue));              break;
+                case CUTOFF_FLAG:              setIterationCutoffRatio(Float.parseFloat(rawValue)); break;
+                case INITIAL_T_BEFRIEND_FLAG:  setBefriendInitialT(Float.parseFloat(rawValue));     break;
+                case DELTA_T_BEFRIEND_FLAG:    setBefriendDeltaT(Float.parseFloat(rawValue));       break;
+                default: throw new RuntimeException(flag + " is not a valid ");
             }
         }
     }
@@ -150,7 +345,7 @@ public class TraceRunner {
         }
     }
 
-    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, boolean flush, boolean echo) {
+    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, int i, boolean flush, boolean echo) {
         int numU = middleware.getNumberOfUsers();
         int numF = middleware.getNumberOfFriendships();
         int numP = middleware.getNumberOfPartitions();
@@ -159,7 +354,8 @@ public class TraceRunner {
         double asrt = middleware.calculateAssortivity();
         String nextAction = next != null ? next.toAbbreviatedString() : "N/A";
         String compressedStr = formatCompressed(type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps);
-        log(pw, compressedStr, flush, echo);
+        String tableStr = formatTable(i, type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps, middleware.getMigrationTally(), middleware.calculateExpectedQueryDelay());
+        log(pw, tableStr, flush, echo);
     }
 
     private static void log(PrintWriter pw, String str, boolean flush, boolean echo) {
@@ -295,6 +491,40 @@ public class TraceRunner {
                 asrtString,
                 cut,
                 reps);
+
+        return result;
+    }
+
+    private static final String HEADER = "No       Type     Date                 Action          Ps   Nodes  Edges    Assort.  EdgeCut  Replicas  Moves     Delay";
+    private static final String TABLE_FORMAT_STR = "%-8d %-8s %-20s %-15s %-4d %-6d %-8d %-8s %-8s %-9d %-8d  %-7d";
+
+    static String formatTable(int i, String type, Date date, String nextAction, int numP, int numU, int numF, double asrt, int cut, int reps, long migrations, double latency) {
+        String formattedDate = sdf.format(date);
+
+        String asrtString = "" + asrt;
+        if(asrtString.startsWith("0")) {
+            asrtString = asrtString.substring(1);
+        }
+        else if(asrtString.startsWith("-0")) {
+            asrtString = "-" + asrtString.substring(2);
+        }
+        if(asrtString.length() > 7) {
+            asrtString = asrtString.substring(0,7);
+        }
+
+        String result = String.format(TABLE_FORMAT_STR,
+                i,
+                type,
+                formattedDate,
+                nextAction,
+                numP,
+                numU,
+                numF,
+                asrtString,
+                cut,
+                reps,
+                migrations,
+                (int) latency);
 
         return result;
     }
