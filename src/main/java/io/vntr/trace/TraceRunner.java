@@ -72,14 +72,17 @@ public class TraceRunner {
 
             for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next, parsedArgs.getType(), i, true, (i % 50) == 0);
+                log(middleware, pw, next, parsedArgs.getType(), i, parsedArgs, true, (i % 50) == 0);
                 runAction(middleware, next);
+                if(parsedArgs.getValidityCheckProbability() != 0 && Math.random() < parsedArgs.getValidityCheckProbability()) {
+                    middleware.checkValidity();
+                }
             }
 
             long timeElapsedNanos = System.nanoTime() - startTime;
             System.out.println("Time elapsed: " + (timeElapsedNanos / BILLION) + "." + ((timeElapsedNanos % BILLION) / MILLION) + " seconds");
 
-            log(middleware, pw, null, parsedArgs.getType(), -1, true, true);
+            log(middleware, pw, null, parsedArgs.getType(), -1, parsedArgs, true, true);
 
         } catch(Exception e) {
             throw e;
@@ -105,7 +108,6 @@ public class TraceRunner {
 
     static ParsedArgs parseArgs(String[] args, Properties props) {
 
-        ParsedArgs parsedArgs = new ParsedArgs();
 
         String inputFolder = props.getProperty("input.folder");
         String outputFolder = props.getProperty("output.folder");
@@ -118,13 +120,13 @@ public class TraceRunner {
             throw new IllegalArgumentException("Must have an even number of arguments!");
         }
 
+        ParsedArgs parsedArgs = new ParsedArgs(args[1]);
         if(args[0].contains(File.separator)) {
             parsedArgs.setInputFile(args[0]);
         } else {
             parsedArgs.setInputFile(inputFolder + File.separator + args[0]);
         }
 
-        parsedArgs.setType(args[1]);
         parsedArgs.setOutputFile(outputFolder + File.separator + generateFilename(args));
 
         if(!allowedTypes.contains(parsedArgs.getType())) {
@@ -143,26 +145,33 @@ public class TraceRunner {
         private String inputFile;
         private String outputFile;
         private Integer numActions;
-        private Float alpha = 1.01f;
+        private Float alpha;
         private Float initialT = 2f;
-        private Float deltaT   = 0.025f;
+        private Float deltaT;
         private Float befriendInitialT = 1.1f;
         private Float befriendDeltaT = 0.025f;
-        private Integer jaK = 3;
+        private Integer jaK = 15;
         private Float gamma = 1.01f;
         private Float iterationCutoffRatio = 0.0025f;
-        private Integer hermesK = 3;
+        private Integer hermesK = 3;  //TODO: should we allow users to set this for SPARMES?
         private Integer minNumReplicas = 0;
+        private double assortivityCheckProbability = 1;
+        private double latencyCheckProbability = 1;
+        private double validityCheckProbability = 0;
 
-        public ParsedArgs() {
+
+        public ParsedArgs(String type) {
+            this.type = type;
+            switch(type) {
+                case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; break;
+                case HERMES_TYPE:  gamma = 1.15f;                  break;
+                case SPAJA_TYPE:   alpha = 1f;    deltaT = 0.5f;   break;
+                case SPARMES_TYPE: gamma = 1.01f;                  break;
+            }
         }
 
         public String getType() {
             return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
         }
 
         public String getInputFile() {
@@ -269,6 +278,30 @@ public class TraceRunner {
             this.minNumReplicas = minNumReplicas;
         }
 
+        public double getAssortivityCheckProbability() {
+            return assortivityCheckProbability;
+        }
+
+        public void setAssortivityCheckProbability(double assortivityCheckProbability) {
+            this.assortivityCheckProbability = assortivityCheckProbability;
+        }
+
+        public double getLatencyCheckProbability() {
+            return latencyCheckProbability;
+        }
+
+        public void setLatencyCheckProbability(double latencyCheckProbability) {
+            this.latencyCheckProbability = latencyCheckProbability;
+        }
+
+        public double getValidityCheckProbability() {
+            return validityCheckProbability;
+        }
+
+        public void setValidityCheckProbability(double validityCheckProbability) {
+            this.validityCheckProbability = validityCheckProbability;
+        }
+
         public static final String NUM_ACTIONS_FLAG = "-n";
         public static final String REPLICAS_FLAG = "-minReps";
         public static final String GAMMA_FLAG = "-gamma";
@@ -280,20 +313,28 @@ public class TraceRunner {
         public static final String CUTOFF_FLAG = "-cutoff";
         public static final String INITIAL_T_BEFRIEND_FLAG = "-initTfriend";
         public static final String DELTA_T_BEFRIEND_FLAG = "-deltaTfriend";
+        public static final String ASSORTIVITY_FLAG = "-assortivity";
+        public static final String LATENCY_FLAG = "-delay";
+        public static final String VALIDITY_FLAG = "-validity";
+
 
         public void setFlag(String flag, String rawValue) {
+            double parsed = Double.parseDouble(rawValue);
             switch(flag) {
-                case NUM_ACTIONS_FLAG:         setNumActions(Integer.parseInt(rawValue));
-                case REPLICAS_FLAG:            setMinNumReplicas(Integer.parseInt(rawValue));       break;
-                case GAMMA_FLAG:               setGamma(Float.parseFloat(rawValue));                break;
-                case ALPHA_FLAG:               setAlpha(Float.parseFloat(rawValue));                break;
-                case INITIAL_T_FLAG:           setInitialT(Float.parseFloat(rawValue));             break;
-                case DELTA_T_FLAG:             setDeltaT(Float.parseFloat(rawValue));               break;
-                case NEIGHBORHOOD_FLAG:        setJaK(Integer.parseInt(rawValue));                  break;
-                case MAX_MOVES_FLAG:           setHermesK(Integer.parseInt(rawValue));              break;
-                case CUTOFF_FLAG:              setIterationCutoffRatio(Float.parseFloat(rawValue)); break;
-                case INITIAL_T_BEFRIEND_FLAG:  setBefriendInitialT(Float.parseFloat(rawValue));     break;
-                case DELTA_T_BEFRIEND_FLAG:    setBefriendDeltaT(Float.parseFloat(rawValue));       break;
+                case NUM_ACTIONS_FLAG:         setNumActions((int) parsed);             break;
+                case REPLICAS_FLAG:            setMinNumReplicas((int) parsed);         break;
+                case GAMMA_FLAG:               setGamma((float) parsed);                break;
+                case ALPHA_FLAG:               setAlpha((float) parsed);                break;
+                case INITIAL_T_FLAG:           setInitialT((float) parsed);             break;
+                case DELTA_T_FLAG:             setDeltaT((float) parsed);               break;
+                case NEIGHBORHOOD_FLAG:        setJaK((int) parsed);                    break;
+                case MAX_MOVES_FLAG:           setHermesK((int) parsed);                break;
+                case CUTOFF_FLAG:              setIterationCutoffRatio((float) parsed); break;
+                case INITIAL_T_BEFRIEND_FLAG:  setBefriendInitialT((float) parsed);     break;
+                case DELTA_T_BEFRIEND_FLAG:    setBefriendDeltaT((float) parsed);       break;
+                case ASSORTIVITY_FLAG:         setAssortivityCheckProbability(parsed);  break;
+                case LATENCY_FLAG:             setLatencyCheckProbability(parsed);      break;
+                case VALIDITY_FLAG:            setValidityCheckProbability(parsed);     break;
                 default: throw new RuntimeException(flag + " is not a valid ");
             }
         }
@@ -340,15 +381,35 @@ public class TraceRunner {
         }
     }
 
-    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, int i, boolean flush, boolean echo) {
+    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, int i, ParsedArgs parsedArgs, boolean flush, boolean echo) {
         int numU = middleware.getNumberOfUsers();
         int numF = middleware.getNumberOfFriendships();
         int numP = middleware.getNumberOfPartitions();
         int cut  = middleware.getEdgeCut();
         int reps = middleware.getReplicationCount();
-        double asrt = middleware.calculateAssortivity();
+
+        double asrt;
+        double asrtProb = parsedArgs.getAssortivityCheckProbability();
+        if(asrtProb == 0) {
+            asrt = -99D;
+        } else if(asrtProb == 1) {
+            asrt = middleware.calculateAssortivity();
+        } else {
+            asrt = Math.random() < asrtProb ? middleware.calculateAssortivity() : -99D;
+        }
+
         long tally = middleware.getMigrationTally();
-        double delay = middleware.calculateExpectedQueryDelay();
+
+        double delay;
+        double delayProb = parsedArgs.getLatencyCheckProbability();
+        if(delayProb == 0) {
+            delay = -99D;
+        } else if(delayProb == 1) {
+            delay = middleware.calculateExpectedQueryDelay();
+        } else {
+            delay = Math.random() < delayProb ? middleware.calculateExpectedQueryDelay() : -99D;
+        }
+
         String nextAction = next != null ? next.toAbbreviatedString() : "END";
 
         String tableStr = formatTable(i, type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps, tally, delay);
