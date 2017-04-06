@@ -306,4 +306,9 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     public double calculateExpectedQueryDelay() {
         return 0; //Replica systems are strictly-local by design.
     }
+
+    @Override
+    public void checkValidity() {
+        manager.checkValidity();
+    }
 }

@@ -333,4 +333,38 @@ public class ReplicaDummyManager {
     public String toString() {
         return "minNumReplicas:" + minNumReplicas + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
     }
+
+    void checkValidity() {
+        boolean valid = true;
+        for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
+            ReplicaDummyUser user = getUserMasterById(uid);
+            Integer observedMasterPid = null;
+            Set<Integer> replicaPidsFromPartitions = new HashSet<>();
+            for(Integer pid : partitionIdToPartitionMap.keySet()) {
+                ReplicaDummyPartition p = partitionIdToPartitionMap.get(pid);
+                if(p.getIdsOfReplicas().contains(uid)) {
+                    replicaPidsFromPartitions.add(pid);
+                }
+                if(p.getIdsOfMasters().contains(observedMasterPid)) {
+                    if(observedMasterPid != null) {
+                        throw new RuntimeException("user cannot have master in multiple partitions");
+                    }
+                    observedMasterPid = pid;
+                }
+            }
+
+            if(observedMasterPid == null) {
+                throw new RuntimeException("user must have a master in some partition");
+            }
+            if(!observedMasterPid.equals(user.getMasterPartitionId())) {
+                throw new RuntimeException("Mismatch between user's master PID and system's");
+            }
+            if(replicaPidsFromPartitions.size() < minNumReplicas) {
+                throw new RuntimeException("Insufficient replicas");
+            }
+            if(!replicaPidsFromPartitions.equals(user.getReplicaPartitionIds())) {
+                throw new RuntimeException("Mismatch between user's replica PIDs and system's");
+            }
+        }
+    }
 }

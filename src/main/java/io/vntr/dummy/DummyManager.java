@@ -149,8 +149,30 @@ public class DummyManager {
         return friendships;
     }
 
+    void checkValidity() {
+        for(Integer uid : uMap.keySet()) {
+            Integer observedMasterPid = null;
+            for(Integer pid : partitions.keySet()) {
+                if(partitions.get(pid).contains(uid)) {
+                    if(observedMasterPid != null) {
+                        throw new RuntimeException("user cannot be in multiple partitions");
+                    }
+                    observedMasterPid = pid;
+                }
+            }
+
+            if(observedMasterPid == null) {
+                throw new RuntimeException("user must be in some partition");
+            }
+            if(!observedMasterPid.equals(uMap.get(uid).getPid())) {
+                throw new RuntimeException("Mismatch between user's PID and system's");
+            }
+        }
+    }
+
     @Override
     public String toString() {
         return "{Dummy} #U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
+
 }

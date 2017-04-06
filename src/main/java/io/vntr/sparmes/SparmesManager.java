@@ -386,10 +386,6 @@ public class SparmesManager {
         }
 
         increaseMigrationTally(usersWhoMoved.size());
-//        if(!checkKReplication()) {
-//            checkKReplication();
-//        }
-
     }
 
     void ensureKReplication(int uid) {
@@ -567,7 +563,57 @@ public class SparmesManager {
         migrationTally += amount;
     }
 
-    private boolean checkKReplication() {
+    void checkValidity() {
+
+        //Check masters
+        for(Integer uid : uMap.keySet()) {
+            Integer observedMasterPid = null;
+            for(Integer pid : pMap.keySet()) {
+                if(pMap.get(pid).getIdsOfMasters().contains(uid)) {
+                    if(observedMasterPid != null) {
+                        throw new RuntimeException("user cannot be in multiple partitions");
+                    }
+                    observedMasterPid = pid;
+                }
+            }
+
+            if(observedMasterPid == null) {
+                throw new RuntimeException("user must be in some partition");
+            }
+            if(!observedMasterPid.equals(uMap.get(uid))) {
+                throw new RuntimeException("Mismatch between uMap's location of user and partition's");
+            }
+            if(!observedMasterPid.equals(getUserMasterById(uid).getMasterPartitionId())) {
+                throw new RuntimeException("Mismatch between user's pid and partition's");
+            }
+
+            //TODO: should we check the logical partitions?
+        }
+
+        //check replicas
+        for(Integer uid : uMap.keySet()) {
+            SparmesUser user = getUserMasterById(uid);
+            Set<Integer> observedReplicaPids = new HashSet<>();
+            for(Integer pid : pMap.keySet()) {
+                if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {
+                    observedReplicaPids.add(pid);
+                }
+            }
+            if(observedReplicaPids.size() < minNumReplicas) {
+                throw new RuntimeException("Insufficient replicas");
+            }
+            if(!observedReplicaPids.equals(user.getReplicaPartitionIds())) {
+                throw new RuntimeException("Mismatch between user's replica PIDs and system's");
+            }
+        }
+
+        //check local semantics
+        if(!checkLocalSemantics()) {
+            throw new RuntimeException("local semantics issue!");
+        }
+    }
+
+    private boolean checkLocalSemantics() {
         boolean valid = true;
         Map<Integer, Set<Integer>> friendships = getFriendships();
         Map<Integer, Set<Integer>> partitions  = getPartitionToUserMap();

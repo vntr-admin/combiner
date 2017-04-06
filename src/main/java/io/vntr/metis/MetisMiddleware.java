@@ -148,4 +148,9 @@ public class MetisMiddleware implements IMiddlewareAnalyzer {
     public double calculateExpectedQueryDelay() {
         return ProbabilityUtils.calculateExpectedQueryDelay(getFriendships(), getPartitionToUserMap());
     }
+
+    @Override
+    public void checkValidity() {
+        manager.checkValidity();
+    }
 }

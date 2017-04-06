@@ -4,20 +4,10 @@ import io.vntr.User;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
-
 /**
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesManager {
-    final static Logger logger = Logger.getLogger(HermesManager.class);
-
-    private static final String preRepartitionFormatStr  = "#U: %5d | #P: %4d | #F: %7d | Pre-Cut: %7d";
-    private static final String postRepartitionFormatStr = "#U: %5d | #P: %4d | #F: %7d | #Iter: %4d | Post-Cut: %7d";
-    private static final String iterationFormatStr = "%4d: %7d";
-
-    private static final String repartitionFormatStr = "#U: %5d | #P: %4d | #F: %7d | #Iter: %4d | Pre-Cut: %7d | Post-Cut: %7d";
-
     private Map<Integer, HermesPartition> pMap;
     private Map<Integer, Integer> uMap;
     private Map<Integer, Integer> uMapLogical;
@@ -220,6 +210,7 @@ public class HermesManager {
             changed |= !targets.isEmpty();
         }
 
+        //TODO: should I include logical migrations in the migration tally?
         for(Integer pid : pMap.keySet()) {
             for(Target target : stageTargets.get(pid)) {
                 migrateLogically(target);
@@ -356,5 +347,31 @@ public class HermesManager {
 
     void updateLogicalPidCache(Integer id, Integer logicalPid) {
         uMapLogical.put(id, logicalPid);
+    }
+
+    void checkValidity() {
+        for(Integer uid : uMap.keySet()) {
+            Integer observedMasterPid = null;
+            for(Integer pid : pMap.keySet()) {
+                if(pMap.get(pid).getPhysicalUserIds().contains(uid)) {
+                    if(observedMasterPid != null) {
+                        throw new RuntimeException("user cannot be in multiple partitions");
+                    }
+                    observedMasterPid = pid;
+                }
+            }
+
+            if(observedMasterPid == null) {
+                throw new RuntimeException("user must be in some partition");
+            }
+            if(!observedMasterPid.equals(uMap.get(uid))) {
+                throw new RuntimeException("Mismatch between uMap's location of user and partition's");
+            }
+            if(!observedMasterPid.equals(getUser(uid).getPhysicalPid())) {
+                throw new RuntimeException("Mismatch between user's pid and partition's");
+            }
+
+            //TODO: should we check the logical partitions?
+        }
     }
 }
