@@ -209,7 +209,7 @@ public class ProbabilityUtils
 
         double sum = 0;
         for(int uid : friendships.keySet()) {
-            double expectedDelay = LND_12_08441436510468D__0_44631395858726847[friendships.get(uid).size()];
+            double expectedDelay = LND_12_08441436510468D__0_44631395858726847[uidToFriendPidsMap.get(uid).size()];
             sum += expectedDelay;
         }
 
