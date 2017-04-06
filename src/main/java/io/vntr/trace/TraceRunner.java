@@ -38,104 +38,68 @@ public class TraceRunner {
     public static final String SPAJA_TYPE = "SPAJA";
     public static final String SPARMES_TYPE = "SPARMES";
     public static final String METIS_TYPE = "METIS";
+
+    public static final long MILLION = 1000000;
+    public static final long BILLION = 1000000000;
+
+    private static final String CONFIG_FILE = "config.properties";
+
     private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(JABEJA_TYPE, HERMES_TYPE, SPAR_TYPE, SPAJA_TYPE, SPARMES_TYPE, METIS_TYPE));
 
-    private static final String overallFormatStr = "    %7s | %s | %-25s | Edge Cut = %7d | Replica Count = %7d";
-
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private static final SimpleDateFormat filenameSdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
 
     public static void main(String[] args) throws Exception {
 
-        Properties prop = new Properties();
-        prop.load(new FileInputStream("config.properties"));
+        Properties props = new Properties();
+        props.load(new FileInputStream(CONFIG_FILE));
 
-        String inputFolder = prop.getProperty("input.folder");
-        String outputFolder = prop.getProperty("output.folder");
+        ParsedArgs parsedArgs = parseArgs(args, props);
 
-        if(args.length < 2) {
-            throw new IllegalArgumentException("Must have at least 2 arguments!");
-        }
+        Trace trace = TraceUtils.getFullTraceFromFile(parsedArgs.getInputFile());
+        int traceLengthLimit = parsedArgs.getNumActions() != null ? parsedArgs.getNumActions() : trace.getActions().size();
 
-        String inputFile;
-        if(args[0].contains(File.separator)) {
-            inputFile = args[0];
-        } else {
-            inputFile = inputFolder + File.separator + args[0];
-        }
-
-        String type = args[1];
-        String outputFile = outputFolder + File.separator + generateFilename(args);
-
-        if(!allowedTypes.contains(type)) {
-            throw new IllegalArgumentException("arg[1] must be one of " + allowedTypes);
-        }
-
-        System.out.println("Type: " + type);
-        System.out.println("Input file: " + inputFile);
-        System.out.println("Output file: " + outputFile);
-        Trace trace = TraceUtils.getFullTraceFromFile(inputFile);
-
-        int traceLengthLimit;
-        boolean hasLengthOverride = ( args.length >= 4 && "-n".equals(args[2]) );
-        if(hasLengthOverride) {
-            traceLengthLimit = Integer.parseInt(args[3]);
-        } else {
-            traceLengthLimit = trace.getActions().size();
-        }
-
-        String[] middlewareArgs = new String[hasLengthOverride ? args.length - 4 : args.length - 2];
-        System.arraycopy(args, hasLengthOverride ? 4 : 2, middlewareArgs, 0, middlewareArgs.length);
-
-        IMiddlewareAnalyzer middleware;
-
-        switch (type) {
-            case JABEJA_TYPE:  middleware = initJabejaMiddleware (trace, middlewareArgs, prop); break;
-            case HERMES_TYPE:  middleware = initHermesMiddleware (trace, middlewareArgs, prop); break;
-            case SPAR_TYPE:    middleware = initSparMiddleware   (trace, middlewareArgs, prop); break;
-            case SPAJA_TYPE:   middleware = initSpajaMiddleware  (trace, middlewareArgs, prop); break;
-            case SPARMES_TYPE: middleware = initSparmesMiddleware(trace, middlewareArgs, prop); break;
-            case METIS_TYPE:   middleware = initMetisMiddleware  (trace, middlewareArgs, prop); break;
-            default: throw new RuntimeException("Must be one of " + allowedTypes);
-        }
+        IMiddlewareAnalyzer middleware = initMiddleware(parsedArgs, trace, props);
 
         PrintWriter pw = null;
         try {
-            pw = new PrintWriter(outputFile);
+            pw = new PrintWriter(parsedArgs.getOutputFile());
 
-            StringBuilder builder = new StringBuilder();
-            for(int i=0; i<args.length; i++) {
-                builder.append(args[i]);
-                if(i< args.length-1) {
-                    builder.append(' ');
-                }
-            }
-            log(pw, "Arguments: " + builder.toString(), true, true);
+            log(pw, "#Arguments: " + parsedArgs.toString(), true, true);
             log(pw, HEADER, true, true);
-            log(middleware, pw, null, type, -1, true, true);
 
             long startTime = System.nanoTime();
 
             for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next, type, i, true, (i % 50) == 0);
+                log(middleware, pw, next, parsedArgs.getType(), i, true, (i % 50) == 0);
                 runAction(middleware, next);
             }
 
-            long timeElapsed = System.nanoTime() - startTime;
-            long seconds = timeElapsed / 1000000000;
-            long millis  = (timeElapsed % 1000000000) / 1000000;
+            long timeElapsedNanos = System.nanoTime() - startTime;
+            System.out.println("Time elapsed: " + (timeElapsedNanos / BILLION) + "." + ((timeElapsedNanos % BILLION) / MILLION) + " seconds");
 
-            System.out.println("Time elapsed: " + seconds + "." + millis + " seconds");
+            log(middleware, pw, null, parsedArgs.getType(), -1, true, true);
 
-            log(middleware, pw, null, type, -1, true, true);
-
-        }catch(Exception e) {
+        } catch(Exception e) {
             throw e;
         }
         finally {
             if(pw != null) {
                 pw.close();
             }
+        }
+    }
+
+    static IMiddlewareAnalyzer initMiddleware(ParsedArgs parsedArgs, Trace trace, Properties props) {
+        switch (parsedArgs.getType()) {
+            case JABEJA_TYPE:  return initJabejaMiddleware (trace, parsedArgs, props);
+            case HERMES_TYPE:  return initHermesMiddleware (trace, parsedArgs, props);
+            case SPAR_TYPE:    return initSparMiddleware   (trace, parsedArgs, props);
+            case SPAJA_TYPE:   return initSpajaMiddleware  (trace, parsedArgs, props);
+            case SPARMES_TYPE: return initSparmesMiddleware(trace, parsedArgs, props);
+            case METIS_TYPE:   return initMetisMiddleware  (trace, parsedArgs, props);
+            default: throw new RuntimeException("args[1] must be one of " + allowedTypes);
         }
     }
 
@@ -179,16 +143,16 @@ public class TraceRunner {
         private String inputFile;
         private String outputFile;
         private Integer numActions;
-        private Float alpha;
-        private Float initialT;
-        private Float deltaT;
-        private Float befriendInitialT;
-        private Float befriendDeltaT;
-        private Integer jaK;
-        private Float gamma;
-        private Float iterationCutoffRatio;
-        private Integer hermesK;
-        private Integer minNumReplicas;
+        private Float alpha = 1.01f;
+        private Float initialT = 2f;
+        private Float deltaT   = 0.025f;
+        private Float befriendInitialT = 1.1f;
+        private Float befriendDeltaT = 0.025f;
+        private Integer jaK = 3;
+        private Float gamma = 1.01f;
+        private Float iterationCutoffRatio = 0.0025f;
+        private Integer hermesK = 3;
+        private Integer minNumReplicas = 0;
 
         public ParsedArgs() {
         }
@@ -305,6 +269,7 @@ public class TraceRunner {
             this.minNumReplicas = minNumReplicas;
         }
 
+        public static final String NUM_ACTIONS_FLAG = "-n";
         public static final String REPLICAS_FLAG = "-minReps";
         public static final String GAMMA_FLAG = "-gamma";
         public static final String ALPHA_FLAG = "-alpha";
@@ -318,6 +283,7 @@ public class TraceRunner {
 
         public void setFlag(String flag, String rawValue) {
             switch(flag) {
+                case NUM_ACTIONS_FLAG:         setNumActions(Integer.parseInt(rawValue));
                 case REPLICAS_FLAG:            setMinNumReplicas(Integer.parseInt(rawValue));       break;
                 case GAMMA_FLAG:               setGamma(Float.parseFloat(rawValue));                break;
                 case ALPHA_FLAG:               setAlpha(Float.parseFloat(rawValue));                break;
@@ -330,6 +296,35 @@ public class TraceRunner {
                 case DELTA_T_BEFRIEND_FLAG:    setBefriendDeltaT(Float.parseFloat(rawValue));       break;
                 default: throw new RuntimeException(flag + " is not a valid ");
             }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append(inputFile).append(' ').append(type);
+
+            if(SPAR_TYPE.equals(type) || SPAJA_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
+                builder.append(" minReplicas=").append(minNumReplicas);
+            }
+            if(JABEJA_TYPE.equals(type) || SPAJA_TYPE.equals(type)) {
+                builder.append(" alpha=").append(alpha).append(" initialT=").append(initialT).append(" deltaT=").append(deltaT).append(" k=").append(jaK);
+            }
+            if(HERMES_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
+                builder.append(" gamma=").append(gamma);
+            }
+
+            if(JABEJA_TYPE.equals(type)) {
+                builder.append(" befriendInitialT=").append(befriendInitialT).append(" befriendDeltaT=").append(befriendDeltaT);
+            }
+            if(HERMES_TYPE.equals(type)) {
+                builder.append(" k=").append(hermesK).append(" cutoff=").append(iterationCutoffRatio);
+            }
+
+            if(numActions != null) {
+                builder.append(" numActions=" + numActions);
+            }
+
+            return builder.toString();
         }
     }
 
@@ -352,9 +347,12 @@ public class TraceRunner {
         int cut  = middleware.getEdgeCut();
         int reps = middleware.getReplicationCount();
         double asrt = middleware.calculateAssortivity();
-        String nextAction = next != null ? next.toAbbreviatedString() : "N/A";
-        String compressedStr = formatCompressed(type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps);
-        String tableStr = formatTable(i, type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps, middleware.getMigrationTally(), middleware.calculateExpectedQueryDelay());
+        long tally = middleware.getMigrationTally();
+        double delay = middleware.calculateExpectedQueryDelay();
+        String nextAction = next != null ? next.toAbbreviatedString() : "END";
+
+        String tableStr = formatTable(i, type, new Date(), nextAction, numP, numU, numF, asrt, cut, reps, tally, delay);
+
         log(pw, tableStr, flush, echo);
     }
 
@@ -369,17 +367,20 @@ public class TraceRunner {
     }
 
     static String generateFilename(String[] args) {
-        long nanoTime = System.nanoTime();
-        Date now = new Date();
-        StringBuilder builder = new StringBuilder();
-        for(int i=0; i<args.length; i++) {
-            builder.append(sanitize(args[i]));
-            builder.append("__");
-        }
-        builder.append(new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(now));
-        builder.append("__");
-        builder.append(nanoTime);
-        builder.append(".txt");
+        String cleanInputFilename = sanitize((args[0]));
+        String type = args[1];
+
+        StringBuilder builder =
+                new StringBuilder()
+                        .append(cleanInputFilename)
+                        .append("__")
+                        .append(type)
+                        .append("__")
+                        .append(filenameSdf.format(new Date()))
+                        .append("__")
+                        .append(System.nanoTime())
+                        .append(".txt");
+
         return builder.toString();
     }
 
@@ -387,116 +388,71 @@ public class TraceRunner {
         return str.replaceAll("\\W", "-");
     }
 
-    static JabejaMiddleware initJabejaMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 6) {
-            throw new IllegalArgumentException("JABEJA requires 6 arguments");
-        }
-        float alpha = Float.parseFloat(args[0]);
-        float initialT = Float.parseFloat(args[1]);
-        float deltaT = Float.parseFloat(args[2]);
-        float befriendInitialT = Float.parseFloat(args[3]);
-        float befriendDeltaT = Float.parseFloat(args[4]);
-        int k = Integer.parseInt(args[5]);
-        JabejaManager jabejaManager = JabejaInitUtils.initGraph(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, trace.getPartitions(), trace.getFriendships());
+    static JabejaMiddleware initJabejaMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+        JabejaManager jabejaManager =
+                JabejaInitUtils.initGraph(parsedArgs.getAlpha(),
+                                          parsedArgs.getInitialT(),
+                                          parsedArgs.getDeltaT(),
+                                          parsedArgs.getBefriendInitialT(),
+                                          parsedArgs.getBefriendDeltaT(),
+                                          parsedArgs.getJaK(),
+                                          trace.getPartitions(),
+                                          trace.getFriendships());
+
         return new JabejaMiddleware(jabejaManager);
     }
 
-    static HermesMiddleware initHermesMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length > 3 || args.length < 1) {
-            throw new IllegalArgumentException("HERMES requires 1-3 arguments");
-        }
-
-        HermesManager hermesManager;
-        float gamma = Float.parseFloat(args[0]);
-
-        if(args.length == 3) {
-            float maxIterationToNumUsersRatio = Float.parseFloat(args[1]);
-            int k = Integer.parseInt((args[2]));
-            hermesManager = HermesInitUtils.initGraph(gamma, k, maxIterationToNumUsersRatio, trace.getPartitions(), trace.getFriendships());
-        }
-        else if(args.length == 2) {
-            float maxIterationToNumUsersRatio = Float.parseFloat(args[1]);
-            hermesManager = HermesInitUtils.initGraph(gamma, 3, maxIterationToNumUsersRatio, trace.getPartitions(), trace.getFriendships());
-        } else {
-            hermesManager = HermesInitUtils.initGraph(gamma, true, trace.getPartitions(), trace.getFriendships());
-        }
+    static HermesMiddleware initHermesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
+        HermesManager hermesManager =
+                HermesInitUtils.initGraph(parsedArgs.getGamma(),
+                                          parsedArgs.getHermesK(),
+                                          parsedArgs.getIterationCutoffRatio(),
+                                          trace.getPartitions(),
+                                          trace.getFriendships());
 
         return new HermesMiddleware(hermesManager, hermesManager.getGamma());
     }
 
-    static SparMiddleware initSparMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 1) {
-            throw new IllegalArgumentException("SPAR requires 1 argument");
-        }
-        int minNumReplicas = Integer.parseInt(args[0]);
-        SparManager manager = SparInitUtils.initGraph(minNumReplicas, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
+    static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+        SparManager manager = SparInitUtils.initGraph(parsedArgs.getMinNumReplicas(), trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
         return new SparMiddleware(manager);
     }
 
-    static SpajaMiddleware initSpajaMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 5) {
-            throw new IllegalArgumentException("SPAJA requires 5 arguments");
-        }
-        int minNumReplicas = Integer.parseInt(args[0]);
-        float alpha = Float.parseFloat(args[1]);
-        float initialT = Float.parseFloat(args[2]);
-        float deltaT = Float.parseFloat(args[3]);
-        int k = Integer.parseInt(args[4]);
-        SpajaManager spajaManager = SpajaInitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
+    static SpajaMiddleware initSpajaMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+        SpajaManager spajaManager =
+                SpajaInitUtils.initGraph(parsedArgs.getMinNumReplicas(),
+                                         parsedArgs.getAlpha(),
+                                         parsedArgs.getInitialT(),
+                                         parsedArgs.getDeltaT(),
+                                         parsedArgs.getJaK(),
+                                         trace.getPartitions(),
+                                         trace.getFriendships(),
+                                         trace.getReplicas());
+
         return new SpajaMiddleware(spajaManager);
     }
 
-    static SparmesMiddleware initSparmesMiddleware(Trace trace, String[] args, Properties prop) {
-        if(args.length != 2) {
-            throw new IllegalArgumentException("SPARMES requires 2 arguments");
-        }
-        int minNumReplicas = Integer.parseInt(args[0]);
-        float gamma = Float.parseFloat(args[1]);
-        SparmesManager sparmesManager = SparmesInitUtils.initGraph(minNumReplicas, gamma, true, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
+    static SparmesMiddleware initSparmesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+        SparmesManager sparmesManager =
+                SparmesInitUtils.initGraph(parsedArgs.getMinNumReplicas(),
+                                           parsedArgs.getGamma(),
+                                           true,
+                                           trace.getPartitions(),
+                                           trace.getFriendships(),
+                                           trace.getReplicas());
 
         return new SparmesMiddleware(sparmesManager);
     }
 
-    static MetisMiddleware initMetisMiddleware(Trace trace, String[] args, Properties prop) {
+    static MetisMiddleware initMetisMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
         String gpmetisLocation = prop.getProperty("gpmetis.location");
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
         MetisManager manager = MetisInitUtils.initGraph(trace.getPartitions(), trace.getFriendships(), gpmetisLocation, gpmetisTempdir);
         return new MetisMiddleware(manager);
     }
 
-    private static final String compressedFormatStr = "#%7s | %19s | %-14s | P=%-3d | U=%-5d | F=%-7d | ASRT=%-6s | Cut=%-7s | Reps=%-7s";
-
-    static String formatCompressed(String type, Date date, String nextAction, int numP, int numU, int numF, double asrt, int cut, int reps) {
-
-        String formattedDate = sdf.format(date);
-
-        String asrtString = "" + asrt;
-        if(asrtString.startsWith("0")) {
-            asrtString = asrtString.substring(1);
-        }
-        else if(asrtString.startsWith("-0")) {
-            asrtString = "-" + asrtString.substring(2);
-        }
-        if(asrtString.length() > 6) {
-            asrtString = asrtString.substring(0,6);
-        }
-
-        String result = String.format(compressedFormatStr,
-                type,
-                formattedDate,
-                nextAction,
-                numP,
-                numU,
-                numF,
-                asrtString,
-                cut,
-                reps);
-
-        return result;
-    }
-
     private static final String HEADER = "No       Type     Date                 Action          Ps   Nodes  Edges    Assort.  EdgeCut  Replicas  Moves     Delay";
-    private static final String TABLE_FORMAT_STR = "%-8d %-8s %-20s %-15s %-4d %-6d %-8d %-8s %-8s %-9d %-8d  %-7d";
+    private static final String TABLE_FORMAT_STR = "%-8d %-8s %-20s %-15s %-4d %-6d %-8d %-8s %-8s %-9d %-8d  %-6d";
 
     static String formatTable(int i, String type, Date date, String nextAction, int numP, int numU, int numF, double asrt, int cut, int reps, long migrations, double latency) {
         String formattedDate = sdf.format(date);
