@@ -18,11 +18,13 @@ Configuration:
             you can skip this.
         output.folder: set it to where you want the output stored
 
+
 Building:
-    From the [checkout_location] directory, run the following:
+    From [checkout_location], run the following:
         mvn clean package
 
-METIS-specific Configuration (Optional)
+
+METIS-specific Configuration (Optional):
 
 Downloading and building METIS:
     http://glaros.dtc.umn.edu/gkhome/metis/metis/download
@@ -55,17 +57,21 @@ Arguments
             run the whole trace).
 
         -validity p
-            checks the validity of the partition states with a probability
-            of p, where 0 <= p <= 0.  Default is 0 (no check).
+            checks the validity of the partition states with probability p.
+            Throws a RuntimeException if any invalid state is found.
+            0 <= p <= 1.  Default is 0 (never check).
 
         -delay p
-            calculates the expected average query delay of the system with a
-            probability of p, where 0 <= p <= 1.  Default is 1 (always).
+            calculates the expected average query delay of the system with
+            probability p.
             In log lines where no check occurrs, delay is reported as -99.
+            0 <= p <= 1.  Default is 1 (always).
 
         -assortivity p
-            calculates the assortivity of the friendship graph with a
-            probability of p, where 0 <= p <= 1.  Default is 1 (always).
+            calculates the assortivity of the friendship graph with
+            probability p.
+            In log lines where no check occurrs, it is reported as -99.
+            0 <= p <= 1.  Default is 1 (always).
             Note that assortivity is not a function of the type, and should
             be the same for all runs at the same point.
 
@@ -94,7 +100,7 @@ Ja-be-Ja:
         -alpha a
             raises the comparison function to a.
             (E.g. 1 is like Manhattan distance, 2 like Euclidean, etc.)
-            a >= 1.0.  Default is 3, and sane values are 1-4.
+            a >= 1.0.  Default is 3.  Sane values are 1-4.
         -initT t
             The initial Temperature.  The distance function is multiplied by
             t (which decreases over time) to allow for temporary deviations
@@ -102,7 +108,7 @@ Ja-be-Ja:
             t > 0.0.  Default is 2.  Sane values are 1.5-2.5.
         -deltaT dT
             How much the temperature decreases each iteration.
-            dT > 0.0.  Default is 0.025.  Sane values are (initialT-1)/dT,
+            dT > 0.0.  Default is 0.025.  Sane values are (initialT-1)/x,
             where 2 <= x <= 40.
             Note: smaller values improve quality but take longer.
             E.g. 0.1 takes ~2x as long as 0.2.
@@ -125,12 +131,12 @@ Hermes:
         -gamma g
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
-            Default value is 1.01.  Sane values are 1.01-1.25.
+            1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
         -cutoff r
             Ratio used for stopping Hermes iterations before convergence.
             Max iterations = r * numUsers, where numUsers is current number
             (changes throughout run).
-            r > 0.  Default is 0.025.  Sane values are 0.025-0.25.
+            r > 0.0.  Default is 0.0025.  Sane values are 0.001-0.25.
             Smaller values speed up process but might negatively affect
             partition quality.
         -maxMove m
@@ -147,8 +153,8 @@ Spar:
         -minReps n
             the minimum number of replicas to maintain of each user.
             (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
-            Note: you need to use a trace that has at least minNumReplicas
-            to start, or it could crash.
+            Note: you need to use a trace that has at least as many replicas
+            as you specify or it could crash.
 
 Spaja:
     Description: Spar normally + Ja-be-Ja upon downtime.
@@ -159,20 +165,19 @@ Spaja:
         -minReps n
             the minimum number of replicas to maintain of each user.
             (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
-            Note: you need to use a trace that has at least minNumReplicas
-            to start, or it could crash.
+            Note: you need to use a trace that has at least as many replicas            as you specify or it could crash.
         -alpha a
             raises the comparison function to a.
             (E.g. 1 is like Manhattan distance, 2 like Euclidean, etc.)
-            a >= 1.0.  Default is 1, and sane values are 1-4.
+            a >= 1.0.  Default is 1.  Sane values are 1-4.
         -initT t
-            The initial Temperature.  The distance function is multiplied by
+            The initial temperature.  The distance function is multiplied by
             t (which decreases over time) to allow for temporary deviations
             from hill-climbing.
             t > 0.0.  Default is 2.  Sane values are 1.5-2.5.
         -deltaT dT
             How much the temperature decreases each iteration.
-            dT > 0.0.  Default is 0.5.  Sane values are (initialT-1)/dT,
+            dT > 0.0.  Default is 0.5.  Sane values are (initialT-1)/x,
             where 2 <= x <= 40.
             Note: smaller values improve quality but take longer.
             E.g. 0.1 takes ~2x as long as 0.2.
@@ -190,18 +195,19 @@ Sparmes:
         -minReps n
             the minimum number of replicas to maintain of each user.
             (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
-            Note: you need to use a trace that has at least minNumReplicas
-            to start, or it could crash.
+            Note: you need to use a trace that has at least as many replicas            as you specify or it could crash.
         -gamma g
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
-            Default value is 1.01.  Sane values are 1.01-1.25.
+            1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
 
 Metis:
-    Description: Uses Karypis et alia's METIS algorithm, provided for
-        comparison with high-quality, performant, off-the-shelf partitioner.
+    Description: Uses Karypis et alia's METIS algorithm
+        Provided for comparison with a high-quality, performant,
+        off-the-shelf partitioner.
         Requires installation of metis (tested with version 5.1.0) and
-        subsequent setup in config.properties.
+        subsequent setup in config.properties.  (See "METIS-specific
+        Configuration" under CONFIGURATION AND BUILDING.)
     Type name: METIS
     Arguments:
         [none]

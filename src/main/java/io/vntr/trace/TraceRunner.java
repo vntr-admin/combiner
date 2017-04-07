@@ -151,7 +151,7 @@ public class TraceRunner {
         private Float befriendInitialT = 1.1f;
         private Float befriendDeltaT = 0.025f;
         private Integer jaK = 15;
-        private Float gamma = 1.01f;
+        private Float gamma;
         private Float iterationCutoffRatio = 0.0025f;
         private Integer hermesK = 3;  //TODO: should we allow users to set this for SPARMES?
         private Integer minNumReplicas = 0;
