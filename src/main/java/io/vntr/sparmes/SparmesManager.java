@@ -12,6 +12,7 @@ public class SparmesManager {
     private int minNumReplicas;
     private float gamma;
     private boolean probabilistic;
+    private int k;
 
     private static final Integer defaultStartingId = 1;
 
@@ -26,9 +27,10 @@ public class SparmesManager {
 
     private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
-    public SparmesManager(int minNumReplicas, float gamma, boolean probabilistic) {
+    public SparmesManager(int minNumReplicas, float gamma, int k, boolean probabilistic) {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
+        this.k = k;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
         this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);

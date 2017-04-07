@@ -234,7 +234,7 @@ public class Analyzer {
     }
 
     private SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SparmesTestUtils.initGraph(2, 1.2f, true, partitions, friendships, replicas);
+        return SparmesTestUtils.initGraph(2, 1.2f, 3, true, partitions, friendships, replicas);
     }
 
     private SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {

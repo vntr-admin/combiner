@@ -255,7 +255,7 @@ public class SingleTraceRunner {
     }
 
     private static SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, int minNumReplicas, float gamma) {
-        return SparmesTestUtils.initGraph(minNumReplicas, gamma, true, partitions, friendships, replicas);
+        return SparmesTestUtils.initGraph(minNumReplicas, gamma, 3, true, partitions, friendships, replicas);
     }
 
     private static SparmesMiddleware initSparmesMiddleware(SparmesManager manager) {

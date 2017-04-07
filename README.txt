@@ -200,6 +200,11 @@ Sparmes:
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
             1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
+        -maxMove m
+            How many users can move off one partition in one iteration.
+            (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
+            Smaller values take longer but might avoid oscillation.
+
 
 Metis:
     Description: Uses Karypis et alia's METIS algorithm

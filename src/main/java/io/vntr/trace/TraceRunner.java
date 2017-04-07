@@ -497,6 +497,7 @@ public class TraceRunner {
         SparmesManager sparmesManager =
                 SparmesInitUtils.initGraph(parsedArgs.getMinNumReplicas(),
                                            parsedArgs.getGamma(),
+                                           parsedArgs.getHermesK(),
                                            true,
                                            trace.getPartitions(),
                                            trace.getFriendships(),
