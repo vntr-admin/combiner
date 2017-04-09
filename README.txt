@@ -165,7 +165,8 @@ Spaja:
         -minReps n
             the minimum number of replicas to maintain of each user.
             (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
-            Note: you need to use a trace that has at least as many replicas            as you specify or it could crash.
+            Note: you need to use a trace that has at least as many replicas
+            as you specify or it could crash.
         -alpha a
             raises the comparison function to a.
             (E.g. 1 is like Manhattan distance, 2 like Euclidean, etc.)
@@ -195,7 +196,8 @@ Sparmes:
         -minReps n
             the minimum number of replicas to maintain of each user.
             (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
-            Note: you need to use a trace that has at least as many replicas            as you specify or it could crash.
+            Note: you need to use a trace that has at least as many replicas
+            as you specify or it could crash.
         -gamma g
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.

@@ -216,20 +216,19 @@ public class ProbabilityUtils
         return sum / friendships.size();
     }
 
-	public static double calculateAssortivityCoefficient(Map<Integer, Set<Integer>> friendships) {
+	public static double calculateAssortivityCoefficient(Map<Integer, Set<Integer>> bidirectionalFriendships) {
 		//We calculate "the Pearson correlation coefficient of the degrees at either ends of an edge"
         //Newman, M. E. (2002). Assortative mixing in networks. Physical review letters, 89(20), 208701.
         //This is also called "Degree-Centrality Assortativity"
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         int edgeCount = 0;
-        for(Set<Integer> friends : friendships.values()) {
+        for(Set<Integer> friends : bidirectionalFriendships.values()) {
             edgeCount += friends.size();
         }
         double[] x = new double[edgeCount];
         double[] y = new double[edgeCount];
         int i=0;
-        for(int uid1 : friendships.keySet()) {
-            for(int uid2 : friendships.get(uid1)) {
+        for(int uid1 : bidirectionalFriendships.keySet()) {
+            for(int uid2 : bidirectionalFriendships.get(uid1)) {
                 x[i] = bidirectionalFriendships.get(uid1).size();
                 y[i] = bidirectionalFriendships.get(uid2).size();
                 i++;
