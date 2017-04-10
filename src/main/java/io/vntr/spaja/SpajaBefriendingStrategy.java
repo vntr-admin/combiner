@@ -116,26 +116,38 @@ public class SpajaBefriendingStrategy {
         return answer;
     }
 
-    Set<Integer> findReplicasInMovingPartitionToDelete(SpajaUser movingUser, Set<Integer> replicasToBeAdded) {
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
-        for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
-            int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPartitionIds().size();
-            if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
-                replicasInMovingPartitionToDelete.add(replicaId);
+    boolean isFriendOnlyThereForThisUsersSake(SpajaUser user, SpajaUser friend) {
+        int uid = user.getId();
+        int pid = user.getMasterPartitionId();
+        if (manager.getMasterPartitionIdForUser(friend.getId()) != pid) {
+            for (Integer friendOfFriendId : friend.getFriendIDs()) {
+                if (friendOfFriendId == uid) {
+                    continue;
+                }
+
+                if (manager.getMasterPartitionIdForUser(friendOfFriendId) == pid) {
+                    return false;
+                }
             }
+
+            return true;
         }
 
-        return replicasInMovingPartitionToDelete;
+        return false;
     }
 
-    Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SpajaUser user) {
+    public Set<Integer> findReplicasInMovingPartitionToDelete(SpajaUser user, Set<Integer> replicasToBeAdded) {
         int uid = user.getId();
         int pid = user.getMasterPartitionId();
         Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
-outer:  for (Integer friendId : user.getFriendIDs()) {
+outer:  for(Integer friendId : user.getFriendIDs()) {
             int friendPid = manager.getMasterPartitionIdForUser(friendId);
             if (friendPid != pid) {
                 SpajaUser friend = manager.getUserMasterById(friendId);
+                int numReplicas = friend.getReplicaPartitionIds().size() + (replicasToBeAdded.contains(friendId) ? 1 : 0);
+                if(numReplicas <= manager.getMinNumReplicas()) {
+                    continue;
+                }
                 for (Integer friendOfFriendId : friend.getFriendIDs()) {
                     if (friendOfFriendId == uid) {
                         continue;
@@ -219,6 +231,7 @@ outer:  for (Integer friendId : user.getFriendIDs()) {
         swapChanges.setAddToP2(addToP2);
 
         Set<Integer> removeFromP1 = findReplicasInMovingPartitionToDelete(u1, addToP1);
+
         if(shouldDeleteReplicaInTargetPartition(u2, pid1, k)) {
             removeFromP1.add(u2.getId());
         }
@@ -226,6 +239,7 @@ outer:  for (Integer friendId : user.getFriendIDs()) {
         swapChanges.setRemoveFromP1(removeFromP1);
 
         Set<Integer> removeFromP2 = findReplicasInMovingPartitionToDelete(u2, addToP2);
+
         if(shouldDeleteReplicaInTargetPartition(u1, pid2, k)) {
             removeFromP2.add(u1.getId());
         }

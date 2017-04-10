@@ -84,6 +84,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
             Set<Integer> replicasToAddInDestinationPartition = spajaBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
             Set<Integer> replicasToDeleteInSourcePartition = spajaBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
+
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
@@ -94,8 +95,8 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         SpajaUser largerUser = manager.getUserMasterById(largerUserId);
 
         if (!smallerUser.getMasterPartitionId().equals(largerUser.getMasterPartitionId())) {
-            boolean smallerReplicaWasOnlyThereForLarger = spajaBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
-            boolean largerReplicaWasOnlyThereForSmaller = spajaBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
+            boolean smallerReplicaWasOnlyThereForLarger = spajaBefriendingStrategy.isFriendOnlyThereForThisUsersSake(largerUser, smallerUser);
+            boolean largerReplicaWasOnlyThereForSmaller = spajaBefriendingStrategy.isFriendOnlyThereForThisUsersSake(smallerUser, largerUser);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPartitionIds().size() > manager.getMinNumReplicas()) {
                 manager.removeReplica(smallerUser, largerUser.getMasterPartitionId());
