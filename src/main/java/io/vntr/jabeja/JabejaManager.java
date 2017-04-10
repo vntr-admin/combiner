@@ -19,10 +19,12 @@ public class JabejaManager {
     private float befriendDeltaT;
     private long migrationTally;
 
-    private NavigableMap<Integer, JabejaUser> uMap;
-    private NavigableMap<Integer, Set<Integer>> partitions;
+    private Map<Integer, JabejaUser> uMap;
+    private Map<Integer, Set<Integer>> partitions;
 
     private static final Integer defaultInitialPid = 1;
+    private int nextPid = 1;
+    private int nextUid = 1;
 
     public JabejaManager(float alpha, float initialT, float deltaT, float befriendInitialT, float befriendDeltaT, int k) {
         this.alpha = alpha;
@@ -31,8 +33,8 @@ public class JabejaManager {
         this.befriendInitialT = befriendInitialT;
         this.deltaT = deltaT;
         this.k = k;
-        uMap = new TreeMap<>();
-        partitions = new TreeMap<>();
+        uMap = new HashMap<>();
+        partitions = new HashMap<>();
     }
 
     public Integer getPartitionForUser(Integer uid) {
@@ -81,15 +83,19 @@ public class JabejaManager {
     }
 
     public int addUser() {
-        int newUid = uMap.lastKey() + 1;
+        int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
     public void addUser(User user) {
         Integer initialPartitionId = getInitialPartitionId();
-        JabejaUser jabejaUser = new JabejaUser(user.getId(), initialPartitionId, alpha, this);
+        int uid = user.getId();
+        JabejaUser jabejaUser = new JabejaUser(uid, initialPartitionId, alpha, this);
         addUser(jabejaUser);
+        if(uid >= nextUid) {
+            nextUid = uid + 1;
+        }
     }
 
     void addUser(JabejaUser jabejaUser) {
@@ -139,13 +145,16 @@ public class JabejaManager {
     }
 
     public Integer addPartition() {
-        Integer pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1;
+        Integer pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
     void addPartition(Integer pid) {
         partitions.put(pid, new HashSet<Integer>());
+        if(pid >= nextPid) {
+            nextPid = pid + 1;
+        }
     }
 
     public void removePartition(Integer partitionId) {

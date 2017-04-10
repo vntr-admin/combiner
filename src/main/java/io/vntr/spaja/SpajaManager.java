@@ -90,7 +90,8 @@ public class SpajaManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SpajaUser spajaUser = new SpajaUser(user.getId(), alpha, minNumReplicas, this);
+        int uid = user.getId();
+        SpajaUser spajaUser = new SpajaUser(uid, alpha, minNumReplicas, this);
         spajaUser.setMasterPartitionId(masterPartitionId);
         spajaUser.setPartitionId(masterPartitionId);
 
@@ -100,7 +101,6 @@ public class SpajaManager {
             addReplica(spajaUser, id);
         }
 
-        int uid = user.getId();
         if(uid >= nextUid) {
             nextUid = uid + 1;
         }

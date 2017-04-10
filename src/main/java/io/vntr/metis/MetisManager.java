@@ -12,17 +12,19 @@ import static io.vntr.utils.ProbabilityUtils.getRandomElement;
  */
 public class MetisManager {
 
-    private NavigableMap<Integer, MetisUser> uMap;
-    private NavigableMap<Integer, Set<Integer>> partitions;
+    private Map<Integer, MetisUser> uMap;
+    private Map<Integer, Set<Integer>> partitions;
     private MetisRepartitioner repartitioner;
 
     private long migrationTally;
 
     private static final Integer defaultInitialPid = 1;
+    private int nextPid = 1;
+    private int nextUid = 1;
 
     public MetisManager(String gpmetisLocation, String gpmetisTempdir) {
-        uMap = new TreeMap<>();
-        partitions = new TreeMap<>();
+        uMap = new HashMap<>();
+        partitions = new HashMap<>();
         this.repartitioner = new MetisRepartitioner(gpmetisLocation, gpmetisTempdir);
     }
 
@@ -71,15 +73,19 @@ public class MetisManager {
     }
 
     public int addUser() {
-        int newUid = uMap.lastKey() + 1;
+        int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
     public void addUser(User user) {
         Integer initialPartitionId = getInitialPartitionId();
-        MetisUser MetisUser = new MetisUser(user.getId(), initialPartitionId);
+        int uid = user.getId();
+        MetisUser MetisUser = new MetisUser(uid, initialPartitionId);
         addUser(MetisUser);
+        if(uid >= nextUid) {
+            nextUid = uid + 1;
+        }
     }
 
     void addUser(MetisUser MetisUser) {
@@ -120,13 +126,16 @@ public class MetisManager {
     }
 
     public Integer addPartition() {
-        Integer pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1;
+        int pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
     void addPartition(Integer pid) {
         partitions.put(pid, new HashSet<Integer>());
+        if(pid >= nextPid) {
+            nextPid = pid + 1;
+        }
     }
 
     public void removePartition(Integer partitionId) {

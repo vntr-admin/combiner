@@ -11,16 +11,18 @@ public class SparManager {
     private int minNumReplicas;
 
     private static final Integer defaultStartingId = 1;
+    private int nextPid = 1;
+    private int nextUid = 1;
 
     private long migrationTally;
 
-    private SortedMap<Integer, SparPartition> partitionIdToPartitionMap;
+    private Map<Integer, SparPartition> partitionIdToPartitionMap;
 
-    private NavigableMap<Integer, Integer> userIdToMasterPartitionIdMap = new TreeMap<>();
+    private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<>();
 
     public SparManager(int minNumReplicas) {
         this.minNumReplicas = minNumReplicas;
-        this.partitionIdToPartitionMap = new TreeMap<>();
+        this.partitionIdToPartitionMap = new HashMap<>();
     }
 
     public int getMinNumReplicas() {
@@ -55,7 +57,7 @@ public class SparManager {
     }
 
     public int addUser() {
-        int newUid = userIdToMasterPartitionIdMap.lastKey() + 1;
+        int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
@@ -63,7 +65,8 @@ public class SparManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparUser sparUser = new SparUser(user.getId());
+        int uid = user.getId();
+        SparUser sparUser = new SparUser(uid);
         sparUser.setMasterPartitionId(masterPartitionId);
         sparUser.setPartitionId(masterPartitionId);
 
@@ -71,6 +74,10 @@ public class SparManager {
 
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
             addReplica(sparUser, id);
+        }
+
+        if(uid >= nextUid) {
+            nextUid = uid + 1;
         }
     }
 
@@ -104,13 +111,16 @@ public class SparManager {
     }
 
     public Integer addPartition() {
-        Integer newId = partitionIdToPartitionMap.isEmpty() ? defaultStartingId : partitionIdToPartitionMap.lastKey() + 1;
+        Integer newId = nextPid;
         addPartition(newId);
         return newId;
     }
 
     void addPartition(Integer pid) {
         partitionIdToPartitionMap.put(pid, new SparPartition(pid));
+        if(pid >= nextPid) {
+            nextPid = pid + 1;
+        }
     }
 
     public void removePartition(Integer id) {
