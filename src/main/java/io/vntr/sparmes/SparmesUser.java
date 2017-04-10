@@ -128,21 +128,20 @@ public class SparmesUser extends User {
     Map<Integer, Integer> getFriendsToAddInEachPartitionLogical() {
         Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<>();
         for(Integer pid : manager.getAllPartitionIds()) {
-            friendsToAddInEachPartition.put(pid, findReplicasToAddToPartition(pid).size());
+            friendsToAddInEachPartition.put(pid, findHowManyReplicasToAddToPartition(pid));
         }
         return friendsToAddInEachPartition;
     }
 
-    Set<Integer> findReplicasToAddToPartition(Integer targetPid) {
-        Set<Integer> toReplicate = new HashSet<>();
+    int findHowManyReplicasToAddToPartition(Integer targetPid) {
+        int count = 0;
         for (Integer friendId : getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
             if (!targetPid.equals(friend.getLogicalPid()) && !friend.getLogicalPartitionIds().contains(targetPid)) {
-                toReplicate.add(friendId);
+                count++;
             }
         }
-
-        return toReplicate;
+        return count;
     }
 
     boolean shouldReplicateInSourcePartitionLogical() {
@@ -200,4 +199,5 @@ outer:  for (Integer friendId : getFriendIDs()) {
 
         return deletionCandidates;
     }
+
 }
