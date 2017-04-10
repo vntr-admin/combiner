@@ -200,10 +200,12 @@ public class ProbabilityUtils
 
         for(int uid : friendships.keySet()) {
             for(int friendId : friendships.get(uid)) {
-                int pid = uidToPidMap.get(uid);
-                int friendPid = uidToPidMap.get(friendId);
-                uidToFriendPidsMap.get(uid).add(friendPid);
-                uidToFriendPidsMap.get(friendId).add(pid);
+                if(uid < friendId) {
+                    int pid = uidToPidMap.get(uid);
+                    int friendPid = uidToPidMap.get(friendId);
+                    uidToFriendPidsMap.get(uid).add(friendPid);
+                    uidToFriendPidsMap.get(friendId).add(pid);
+                }
             }
         }
 
