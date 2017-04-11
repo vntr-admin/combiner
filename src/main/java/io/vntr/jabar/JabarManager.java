@@ -16,22 +16,17 @@ public class JabarManager {
     private float alpha;
     private float initialT;
     private float deltaT;
-    private float befriendInitialT;
-    private float befriendDeltaT;
     private long migrationTally;
 
     private Map<Integer, JabarUser> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
-    private static final Integer defaultInitialPid = 1;
     private int nextPid = 1;
     private int nextUid = 1;
 
-    public JabarManager(float alpha, float initialT, float deltaT, float befriendInitialT, float befriendDeltaT, int k) {
+    public JabarManager(float alpha, float initialT, float deltaT, int k) {
         this.alpha = alpha;
         this.initialT = initialT;
-        this.befriendDeltaT = befriendDeltaT;
-        this.befriendInitialT = befriendInitialT;
         this.deltaT = deltaT;
         this.k = k;
         uMap = new HashMap<>();
@@ -122,10 +117,8 @@ public class JabarManager {
         getUser(id2).unfriend(id1);
     }
 
-    public void repartition(boolean isDowntime) {
-        float effectiveDeltaT = isDowntime ? deltaT : befriendDeltaT;
-        float effectiveInitialT = isDowntime ? initialT : befriendInitialT;
-        for(float t = effectiveInitialT; t >= 1; t -= effectiveDeltaT) {
+    public void repartition() {
+        for(float t = initialT; t >= 1; t -= deltaT) {
             List<Integer> randomUserList = new LinkedList<>(uMap.keySet());
             Collections.shuffle(randomUserList);
             for(Integer uid : randomUserList) {
@@ -286,7 +279,15 @@ public class JabarManager {
     }
 
     JabarUser findPartnerOnPartition(JabarUser user, Integer pid) {
-        return user.findPartner(getUsers(getKDistinctValuesFromList(k, partitions.get(pid))), 1F);
+        Set<Integer> partition = partitions.get(pid);
+        Set<Integer> candidates;
+        if(partition.size() <= k) {
+            candidates = new HashSet<>(partition);
+        }
+        else {
+            candidates = getKDistinctValuesFromList(k, partition);
+        }
+        return user.findPartner(getUsers(candidates), 1F);
     }
 
     int calculateGain(JabarUser user1, JabarUser user2) {

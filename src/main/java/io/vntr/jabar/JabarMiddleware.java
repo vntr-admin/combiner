@@ -117,7 +117,7 @@ public class JabarMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void broadcastDowntime() {
-        manager.repartition(true);
+        manager.repartition();
     }
 
     @Override
