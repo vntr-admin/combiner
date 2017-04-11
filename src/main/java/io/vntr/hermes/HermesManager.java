@@ -18,6 +18,8 @@ public class HermesManager {
     private float maxIterationToNumUsersRatio;
 
     private long migrationTally;
+    private long logicalMigrationTally;
+    private double logicalMigrationRatio = 0;
 
     private int nextPid = 1;
     private int nextUid = 1;
@@ -66,6 +68,18 @@ public class HermesManager {
         this.k = k;
     }
 
+    public HermesManager(float gamma, float maxIterationToNumUsersRatio, int k, double logicalMigrationRatio) {
+        this.gamma = gamma;
+        this.probabilistic = false;
+        this.pMap = new HashMap<>();
+        this.uMap = new HashMap<>();
+        this.uMapLogical = new HashMap<>();
+        this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
+        this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
+        this.k = k;
+        this.logicalMigrationRatio = logicalMigrationRatio;
+    }
+
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
@@ -89,6 +103,9 @@ public class HermesManager {
         uMapLogical.put(user.getId(), pid);
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
+        }
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
         }
     }
 
@@ -213,6 +230,7 @@ public class HermesManager {
         //TODO: should I include logical migrations in the migration tally?
         for(Integer pid : pMap.keySet()) {
             for(Target target : stageTargets.get(pid)) {
+                increaseTallyLogical(1);
                 migrateLogically(target);
             }
         }
@@ -331,13 +349,16 @@ public class HermesManager {
     }
 
     public long getMigrationTally() {
-        return migrationTally;
+        return migrationTally + (long) (logicalMigrationRatio * logicalMigrationTally);
     }
 
     void increaseTally(int amount) {
         migrationTally += amount;
     }
 
+    void increaseTallyLogical(int amount) {
+        logicalMigrationTally += amount;
+    }
 
 
     @Override

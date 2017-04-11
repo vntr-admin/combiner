@@ -18,8 +18,10 @@ public class SparmesManager {
 
     private int nextUid = 1;
     private int nextPid = 1;
-    private long migrationTally;
 
+    private long migrationTally;
+    private long migrationTallyLogical;
+    private double logicalMigrationRatio = 0;
 
     private Map<Integer, SparmesPartition> pMap;
 
@@ -34,6 +36,16 @@ public class SparmesManager {
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
         this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
+    }
+
+    public SparmesManager(int minNumReplicas, float gamma, int k, boolean probabilistic, double logicalMigrationRatio) {
+        this.minNumReplicas = minNumReplicas;
+        this.gamma = gamma;
+        this.k = k;
+        this.probabilistic = probabilistic;
+        this.pMap = new HashMap<>();
+        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
+        this.logicalMigrationRatio = logicalMigrationRatio;
     }
 
     public int getMinNumReplicas() {
@@ -387,7 +399,7 @@ public class SparmesManager {
             ensureKReplication(uid);
         }
 
-        increaseMigrationTally(usersWhoMoved.size());
+        increaseTally(usersWhoMoved.size());
     }
 
     void ensureKReplication(int uid) {
@@ -558,11 +570,15 @@ public class SparmesManager {
     }
 
     public long getMigrationTally() {
-        return migrationTally;
+        return migrationTally + (long) (logicalMigrationRatio * migrationTallyLogical);
     }
 
-    void increaseMigrationTally(int amount) {
+    void increaseTally(int amount) {
         migrationTally += amount;
+    }
+
+    void increaseTallyLogical(int amount) {
+        migrationTallyLogical += amount;
     }
 
     void checkValidity() {

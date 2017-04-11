@@ -163,11 +163,12 @@ public class TraceRunner {
         private Integer jaK = 15;
         private Float gamma;
         private Float iterationCutoffRatio = 0.0025f;
-        private Integer hermesK = 3;  //TODO: should we allow users to set this for SPARMES?
+        private Integer hermesK = 3;
         private Integer minNumReplicas = 0;
         private double assortivityCheckProbability = 1;
         private double latencyCheckProbability = 1;
         private double validityCheckProbability = 0;
+        private double logicalMigrationRatio = 0;
 
 
         public ParsedArgs(String type) {
@@ -314,6 +315,14 @@ public class TraceRunner {
             this.validityCheckProbability = validityCheckProbability;
         }
 
+        public double getLogicalMigrationRatio() {
+            return logicalMigrationRatio;
+        }
+
+        public void setLogicalMigrationRatio(double logicalMigrationRatio) {
+            this.logicalMigrationRatio = logicalMigrationRatio;
+        }
+
         public static final String NUM_ACTIONS_FLAG = "-n";
         public static final String REPLICAS_FLAG = "-minReps";
         public static final String GAMMA_FLAG = "-gamma";
@@ -328,6 +337,7 @@ public class TraceRunner {
         public static final String ASSORTIVITY_FLAG = "-assortivity";
         public static final String LATENCY_FLAG = "-delay";
         public static final String VALIDITY_FLAG = "-validity";
+        public static final String LOGICAL_FLAG = "-logMig";
 
 
         public void setFlag(String flag, String rawValue) {
@@ -347,15 +357,26 @@ public class TraceRunner {
                 case ASSORTIVITY_FLAG:         setAssortivityCheckProbability(parsed);  break;
                 case LATENCY_FLAG:             setLatencyCheckProbability(parsed);      break;
                 case VALIDITY_FLAG:            setValidityCheckProbability(parsed);     break;
-                default: throw new RuntimeException(flag + " is not a valid ");
+                case LOGICAL_FLAG:             setLogicalMigrationRatio(parsed);        break;
+                default: throw new RuntimeException(flag + " is not a valid flag");
             }
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append(inputFile).append(' ').append(type);
 
+            //General args
+            builder.append(inputFile).append(' ').append(type)
+                    .append(" assortivity=").append(assortivityCheckProbability)
+                    .append(" latency=").append(latencyCheckProbability)
+                    .append(" validity=").append(validityCheckProbability);
+
+            if(numActions != null) {
+                builder.append(" numActions=").append(numActions);
+            }
+
+            //type-specific args
             if(SPAR_TYPE.equals(type) || SPAJA_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
                 builder.append(" minReplicas=").append(minNumReplicas);
             }
@@ -363,7 +384,7 @@ public class TraceRunner {
                 builder.append(" alpha=").append(alpha).append(" initialT=").append(initialT).append(" deltaT=").append(deltaT).append(" k=").append(jaK);
             }
             if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
-                builder.append(" gamma=").append(gamma);
+                builder.append(" gamma=").append(gamma).append(" logicalRatio=").append(logicalMigrationRatio);
             }
 
             if(JABEJA_TYPE.equals(type)) {
@@ -493,6 +514,7 @@ public class TraceRunner {
                 HermesInitUtils.initGraph(parsedArgs.getGamma(),
                         parsedArgs.getHermesK(),
                         parsedArgs.getIterationCutoffRatio(),
+                        parsedArgs.getLogicalMigrationRatio(),
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -504,6 +526,7 @@ public class TraceRunner {
                 HermarInitUtils.initGraph(parsedArgs.getGamma(),
                         parsedArgs.getHermesK(),
                         parsedArgs.getIterationCutoffRatio(),
+                        parsedArgs.getLogicalMigrationRatio(),
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -535,6 +558,7 @@ public class TraceRunner {
                                            parsedArgs.getGamma(),
                                            parsedArgs.getHermesK(),
                                            true,
+                                           parsedArgs.getLogicalMigrationRatio(),
                                            trace.getPartitions(),
                                            trace.getFriendships(),
                                            trace.getReplicas());

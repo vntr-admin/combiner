@@ -10,8 +10,8 @@ import static io.vntr.InitUtils.getUToReplicasMap;
  * Created by robertlindquist on 4/1/17.
  */
 public class SparmesInitUtils {
-    public static SparmesManager initGraph(int minNumReplicas, float gamma, int k, boolean probabilistic, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicaPartitions) {
-        SparmesManager manager = new SparmesManager(minNumReplicas, gamma, k, probabilistic);
+    public static SparmesManager initGraph(int minNumReplicas, float gamma, int k, boolean probabilistic, double logicalMigrationRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicaPartitions) {
+        SparmesManager manager = new SparmesManager(minNumReplicas, gamma, k, probabilistic, logicalMigrationRatio);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
         }

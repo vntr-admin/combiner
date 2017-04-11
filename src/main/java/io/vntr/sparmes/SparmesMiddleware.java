@@ -81,7 +81,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
             Set<Integer> replicasToAddInDestinationPartition = sparmesBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
             Set<Integer> replicasToDeleteInSourcePartition = sparmesBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
-            manager.increaseMigrationTally(1);
+            manager.increaseTally(1);
         }
     }
 

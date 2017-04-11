@@ -18,6 +18,8 @@ public class HermarManager {
     private float maxIterationToNumUsersRatio;
 
     private long migrationTally;
+    private long migrationTallyLogical;
+    private double logicalMigrationRatio = 0;
 
     private int nextPid = 1;
     private int nextUid = 1;
@@ -64,6 +66,18 @@ public class HermarManager {
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
+    }
+
+    public HermarManager(float gamma, float maxIterationToNumUsersRatio, int k, double logicalMigrationRatio) {
+        this.gamma = gamma;
+        this.probabilistic = false;
+        this.pMap = new HashMap<>();
+        this.uMap = new HashMap<>();
+        this.uMapLogical = new HashMap<>();
+        this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
+        this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
+        this.k = k;
+        this.logicalMigrationRatio = logicalMigrationRatio;
     }
 
     public int addUser() {
@@ -213,6 +227,7 @@ public class HermarManager {
         //TODO: should I include logical migrations in the migration tally?
         for(Integer pid : pMap.keySet()) {
             for(Target target : stageTargets.get(pid)) {
+                increaseTallyLogical(1);
                 migrateLogically(target);
             }
         }
@@ -331,13 +346,14 @@ public class HermarManager {
     }
 
     public long getMigrationTally() {
-        return migrationTally;
+        return migrationTally + (long) (logicalMigrationRatio * migrationTallyLogical);
     }
 
     void increaseTally(int amount) {
         migrationTally += amount;
     }
 
+    void increaseTallyLogical(int amount) { migrationTallyLogical += amount; }
 
 
     @Override
