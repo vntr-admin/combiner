@@ -3,9 +3,15 @@ package io.vntr.trace;
 import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.hermar.HermarInitUtils;
+import io.vntr.hermar.HermarManager;
+import io.vntr.hermar.HermarMiddleware;
 import io.vntr.hermes.HermesInitUtils;
 import io.vntr.hermes.HermesManager;
 import io.vntr.hermes.HermesMiddleware;
+import io.vntr.jabar.JabarInitUtils;
+import io.vntr.jabar.JabarManager;
+import io.vntr.jabar.JabarMiddleware;
 import io.vntr.jabeja.JabejaInitUtils;
 import io.vntr.jabeja.JabejaManager;
 import io.vntr.jabeja.JabejaMiddleware;
@@ -34,7 +40,9 @@ import java.util.*;
 public class TraceRunner {
     public static final String SPAR_TYPE = "SPAR";
     public static final String JABEJA_TYPE = "JABEJA";
+    public static final String JABAR_TYPE = "JABAR";
     public static final String HERMES_TYPE = "HERMES";
+    public static final String HERMAR_TYPE = "HERMAR";
     public static final String SPAJA_TYPE = "SPAJA";
     public static final String SPARMES_TYPE = "SPARMES";
     public static final String METIS_TYPE = "METIS";
@@ -44,7 +52,7 @@ public class TraceRunner {
 
     private static final String CONFIG_FILE = "config.properties";
 
-    private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(JABEJA_TYPE, HERMES_TYPE, SPAR_TYPE, SPAJA_TYPE, SPARMES_TYPE, METIS_TYPE));
+    private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(JABEJA_TYPE, JABAR_TYPE, HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPAJA_TYPE, SPARMES_TYPE, METIS_TYPE));
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private static final SimpleDateFormat filenameSdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -97,7 +105,9 @@ public class TraceRunner {
     static IMiddlewareAnalyzer initMiddleware(ParsedArgs parsedArgs, Trace trace, Properties props) {
         switch (parsedArgs.getType()) {
             case JABEJA_TYPE:  return initJabejaMiddleware (trace, parsedArgs, props);
+            case JABAR_TYPE:   return initJabarMiddleware  (trace, parsedArgs, props);
             case HERMES_TYPE:  return initHermesMiddleware (trace, parsedArgs, props);
+            case HERMAR_TYPE:  return initHermarMiddleware (trace, parsedArgs, props);
             case SPAR_TYPE:    return initSparMiddleware   (trace, parsedArgs, props);
             case SPAJA_TYPE:   return initSpajaMiddleware  (trace, parsedArgs, props);
             case SPARMES_TYPE: return initSparmesMiddleware(trace, parsedArgs, props);
@@ -164,7 +174,9 @@ public class TraceRunner {
             this.type = type;
             switch(type) {
                 case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; break;
+                case JABAR_TYPE:   alpha = 3f;    deltaT = 0.025f; break;
                 case HERMES_TYPE:  gamma = 1.15f;                  break;
+                case HERMAR_TYPE:  gamma = 1.15f;                  break;
                 case SPAJA_TYPE:   alpha = 1f;    deltaT = 0.5f;   break;
                 case SPARMES_TYPE: gamma = 1.01f;                  break;
             }
@@ -347,17 +359,17 @@ public class TraceRunner {
             if(SPAR_TYPE.equals(type) || SPAJA_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
                 builder.append(" minReplicas=").append(minNumReplicas);
             }
-            if(JABEJA_TYPE.equals(type) || SPAJA_TYPE.equals(type)) {
+            if(JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type) || SPAJA_TYPE.equals(type)) {
                 builder.append(" alpha=").append(alpha).append(" initialT=").append(initialT).append(" deltaT=").append(deltaT).append(" k=").append(jaK);
             }
-            if(HERMES_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
+            if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
                 builder.append(" gamma=").append(gamma);
             }
 
             if(JABEJA_TYPE.equals(type)) {
                 builder.append(" befriendInitialT=").append(befriendInitialT).append(" befriendDeltaT=").append(befriendDeltaT);
             }
-            if(HERMES_TYPE.equals(type)) {
+            if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type)) {
                 builder.append(" k=").append(hermesK).append(" cutoff=").append(iterationCutoffRatio);
             }
 
@@ -463,15 +475,39 @@ public class TraceRunner {
         return new JabejaMiddleware(jabejaManager);
     }
 
+    static JabarMiddleware initJabarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+        JabarManager jabarManager =
+                JabarInitUtils.initGraph(parsedArgs.getAlpha(),
+                        parsedArgs.getInitialT(),
+                        parsedArgs.getDeltaT(),
+                        parsedArgs.getJaK(),
+                        trace.getPartitions(),
+                        trace.getFriendships());
+
+        return new JabarMiddleware(jabarManager);
+    }
+
+
     static HermesMiddleware initHermesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
         HermesManager hermesManager =
                 HermesInitUtils.initGraph(parsedArgs.getGamma(),
-                                          parsedArgs.getHermesK(),
-                                          parsedArgs.getIterationCutoffRatio(),
-                                          trace.getPartitions(),
-                                          trace.getFriendships());
+                        parsedArgs.getHermesK(),
+                        parsedArgs.getIterationCutoffRatio(),
+                        trace.getPartitions(),
+                        trace.getFriendships());
 
         return new HermesMiddleware(hermesManager, hermesManager.getGamma());
+    }
+
+    static HermarMiddleware initHermarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
+        HermarManager hermarManager =
+                HermarInitUtils.initGraph(parsedArgs.getGamma(),
+                        parsedArgs.getHermesK(),
+                        parsedArgs.getIterationCutoffRatio(),
+                        trace.getPartitions(),
+                        trace.getFriendships());
+
+        return new HermarMiddleware(hermarManager, hermarManager.getGamma());
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
