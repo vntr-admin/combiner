@@ -36,8 +36,8 @@ public class TraceGenerator {
     static {
         actionsProbability.put(ADD_USER, 0.1D);
         actionsProbability.put(REMOVE_USER, 0.01D);
-        actionsProbability.put(BEFRIEND, 0.8D);
-        actionsProbability.put(UNFRIEND, 0.08D);
+        actionsProbability.put(BEFRIEND, 0.66D); //Befriend/Unfriend ratio should be ~3, according to sigmod-linkbench paper
+        actionsProbability.put(UNFRIEND, 0.22D);
         actionsProbability.put(ADD_PARTITION, 0D);  //this should be triggered by adding users or removing partitions...
         actionsProbability.put(REMOVE_PARTITION, 0.005D);
         actionsProbability.put(DOWNTIME, 0.005D);
