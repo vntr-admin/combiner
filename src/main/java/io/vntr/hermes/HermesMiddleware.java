@@ -46,23 +46,18 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public int addPartition() {
-        int newPid = manager.addPartition();
-        manager.repartition();
-        return newPid;
-
+        return manager.addPartition();
     }
 
     @Override
     public void addPartition(Integer partitionId) {
         manager.addPartition(partitionId);
-        manager.repartition();
     }
 
     @Override
     public void removePartition(Integer partitionId) {
         migrator.migrateOffPartition(partitionId);
         manager.removePartition(partitionId);
-        manager.repartition();
     }
 
     @Override
@@ -117,7 +112,7 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void broadcastDowntime() {
-        manager.repartition();
+        //Hermes only repartitions upon node addition or node weight change (the latter of which we do not consider)
     }
 
     @Override
