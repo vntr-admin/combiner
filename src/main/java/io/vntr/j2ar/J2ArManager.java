@@ -154,10 +154,7 @@ public class J2ArManager {
                 Collections.shuffle(randomUserList);
                 for(Integer uid : randomUserList) {
                     J2ArUser user = getUser(uid);
-                    J2ArUser partner = user.findPartner(getRandomSamplingOfUsersOnPartition(k, user.getPid()), t, true);
-                    if(partner == null) {
-                        partner = user.findPartner(getRandomSamplingOfUsers(k), t, true);
-                    }
+                    J2ArUser partner = user.findPartner(getRandomSamplingOfUsers(k), t, true);
                     if(partner != null) {
                         logicalSwap(user.getId(), partner.getId());
                     }
