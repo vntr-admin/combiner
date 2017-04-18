@@ -33,8 +33,7 @@ public class SpajaTestUtils {
         for(Integer uid : friendships.keySet()) {
             SpajaUser user = new SpajaUser(uid, alpha, minNumReplicas, manager);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPartitionId(pid);
-            user.setPartitionId(pid);
+            user.setMasterPid(pid);
 
             manager.addUser(user, pid);
 

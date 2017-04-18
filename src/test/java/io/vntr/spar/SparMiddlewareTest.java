@@ -217,22 +217,22 @@ public class SparMiddlewareTest {
 
         assertEquals((Integer) 28, middleware.getEdgeCut());
 
-        assertEquals(manager.getUserMasterById(10).getReplicaPartitionIds(), initSet(3));
-        assertEquals(manager.getUserMasterById(11).getReplicaPartitionIds(), initSet(2, 4));
+        assertEquals(manager.getUserMasterById(10).getReplicaPids(), initSet(3));
+        assertEquals(manager.getUserMasterById(11).getReplicaPids(), initSet(2, 4));
 
         middleware.unfriend(10, 11);
 
-        assertEquals(manager.getUserMasterById(10).getReplicaPartitionIds(), initSet(3));
-        assertEquals(manager.getUserMasterById(11).getReplicaPartitionIds(), initSet(4));
+        assertEquals(manager.getUserMasterById(10).getReplicaPids(), initSet(3));
+        assertEquals(manager.getUserMasterById(11).getReplicaPids(), initSet(4));
 
 
-        assertEquals(manager.getUserMasterById( 5).getReplicaPartitionIds(), initSet(2, 4));
-        assertEquals(manager.getUserMasterById(18).getReplicaPartitionIds(), initSet(1, 2));
+        assertEquals(manager.getUserMasterById( 5).getReplicaPids(), initSet(2, 4));
+        assertEquals(manager.getUserMasterById(18).getReplicaPids(), initSet(1, 2));
 
         middleware.unfriend(5, 18);
 
-        assertEquals(manager.getUserMasterById( 5).getReplicaPartitionIds(), initSet(2));
-        assertEquals(manager.getUserMasterById(18).getReplicaPartitionIds(), initSet(1, 2));
+        assertEquals(manager.getUserMasterById( 5).getReplicaPids(), initSet(2));
+        assertEquals(manager.getUserMasterById(18).getReplicaPids(), initSet(1, 2));
     }
 
 //    @Test TODO: reenable this

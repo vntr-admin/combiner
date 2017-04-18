@@ -173,8 +173,7 @@ public class SparTestUtils {
             Integer masterPartitionId = spec.getMasterPartitionIdForUser(userId);
             Set<Integer> replicaPartitionIds = spec.getReplicaPartitionIdsForUser(userId);
             SparUser user = new SparUser(userId);
-            user.setMasterPartitionId(masterPartitionId);
-            user.setPartitionId(masterPartitionId);
+            user.setMasterPid(masterPartitionId);
             user.addReplicaPartitionIds(replicaPartitionIds);
             for (Integer friendId : spec.getFriendIdsForUser(userId)) {
                 user.befriend(friendId);
@@ -239,8 +238,8 @@ public class SparTestUtils {
 
     public static Set<Integer> getPartitionsWithAPresence(SparManager manager, Integer userId) {
         SparUser user = manager.getUserMasterById(userId);
-        Set<Integer> partitionsWithAPresence = new HashSet<>(user.getReplicaPartitionIds());
-        partitionsWithAPresence.add(user.getMasterPartitionId());
+        Set<Integer> partitionsWithAPresence = new HashSet<>(user.getReplicaPids());
+        partitionsWithAPresence.add(user.getMasterPid());
         return partitionsWithAPresence;
     }
 
@@ -289,12 +288,9 @@ public class SparTestUtils {
         for(Integer uid : friendships.keySet()) {
             SparUser user = new SparUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPartitionId(pid);
-            user.setPartitionId(pid);
+            user.setMasterPid(pid);
 
             manager.addUser(user, pid);
-
-
         }
 
         for(Integer uid : friendships.keySet()) {

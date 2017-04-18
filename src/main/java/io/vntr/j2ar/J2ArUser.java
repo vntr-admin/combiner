@@ -4,6 +4,9 @@ import io.vntr.User;
 
 import java.util.Collection;
 
+import static io.vntr.Utils.safeEquals;
+import static io.vntr.Utils.safeHashCode;
+
 /**
  * Created by robertlindquist on 4/12/17.
  */
@@ -91,5 +94,32 @@ public class J2ArUser extends User{
         }
 
         return count;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof J2ArUser)) return false;
+
+        J2ArUser that = (J2ArUser) o;
+
+        return  (Float.compare(that.alpha, alpha) == 0)
+                && safeEquals(this.pid,            that.pid)
+                && safeEquals(this.logicalPid,     that.logicalPid)
+                && safeEquals(this.bestLogicalPid, that.bestLogicalPid)
+                && safeEquals(this.getId(),        that.getId())
+                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (alpha != +0.0f ? Float.floatToIntBits(alpha) : 0);
+        result = 31 * result + safeHashCode(pid);
+        result = 31 * result + safeHashCode(logicalPid);
+        result = 31 * result + safeHashCode(bestLogicalPid);
+        result = 31 * result + safeHashCode(getId());
+        result = 31 * result + safeHashCode(getFriendIDs());
+        return result;
     }
 }

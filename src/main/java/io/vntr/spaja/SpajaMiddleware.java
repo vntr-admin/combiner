@@ -53,11 +53,11 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
 
         //TODO: on SparMiddleware, we moved the following to the end of the method, so perhaps that's necessary
 
-        Integer smallerUserPid = smallerUser.getMasterPartitionId();
-        Integer largerUserPid  = largerUser.getMasterPartitionId();
+        Integer smallerUserPid = smallerUser.getMasterPid();
+        Integer largerUserPid  = largerUser.getMasterPid();
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
-        boolean colocatedReplicas = smallerUser.getReplicaPartitionIds().contains(largerUserPid) && largerUser.getReplicaPartitionIds().contains(smallerUserPid);
+        boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
         if (!colocatedMasters && !colocatedReplicas) {
             BEFRIEND_REBALANCE_STRATEGY strategy = spajaBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
             performRebalace(strategy, smallerUserId, largerUserId);
@@ -69,14 +69,14 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
         SpajaUser smallerUser = manager.getUserMasterById(smallUid);
         SpajaUser largerUser = manager.getUserMasterById(largeUid);
-        Integer smallerUserPid = smallerUser.getMasterPartitionId();
-        Integer largerUserPid = largerUser.getMasterPartitionId();
+        Integer smallerUserPid = smallerUser.getMasterPid();
+        Integer largerUserPid = largerUser.getMasterPid();
 
         if (strategy == NO_CHANGE) {
-            if (!smallerUser.getReplicaPartitionIds().contains(largerUserPid)) {
+            if (!smallerUser.getReplicaPids().contains(largerUserPid)) {
                 manager.addReplica(smallerUser, largerUserPid);
             }
-            if (!largerUser.getReplicaPartitionIds().contains(smallerUserPid)) {
+            if (!largerUser.getReplicaPids().contains(smallerUserPid)) {
                 manager.addReplica(largerUser, smallerUserPid);
             }
         } else {
@@ -94,15 +94,15 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         SpajaUser smallerUser = manager.getUserMasterById(smallerUserId);
         SpajaUser largerUser = manager.getUserMasterById(largerUserId);
 
-        if (!smallerUser.getMasterPartitionId().equals(largerUser.getMasterPartitionId())) {
+        if (!smallerUser.getMasterPid().equals(largerUser.getMasterPid())) {
             boolean smallerReplicaWasOnlyThereForLarger = spajaBefriendingStrategy.isFriendOnlyThereForThisUsersSake(largerUser, smallerUser);
             boolean largerReplicaWasOnlyThereForSmaller = spajaBefriendingStrategy.isFriendOnlyThereForThisUsersSake(smallerUser, largerUser);
 
-            if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPartitionIds().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(smallerUser, largerUser.getMasterPartitionId());
+            if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
+                manager.removeReplica(smallerUser, largerUser.getMasterPid());
             }
-            if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPartitionIds().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(largerUser, smallerUser.getMasterPartitionId());
+            if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
+                manager.removeReplica(largerUser, smallerUser.getMasterPid());
             }
         }
 
@@ -131,7 +131,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
-            if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
+            if (!user.getReplicaPids().contains(newPartitionId)) {
                 if(manager.getMinNumReplicas() > 0) {
                     throw new RuntimeException("This should never happen with minNumReplicas > 0!");
                 }
@@ -153,7 +153,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         // "Fifth, remove references to replicas formerly on this partition"
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
             SpajaUser user = manager.getUserMasterById(uid);
-            for (Integer currentReplicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
                 manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
             }
             user.removeReplicaPartitionId(partitionId);
@@ -181,8 +181,8 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         for(Integer uid : uids) {
             int count = 0;
             SpajaUser user = manager.getUserMasterById(uid);
-            count += user.getMasterPartitionId().equals(pid) ? 0 : 1;
-            Set<Integer> replicas = user.getReplicaPartitionIds();
+            count += user.getMasterPid().equals(pid) ? 0 : 1;
+            Set<Integer> replicas = user.getReplicaPids();
             int numReplicas = replicas.size();
             count += replicas.contains(pid) ? numReplicas - 1 : numReplicas;
             counts.put(uid, count);
@@ -200,8 +200,8 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPartitionId());
-        potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
+        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }

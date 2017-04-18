@@ -40,7 +40,7 @@ public class ReplicaDummyMigrationStrategy {
     private Integer getLightestReplicaPid(int masterId, Map<Integer, Integer> pWeightMap) {
         Integer minReplica = null;
         int minWeight = Integer.MAX_VALUE;
-        for(int replicaPid : manager.getUserMasterById(masterId).getReplicaPartitionIds()) {
+        for(int replicaPid : manager.getUserMasterById(masterId).getReplicaPids()) {
             int weight = pWeightMap.get(replicaPid);
             if(weight < minWeight) {
                 minWeight = weight;

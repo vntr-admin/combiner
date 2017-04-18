@@ -5,11 +5,13 @@ import io.vntr.User;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.vntr.Utils.safeEquals;
+import static io.vntr.Utils.safeHashCode;
+
 /**
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesUser extends User {
-    private Integer pId;
     private float gamma;
     private Integer physicalPid;
     private Integer logicalPid;
@@ -21,14 +23,6 @@ public class HermesUser extends User {
         this.manager = manager;
         this.physicalPid = initialPid;
         this.logicalPid = initialPid;
-    }
-
-    public Integer getpId() {
-        return pId;
-    }
-
-    public void setpId(Integer pId) {
-        this.pId = pId;
     }
 
     public Integer getPhysicalPid() {
@@ -90,21 +84,22 @@ public class HermesUser extends User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        HermesUser user = (HermesUser) o;
+        HermesUser that = (HermesUser) o;
 
-        if (Float.compare(user.gamma, gamma) != 0) return false;
-        if (!pId.equals(user.pId)) return false;
-        if (!physicalPid.equals(user.physicalPid)) return false;
-        return logicalPid.equals(user.logicalPid);
-
+        return  (Float.compare(that.gamma, gamma) == 0)
+                && safeEquals(this.physicalPid, that.physicalPid)
+                && safeEquals(this.logicalPid,  that.logicalPid)
+                && safeEquals(this.getId(), that.getId())
+                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
     }
 
     @Override
     public int hashCode() {
-        int result = pId.hashCode();
-        result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
-        result = 31 * result + physicalPid.hashCode();
-        result = 31 * result + logicalPid.hashCode();
+        int result = (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
+        result = 31 * result + safeHashCode(physicalPid);
+        result = 31 * result + safeHashCode(logicalPid);
+        result = 31 * result + safeHashCode(getId());
+        result = 31 * result + safeHashCode(getFriendIDs());
         return result;
     }
 }

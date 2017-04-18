@@ -21,8 +21,7 @@ public class ReplicaDummyTestUtils {
         for(Integer uid : friendships.keySet()) {
             ReplicaDummyUser user = new ReplicaDummyUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPartitionId(pid);
-            user.setPartitionId(pid);
+            user.setMasterPid(pid);
 
             manager.addUser(user, pid);
 

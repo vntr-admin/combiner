@@ -31,17 +31,18 @@ public class J2User extends User{
         if (this == o) return true;
         if (!(o instanceof J2User)) return false;
 
-        J2User j2User = (J2User) o;
+        J2User that = (J2User) o;
 
-        return safeEquals(this.getId(), j2User.getId())
-                && safeEquals(this.pid, j2User.pid)
-                && safeEquals(this.getFriendIDs(), j2User.getFriendIDs());
+        return safeEquals(this.pid,                that.pid)
+                && safeEquals(this.getId(),        that.getId())
+                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
     }
 
     @Override
     public int hashCode() {
         int result = safeHashCode(pid);
         result = 31 * result + safeHashCode(getId());
-        return 31 * result + safeHashCode(getFriendIDs());
+        result = 31 * result + safeHashCode(getFriendIDs());
+        return result;
     }
 }

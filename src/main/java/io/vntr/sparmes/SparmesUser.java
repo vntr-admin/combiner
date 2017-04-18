@@ -4,61 +4,54 @@ import io.vntr.User;
 
 import java.util.*;
 
+import static io.vntr.Utils.safeEquals;
+import static io.vntr.Utils.safeHashCode;
+
 /**
  * Created by robertlindquist on 9/28/16.
  */
 public class SparmesUser extends User {
-    private Integer partitionId;
-    private Integer masterPartitionId;
+    private Integer masterPid;
     private Integer logicalPid;
     private float gamma;
-    private Set<Integer> replicaPartitionIds;
-    private Set<Integer> logicalPartitionIds;
+    private Set<Integer> replicaPids;
+    private Set<Integer> logicalPids;
     private SparmesManager manager;
     private int minNumReplicas;
 
     public SparmesUser(Integer id, Integer initialPid, float gamma, SparmesManager manager, int minNumReplicas) {
         super(id);
-        replicaPartitionIds = new HashSet<>();
-        logicalPartitionIds = new HashSet<>();
+        replicaPids = new HashSet<>();
+        logicalPids = new HashSet<>();
         this.gamma = gamma;
         this.manager = manager;
-        this.masterPartitionId = initialPid;
-        this.partitionId = initialPid;
+        this.masterPid = initialPid;
         this.logicalPid = initialPid;
         this.minNumReplicas = minNumReplicas;
     }
 
-    public Integer getPartitionId() {
-        return partitionId;
+    public Integer getMasterPid() {
+        return masterPid;
     }
 
-    public void setPartitionId(Integer partitionId) {
-        this.partitionId = partitionId;
-    }
-
-    public Integer getMasterPartitionId() {
-        return masterPartitionId;
-    }
-
-    public void setMasterPartitionId(Integer masterPartitionId) {
-        this.masterPartitionId = masterPartitionId;
+    public void setMasterPid(Integer masterPid) {
+        this.masterPid = masterPid;
     }
 
     public void addReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPartitionIds.add(replicaPartitionId);
+        this.replicaPids.add(replicaPartitionId);
     }
 
     public void removeReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPartitionIds.remove(replicaPartitionId);
+        this.replicaPids.remove(replicaPartitionId);
     }
 
     public void addReplicaPartitionIds(Collection<Integer> replicaPartitionIds) {
-        this.replicaPartitionIds.addAll(replicaPartitionIds);
+        this.replicaPids.addAll(replicaPartitionIds);
     }
 
-    public Set<Integer> getReplicaPartitionIds() {
-        return replicaPartitionIds;
+    public Set<Integer> getReplicaPids() {
+        return replicaPids;
     }
 
     public Integer getLogicalPid() {
@@ -69,25 +62,24 @@ public class SparmesUser extends User {
         this.logicalPid = logicalPid;
     }
 
-    public Set<Integer> getLogicalPartitionIds() {
-        return logicalPartitionIds;
+    public Set<Integer> getLogicalPids() {
+        return logicalPids;
     }
 
     public void addLogicalPartitionId(Integer pid) {
-        logicalPartitionIds.add(pid);
+        logicalPids.add(pid);
     }
 
     public void removeLogicalPartitionId(Integer pid) {
-        logicalPartitionIds.remove(pid);
+        logicalPids.remove(pid);
     }
 
     @Override
     public SparmesUser clone() {
-        SparmesUser user = new SparmesUser(getId(), masterPartitionId, gamma, manager, minNumReplicas);
-        user.setMasterPartitionId(masterPartitionId);
-        user.setPartitionId(partitionId);
+        SparmesUser user = new SparmesUser(getId(), masterPid, gamma, manager, minNumReplicas);
+        user.setMasterPid(masterPid);
         user.setLogicalPid(logicalPid);
-        user.addReplicaPartitionIds(replicaPartitionIds);
+        user.addReplicaPartitionIds(replicaPids);
         for (Integer friendId : getFriendIDs()) {
             user.befriend(friendId);
         }
@@ -95,13 +87,9 @@ public class SparmesUser extends User {
         return user;
     }
 
-    public boolean isReplica() {
-        return !partitionId.equals(masterPartitionId);
-    }
-
     @Override
     public String toString() {
-        return super.toString() + "|M:" + masterPartitionId + "|P:" + partitionId + "|L:" + logicalPid + "|Reps:" + replicaPartitionIds.toString();
+        return super.toString() + "|M:" + masterPid + "|L:" + logicalPid + "|Reps:" + replicaPids.toString();
     }
 
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
@@ -122,7 +110,7 @@ public class SparmesUser extends User {
 
         int numFriendsToDeleteInCurrentPartition = strat.findReplicasInMovingPartitionToDelete(this, Collections.<Integer>emptySet()).size();
         boolean replicateInSourcePartition = strat.shouldWeAddAReplicaOfMovingUserInMovingPartition(this, -1); //TODO: hmmnh
-        return new LogicalUser(getId(), partitionId, gamma, pToFriendCount, pToWeight, replicaPartitionIds, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
+        return new LogicalUser(getId(), masterPid, gamma, pToFriendCount, pToWeight, replicaPids, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
     }
 
     Map<Integer, Integer> getFriendsToAddInEachPartitionLogical() {
@@ -137,7 +125,7 @@ public class SparmesUser extends User {
         int count = 0;
         for (Integer friendId : getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
-            if (!targetPid.equals(friend.getLogicalPid()) && !friend.getLogicalPartitionIds().contains(targetPid)) {
+            if (!targetPid.equals(friend.getLogicalPid()) && !friend.getLogicalPids().contains(targetPid)) {
                 count++;
             }
         }
@@ -169,7 +157,7 @@ public class SparmesUser extends User {
     int getNumFriendsToDeleteInCurrentPartitionLogical() {
         int count = 0;
         for (Integer replicaId : findDeletionCandidatesLogical()) {
-            if (manager.getUserMasterById(replicaId).getLogicalPartitionIds().size() > manager.getMinNumReplicas()) {
+            if (manager.getUserMasterById(replicaId).getLogicalPids().size() > manager.getMinNumReplicas()) {
                 count++;
             }
         }
@@ -200,4 +188,33 @@ outer:  for (Integer friendId : getFriendIDs()) {
         return deletionCandidates;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SparmesUser)) return false;
+
+        SparmesUser that = (SparmesUser) o;
+
+        return  this.minNumReplicas == that.minNumReplicas
+                && (Float.compare(that.gamma, gamma) == 0)
+                && safeEquals(this.masterPid, that.masterPid)
+                && safeEquals(this.logicalPid, that.logicalPid)
+                && safeEquals(this.getId(), that.getId())
+                && safeEquals(this.replicaPids, that.replicaPids)
+                && safeEquals(this.logicalPids, that.logicalPids)
+                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = minNumReplicas;
+        result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
+        result = 31 * result + safeHashCode(masterPid);
+        result = 31 * result + safeHashCode(logicalPid);
+        result = 31 * result + safeHashCode(getId());
+        result = 31 * result + safeHashCode(replicaPids);
+        result = 31 * result + safeHashCode(logicalPids);
+        result = 31 * result + safeHashCode(getFriendIDs());
+        return result;
+    }
 }

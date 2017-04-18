@@ -24,8 +24,8 @@ public class SparBefriendingStrategy {
         int toLarger  = calcNumReplicasMove(smallerUser, largerUser);
         int toSmaller = calcNumReplicasMove(largerUser, smallerUser);
 
-        int smallerMasters = manager.getPartitionById(smallerUser.getMasterPartitionId()).getNumMasters();
-        int largerMasters  = manager.getPartitionById(largerUser.getMasterPartitionId()).getNumMasters();
+        int smallerMasters = manager.getPartitionById(smallerUser.getMasterPid()).getNumMasters();
+        int largerMasters  = manager.getPartitionById(largerUser.getMasterPid()).getNumMasters();
 
         return determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
     }
@@ -63,21 +63,21 @@ public class SparBefriendingStrategy {
     }
 
     int calcNumReplicasStay(SparUser smallerUser, SparUser largerUser) {
-        Integer smallerPartitionId = smallerUser.getMasterPartitionId();
-        Integer largerPartitionId = largerUser.getMasterPartitionId();
-        boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPartitionIds().contains(smallerPartitionId);
-        boolean smallerReplicaExistsOnLargerMaster = smallerUser.getReplicaPartitionIds().contains(largerPartitionId);
+        Integer smallerPartitionId = smallerUser.getMasterPid();
+        Integer largerPartitionId = largerUser.getMasterPid();
+        boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPids().contains(smallerPartitionId);
+        boolean smallerReplicaExistsOnLargerMaster = smallerUser.getReplicaPids().contains(largerPartitionId);
         int deltaReplicas = (largerReplicaExistsOnSmallerMaster ? 0 : 1) + (smallerReplicaExistsOnLargerMaster ? 0 : 1);
         int curReplicas = manager.getPartitionById(smallerPartitionId).getNumReplicas() + manager.getPartitionById(largerPartitionId).getNumReplicas();
         return curReplicas + deltaReplicas;
     }
 
     int calcNumReplicasMove(SparUser movingUser, SparUser stayingUser) {
-        int curReplicas = manager.getPartitionById(movingUser.getMasterPartitionId()).getNumReplicas() + manager.getPartitionById(stayingUser.getMasterPartitionId()).getNumReplicas();
+        int curReplicas = manager.getPartitionById(movingUser.getMasterPid()).getNumReplicas() + manager.getPartitionById(stayingUser.getMasterPid()).getNumReplicas();
 
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser);
-        Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPartitionId());
+        Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getMasterPid());
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser);
@@ -97,7 +97,7 @@ public class SparBefriendingStrategy {
         Set<Integer> replicasToAddInStayingPartition = new HashSet<>();
         for (Integer friendId : movingUser.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);
-            if (!targetPartitionId.equals(friend.getMasterPartitionId()) && !friend.getReplicaPartitionIds().contains(targetPartitionId)) {
+            if (!targetPartitionId.equals(friend.getMasterPid()) && !friend.getReplicaPids().contains(targetPartitionId)) {
                 replicasToAddInStayingPartition.add(friendId);
             }
         }
@@ -108,7 +108,7 @@ public class SparBefriendingStrategy {
     Set<Integer> findReplicasInMovingPartitionToDelete(SparUser movingUser, Set<Integer> replicasToBeAdded) {
         Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
         for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
-            int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPartitionIds().size();
+            int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPids().size();
             if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
                 replicasInMovingPartitionToDelete.add(replicaId);
             }
@@ -122,14 +122,14 @@ public class SparBefriendingStrategy {
         outer:
         for (Integer friendId : user.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);
-            if (!friend.getMasterPartitionId().equals(user.getMasterPartitionId())) {
+            if (!friend.getMasterPid().equals(user.getMasterPid())) {
                 for (Integer friendOfFriendId : friend.getFriendIDs()) {
                     if (friendOfFriendId.equals(user.getId())) {
                         continue;
                     }
 
                     SparUser friendOfFriend = manager.getUserMasterById(friendOfFriendId);
-                    if (friendOfFriend.getMasterPartitionId().equals(user.getMasterPartitionId())) {
+                    if (friendOfFriend.getMasterPid().equals(user.getMasterPid())) {
                         continue outer;
                     }
                 }
@@ -143,8 +143,8 @@ public class SparBefriendingStrategy {
 
     private boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SparUser movingUser) {
         for (Integer friendId : movingUser.getFriendIDs()) {
-            Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPartitionId();
-            if (movingUser.getMasterPartitionId().equals(friendMasterPartitionId)) {
+            Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getMasterPid();
+            if (movingUser.getMasterPid().equals(friendMasterPartitionId)) {
                 return true;
             }
         }
@@ -153,24 +153,24 @@ public class SparBefriendingStrategy {
     }
 
     boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(SparUser movingUser, SparUser stayingUser) {
-        boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = movingUser.getReplicaPartitionIds().contains(stayingUser.getMasterPartitionId());
-        int redundancyOfMovingUser = movingUser.getReplicaPartitionIds().size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser) ? 1 : 0);
+        boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = movingUser.getReplicaPids().contains(stayingUser.getMasterPid());
+        int redundancyOfMovingUser = movingUser.getReplicaPids().size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser) ? 1 : 0);
         return couldWeDeleteReplicaOfMovingUserInStayingPartition && redundancyOfMovingUser > manager.getMinNumReplicas();
     }
 
     boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(SparUser movingUser, SparUser stayingUser) {
         boolean couldWeDeleteReplicaOfStayingUserInMovingPartition = couldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
-        int redundancyOfStayingUser = stayingUser.getReplicaPartitionIds().size();
+        int redundancyOfStayingUser = stayingUser.getReplicaPids().size();
         return couldWeDeleteReplicaOfStayingUserInMovingPartition && redundancyOfStayingUser > manager.getMinNumReplicas();
     }
 
     boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(SparUser movingUser, SparUser stayingUser) {
-        boolean movingPartitionHasStayingUserReplica = stayingUser.getReplicaPartitionIds().contains(movingUser.getMasterPartitionId());
+        boolean movingPartitionHasStayingUserReplica = stayingUser.getReplicaPids().contains(movingUser.getMasterPid());
         boolean stayingUserHasNoOtherFriendMastersInMovingPartition = true; //deleting staying user replica is a possibility, if it exists, subject to balance constraints
         for (Integer friendId : stayingUser.getFriendIDs()) {
             SparUser friend = manager.getUserMasterById(friendId);
-            Integer friendMasterPartitionId = friend.getMasterPartitionId();
-            if (!(friendId.equals(movingUser.getId())) && friendMasterPartitionId.equals(movingUser.getMasterPartitionId())) {
+            Integer friendMasterPartitionId = friend.getMasterPid();
+            if (!(friendId.equals(movingUser.getId())) && friendMasterPartitionId.equals(movingUser.getMasterPid())) {
                 stayingUserHasNoOtherFriendMastersInMovingPartition = false;
             }
         }

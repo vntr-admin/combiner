@@ -77,7 +77,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
-            if (!user.getReplicaPartitionIds().contains(newPartitionId)) {
+            if (!user.getReplicaPids().contains(newPartitionId)) {
                 manager.addReplica(user, newPartitionId);
                 usersInNeedOfNewReplicas.remove(userId);
             }
@@ -94,7 +94,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         //Fifth, remove references to replicas formerly on this partition
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
             ReplicaDummyUser user = manager.getUserMasterById(uid);
-            for (Integer currentReplicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
                 manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
             }
 
@@ -113,14 +113,14 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         //First, determine which users will need more replicas once this partition is kaput
         for (Integer userId : partition.getIdsOfMasters()) {
             ReplicaDummyUser user = manager.getUserMasterById(userId);
-            if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
+            if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
         for (Integer userId : partition.getIdsOfReplicas()) {
             ReplicaDummyUser user = manager.getUserMasterById(userId);
-            if (user.getReplicaPartitionIds().size() <= manager.getMinNumReplicas()) {
+            if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
@@ -131,8 +131,8 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(ReplicaDummyUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPartitionId());
-        potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
+        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }

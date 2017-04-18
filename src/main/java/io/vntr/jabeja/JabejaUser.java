@@ -4,6 +4,9 @@ import io.vntr.User;
 
 import java.util.Collection;
 
+import static io.vntr.Utils.safeEquals;
+import static io.vntr.Utils.safeHashCode;
+
 /**
  * Created by robertlindquist on 9/19/16.
  */
@@ -66,5 +69,27 @@ public class JabejaUser extends User {
 
     public String toString() {
         return super.toString() + "|P:" + pid + "|alpha:" + alpha;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof JabejaUser)) return false;
+
+        JabejaUser that = (JabejaUser) o;
+
+        return(safeEquals(this.pid, that.pid))
+                && safeEquals(this.alpha, that.alpha)
+                && safeEquals(this.getId(), that.getId())
+                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = safeHashCode(pid);
+        result = 31 * result + safeHashCode(getId());
+        result = 31 * result + safeHashCode(getFriendIDs());
+        result = 31 * result + (alpha != +0.0f ? Float.floatToIntBits(alpha) : 0);
+        return result;
     }
 }
