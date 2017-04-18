@@ -12,7 +12,7 @@ public class J2InitUtils {
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new J2User(uid, pid, alpha, manager));
+                manager.addUser(new J2User(uid, pid));
             }
         }
         for (Integer uid1 : friendships.keySet()) {

@@ -23,6 +23,8 @@ public class J2Manager {
     private Map<Integer, J2User> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
+    private J2Repartitioner repartitioner;
+
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -33,6 +35,7 @@ public class J2Manager {
         this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
         uMap = new HashMap<>();
+        this.repartitioner = new J2Repartitioner(this, alpha, initialT, deltaT, k);
         partitions = new HashMap<>();
     }
 
@@ -48,45 +51,6 @@ public class J2Manager {
         return partitions.get(pid);
     }
 
-    public Set<J2User> getUsers(Collection<Integer> uids) {
-        Set<J2User> users = new HashSet<>();
-        for(Integer uid : uids) {
-            users.add(uMap.get(uid));
-        }
-        return users;
-    }
-
-    public Collection<J2User> getRandomSamplingOfUsers(int n) {
-        if(uMap.size() <= n) {
-            return getUsers(uMap.keySet());
-        }
-        else {
-            return getUsers(getKDistinctValuesFromList(n, uMap.keySet()));
-        }
-    }
-
-    public Collection<J2User> getRandomSamplingOfUsersOnPartition(int n, Integer pid) {
-        if(partitions.get(pid).size() <= n) {
-            return getUsers(partitions.get(pid));
-        }
-        else {
-            return getUsers(getKDistinctValuesFromList(n, partitions.get(pid)));
-        }
-    }
-
-    public void logicalSwap(Integer id1, Integer id2) {
-        J2User u1 = getUser(id1);
-        J2User u2 = getUser(id2);
-
-        Integer logicalPid1 = u1.getLogicalPid();
-        Integer logicalPid2 = u2.getLogicalPid();
-
-        u1.setLogicalPid(logicalPid2);
-        u2.setLogicalPid(logicalPid1);
-
-        increaseLogicalMigrationTally(2);
-    }
-
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
@@ -96,7 +60,7 @@ public class J2Manager {
     public void addUser(User user) {
         Integer initialPartitionId = getInitialPartitionId();
         int uid = user.getId();
-        J2User j2User = new J2User(uid, initialPartitionId, alpha, this);
+        J2User j2User = new J2User(uid, initialPartitionId);
         addUser(j2User);
     }
 
@@ -127,89 +91,8 @@ public class J2Manager {
         getUser(id2).unfriend(id1);
     }
 
-    void randomlyAssignLogicalPids() {
-        List<Integer> pids = Arrays.asList(getPidsToAssign());
-        Collections.shuffle(pids);
-
-        int index = 0;
-        for(J2User user : uMap.values()) {
-            user.setLogicalPid(pids.get(index));
-            index++;
-        }
-    }
-
-    Integer[] getPidsToAssign() {
-        //Fill array with pids such that:
-        //(1) array.length = numUsers
-        //(2) no pid occurs more than ceiling(numUsers/numPartitions) times
-        //Note: The order is unimportant, since we'll shuffle it later
-        Integer[] replicatedPids = new Integer[getNumUsers()];
-
-        //Step 1: fill the first numPartitions * floor(numUsers/numPartitions) elements
-        //This is easy, because we can just put floor(numUsers/numPartitions) copies of each pid
-        int floorUsersPerPartition = getNumUsers() / getNumPartitions();
-
-        int index = 0;
-        for(int i : partitions.keySet()) {
-            Arrays.fill(replicatedPids, index, index + floorUsersPerPartition, i);
-            index += floorUsersPerPartition;
-        }
-
-        //Step 2: fill the remainder (if any) with randomly-selected pids (no more than once each)
-        List<Integer> remainingPids = new ArrayList<>(partitions.keySet());
-        Collections.shuffle(remainingPids);
-        Iterator<Integer> pidIter = remainingPids.iterator();
-        while(index < replicatedPids.length) {
-            replicatedPids[index] = pidIter.next();
-            index++;
-        }
-
-        return replicatedPids;
-    }
-
-    void physicallyMigrate() {
-        for(J2User user : uMap.values()) {
-            Integer bestLogicalPid = user.getBestLogicalPid();
-            if(bestLogicalPid != null && !bestLogicalPid.equals(user.getPid())) {
-                moveUser(user.getId(), bestLogicalPid, false);
-            }
-        }
-    }
-
     public void repartition() {
-        boolean changed = false;
-        int bestEdgeCut = getEdgeCut(false);
-
-        int numRestarts = 10;
-        for(int i=0; i<numRestarts; i++) {
-            randomlyAssignLogicalPids();
-            for(float t = initialT; t >= 1; t -= deltaT) {
-                List<Integer> randomUserList = new LinkedList<>(uMap.keySet());
-                Collections.shuffle(randomUserList);
-                for(Integer uid : randomUserList) {
-                    J2User user = getUser(uid);
-                    J2User partner = user.findPartner(getRandomSamplingOfUsersOnPartition(k, user.getPid()), t);
-                    if(partner == null) {
-                        partner = user.findPartner(getRandomSamplingOfUsers(k), t);
-                    }
-                    if(partner != null) {
-                        logicalSwap(user.getId(), partner.getId());
-                    }
-                }
-            }
-            int edgeCut = getEdgeCut(true);
-            if(edgeCut < bestEdgeCut) {
-                changed = true;
-                bestEdgeCut = edgeCut;
-                for(J2User user : uMap.values()) {
-                    user.setBestLogicalPid(user.getLogicalPid());
-                }
-            }
-        }
-
-        if(changed) {
-            physicallyMigrate();
-        }
+        increaseLogicalMigrationTally(repartitioner.repartition(10));
     }
 
     Integer getInitialPartitionId() {
@@ -258,13 +141,13 @@ public class J2Manager {
         return uMap.size();
     }
 
-    public Integer getEdgeCut(boolean logical) {
+    public Integer getEdgeCut() {
         int count = 0;
         for(J2User user : uMap.values()) {
-            Integer userPid = logical ? user.getLogicalPid() : user.getPid();
+            Integer userPid = user.getPid();
 
             for(int friendId : user.getFriendIDs()) {
-                Integer friendPid = logical ? getUser(friendId).getLogicalPid() : getUser(friendId).getPid();
+                Integer friendPid = getUser(friendId).getPid();
                 if(userPid < friendPid) {
                     count++;
                 }

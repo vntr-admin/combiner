@@ -4,21 +4,18 @@ import io.vntr.User;
 
 import java.util.Collection;
 
+import static io.vntr.Utils.safeEquals;
+import static io.vntr.Utils.safeHashCode;
+
 /**
  * Created by robertlindquist on 4/12/17.
  */
 public class J2User extends User{
-    private float alpha;
     private Integer pid;
-    private Integer logicalPid;
-    private Integer bestLogicalPid;
-    private J2Manager manager;
 
-    public J2User(Integer id, Integer initialPid, float alpha, J2Manager manager) {
+    public J2User(Integer id, Integer initialPid) {
         super(id);
         this.pid = initialPid;
-        this.alpha = alpha;
-        this.manager = manager;
     }
 
     public Integer getPid() {
@@ -29,55 +26,22 @@ public class J2User extends User{
         this.pid = pid;
     }
 
-    public Integer getLogicalPid() {
-        return logicalPid;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof J2User)) return false;
+
+        J2User j2User = (J2User) o;
+
+        return safeEquals(this.getId(), j2User.getId())
+                && safeEquals(this.pid, j2User.pid)
+                && safeEquals(this.getFriendIDs(), j2User.getFriendIDs());
     }
 
-    public void setLogicalPid(Integer logicalPid) {
-        this.logicalPid = logicalPid;
-    }
-
-    public Integer getBestLogicalPid() {
-        return bestLogicalPid;
-    }
-
-    public void setBestLogicalPid(Integer bestLogicalPid) {
-        this.bestLogicalPid = bestLogicalPid;
-    }
-
-    public J2User findPartner(Collection<J2User> users, float t) {
-        J2User bestPartner = null;
-        float bestScore = 0f;
-
-        for(J2User partner : users) {
-            Integer theirLogicalPid = partner.getLogicalPid();
-            if(theirLogicalPid.equals(logicalPid)) {
-                continue;
-            }
-
-            int myNeighborsOnMine      = this.howManyFriendsHaveLogicalPartition(logicalPid);
-            int myNeighborsOnTheirs    = this.howManyFriendsHaveLogicalPartition(theirLogicalPid);
-            int theirNeighborsOnMine   = partner.howManyFriendsHaveLogicalPartition(logicalPid);
-            int theirNeighborsOnTheirs = partner.howManyFriendsHaveLogicalPartition(theirLogicalPid);
-
-            float oldScore = (float) (Math.pow(myNeighborsOnMine, alpha) + Math.pow(theirNeighborsOnTheirs, alpha));
-            float newScore = (float) (Math.pow(myNeighborsOnTheirs, alpha) + Math.pow(theirNeighborsOnMine, alpha));
-
-            if(newScore > bestScore && (newScore * t) > oldScore) {
-                bestPartner = partner;
-                bestScore = newScore;
-            }
-        }
-
-        return bestPartner;
-    }
-
-    int howManyFriendsHaveLogicalPartition(Integer logicalPid) {
-        int count = 0;
-        for(Integer friendId : getFriendIDs()) {
-            Integer friendLogicalPid = manager.getUser(friendId).getLogicalPid();
-            count += friendLogicalPid.equals(logicalPid) ? 1 : 0;
-        }
-        return count;
+    @Override
+    public int hashCode() {
+        int result = safeHashCode(pid);
+        result = 31 * result + safeHashCode(getId());
+        return 31 * result + safeHashCode(getFriendIDs());
     }
 }
