@@ -4,7 +4,6 @@ import io.vntr.User;
 
 import java.util.*;
 
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 
 /**
@@ -23,6 +22,9 @@ public class J2ArManager {
     private Map<Integer, J2ArUser> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
+    private J2ArRepartitioner repartitioner;
+    private J2ArBefriendingStrategy befriendingStrategy;
+
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -32,6 +34,8 @@ public class J2ArManager {
         this.deltaT = deltaT;
         this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
+        repartitioner = new J2ArRepartitioner(this, alpha, initialT, deltaT, k);
+        befriendingStrategy = new J2ArBefriendingStrategy(alpha, k, this);
         uMap = new HashMap<>();
         partitions = new HashMap<>();
     }
@@ -54,37 +58,6 @@ public class J2ArManager {
             users.add(uMap.get(uid));
         }
         return users;
-    }
-
-    public Collection<J2ArUser> getRandomSamplingOfUsers(int n) {
-        if(uMap.size() <= n) {
-            return getUsers(uMap.keySet());
-        }
-        else {
-            return getUsers(getKDistinctValuesFromList(n, uMap.keySet()));
-        }
-    }
-
-    public Collection<J2ArUser> getRandomSamplingOfUsersOnPartition(int n, Integer pid) {
-        if(partitions.get(pid).size() <= n) {
-            return getUsers(partitions.get(pid));
-        }
-        else {
-            return getUsers(getKDistinctValuesFromList(n, partitions.get(pid)));
-        }
-    }
-
-    public void logicalSwap(Integer id1, Integer id2) {
-        J2ArUser u1 = getUser(id1);
-        J2ArUser u2 = getUser(id2);
-
-        Integer logicalPid1 = u1.getLogicalPid();
-        Integer logicalPid2 = u2.getLogicalPid();
-
-        u1.setLogicalPid(logicalPid2);
-        u2.setLogicalPid(logicalPid1);
-
-        increaseLogicalMigrationTally(2);
     }
 
     public int addUser() {
@@ -127,52 +100,8 @@ public class J2ArManager {
         getUser(id2).unfriend(id1);
     }
 
-    void setLogicalPids() {
-        for(J2ArUser user : uMap.values()) {
-            user.setLogicalPid(user.getPid());
-        }
-    }
-
-    void physicallyMigrate() {
-        for(J2ArUser user : uMap.values()) {
-            Integer bestLogicalPid = user.getBestLogicalPid();
-            if(bestLogicalPid != null && !bestLogicalPid.equals(user.getPid())) {
-                moveUser(user.getId(), bestLogicalPid, false);
-            }
-        }
-    }
-
     public void repartition() {
-        boolean changed = false;
-        int bestEdgeCut = getEdgeCut(false);
-
-        int numRestarts = 1;
-        for(int i=0; i<numRestarts; i++) {
-            setLogicalPids();
-            for(float t = initialT; t >= 1; t -= deltaT) {
-                List<Integer> randomUserList = new LinkedList<>(uMap.keySet());
-                Collections.shuffle(randomUserList);
-                for(Integer uid : randomUserList) {
-                    J2ArUser user = getUser(uid);
-                    J2ArUser partner = user.findPartner(getRandomSamplingOfUsers(k), t, true);
-                    if(partner != null) {
-                        logicalSwap(user.getId(), partner.getId());
-                    }
-                }
-            }
-            int edgeCut = getEdgeCut(true);
-            if(edgeCut < bestEdgeCut) {
-                changed = true;
-                bestEdgeCut = edgeCut;
-                for(J2ArUser user : uMap.values()) {
-                    user.setBestLogicalPid(user.getLogicalPid());
-                }
-            }
-        }
-
-        if(changed) {
-            physicallyMigrate();
-        }
+        increaseLogicalMigrationTally(this.repartitioner.repartition(1));
     }
 
     Integer getInitialPartitionId() {
@@ -221,13 +150,13 @@ public class J2ArManager {
         return uMap.size();
     }
 
-    public Integer getEdgeCut(boolean logical) {
+    public Integer getEdgeCut() {
         int count = 0;
         for(J2ArUser user : uMap.values()) {
-            Integer userPid = logical ? user.getLogicalPid() : user.getPid();
+            Integer userPid = user.getPid();
 
             for(int friendId : user.getFriendIDs()) {
-                Integer friendPid = logical ? getUser(friendId).getLogicalPid() : getUser(friendId).getPid();
+                Integer friendPid = getUser(friendId).getPid();
                 if(userPid < friendPid) {
                     count++;
                 }
@@ -295,54 +224,6 @@ public class J2ArManager {
     }
 
     void rebalance(Integer smallerUserId, Integer largerUserId) {
-        J2ArUser smallerUser = getUser(smallerUserId);
-        int smallerPid = smallerUser.getPid();
-
-        J2ArUser largerUser = getUser(largerUserId);
-        int largerPid = largerUser.getPid();
-
-        if (smallerPid != largerPid) {
-            J2ArUser smallerPartner = findPartnerOnPartition(smallerUser, largerPid);
-            J2ArUser largerPartner = findPartnerOnPartition(largerUser, smallerPid);
-
-            if(smallerPartner != null && largerPartner == null) {
-                moveUser(smallerUserId, largerPid, false);
-                moveUser(smallerPartner.getId(), smallerPid, false);
-            }
-            else if(largerPartner != null && smallerPartner == null) {
-                moveUser(largerUserId, smallerPid, false);
-                moveUser(largerPartner.getId(), largerPid, false);
-            }
-            else if(smallerPartner != null && largerPartner != null) {
-                int gainSmallerToLarger = calculateGain(smallerPartner, largerPartner);
-                int gainLargerToSmaller = calculateGain(largerPartner, smallerPartner);
-                if(gainSmallerToLarger >= gainLargerToSmaller) {
-                    moveUser(smallerUserId, largerPid, false);
-                    moveUser(smallerPartner.getId(), smallerPid, false);
-                }
-                else {
-                    moveUser(largerUserId, smallerPid, false);
-                    moveUser(largerPartner.getId(), largerPid, false);
-                }
-            }
-        }
-    }
-
-    J2ArUser findPartnerOnPartition(J2ArUser user, Integer pid) {
-        Set<Integer> partition = partitions.get(pid);
-        Set<Integer> candidates;
-        if(partition.size() <= k) {
-            candidates = new HashSet<>(partition);
-        }
-        else {
-            candidates = getKDistinctValuesFromList(k, partition);
-        }
-        return user.findPartner(getUsers(candidates), 1F, false);
-    }
-
-    int calculateGain(J2ArUser user1, J2ArUser user2) {
-        int oldCut = user1.getNeighborsOnPartition(user2.getPid()) + user2.getNeighborsOnPartition(user1.getPid());
-        int newCut = user1.getNeighborsOnPartition(user1.getPid()) + user2.getNeighborsOnPartition(user2.getPid());
-        return oldCut - newCut;
+        befriendingStrategy.rebalance(smallerUserId, largerUserId);
     }
 }

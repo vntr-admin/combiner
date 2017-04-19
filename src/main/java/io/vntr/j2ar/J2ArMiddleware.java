@@ -94,7 +94,7 @@ public class J2ArMiddleware implements IMiddlewareAnalyzer{
 
     @Override
     public Integer getEdgeCut() {
-        return manager.getEdgeCut(false);
+        return manager.getEdgeCut();
     }
 
     @Override
