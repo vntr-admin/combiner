@@ -100,7 +100,7 @@ public class J2ArRepartitioner {
         return uids.size() > n ? getKDistinctValuesFromList(n, uids) : new HashSet<>(uids);
     }
 
-    void logicalSwap(Integer uid1, Integer uid2, State state) {
+    static void logicalSwap(Integer uid1, Integer uid2, State state) {
         Integer pid1 = state.getLogicalPids().get(uid1);
         Integer pid2 = state.getLogicalPids().get(uid2);
 
@@ -126,7 +126,7 @@ public class J2ArRepartitioner {
         }
     }
 
-    int getLogicalEdgeCut(State state) {
+    static int getLogicalEdgeCut(State state) {
         Map<Integer, Integer> pids = state.getLogicalPids();
         int count = 0;
         for(Integer uid : pids.keySet()) {

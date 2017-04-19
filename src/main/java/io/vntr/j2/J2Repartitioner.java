@@ -105,7 +105,7 @@ public class J2Repartitioner {
         return uids.size() > n ? getKDistinctValuesFromList(n, uids) : new HashSet<>(uids);
     }
 
-    void logicalSwap(Integer uid1, Integer uid2, State state) {
+    static void logicalSwap(Integer uid1, Integer uid2, State state) {
         Integer pid1 = state.getLogicalPids().get(uid1);
         Integer pid2 = state.getLogicalPids().get(uid2);
 
@@ -131,14 +131,14 @@ public class J2Repartitioner {
         }
     }
 
-    int getLogicalEdgeCut(State state) {
-        Map<Integer, Integer> pids = state.getLogicalPids();
+    static int getLogicalEdgeCut(State state) {
+        Map<Integer, Integer> uidToPidMap = state.getLogicalPids();
         int count = 0;
-        for(Integer uid : pids.keySet()) {
-            Integer pid = pids.get(uid);
+        for(Integer uid : uidToPidMap.keySet()) {
+            Integer pid = uidToPidMap.get(uid);
 
             for(int friendId : state.getFriendships().get(uid)) {
-                Integer friendPid = pids.get(friendId);
+                Integer friendPid = uidToPidMap.get(friendId);
                 if(pid < friendPid) {
                     count++;
                 }
@@ -147,7 +147,7 @@ public class J2Repartitioner {
         return count;
     }
 
-    Map<Integer, Integer> getRandomLogicalPids(Set<Integer> uids, Set<Integer> pids) {
+    static Map<Integer, Integer> getRandomLogicalPids(Set<Integer> uids, Set<Integer> pids) {
         List<Integer> pidList = Arrays.asList(getPidsToAssign(uids.size(), pids));
         Collections.shuffle(pidList);
 
