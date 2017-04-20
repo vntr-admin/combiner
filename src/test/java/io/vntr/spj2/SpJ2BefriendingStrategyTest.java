@@ -960,7 +960,6 @@ public class SpJ2BefriendingStrategyTest {
 
     @Test
     public void testFindReplicasInMovingPartitionToDeleteIsolatedMoverNotAllFriendsMeetRedundancyRequirement() {
-        //TODO: this failed once
         SpJ2Manager manager = SpJ2TestUtils.getStandardManager();
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 

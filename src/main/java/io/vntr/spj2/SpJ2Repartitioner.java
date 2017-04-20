@@ -309,13 +309,12 @@ outer:  for(Integer friendId : state.getFriendships().get(uid)) {
     }
 
     static boolean shouldDeleteReplicaInTargetPartition(Integer uid, Integer targetPid, State state) {
-        boolean answer = false;
         if(state.getLogicalReplicaPids().get(uid).contains(targetPid)) {
             boolean addReplicaInCurrentPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(uid, targetPid, state);
             int numReplicas = state.getLogicalReplicaPids().get(uid).size() + (addReplicaInCurrentPartition ? 1 : 0);
-            answer = numReplicas > state.getMinNumReplicas();
+            return numReplicas > state.getMinNumReplicas();
         }
-        return answer;
+        return false;
     }
 
     static class SwapChanges {

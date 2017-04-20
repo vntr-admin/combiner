@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.spj2.SpJ2Repartitioner.*;
 import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -289,6 +290,188 @@ public class SpJ2RepartitionerTest {
             }
         }
     }
+
+    @Test
+    public void testFindReplicasToAddToTargetPartition() {
+        int minNumReplicas = 1;
+        float alpha = 1f;
+        float initialT = 2f;
+        float deltaT = 0.5f;
+        int k = 7;
+
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
+
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put(2,  initSet(3, 6, 9, 12));
+        friendships.put(3,  initSet(4, 8, 12));
+        friendships.put(4,  initSet(5, 10));
+        friendships.put(5,  initSet(6, 12));
+        friendships.put(6,  initSet(7));
+        friendships.put(7,  initSet(8));
+        friendships.put(8,  initSet(9));
+        friendships.put(9,  initSet(10));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, Collections.<Integer>emptySet());
+
+        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
+        replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
+        replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
+
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+
+        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        fillState(state, partitions, replicas);
+
+        //For every friend of the moving user:
+        //    We should add a replica in the target partition if there isn't already a replica or master in that partition
+        assertEquals(findReplicasToAddToTargetPartition(1, 2, state), initSet(4, 12));
+        assertEquals(findReplicasToAddToTargetPartition(1, 3, state), initSet(6, 8));
+        assertEquals(findReplicasToAddToTargetPartition(13, 1, state), Collections.<Integer>emptySet());
+    }
+
+    @Test
+    public void testFindReplicasInMovingPartitionToDelete() {
+        int minNumReplicas = 1;
+        float alpha = 1f;
+        float initialT = 2f;
+        float deltaT = 0.5f;
+        int k = 7;
+
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
+
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put(2,  initSet(3, 6, 9, 12));
+        friendships.put(3,  initSet(4, 8, 12));
+        friendships.put(4,  initSet(5, 10));
+        friendships.put(5,  initSet(6, 12));
+        friendships.put(6,  initSet(7));
+        friendships.put(7,  initSet(8));
+        friendships.put(8,  initSet(9));
+        friendships.put(9,  initSet(10));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(9, 12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, Collections.<Integer>emptySet());
+
+        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
+        replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
+        replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
+
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+
+        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        fillState(state, partitions, replicas);
+
+        //For every friend of the moving user, if:
+        //    (1) friend has a replica on movingPartition
+        //    (2) friend doesn't have any other friends on movingPartition
+        //    (3) friend has more than minNumReplicas replicas
+        //then delete it
+
+        //All of its friends either have masters in P1, or have replicas in P1
+        Set<Integer> toDeleteIn1For1 = findReplicasInMovingPartitionToDelete(1, 1, findReplicasToAddToTargetPartition(1, 2, state), state);
+        assertEquals(toDeleteIn1For1, Collections.<Integer>emptySet());
+
+        //10 was only in P2 for 9's sake
+        Set<Integer> toDeleteIn2For9 = findReplicasInMovingPartitionToDelete(9, 2, findReplicasToAddToTargetPartition(9, 3, state), state);
+        assertEquals(toDeleteIn2For9, initSet(10));
+
+        //10's friends are 1, 4, 9, and 11.  1 and 9 have other friends on P3.  11 is on P3.  4's only there for 10, but would violate minNumReplicas
+        Set<Integer> toDeleteIn3For10 = findReplicasInMovingPartitionToDelete(10, 3, findReplicasToAddToTargetPartition(10, 1, state), state);
+        assertEquals(toDeleteIn3For10, Collections.<Integer>emptySet());
+    }
+
+    @Test
+    public void testShouldDeleteReplicaInTargetPartitionAndShouldWeAddAReplicaOfMovingUserInMovingPartition() {
+        int minNumReplicas = 1;
+        float alpha = 1f;
+        float initialT = 2f;
+        float deltaT = 0.5f;
+        int k = 7;
+
+        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
+
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put(2,  initSet(3, 6, 9, 12));
+        friendships.put(3,  initSet(4, 8, 12));
+        friendships.put(4,  initSet(5, 10));
+        friendships.put(5,  initSet(6, 12));
+        friendships.put(6,  initSet(7));
+        friendships.put(7,  initSet(8));
+        friendships.put(8,  initSet(9));
+        friendships.put(9,  initSet(10));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, Collections.<Integer>emptySet());
+
+        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
+        replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
+        replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
+
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+
+        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        fillState(state, partitions, replicas);
+
+        //Test shouldDeleteReplicaInTargetPartition
+        //If there's a replica of moving user in targetPartition, then delete it
+        for(Integer pid : replicas.keySet()) {
+            for(Integer uid : friendships.keySet()) {
+                if(partitions.get(pid).contains(uid)) {
+                    continue;
+                }
+                if(replicas.get(pid).contains(uid)) {
+                    assertTrue(shouldDeleteReplicaInTargetPartition(uid, pid, state));
+                }
+                else {
+                    assertFalse(shouldDeleteReplicaInTargetPartition(uid, pid, state));
+                }
+            }
+        }
+
+        //Test shouldWeAddAReplicaOfMovingUserInMovingPartition
+        //We should add a replica if moving user has friends in moving partition
+        //Additionally, we should add one if moving user has minNumReplica replicas, including one in targetPartition
+        shouldWeAddAReplicaOfMovingUserInMovingPartition(1, 1, state);
+        for(Integer pid : replicas.keySet()) {
+uidLoop:    for (Integer uid : friendships.keySet()) {
+                Integer logicalPid = state.getLogicalPids().get(uid);
+                if(partitions.get(pid).contains(uid)) {
+                    continue;
+                }
+                if(state.getLogicalReplicaPids().get(uid).contains(uid) && state.getLogicalReplicaPids().get(uid).size() <= state.getMinNumReplicas()) {
+                    assertTrue(shouldWeAddAReplicaOfMovingUserInMovingPartition(uid, pid, state));
+                    continue;
+                }
+                for(Integer friendId : state.getFriendships().get(uid)) {
+                    if(state.getLogicalPids().get(friendId).equals(logicalPid)) {
+                        assertTrue(shouldWeAddAReplicaOfMovingUserInMovingPartition(uid, pid, state));
+                        continue uidLoop;
+                    }
+                }
+                assertFalse(shouldWeAddAReplicaOfMovingUserInMovingPartition(uid, pid, state));
+            }
+        }
+    }
+
 
     private static void fillState(SpJ2Repartitioner.State state, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         Map<Integer, Integer> logicalPids = new HashMap<>();
