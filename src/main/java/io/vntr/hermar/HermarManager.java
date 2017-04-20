@@ -91,9 +91,6 @@ public class HermarManager {
         int uid = user.getId();
         HermarUser hermarUser = new HermarUser(uid, initialPid, gamma, this);
         addUser(hermarUser);
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(HermarUser user) {
@@ -104,6 +101,10 @@ public class HermarManager {
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
         }
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
+        }
+
     }
 
     public void removeUser(Integer userId) {

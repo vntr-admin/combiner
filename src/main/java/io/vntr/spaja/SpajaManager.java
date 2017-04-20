@@ -97,15 +97,15 @@ public class SpajaManager {
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
             addReplica(spajaUser, id);
         }
-
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(SpajaUser user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
         uMap.put(user.getId(), masterPartitionId);
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
+        }
+
     }
 
     public void removeUser(Integer userId) {

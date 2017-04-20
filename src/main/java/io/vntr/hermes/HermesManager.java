@@ -91,9 +91,6 @@ public class HermesManager {
         int uid = user.getId();
         HermesUser hermesUser = new HermesUser(uid, initialPid, gamma, this);
         addUser(hermesUser);
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(HermesUser user) {

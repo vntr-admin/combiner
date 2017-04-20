@@ -89,14 +89,15 @@ public class JabarManager {
         int uid = user.getId();
         JabarUser jabarUser = new JabarUser(uid, initialPartitionId, alpha, this);
         addUser(jabarUser);
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(JabarUser jabarUser) {
         uMap.put(jabarUser.getId(), jabarUser);
         partitions.get(jabarUser.getPid()).add(jabarUser.getId());
+        if(jabarUser.getId() >= nextUid) {
+            nextUid = jabarUser.getId() + 1;
+        }
+
     }
 
     public void removeUser(Integer uid) {

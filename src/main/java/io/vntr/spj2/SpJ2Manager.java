@@ -78,15 +78,15 @@ public class SpJ2Manager {
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
             addReplica(spJ2User, id);
         }
-
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(SpJ2User user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
         uidToMasterPidMap.put(user.getId(), masterPartitionId);
+
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
+        }
     }
 
     public void removeUser(Integer userId) {
