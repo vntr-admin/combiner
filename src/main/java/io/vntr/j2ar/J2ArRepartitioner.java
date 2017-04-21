@@ -69,10 +69,12 @@ public class J2ArRepartitioner {
                 continue;
             }
 
-            int myNeighborsOnMine      = howManyFriendsHaveLogicalPartition(uid, logicalPid, state);
-            int myNeighborsOnTheirs    = howManyFriendsHaveLogicalPartition(uid, theirLogicalPid, state);
-            int theirNeighborsOnMine   = howManyFriendsHaveLogicalPartition(partnerId, logicalPid, state);
-            int theirNeighborsOnTheirs = howManyFriendsHaveLogicalPartition(partnerId, theirLogicalPid, state);
+            int[] myCounts = howManyFriendsHaveLogicalPartitions(uid, new int[]{logicalPid, theirLogicalPid}, state);
+            int[] theirCounts = howManyFriendsHaveLogicalPartitions(partnerId, new int[]{logicalPid, theirLogicalPid}, state);
+            int myNeighborsOnMine      = myCounts[0];
+            int myNeighborsOnTheirs    = myCounts[1];
+            int theirNeighborsOnMine   = theirCounts[0];
+            int theirNeighborsOnTheirs = theirCounts[1];
 
             float oldScore = (float) (Math.pow(myNeighborsOnMine, state.getAlpha()) + Math.pow(theirNeighborsOnTheirs, state.getAlpha()));
             float newScore = (float) (Math.pow(myNeighborsOnTheirs, state.getAlpha()) + Math.pow(theirNeighborsOnMine, state.getAlpha()));
@@ -86,14 +88,17 @@ public class J2ArRepartitioner {
         return bestPartner;
     }
 
-    static int howManyFriendsHaveLogicalPartition(Integer uid, Integer pid, State state) {
-        int count = 0;
+    static int[] howManyFriendsHaveLogicalPartitions(int uid, int[] pids, State state) {
+        int[] counts = new int[pids.length];
         for(Integer friendId : state.getFriendships().get(uid)) {
-            if(state.getLogicalPids().get(friendId).equals(pid)) {
-                count++;
+            int friendPid = state.getLogicalPids().get(friendId);
+            for(int i=0; i<pids.length; i++) {
+                if(pids[i] == friendPid) {
+                    counts[i]++;
+                }
             }
         }
-        return count;
+        return counts;
     }
 
     static Set<Integer> sample(int n, Set<Integer> uids) {

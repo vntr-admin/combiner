@@ -6,6 +6,7 @@ import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -70,24 +71,12 @@ public class J2ArRepartitionerTest {
 
         J2ArRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
 
-        int numFriendsOf1On1 = J2ArRepartitioner.howManyFriendsHaveLogicalPartition(1, 1, state);
-        assertTrue(numFriendsOf1On1 == 4);
+        int[] numFriendsOf1 = J2ArRepartitioner.howManyFriendsHaveLogicalPartitions(1, new int[]{1, 2, 3}, state);
+        assertArrayEquals(numFriendsOf1, new int[]{4, 4, 3});
 
-        int numFriendsOf1On2 = J2ArRepartitioner.howManyFriendsHaveLogicalPartition(1, 2, state);
-        assertTrue(numFriendsOf1On2 == 4);
+        int[] numFriendsOf2 = J2ArRepartitioner.howManyFriendsHaveLogicalPartitions(2, new int[]{1, 2, 3}, state);
+        assertArrayEquals(numFriendsOf2, new int[]{4, 4, 4});
 
-        int numFriendsOf1On3 = J2ArRepartitioner.howManyFriendsHaveLogicalPartition(1, 3, state);
-        assertTrue(numFriendsOf1On3 == 3);
-
-
-        int numFriendsOf2On1 = J2ArRepartitioner.howManyFriendsHaveLogicalPartition(2, 1, state);
-        assertTrue(numFriendsOf2On1 == 4);
-
-        int numFriendsOf2On2 = J2ArRepartitioner.howManyFriendsHaveLogicalPartition(2, 2, state);
-        assertTrue(numFriendsOf2On2 == 4);
-
-        int numFriendsOf2On3 = J2ArRepartitioner.howManyFriendsHaveLogicalPartition(2, 3, state);
-        assertTrue(numFriendsOf2On3 == 4);
     }
 
     @Test
