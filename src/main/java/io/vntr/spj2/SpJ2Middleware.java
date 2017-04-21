@@ -1,6 +1,7 @@
 package io.vntr.spj2;
 
 import io.vntr.IMiddlewareAnalyzer;
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -37,11 +38,11 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
 
     @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
-        SpJ2User smallerUser = manager.getUserMasterById(smallerUserId);
-        SpJ2User largerUser = manager.getUserMasterById(largerUserId);
+        RepUser smallerUser = manager.getUserMasterById(smallerUserId);
+        RepUser largerUser = manager.getUserMasterById(largerUserId);
 
-        Integer smallerUserPid = smallerUser.getMasterPid();
-        Integer largerUserPid  = largerUser.getMasterPid();
+        Integer smallerUserPid = smallerUser.getBasePid();
+        Integer largerUserPid  = largerUser.getBasePid();
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
@@ -54,10 +55,10 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
     }
 
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
-        SpJ2User smallerUser = manager.getUserMasterById(smallUid);
-        SpJ2User largerUser = manager.getUserMasterById(largeUid);
-        Integer smallerUserPid = smallerUser.getMasterPid();
-        Integer largerUserPid = largerUser.getMasterPid();
+        RepUser smallerUser = manager.getUserMasterById(smallUid);
+        RepUser largerUser = manager.getUserMasterById(largeUid);
+        Integer smallerUserPid = smallerUser.getBasePid();
+        Integer largerUserPid = largerUser.getBasePid();
 
         Object k = NO_CHANGE;
         if (strategy == NO_CHANGE) {
@@ -68,7 +69,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
                 manager.addReplica(largerUser, smallerUserPid);
             }
         } else {
-            SpJ2User moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
+            RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
             Set<Integer> replicasToAddInDestinationPartition = spJ2BefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
             Set<Integer> replicasToDeleteInSourcePartition = spJ2BefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
@@ -83,18 +84,18 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         //if no other node requires it, and vice-versa.
         //The algorithm checks whether there are more than K slave replicas before removing the node so that the desired redundancy level is maintained.
 
-        SpJ2User smallerUser = manager.getUserMasterById(smallerUserId);
-        SpJ2User largerUser = manager.getUserMasterById(largerUserId);
+        RepUser smallerUser = manager.getUserMasterById(smallerUserId);
+        RepUser largerUser = manager.getUserMasterById(largerUserId);
 
-        if (!smallerUser.getMasterPid().equals(largerUser.getMasterPid())) {
+        if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
             boolean smallerReplicaWasOnlyThereForLarger = spJ2BefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
             boolean largerReplicaWasOnlyThereForSmaller = spJ2BefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(smallerUser, largerUser.getMasterPid());
+                manager.removeReplica(smallerUser, largerUser.getBasePid());
             }
             if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(largerUser, smallerUser.getMasterPid());
+                manager.removeReplica(largerUser, smallerUser.getBasePid());
             }
         }
 
@@ -123,7 +124,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
-            SpJ2User user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
@@ -140,14 +141,14 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
-            SpJ2User user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
             manager.addReplica(user, newPid);
         }
 
         //Fifth, remove references to replicas formerly on this partition
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
-            SpJ2User user = manager.getUserMasterById(uid);
+            RepUser user = manager.getUserMasterById(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
                 manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
             }
@@ -166,14 +167,14 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
 
         //First, determine which users will need more replicas once this partition is kaput
         for (Integer userId : partition.getIdsOfMasters()) {
-            SpJ2User user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
         for (Integer userId : partition.getIdsOfReplicas()) {
-            SpJ2User user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
@@ -198,8 +199,8 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         Map<Integer, Integer> counts = new HashMap<>();
         for(Integer uid : uids) {
             int count = 0;
-            SpJ2User user = manager.getUserMasterById(uid);
-            count += user.getMasterPid().equals(pid) ? 0 : 1;
+            RepUser user = manager.getUserMasterById(uid);
+            count += user.getBasePid().equals(pid) ? 0 : 1;
             Set<Integer> replicas = user.getReplicaPids();
             int numReplicas = replicas.size();
             count += replicas.contains(pid) ? numReplicas - 1 : numReplicas;
@@ -215,10 +216,10 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         return possibilities;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpJ2User user, Collection<Integer> pidsToExclude) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));

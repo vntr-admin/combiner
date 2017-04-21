@@ -12,13 +12,12 @@ import static io.vntr.utils.ProbabilityUtils.getRandomElement;
  */
 public class MetisManager {
 
-    private Map<Integer, MetisUser> uMap;
+    private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
     private MetisRepartitioner repartitioner;
 
     private long migrationTally;
 
-    private static final Integer defaultInitialPid = 1;
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -28,15 +27,11 @@ public class MetisManager {
         this.repartitioner = new MetisRepartitioner(gpmetisLocation, gpmetisTempdir);
     }
 
-    public Integer getPartitionForUser(Integer uid) {
-        return uMap.get(uid).getPid();
-    }
-
     public Set<Integer> getUserIds() {
         return uMap.keySet();
     }
 
-    public MetisUser getUser(Integer uid) {
+    public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
@@ -44,32 +39,12 @@ public class MetisManager {
         return partitions.get(pid);
     }
 
-    public Set<MetisUser> getUsers(Collection<Integer> uids) {
-        Set<MetisUser> users = new HashSet<>();
+    public Set<User> getUsers(Collection<Integer> uids) {
+        Set<User> users = new HashSet<>();
         for(Integer uid : uids) {
             users.add(uMap.get(uid));
         }
         return users;
-    }
-
-    public Collection<MetisUser> getRandomSamplingOfUsers(int n) {
-        return getUsers(getKDistinctValuesFromList(n, uMap.keySet()));
-    }
-
-    public void swap(Integer id1, Integer id2) {
-        MetisUser u1 = getUser(id1);
-        MetisUser u2 = getUser(id2);
-
-        int pid1 = u1.getPid();
-        int pid2 = u2.getPid();
-
-        u1.setPid(pid2);
-        u2.setPid(pid1);
-
-        getPartition(pid2).add(id1);
-        getPartition(pid1).add(id2);
-        getPartition(pid2).remove(id2);
-        getPartition(pid1).remove(id1);
     }
 
     public int addUser() {
@@ -79,27 +54,24 @@ public class MetisManager {
     }
 
     public void addUser(User user) {
-        Integer initialPartitionId = getInitialPartitionId();
-        int uid = user.getId();
-        MetisUser MetisUser = new MetisUser(uid, initialPartitionId);
-        addUser(MetisUser);
-    }
-
-    void addUser(MetisUser metisUser) {
-        uMap.put(metisUser.getId(), metisUser);
-        partitions.get(metisUser.getPid()).add(metisUser.getId());
-        if(metisUser.getId() >= nextUid) {
-            nextUid = metisUser.getId() + 1;
+        if(user.getBasePid() == null) {
+            user.setBasePid(getInitialPartitionId());
         }
 
+        int uid = user.getId();
+        uMap.put(user.getId(), user);
+        partitions.get(user.getBasePid()).add(user.getId());
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
+        }
     }
 
     public void removeUser(Integer uid) {
-        MetisUser user = uMap.remove(uid);
+        User user = uMap.remove(uid);
         for(Integer friendId : user.getFriendIDs()) {
             getUser(friendId).unfriend(uid);
         }
-        partitions.get(user.getPid()).remove(uid);
+        partitions.get(user.getBasePid()).remove(uid);
     }
 
     public void befriend(Integer id1, Integer id2) {
@@ -116,7 +88,7 @@ public class MetisManager {
         Map<Integer, Integer> newPartitioning = repartitioner.partition(getFriendships(), partitions.keySet());
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);
-            if(newPid != getUser(uid).getPid()) {
+            if(newPid != getUser(uid).getBasePid()) {
                 moveUser(uid, newPid);
             }
         }
@@ -148,12 +120,12 @@ public class MetisManager {
     }
 
     public void moveUser(Integer uid, Integer newPid) {
-        MetisUser user = getUser(uid);
-        if(partitions.containsKey(user.getPid())) {
-            getPartition(user.getPid()).remove(uid);
+        User user = getUser(uid);
+        if(partitions.containsKey(user.getBasePid())) {
+            getPartition(user.getBasePid()).remove(uid);
         }
         getPartition(newPid).add(uid);
-        user.setPid(newPid);
+        user.setBasePid(newPid);
         increaseMigrationTally(1);
     }
 
@@ -167,10 +139,10 @@ public class MetisManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(MetisUser user : uMap.values()) {
+        for(User user : uMap.values()) {
             for(int friendId : user.getFriendIDs()) {
-                MetisUser friend = getUser(friendId);
-                if(user.getPid() < friend.getPid()) {
+                User friend = getUser(friendId);
+                if(user.getBasePid() < friend.getBasePid()) {
                     count++;
                 }
             }
@@ -226,7 +198,7 @@ public class MetisManager {
             if(observedMasterPid == null) {
                 throw new RuntimeException("user must be in some partition");
             }
-            if(!observedMasterPid.equals(uMap.get(uid).getPid())) {
+            if(!observedMasterPid.equals(uMap.get(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's PID and system's");
             }
         }

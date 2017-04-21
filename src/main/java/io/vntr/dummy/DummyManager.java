@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class DummyManager {
     private NavigableMap<Integer, Set<Integer>> partitions;
-    private NavigableMap<Integer, DummyUser> uMap;
+    private NavigableMap<Integer, User> uMap;
 
     private static final Integer defaultInitialPid = 1;
 
@@ -19,14 +19,14 @@ public class DummyManager {
     }
 
     public Integer getPartitionForUser(Integer uid) {
-        return uMap.get(uid).getPid();
+        return uMap.get(uid).getBasePid();
     }
 
     public Set<Integer> getUserIds() {
         return uMap.keySet();
     }
 
-    public DummyUser getUser(Integer uid) {
+    public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
@@ -41,22 +41,19 @@ public class DummyManager {
     }
 
     public void addUser(User user) {
-        Integer initialPartitionId = getInitialPartitionId();
-        DummyUser DummyUser = new DummyUser(user.getId(), initialPartitionId);
-        addUser(DummyUser);
-    }
-
-    void addUser(DummyUser DummyUser) {
-        uMap.put(DummyUser.getId(), DummyUser);
-        partitions.get(DummyUser.getPid()).add(DummyUser.getId());
+        if(user.getBasePid() == null) {
+            user.setBasePid(getInitialPartitionId());
+        }
+        uMap.put(user.getId(), user);
+        partitions.get(user.getBasePid()).add(user.getId());
     }
 
     public void removeUser(Integer uid) {
-        DummyUser user = uMap.remove(uid);
+        User user = uMap.remove(uid);
         for(Integer friendId : user.getFriendIDs()) {
             getUser(friendId).unfriend(uid);
         }
-        partitions.get(user.getPid()).remove(uid);
+        partitions.get(user.getBasePid()).remove(uid);
     }
 
     public void befriend(Integer id1, Integer id2) {
@@ -100,12 +97,12 @@ public class DummyManager {
     }
 
     public void moveUser(Integer uid, Integer newPid) {
-        DummyUser user = getUser(uid);
-        if(partitions.containsKey(user.getPid())) {
-            getPartition(user.getPid()).remove(uid);
+        User user = getUser(uid);
+        if(partitions.containsKey(user.getBasePid())) {
+            getPartition(user.getBasePid()).remove(uid);
         }
         getPartition(newPid).add(uid);
-        user.setPid(newPid);
+        user.setBasePid(newPid);
     }
 
     public Integer getNumPartitions() {
@@ -118,10 +115,10 @@ public class DummyManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(DummyUser user : uMap.values()) {
+        for(User user : uMap.values()) {
             for(int friendId : user.getFriendIDs()) {
-                DummyUser friend = getUser(friendId);
-                if(user.getPid() < friend.getPid()) {
+                User friend = getUser(friendId);
+                if(user.getBasePid() < friend.getBasePid()) {
                     count++;
                 }
             }
@@ -164,7 +161,7 @@ public class DummyManager {
             if(observedMasterPid == null) {
                 throw new RuntimeException("user must be in some partition");
             }
-            if(!observedMasterPid.equals(uMap.get(uid).getPid())) {
+            if(!observedMasterPid.equals(uMap.get(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's PID and system's");
             }
         }

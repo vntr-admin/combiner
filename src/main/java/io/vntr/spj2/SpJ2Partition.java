@@ -1,5 +1,6 @@
 package io.vntr.spj2;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 
 import java.util.HashMap;
@@ -7,15 +8,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class SpJ2Partition {
-    private Map<Integer, SpJ2User> idToMasterMap = new HashMap<>();
-    private Map<Integer, SpJ2User> idToReplicaMap = new HashMap<>();
+    private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
+    private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();
     private Integer id;
 
     public SpJ2Partition(Integer id) {
         this.id = id;
     }
 
-    public void addMaster(SpJ2User user) {
+    public void addMaster(RepUser user) {
         idToMasterMap.put(user.getId(), user);
     }
 
@@ -23,7 +24,7 @@ public class SpJ2Partition {
         return idToMasterMap.remove(id);
     }
 
-    public void addReplica(SpJ2User user) {
+    public void addReplica(RepUser user) {
         idToReplicaMap.put(user.getId(), user);
     }
 
@@ -31,11 +32,11 @@ public class SpJ2Partition {
         return idToReplicaMap.remove(id);
     }
 
-    public SpJ2User getMasterById(Integer userId) {
+    public RepUser getMasterById(Integer userId) {
         return idToMasterMap.get(userId);
     }
 
-    public SpJ2User getReplicaById(Integer userId) {
+    public RepUser getReplicaById(Integer userId) {
         return idToReplicaMap.get(userId);
     }
 

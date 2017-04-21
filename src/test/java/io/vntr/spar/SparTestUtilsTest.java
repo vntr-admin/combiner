@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import io.vntr.RepUser;
 import io.vntr.spar.SparTestUtils.GraphSpec;
 import io.vntr.spar.SparTestUtils.IntegerPair;
 
@@ -62,22 +63,22 @@ public class SparTestUtilsTest {
 
         //Ensure all friendships are present
         for (IntegerPair friendship : friendships) {
-            SparUser user1 = manager.getUserMasterById(friendship.val1);
-            SparUser user2 = manager.getUserMasterById(friendship.val2);
+            RepUser user1 = manager.getUserMasterById(friendship.val1);
+            RepUser user2 = manager.getUserMasterById(friendship.val2);
             assertTrue(user1.getFriendIDs().contains(friendship.val2));
             assertTrue(user2.getFriendIDs().contains(friendship.val1));
             for (Integer replicaId : user1.getReplicaPids()) {
-                SparUser user1Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val1);
+                RepUser user1Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val1);
                 assertTrue(user1Replica.getFriendIDs().contains(friendship.val2));
             }
             for (Integer replicaId : user2.getReplicaPids()) {
-                SparUser user2Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val2);
+                RepUser user2Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val2);
                 assertTrue(user2Replica.getFriendIDs().contains(friendship.val1));
             }
         }
 
         for (Integer userId : allUserIds) {
-            SparUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             for (Integer friendId : user.getFriendIDs()) {
                 assertTrue(friendships.contains(new IntegerPair(userId, friendId)) || friendships.contains(new IntegerPair(friendId, userId)));
             }
@@ -85,8 +86,8 @@ public class SparTestUtilsTest {
 
         //Ensure that masters and replicas are placed in the correct partition
         for (Integer userId : allUserIds) {
-            SparUser user = manager.getUserMasterById(userId);
-            Integer masterPartitionId = user.getMasterPid();
+            RepUser user = manager.getUserMasterById(userId);
+            Integer masterPartitionId = user.getBasePid();
             assertTrue(partitionIdToMastersMap.get(masterPartitionId).contains(userId));
             for (Integer replicaPartitionId : user.getReplicaPids()) {
                 assertTrue(partitionIdToReplicasMap.get(replicaPartitionId).contains(userId));

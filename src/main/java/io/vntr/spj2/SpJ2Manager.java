@@ -1,5 +1,6 @@
 package io.vntr.spj2;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -37,7 +38,7 @@ public class SpJ2Manager {
         return pidToPartitionMap.get(id);
     }
 
-    public SpJ2User getUserMasterById(Integer id) {
+    public RepUser getUserMasterById(Integer id) {
         Integer partitionId = uidToMasterPidMap.get(id);
         if (partitionId != null) {
             SpJ2Partition partition = getPartitionById(partitionId);
@@ -70,17 +71,17 @@ public class SpJ2Manager {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
         int uid = user.getId();
-        SpJ2User spJ2User = new SpJ2User(uid);
-        spJ2User.setMasterPid(masterPartitionId);
+        RepUser RepUser = new RepUser(uid);
+        RepUser.setBasePid(masterPartitionId);
 
-        addUser(spJ2User, masterPartitionId);
+        addUser(RepUser, masterPartitionId);
 
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
-            addReplica(spJ2User, id);
+            addReplica(RepUser, id);
         }
     }
 
-    void addUser(SpJ2User user, Integer masterPartitionId) {
+    void addUser(RepUser user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
         uidToMasterPidMap.put(user.getId(), masterPartitionId);
 
@@ -90,10 +91,10 @@ public class SpJ2Manager {
     }
 
     public void removeUser(Integer userId) {
-        SpJ2User user = getUserMasterById(userId);
+        RepUser user = getUserMasterById(userId);
 
         //Remove user from relevant partitions
-        getPartitionById(user.getMasterPid()).removeMaster(userId);
+        getPartitionById(user.getBasePid()).removeMaster(userId);
         for (Integer replicaPartitionId : user.getReplicaPids()) {
             getPartitionById(replicaPartitionId).removeReplica(userId);
         }
@@ -103,7 +104,7 @@ public class SpJ2Manager {
 
         //Remove friendships
         for (Integer friendId : user.getFriendIDs()) {
-            SpJ2User friendMaster = getUserMasterById(friendId);
+            RepUser friendMaster = getUserMasterById(friendId);
             friendMaster.unfriend(userId);
 
             for (Integer friendReplicaPartitionId : friendMaster.getReplicaPids()) {
@@ -130,8 +131,8 @@ public class SpJ2Manager {
         pidToPartitionMap.remove(id);
     }
 
-    public void addReplica(SpJ2User user, Integer destPid) {
-        SpJ2User replicaOfUser = addReplicaNoUpdates(user, destPid);
+    public void addReplica(RepUser user, Integer destPid) {
+        RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
         //Update the replicaPartitionIds to reflect this addition
         replicaOfUser.addReplicaPartitionId(destPid);
@@ -141,17 +142,17 @@ public class SpJ2Manager {
         user.addReplicaPartitionId(destPid);
     }
 
-    SpJ2User addReplicaNoUpdates(SpJ2User user, Integer destPid) {
-        SpJ2User replica = user.clone();
+    RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+        RepUser replica = user.dupe();
         pidToPartitionMap.get(destPid).addReplica(replica);
         return replica;
     }
 
-    public void removeReplica(SpJ2User user, Integer removalPartitionId) {
+    public void removeReplica(RepUser user, Integer removalPartitionId) {
         //Delete it from each replica's replicaPartitionIds
         for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
             SpJ2Partition p = pidToPartitionMap.get(currentReplicaPartitionId);
-            SpJ2User r = p.getReplicaById(user.getId());
+            RepUser r = p.getReplicaById(user.getId());
             r.removeReplicaPartitionId(removalPartitionId);
         }
 
@@ -162,10 +163,10 @@ public class SpJ2Manager {
         pidToPartitionMap.get(removalPartitionId).removeReplica(user.getId());
     }
 
-    public void moveUser(SpJ2User user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
+    public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
-        Integer fromPid = user.getMasterPid();
+        Integer fromPid = user.getBasePid();
 
         moveMasterAndInformReplicas(uid, fromPid, toPid);
 
@@ -204,20 +205,20 @@ public class SpJ2Manager {
     }
 
     void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
-        SpJ2User user = getUserMasterById(uid);
+        RepUser user = getUserMasterById(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
 
         uidToMasterPidMap.put(uid, toPid);
 
-        user.setMasterPid(toPid);
+        user.setBasePid(toPid);
 
         for (Integer rPid : user.getReplicaPids()) {
-            pidToPartitionMap.get(rPid).getReplicaById(uid).setMasterPid(toPid);
+            pidToPartitionMap.get(rPid).getReplicaById(uid).setBasePid(toPid);
         }
     }
 
-    public void befriend(SpJ2User smallerUser, SpJ2User largerUser) {
+    public void befriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
 
@@ -230,7 +231,7 @@ public class SpJ2Manager {
         }
     }
 
-    public void unfriend(SpJ2User smallerUser, SpJ2User largerUser) {
+    public void unfriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
 
@@ -245,8 +246,8 @@ public class SpJ2Manager {
 
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
         SpJ2Partition partition = pidToPartitionMap.get(partitionId);
-        SpJ2User user = partition.getReplicaById(userId);
-        user.setMasterPid(partitionId);
+        RepUser user = partition.getReplicaById(userId);
+        user.setBasePid(partitionId);
         user.removeReplicaPartitionId(partitionId);
         partition.addMaster(user);
         partition.removeReplica(userId);
@@ -254,8 +255,8 @@ public class SpJ2Manager {
         uidToMasterPidMap.put(userId, partitionId);
 
         for (Integer replicaPartitionId : user.getReplicaPids()) {
-            SpJ2User replica = pidToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
-            replica.setMasterPid(partitionId);
+            RepUser replica = pidToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
+            replica.setBasePid(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
 
@@ -282,9 +283,9 @@ public class SpJ2Manager {
         return minId;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpJ2User user) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(pidToPartitionMap.keySet());
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
@@ -315,8 +316,8 @@ public class SpJ2Manager {
     public Integer getEdgeCut() {
         int count = 0;
         for (Integer uid : uidToMasterPidMap.keySet()) {
-            SpJ2User user = getUserMasterById(uid);
-            Integer pid = user.getMasterPid();
+            RepUser user = getUserMasterById(uid);
+            Integer pid = user.getBasePid();
             for (Integer friendId : user.getFriendIDs()) {
                 if (pid < uidToMasterPidMap.get(friendId)) {
                     count++;
@@ -379,7 +380,7 @@ public class SpJ2Manager {
             if(!observedMasterPid.equals(uidToMasterPidMap.get(uid))) {
                 throw new RuntimeException("Mismatch between uMap's location of user and partition's");
             }
-            if(!observedMasterPid.equals(getUserMasterById(uid).getMasterPid())) {
+            if(!observedMasterPid.equals(getUserMasterById(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
 
@@ -388,7 +389,7 @@ public class SpJ2Manager {
 
         //check replicas
         for(Integer uid : uidToMasterPidMap.keySet()) {
-            SpJ2User user = getUserMasterById(uid);
+            RepUser user = getUserMasterById(uid);
             Set<Integer> observedReplicaPids = new HashSet<>();
             for(Integer pid : pidToPartitionMap.keySet()) {
                 if(pidToPartitionMap.get(pid).getIdsOfReplicas().contains(uid)) {

@@ -1,5 +1,7 @@
 package io.vntr.j2ar;
 
+import io.vntr.User;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,15 +23,15 @@ public class J2ArBefriendingStrategy {
     }
 
     void rebalance(Integer smallerUserId, Integer largerUserId) {
-        J2ArUser smallerUser = manager.getUser(smallerUserId);
-        int smallerPid = smallerUser.getPid();
+        User smallerUser = manager.getUser(smallerUserId);
+        int smallerPid = smallerUser.getBasePid();
 
-        J2ArUser largerUser = manager.getUser(largerUserId);
-        int largerPid = largerUser.getPid();
+        User largerUser = manager.getUser(largerUserId);
+        int largerPid = largerUser.getBasePid();
 
         if (smallerPid != largerPid) {
-            J2ArUser smallerPartner = findPartnerOnPartition(smallerUser, largerPid);
-            J2ArUser largerPartner = findPartnerOnPartition(largerUser, smallerPid);
+            User smallerPartner = findPartnerOnPartition(smallerUser, largerPid);
+            User largerPartner = findPartnerOnPartition(largerUser, smallerPid);
 
             if(smallerPartner != null && largerPartner == null) {
                 manager.moveUser(smallerUserId, largerPid, false);
@@ -54,7 +56,7 @@ public class J2ArBefriendingStrategy {
         }
     }
 
-    J2ArUser findPartnerOnPartition(J2ArUser user, Integer pid) {
+    User findPartnerOnPartition(User user, Integer pid) {
         Set<Integer> partition = manager.getPartition(pid);
         Set<Integer> candidates;
         if(partition.size() <= k) {
@@ -66,29 +68,29 @@ public class J2ArBefriendingStrategy {
         return findPartner(user, manager.getUsers(candidates), 1F);
     }
 
-    int calculateGain(J2ArUser user1, J2ArUser user2) {
-        int oldCut = getNeighborsOnPartition(user1.getId(), user2.getPid()) + getNeighborsOnPartition(user2.getId(), user1.getPid());
-        int newCut = getNeighborsOnPartition(user1.getId(), user1.getPid()) + getNeighborsOnPartition(user2.getId(), user2.getPid());
+    int calculateGain(User user1, User user2) {
+        int oldCut = getNeighborsOnPartition(user1.getId(), user2.getBasePid()) + getNeighborsOnPartition(user2.getId(), user1.getBasePid());
+        int newCut = getNeighborsOnPartition(user1.getId(), user1.getBasePid()) + getNeighborsOnPartition(user2.getId(), user2.getBasePid());
         return oldCut - newCut;
     }
 
     public int getNeighborsOnPartition(Integer uid, Integer pid) {
         int count = 0;
         for(Integer friendId : manager.getUser(uid).getFriendIDs()) {
-            count += manager.getUser(friendId).getPid().equals(pid) ? 1 : 0;
+            count += manager.getUser(friendId).getBasePid().equals(pid) ? 1 : 0;
         }
 
         return count;
     }
 
-    J2ArUser findPartner(J2ArUser user, Set<J2ArUser> candidates, float t) {
-        J2ArUser bestPartner = null;
+    User findPartner(User user, Set<User> candidates, float t) {
+        User bestPartner = null;
         float bestScore = 0f;
 
-        Integer myPid = user.getPid();
+        Integer myPid = user.getBasePid();
 
-        for(J2ArUser partner : candidates) {
-            Integer theirPid = partner.getPid();
+        for(User partner : candidates) {
+            Integer theirPid = partner.getBasePid();
             if(theirPid.equals(myPid)) {
                 continue;
             }
@@ -110,11 +112,11 @@ public class J2ArBefriendingStrategy {
         return bestPartner;
     }
 
-    int howManyFriendsHavePartition(J2ArUser user, Integer pid) {
+    int howManyFriendsHavePartition(User user, Integer pid) {
         int count = 0;
         for(Integer friendId : user.getFriendIDs()) {
-            J2ArUser friend = manager.getUser(friendId);
-            count += friend.getPid().equals(pid) ? 1 : 0;
+            User friend = manager.getUser(friendId);
+            count += friend.getBasePid().equals(pid) ? 1 : 0;
         }
         return count;
     }

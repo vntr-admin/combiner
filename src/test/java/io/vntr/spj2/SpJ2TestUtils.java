@@ -1,6 +1,6 @@
 package io.vntr.spj2;
 
-import io.vntr.TestUtils;
+import io.vntr.RepUser;
 import io.vntr.User;
 
 import java.util.Collections;
@@ -211,9 +211,9 @@ public class SpJ2TestUtils {
     }
 
     public static Set<Integer> getPartitionsWithAPresence(SpJ2Manager manager, Integer userId) {
-        SpJ2User user = manager.getUserMasterById(userId);
+        RepUser user = manager.getUserMasterById(userId);
         Set<Integer> partitionsWithAPresence = new HashSet<>(user.getReplicaPids());
-        partitionsWithAPresence.add(user.getMasterPid());
+        partitionsWithAPresence.add(user.getBasePid());
         return partitionsWithAPresence;
     }
 
@@ -223,7 +223,7 @@ public class SpJ2TestUtils {
         return partitionsWithoutAPresence;
     }
 
-    public static SpJ2User getUserWithMasterOnPartition(SpJ2Manager manager, Integer partitionId) {
+    public static RepUser getUserWithMasterOnPartition(SpJ2Manager manager, Integer partitionId) {
         SpJ2Partition partition = manager.getPartitionById(partitionId);
         Integer userId = partition.getIdsOfMasters().iterator().next();
         return manager.getUserMasterById(userId);

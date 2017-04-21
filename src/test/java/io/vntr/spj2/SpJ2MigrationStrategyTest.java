@@ -1,5 +1,6 @@
 package io.vntr.spj2;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 
 import java.util.*;
@@ -47,8 +48,8 @@ public class SpJ2MigrationStrategyTest {
         manager.addUser(user5);
         userIdToUserMap.put(userId5, user5);
 
-        SpJ2User sparUser1 = manager.getUserMasterById(userId1);
-        SpJ2User sparUser3 = manager.getUserMasterById(userId3);
+        RepUser sparUser1 = manager.getUserMasterById(userId1);
+        RepUser sparUser3 = manager.getUserMasterById(userId3);
 
         manager.befriend(sparUser3, sparUser1);
 
@@ -61,20 +62,20 @@ public class SpJ2MigrationStrategyTest {
         manager.addUser(user6);
         userIdToUserMap.put(userId6, user6);
 
-        SpJ2User sparUser6 = manager.getUserMasterById(userId6);
+        RepUser sparUser6 = manager.getUserMasterById(userId6);
 
         outer:
         for (Integer partitionId : sparUser6.getReplicaPids()) {
             for (Integer userId : userIdToUserMap.keySet()) {
-                SpJ2User sparUser = manager.getUserMasterById(userId);
-                if (sparUser.getMasterPid().equals(partitionId)) {
+                RepUser sparUser = manager.getUserMasterById(userId);
+                if (sparUser.getBasePid().equals(partitionId)) {
                     manager.befriend(sparUser, sparUser6);
                     break outer;
                 }
             }
         }
 
-        Integer friendPartitionId = manager.getUserMasterById(sparUser6.getFriendIDs().iterator().next()).getMasterPid();
+        Integer friendPartitionId = manager.getUserMasterById(sparUser6.getFriendIDs().iterator().next()).getBasePid();
 
         assertTrue(strategy.scoreReplicaPromotion(sparUser6, friendPartitionId) == 1f);
         Set<Integer> replicaPartitionIds = new HashSet<>(sparUser6.getReplicaPids());
@@ -89,17 +90,17 @@ public class SpJ2MigrationStrategyTest {
             userIdToUserMap.put(userIdArray[i], user);
         }
 
-        Set<SpJ2User> usersOnNonFriendPartition = new HashSet<>();
+        Set<RepUser> usersOnNonFriendPartition = new HashSet<>();
         for (Integer userId : userIdToUserMap.keySet()) {
-            SpJ2User sparUser = manager.getUserMasterById(userId);
-            if (sparUser.getMasterPid().equals(nonFriendPartitionId)) {
+            RepUser sparUser = manager.getUserMasterById(userId);
+            if (sparUser.getBasePid().equals(nonFriendPartitionId)) {
                 usersOnNonFriendPartition.add(sparUser);
             }
         }
 
         assertTrue(usersOnNonFriendPartition.size() == 3);
 
-        for (SpJ2User sparUser : usersOnNonFriendPartition) {
+        for (RepUser sparUser : usersOnNonFriendPartition) {
             manager.befriend(sparUser, sparUser6);
         }
 
@@ -146,7 +147,7 @@ public class SpJ2MigrationStrategyTest {
         partitionsWithTwoMasters.removeAll(partitionsWithOnlyOneMaster);
         Integer partitionIdToSendTo = partitionsWithTwoMasters.iterator().next();
 
-        SpJ2User user = manager.getUserMasterById(manager.getPartitionById(partitionIdToRob).getIdsOfMasters().iterator().next());
+        RepUser user = manager.getUserMasterById(manager.getPartitionById(partitionIdToRob).getIdsOfMasters().iterator().next());
         manager.moveUser(user, partitionIdToSendTo, new HashSet<Integer>(), new HashSet<Integer>());
 
         Map<Integer, Integer> remainingSpotsInPartitions2 = strategy.getRemainingSpotsInPartitions(new HashSet<Integer>());

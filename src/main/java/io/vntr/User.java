@@ -5,11 +5,17 @@ import java.util.Set;
 
 public class User {
     private Integer id;
-    //TODO: you may as well move pid or masterPid in here
+    private Integer basePid;
     private Set<Integer> friendIDs;
 
     public User(Integer id) {
         this.id = id;
+        this.friendIDs = new HashSet<>();
+    }
+
+    public User(Integer id, Integer basePid) {
+        this.id = id;
+        this.basePid = basePid;
         this.friendIDs = new HashSet<>();
     }
 
@@ -19,6 +25,14 @@ public class User {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getBasePid() {
+        return basePid;
+    }
+
+    public void setBasePid(Integer basePid) {
+        this.basePid = basePid;
     }
 
     public void befriend(Integer friendId) {
@@ -35,6 +49,26 @@ public class User {
 
     @Override
     public String toString() {
-        return id + "|F:" + friendIDs.toString();
+        return id + "|F:" + friendIDs.toString() + "|P:" + basePid;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+
+        User user = (User) o;
+
+        if (id != null ? !id.equals(user.id) : user.id != null) return false;
+        if (basePid != null ? !basePid.equals(user.basePid) : user.basePid != null) return false;
+        return friendIDs != null ? friendIDs.equals(user.friendIDs) : user.friendIDs == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (basePid != null ? basePid.hashCode() : 0);
+        result = 31 * result + (friendIDs != null ? friendIDs.hashCode() : 0);
+        return result;
     }
 }

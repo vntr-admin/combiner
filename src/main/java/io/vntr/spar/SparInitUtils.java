@@ -1,5 +1,7 @@
 package io.vntr.spar;
 
+import io.vntr.RepUser;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -20,9 +22,9 @@ public class SparInitUtils {
         Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
-            SparUser user = new SparUser(uid);
+            RepUser user = new RepUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPid(pid);
+            user.setBasePid(pid);
 
             manager.addUser(user, pid);
         }

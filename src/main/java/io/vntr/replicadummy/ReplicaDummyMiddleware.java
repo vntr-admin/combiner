@@ -1,6 +1,7 @@
 package io.vntr.replicadummy;
 
 import io.vntr.IMiddlewareAnalyzer;
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -40,15 +41,15 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
-        ReplicaDummyUser smallerUser = manager.getUserMasterById(smallerUserId);
-        ReplicaDummyUser largerUser = manager.getUserMasterById(largerUserId);
+        RepUser smallerUser = manager.getUserMasterById(smallerUserId);
+        RepUser largerUser = manager.getUserMasterById(largerUserId);
         manager.befriend(smallerUser, largerUser);
     }
 
     @Override
     public void unfriend(Integer smallerUserId, Integer largerUserId) {
-        ReplicaDummyUser smallerUser = manager.getUserMasterById(smallerUserId);
-        ReplicaDummyUser largerUser = manager.getUserMasterById(largerUserId);
+        RepUser smallerUser = manager.getUserMasterById(smallerUserId);
+        RepUser largerUser = manager.getUserMasterById(largerUserId);
         manager.unfriend(smallerUser, largerUser);
     }
 
@@ -73,7 +74,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
-            ReplicaDummyUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
@@ -86,14 +87,14 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
-            ReplicaDummyUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
             manager.addReplica(user, newPid);
         }
 
         //Fifth, remove references to replicas formerly on this partition
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
-            ReplicaDummyUser user = manager.getUserMasterById(uid);
+            RepUser user = manager.getUserMasterById(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
                 manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
             }
@@ -112,14 +113,14 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
 
         //First, determine which users will need more replicas once this partition is kaput
         for (Integer userId : partition.getIdsOfMasters()) {
-            ReplicaDummyUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
         for (Integer userId : partition.getIdsOfReplicas()) {
-            ReplicaDummyUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
@@ -128,10 +129,10 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         return usersInNeedOfNewReplicas;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(ReplicaDummyUser user, Collection<Integer> pidsToExclude) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));

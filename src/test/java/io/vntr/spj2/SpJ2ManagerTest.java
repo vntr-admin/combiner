@@ -1,5 +1,6 @@
 package io.vntr.spj2;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
@@ -52,13 +53,13 @@ public class SpJ2ManagerTest {
         Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
 
         Integer newUid = manager.addUser();
-        SpJ2User newUser = manager.getUserMasterById(newUid);
+        RepUser newUser = manager.getUserMasterById(newUid);
         Set<Integer> expectedUids = new HashSet<>(friendships.keySet());
         expectedUids.add(newUid);
         assertEquals(manager.getAllUserIds(), expectedUids);
         assertTrue(newUser.getFriendIDs().isEmpty());
 
-        Integer newPid = newUser.getMasterPid();
+        Integer newPid = newUser.getBasePid();
         assertTrue(manager.getPartitionById(newPid).getIdsOfMasters().contains(newUid));
         assertTrue(newUser.getReplicaPids().size() >= minNumReplicas);
         for(Integer replicaPid : newUser.getReplicaPids()) {
@@ -72,13 +73,13 @@ public class SpJ2ManagerTest {
 
         Integer manualUid = new TreeSet<>(manager.getAllUserIds()).last() + 1;
         manager.addUser(new User(manualUid));
-        SpJ2User manualUser = manager.getUserMasterById(manualUid);
+        RepUser manualUser = manager.getUserMasterById(manualUid);
 
         expectedUids.add(manualUid);
         assertEquals(manager.getAllUserIds(), expectedUids);
         assertTrue(manualUser.getFriendIDs().isEmpty());
 
-        Integer manualPid = manualUser.getMasterPid();
+        Integer manualPid = manualUser.getBasePid();
         assertTrue(manager.getPartitionById(manualPid).getIdsOfMasters().contains(manualUid));
         assertTrue(manualUser.getReplicaPids().size() >= minNumReplicas);
         for(Integer replicaPid : manualUser.getReplicaPids()) {
@@ -139,7 +140,7 @@ public class SpJ2ManagerTest {
             assertFalse(partition.getIdsOfReplicas().contains(uidToRemove));
 
             for(Integer replicaId : partition.getIdsOfReplicas()) {
-                SpJ2User replica = partition.getReplicaById(replicaId);
+                RepUser replica = partition.getReplicaById(replicaId);
                 assertFalse(replica.getFriendIDs().contains(uidToRemove));
             }
         }
@@ -199,19 +200,19 @@ public class SpJ2ManagerTest {
         bidirectionalFriendships.get(newFriendId2).add(newFriendId1);
         assertEquals(manager.getFriendships(), bidirectionalFriendships);
 
-        SpJ2User newFriend1 = manager.getUserMasterById(newFriendId1);
-        SpJ2User newFriend2 = manager.getUserMasterById(newFriendId2);
+        RepUser newFriend1 = manager.getUserMasterById(newFriendId1);
+        RepUser newFriend2 = manager.getUserMasterById(newFriendId2);
 
         assertTrue(newFriend1.getFriendIDs().contains(newFriendId2));
         assertTrue(newFriend2.getFriendIDs().contains(newFriendId1));
 
         for(Integer replicaPid : newFriend1.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(newFriendId1);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(newFriendId1);
             assertTrue(replica.getFriendIDs().contains(newFriendId2));
         }
 
         for(Integer replicaPid : newFriend2.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(newFriendId2);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(newFriendId2);
             assertTrue(replica.getFriendIDs().contains(newFriendId1));
         }
     }
@@ -260,19 +261,19 @@ public class SpJ2ManagerTest {
         bidirectionalFriendships.get(unfriendId2).remove(unfriendId1);
         assertEquals(manager.getFriendships(), bidirectionalFriendships);
 
-        SpJ2User formerFriend1 = manager.getUserMasterById(unfriendId1);
-        SpJ2User formerFriend2 = manager.getUserMasterById(unfriendId2);
+        RepUser formerFriend1 = manager.getUserMasterById(unfriendId1);
+        RepUser formerFriend2 = manager.getUserMasterById(unfriendId2);
 
         assertFalse(formerFriend1.getFriendIDs().contains(unfriendId2));
         assertFalse(formerFriend2.getFriendIDs().contains(unfriendId1));
 
         for(Integer replicaPid : formerFriend1.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(unfriendId1);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(unfriendId1);
             assertFalse(replica.getFriendIDs().contains(unfriendId2));
         }
 
         for(Integer replicaPid : formerFriend2.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(unfriendId2);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(unfriendId2);
             assertFalse(replica.getFriendIDs().contains(unfriendId1));
         }
     }
@@ -423,10 +424,10 @@ public class SpJ2ManagerTest {
         Integer pidOnWhichToReplicate = 2;
         manager.addReplica(manager.getUserMasterById(uidToReplicate), pidOnWhichToReplicate);
 
-        SpJ2User user = manager.getUserMasterById(uidToReplicate);
+        RepUser user = manager.getUserMasterById(uidToReplicate);
         assertEquals(user.getReplicaPids(), initSet(2, 3));
         for(Integer replicaPid : user.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(uidToReplicate);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(uidToReplicate);
             assertTrue(replica.getReplicaPids().contains(pidOnWhichToReplicate));
         }
 
@@ -475,10 +476,10 @@ public class SpJ2ManagerTest {
         manager.removeReplica(manager.getUserMasterById(uidToDereplicate), pidOnWhichToDereplicate);
 
 
-        SpJ2User user = manager.getUserMasterById(uidToDereplicate);
+        RepUser user = manager.getUserMasterById(uidToDereplicate);
         assertEquals(user.getReplicaPids(), initSet( 3));
         for(Integer replicaPid : user.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(uidToDereplicate);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(uidToDereplicate);
             assertTrue(replica.getReplicaPids().contains(replicaPid));
             assertFalse(replica.getReplicaPids().contains(pidOnWhichToDereplicate));
         }
@@ -527,13 +528,13 @@ public class SpJ2ManagerTest {
         Integer pidToMoveTo = 3;
         manager.moveMasterAndInformReplicas(uidToMove, pidToMoveFrom, pidToMoveTo);
 
-        SpJ2User user = manager.getUserMasterById(uidToMove);
-        assertEquals(user.getMasterPid(), pidToMoveTo);
+        RepUser user = manager.getUserMasterById(uidToMove);
+        assertEquals(user.getBasePid(), pidToMoveTo);
         Set<Integer> expectedReplicas = initSet(2, 3);
         assertEquals(user.getReplicaPids(), expectedReplicas);
         for(Integer replicaPid : user.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPid).getReplicaById(uidToMove);
-            assertEquals(replica.getMasterPid(), pidToMoveTo);
+            RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(uidToMove);
+            assertEquals(replica.getBasePid(), pidToMoveTo);
             assertEquals(replica.getReplicaPids(), expectedReplicas);
         }
     }
@@ -579,12 +580,12 @@ public class SpJ2ManagerTest {
         Integer uidToPromote = 1;
         Integer pidInWhichToPromote = 3;
         manager.promoteReplicaToMaster(uidToPromote, pidInWhichToPromote);
-        SpJ2User newMaster = manager.getUserMasterById(uidToPromote);
-        assertEquals(newMaster.getMasterPid(), pidInWhichToPromote);
+        RepUser newMaster = manager.getUserMasterById(uidToPromote);
+        assertEquals(newMaster.getBasePid(), pidInWhichToPromote);
         assertEquals(newMaster.getReplicaPids(), initSet(2));
         for(Integer replicaPids : newMaster.getReplicaPids()) {
-            SpJ2User replica = manager.getPartitionById(replicaPids).getReplicaById(uidToPromote);
-            assertEquals(replica.getMasterPid(), pidInWhichToPromote);
+            RepUser replica = manager.getPartitionById(replicaPids).getReplicaById(uidToPromote);
+            assertEquals(replica.getBasePid(), pidInWhichToPromote);
             assertEquals(replica.getReplicaPids(), initSet(2));
         }
 
@@ -596,10 +597,10 @@ public class SpJ2ManagerTest {
         assertEquals(manager.getPartitionToReplicasMap(), replicas);
 
         for(Integer friendId : friendsToReplicateInNewPartition) {
-            SpJ2User friend = manager.getUserMasterById(friendId);
+            RepUser friend = manager.getUserMasterById(friendId);
             assertTrue(friend.getReplicaPids().contains(pidInWhichToPromote));
             for(Integer replicaPid : friend.getReplicaPids()) {
-                SpJ2User friendReplica = manager.getPartitionById(replicaPid).getReplicaById(friendId);
+                RepUser friendReplica = manager.getPartitionById(replicaPid).getReplicaById(friendId);
                 assertTrue(friendReplica.getReplicaPids().contains(pidInWhichToPromote));
             }
         }

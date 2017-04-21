@@ -3,6 +3,7 @@ package io.vntr.spar;
 import java.util.*;
 
 import io.vntr.IMiddlewareAnalyzer;
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -43,11 +44,11 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
-        SparUser smallerUser = manager.getUserMasterById(smallerUserId);
-        SparUser largerUser = manager.getUserMasterById(largerUserId);
+        RepUser smallerUser = manager.getUserMasterById(smallerUserId);
+        RepUser largerUser = manager.getUserMasterById(largerUserId);
 
-        Integer smallerUserPid = smallerUser.getMasterPid();
-        Integer largerUserPid  = largerUser.getMasterPid();
+        Integer smallerUserPid = smallerUser.getBasePid();
+        Integer largerUserPid  = largerUser.getBasePid();
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
@@ -60,10 +61,10 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
     }
 
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
-        SparUser smallerUser = manager.getUserMasterById(smallUid);
-        SparUser largerUser = manager.getUserMasterById(largeUid);
-        Integer smallerUserPid = smallerUser.getMasterPid();
-        Integer largerUserPid = largerUser.getMasterPid();
+        RepUser smallerUser = manager.getUserMasterById(smallUid);
+        RepUser largerUser = manager.getUserMasterById(largeUid);
+        Integer smallerUserPid = smallerUser.getBasePid();
+        Integer largerUserPid = largerUser.getBasePid();
 
         if (strategy == NO_CHANGE) {
             if (!smallerUser.getReplicaPids().contains(largerUserPid)) {
@@ -73,7 +74,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
                 manager.addReplica(largerUser, smallerUserPid);
             }
         } else {
-            SparUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
+            RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
             Set<Integer> replicasToAddInDestinationPartition = sparBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
             Set<Integer> replicasToDeleteInSourcePartition = sparBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
@@ -88,18 +89,18 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         //if no other node requires it, and vice-versa.
         //The algorithm checks whether there are more than K slave replicas before removing the node so that the desired redundancy level is maintained.
 
-        SparUser smallerUser = manager.getUserMasterById(smallerUserId);
-        SparUser largerUser = manager.getUserMasterById(largerUserId);
+        RepUser smallerUser = manager.getUserMasterById(smallerUserId);
+        RepUser largerUser = manager.getUserMasterById(largerUserId);
 
-        if (!smallerUser.getMasterPid().equals(largerUser.getMasterPid())) {
+        if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
             boolean smallerReplicaWasOnlyThereForLarger = sparBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
             boolean largerReplicaWasOnlyThereForSmaller = sparBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(smallerUser, largerUser.getMasterPid());
+                manager.removeReplica(smallerUser, largerUser.getBasePid());
             }
             if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(largerUser, smallerUser.getMasterPid());
+                manager.removeReplica(largerUser, smallerUser.getBasePid());
             }
         }
 
@@ -128,7 +129,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
-            SparUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
@@ -145,14 +146,14 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
-            SparUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
             manager.addReplica(user, newPid);
         }
 
         //Fifth, remove references to replicas formerly on this partition
         for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
-            SparUser user = manager.getUserMasterById(uid);
+            RepUser user = manager.getUserMasterById(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
                 manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
             }
@@ -171,14 +172,14 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
 
         //First, determine which users will need more replicas once this partition is kaput
         for (Integer userId : partition.getIdsOfMasters()) {
-            SparUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
         for (Integer userId : partition.getIdsOfReplicas()) {
-            SparUser user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
@@ -203,8 +204,8 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         Map<Integer, Integer> counts = new HashMap<>();
         for(Integer uid : uids) {
             int count = 0;
-            SparUser user = manager.getUserMasterById(uid);
-            count += user.getMasterPid().equals(pid) ? 0 : 1;
+            RepUser user = manager.getUserMasterById(uid);
+            count += user.getBasePid().equals(pid) ? 0 : 1;
             Set<Integer> replicas = user.getReplicaPids();
             int numReplicas = replicas.size();
             count += replicas.contains(pid) ? numReplicas - 1 : numReplicas;
@@ -220,10 +221,10 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         return possibilities;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparUser user, Collection<Integer> pidsToExclude) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));

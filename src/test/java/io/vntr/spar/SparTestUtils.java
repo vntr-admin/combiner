@@ -1,5 +1,6 @@
 package io.vntr.spar;
 
+import io.vntr.RepUser;
 import io.vntr.TestUtils;
 import io.vntr.User;
 
@@ -172,8 +173,8 @@ public class SparTestUtils {
         for (Integer userId : spec.getUserIds()) {
             Integer masterPartitionId = spec.getMasterPartitionIdForUser(userId);
             Set<Integer> replicaPartitionIds = spec.getReplicaPartitionIdsForUser(userId);
-            SparUser user = new SparUser(userId);
-            user.setMasterPid(masterPartitionId);
+            RepUser user = new RepUser(userId);
+            user.setBasePid(masterPartitionId);
             user.addReplicaPartitionIds(replicaPartitionIds);
             for (Integer friendId : spec.getFriendIdsForUser(userId)) {
                 user.befriend(friendId);
@@ -237,9 +238,9 @@ public class SparTestUtils {
     }
 
     public static Set<Integer> getPartitionsWithAPresence(SparManager manager, Integer userId) {
-        SparUser user = manager.getUserMasterById(userId);
+        RepUser user = manager.getUserMasterById(userId);
         Set<Integer> partitionsWithAPresence = new HashSet<>(user.getReplicaPids());
-        partitionsWithAPresence.add(user.getMasterPid());
+        partitionsWithAPresence.add(user.getBasePid());
         return partitionsWithAPresence;
     }
 
@@ -249,7 +250,7 @@ public class SparTestUtils {
         return partitionsWithoutAPresence;
     }
 
-    public static SparUser getUserWithMasterOnPartition(SparManager manager, Integer partitionId) {
+    public static RepUser getUserWithMasterOnPartition(SparManager manager, Integer partitionId) {
         SparPartition partition = manager.getPartitionById(partitionId);
         Integer userId = partition.getIdsOfMasters().iterator().next();
         return manager.getUserMasterById(userId);
@@ -286,9 +287,9 @@ public class SparTestUtils {
         Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
-            SparUser user = new SparUser(uid);
+            RepUser user = new RepUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPid(pid);
+            user.setBasePid(pid);
 
             manager.addUser(user, pid);
         }

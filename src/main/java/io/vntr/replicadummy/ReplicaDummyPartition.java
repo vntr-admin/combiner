@@ -1,5 +1,6 @@
 package io.vntr.replicadummy;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 
 import java.util.HashMap;
@@ -10,15 +11,15 @@ import java.util.Set;
  * Created by robertlindquist on 11/23/16.
  */
 public class ReplicaDummyPartition {
-    private Map<Integer, ReplicaDummyUser> idToMasterMap = new HashMap<>();
-    private Map<Integer, ReplicaDummyUser> idToReplicaMap = new HashMap<>();
+    private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
+    private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();
     private Integer id;
 
     public ReplicaDummyPartition(Integer id) {
         this.id = id;
     }
 
-    public void addMaster(ReplicaDummyUser user) {
+    public void addMaster(RepUser user) {
         idToMasterMap.put(user.getId(), user);
     }
 
@@ -26,7 +27,7 @@ public class ReplicaDummyPartition {
         return idToMasterMap.remove(id);
     }
 
-    public void addReplica(ReplicaDummyUser user) {
+    public void addReplica(RepUser user) {
         idToReplicaMap.put(user.getId(), user);
     }
 
@@ -34,11 +35,11 @@ public class ReplicaDummyPartition {
         return idToReplicaMap.remove(id);
     }
 
-    public ReplicaDummyUser getMasterById(Integer userId) {
+    public RepUser getMasterById(Integer userId) {
         return idToMasterMap.get(userId);
     }
 
-    public ReplicaDummyUser getReplicaById(Integer userId) {
+    public RepUser getReplicaById(Integer userId) {
         return idToReplicaMap.get(userId);
     }
 

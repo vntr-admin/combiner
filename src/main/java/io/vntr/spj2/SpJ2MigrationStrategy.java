@@ -1,5 +1,7 @@
 package io.vntr.spj2;
 
+import io.vntr.RepUser;
+
 import java.util.*;
 
 public class SpJ2MigrationStrategy {
@@ -81,7 +83,7 @@ public class SpJ2MigrationStrategy {
 
         NavigableSet<Score> scores = new TreeSet<>();
         for (Integer userId : masterIds) {
-            SpJ2User user = manager.getUserMasterById(userId);
+            RepUser user = manager.getUserMasterById(userId);
             for (Integer replicaPartitionId : user.getReplicaPids()) {
                 scores.add(new Score(userId, replicaPartitionId, scoreReplicaPromotion(user, replicaPartitionId)));
             }
@@ -152,7 +154,7 @@ public class SpJ2MigrationStrategy {
             pToStrategyCount.put(pid, pToStrategyCount.get(pid));
         }
 
-        SpJ2User user = manager.getUserMasterById(uid);
+        RepUser user = manager.getUserMasterById(uid);
         int minMasters = Integer.MAX_VALUE;
         Integer minPid = null;
         for(Integer pid : user.getReplicaPids()) {
@@ -165,12 +167,12 @@ public class SpJ2MigrationStrategy {
         return minPid;
     }
 
-    float scoreReplicaPromotion(SpJ2User user, Integer replicaPartitionId) {
+    float scoreReplicaPromotion(RepUser user, Integer replicaPartitionId) {
         //based on what they've said, it seems like a decent scoring mechanism is numFriendsOnPartition^2 / numFriendsTotal
         int numFriendsOnPartition = 0;
         for (Integer friendId : user.getFriendIDs()) {
-            SpJ2User friend = manager.getUserMasterById(friendId);
-            if (friend.getMasterPid().equals(replicaPartitionId)) {
+            RepUser friend = manager.getUserMasterById(friendId);
+            if (friend.getBasePid().equals(replicaPartitionId)) {
                 numFriendsOnPartition++;
             }
         }

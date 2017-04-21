@@ -57,7 +57,7 @@ public class SpJ2InitUtilsTest {
             assertEquals(partition.getIdsOfMasters(), partitions.get(pid));
             assertEquals(partition.getIdsOfReplicas(), replicas.get(pid));
             for(Integer uid : partition.getIdsOfMasters()) {
-                assertEquals(manager.getUserMasterById(uid).getMasterPid(), pid);
+                assertEquals(manager.getUserMasterById(uid).getBasePid(), pid);
             }
             for(Integer uid : partition.getIdsOfReplicas()) {
                 assertTrue(manager.getUserMasterById(uid).getReplicaPids().contains(pid));

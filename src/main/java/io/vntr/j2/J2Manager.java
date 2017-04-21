@@ -21,7 +21,7 @@ public class J2Manager {
     private long logicalMigrationTally;
     private double logicalMigrationRatio;
 
-    private Map<Integer, J2User> uMap;
+    private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
     private J2Repartitioner repartitioner;
@@ -45,7 +45,7 @@ public class J2Manager {
         return uMap.keySet();
     }
 
-    public J2User getUser(Integer uid) {
+    public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
@@ -60,27 +60,23 @@ public class J2Manager {
     }
 
     public void addUser(User user) {
-        Integer initialPartitionId = getInitialPartitionId();
-        int uid = user.getId();
-        J2User j2User = new J2User(uid, initialPartitionId);
-        addUser(j2User);
-    }
+        if(user.getBasePid() == null) {
+            user.setBasePid(getInitialPartitionId());
+        }
+        uMap.put(user.getId(), user);
+        partitions.get(user.getBasePid()).add(user.getId());
 
-    void addUser(J2User j2User) {
-        uMap.put(j2User.getId(), j2User);
-        partitions.get(j2User.getPid()).add(j2User.getId());
-
-        if(j2User.getId() >= nextUid) {
-            nextUid = j2User.getId() + 1;
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
         }
     }
 
     public void removeUser(Integer uid) {
-        J2User user = uMap.remove(uid);
+        User user = uMap.remove(uid);
         for(Integer friendId : user.getFriendIDs()) {
             getUser(friendId).unfriend(uid);
         }
-        partitions.get(user.getPid()).remove(uid);
+        partitions.get(user.getBasePid()).remove(uid);
     }
 
     public void befriend(Integer id1, Integer id2) {
@@ -123,12 +119,12 @@ public class J2Manager {
     }
 
     public void moveUser(Integer uid, Integer newPid, boolean isFromPartitionRemoval) {
-        J2User user = getUser(uid);
-        if(partitions.containsKey(user.getPid())) {
-            getPartition(user.getPid()).remove(uid);
+        User user = getUser(uid);
+        if(partitions.containsKey(user.getBasePid())) {
+            getPartition(user.getBasePid()).remove(uid);
         }
         getPartition(newPid).add(uid);
-        user.setPid(newPid);
+        user.setBasePid(newPid);
 
         if(!isFromPartitionRemoval) {
             increaseMigrationTally(1);
@@ -145,11 +141,11 @@ public class J2Manager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(J2User user : uMap.values()) {
-            Integer userPid = user.getPid();
+        for(User user : uMap.values()) {
+            Integer userPid = user.getBasePid();
 
             for(int friendId : user.getFriendIDs()) {
-                Integer friendPid = getUser(friendId).getPid();
+                Integer friendPid = getUser(friendId).getBasePid();
                 if(userPid < friendPid) {
                     count++;
                 }
@@ -210,7 +206,7 @@ public class J2Manager {
             if(observedMasterPid == null) {
                 throw new RuntimeException("user must be in some partition");
             }
-            if(!observedMasterPid.equals(uMap.get(uid).getPid())) {
+            if(!observedMasterPid.equals(uMap.get(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's PID and system's");
             }
         }

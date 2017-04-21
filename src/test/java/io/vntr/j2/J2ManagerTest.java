@@ -1,7 +1,6 @@
 package io.vntr.j2;
 
 import io.vntr.User;
-import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
 import java.util.*;
@@ -43,7 +42,7 @@ public class J2ManagerTest {
 
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
-                assertEquals(pid, manager.getUser(uid).getPid());
+                assertEquals(pid, manager.getUser(uid).getBasePid());
             }
         }
 
@@ -52,10 +51,10 @@ public class J2ManagerTest {
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
                 if(uid.equals(uidToMove)) {
-                    assertEquals(destinationPid, manager.getUser(uid).getPid());
+                    assertEquals(destinationPid, manager.getUser(uid).getBasePid());
                 }
                 else {
-                    assertEquals(pid, manager.getUser(uid).getPid());
+                    assertEquals(pid, manager.getUser(uid).getBasePid());
                 }
             }
         }
@@ -88,7 +87,7 @@ public class J2ManagerTest {
         assertEquals(manager.getUserIds(), expectedUids);
         assertTrue(manager.getUser(newUid).getFriendIDs().isEmpty());
 
-        assertTrue(manager.getPartition(manager.getUser(newUid).getPid()).contains(newUid));
+        assertTrue(manager.getPartition(manager.getUser(newUid).getBasePid()).contains(newUid));
 
         for(Integer originalUid : friendships.keySet()) {
             assertEquals(manager.getUser(originalUid).getFriendIDs(), bidirectionalFriendships.get(originalUid));
@@ -102,7 +101,7 @@ public class J2ManagerTest {
         assertEquals(manager.getUserIds(), expectedUids);
         assertTrue(manager.getUser(uidToAddManually).getFriendIDs().isEmpty());
 
-        assertTrue(manager.getPartition(manager.getUser(uidToAddManually).getPid()).contains(uidToAddManually));
+        assertTrue(manager.getPartition(manager.getUser(uidToAddManually).getBasePid()).contains(uidToAddManually));
 
         for(Integer originalUid : friendships.keySet()) {
             assertEquals(manager.getUser(originalUid).getFriendIDs(), bidirectionalFriendships.get(originalUid));
@@ -135,7 +134,7 @@ public class J2ManagerTest {
 
         assertEquals(bidirectionalFriendships, manager.getFriendships());
 
-        Integer pidForUserToRemove = manager.getUser(uidToRemove).getPid();
+        Integer pidForUserToRemove = manager.getUser(uidToRemove).getBasePid();
         manager.removeUser(uidToRemove);
 
         for(Integer pid : partitions.keySet()) {
@@ -318,7 +317,7 @@ public class J2ManagerTest {
 
         //Note that manager.removePartition does not migrate!  It is the middleware that does this.
         for(Integer uid : partitions.get(pidToRemove)) {
-            Integer userSuppliedPid = manager.getUser(uid).getPid();
+            Integer userSuppliedPid = manager.getUser(uid).getBasePid();
             assertEquals(userSuppliedPid, pidToRemove);
             assertFalse(manager.getPartition(1).contains(uid) || manager.getPartition(3).contains(uid));
         }

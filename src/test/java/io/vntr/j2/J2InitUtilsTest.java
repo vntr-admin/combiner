@@ -1,5 +1,6 @@
 package io.vntr.j2;
 
+import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
@@ -45,8 +46,8 @@ public class J2InitUtilsTest {
         for(Integer pid : partitions.keySet()) {
             assertEquals(partitions.get(pid), manager.getPartition(pid));
             for(Integer uid : partitions.get(pid)) {
-                J2User user = manager.getUser(uid);
-                assertEquals(user.getPid(), pid);
+                User user = manager.getUser(uid);
+                assertEquals(user.getBasePid(), pid);
                 assertEquals(user.getFriendIDs(), bidirectionalFriendships.get(uid));
                 assertEquals(uid, user.getId());
             }

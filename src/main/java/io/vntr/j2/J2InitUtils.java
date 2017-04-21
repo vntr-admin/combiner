@@ -1,5 +1,7 @@
 package io.vntr.j2;
 
+import io.vntr.User;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -12,7 +14,7 @@ public class J2InitUtils {
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new J2User(uid, pid));
+                manager.addUser(new User(uid, pid));
             }
         }
         for (Integer uid1 : friendships.keySet()) {

@@ -1,5 +1,6 @@
 package io.vntr.spar;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -8,7 +9,6 @@ import java.util.*;
 public class SparManager {
     private int minNumReplicas;
 
-    private static final Integer defaultStartingId = 1;
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -31,7 +31,7 @@ public class SparManager {
         return partitionIdToPartitionMap.get(id);
     }
 
-    public SparUser getUserMasterById(Integer id) {
+    public RepUser getUserMasterById(Integer id) {
         Integer partitionId = userIdToMasterPartitionIdMap.get(id);
         if (partitionId != null) {
             SparPartition partition = getPartitionById(partitionId);
@@ -64,17 +64,17 @@ public class SparManager {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
         int uid = user.getId();
-        SparUser sparUser = new SparUser(uid);
-        sparUser.setMasterPid(masterPartitionId);
+        RepUser RepUser = new RepUser(uid);
+        RepUser.setBasePid(masterPartitionId);
 
-        addUser(sparUser, masterPartitionId);
+        addUser(RepUser, masterPartitionId);
 
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
-            addReplica(sparUser, id);
+            addReplica(RepUser, id);
         }
     }
 
-    void addUser(SparUser user, Integer masterPartitionId) {
+    void addUser(RepUser user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
         userIdToMasterPartitionIdMap.put(user.getId(), masterPartitionId);
         if(user.getId() >= nextUid) {
@@ -83,10 +83,10 @@ public class SparManager {
     }
 
     public void removeUser(Integer userId) {
-        SparUser user = getUserMasterById(userId);
+        RepUser user = getUserMasterById(userId);
 
         //Remove user from relevant partitions
-        getPartitionById(user.getMasterPid()).removeMaster(userId);
+        getPartitionById(user.getBasePid()).removeMaster(userId);
         for (Integer replicaPartitionId : user.getReplicaPids()) {
             getPartitionById(replicaPartitionId).removeReplica(userId);
         }
@@ -96,7 +96,7 @@ public class SparManager {
 
         //Remove friendships
         for (Integer friendId : user.getFriendIDs()) {
-            SparUser friendMaster = getUserMasterById(friendId);
+            RepUser friendMaster = getUserMasterById(friendId);
             friendMaster.unfriend(userId);
 
             for (Integer friendReplicaPartitionId : friendMaster.getReplicaPids()) {
@@ -123,8 +123,8 @@ public class SparManager {
         partitionIdToPartitionMap.remove(id);
     }
 
-    public void addReplica(SparUser user, Integer destPid) {
-        SparUser replicaOfUser = addReplicaNoUpdates(user, destPid);
+    public void addReplica(RepUser user, Integer destPid) {
+        RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
         //Update the replicaPartitionIds to reflect this addition
         replicaOfUser.addReplicaPartitionId(destPid);
@@ -134,17 +134,17 @@ public class SparManager {
         user.addReplicaPartitionId(destPid);
     }
 
-    SparUser addReplicaNoUpdates(SparUser user, Integer destPid) {
-        SparUser replica = user.clone();
+    RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+        RepUser replica = user.dupe();
         partitionIdToPartitionMap.get(destPid).addReplica(replica);
         return replica;
     }
 
-    public void removeReplica(SparUser user, Integer removalPartitionId) {
+    public void removeReplica(RepUser user, Integer removalPartitionId) {
         //Delete it from each replica's replicaPartitionIds
         for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
             SparPartition p = partitionIdToPartitionMap.get(currentReplicaPartitionId);
-            SparUser r = p.getReplicaById(user.getId());
+            RepUser r = p.getReplicaById(user.getId());
             r.removeReplicaPartitionId(removalPartitionId);
         }
 
@@ -155,10 +155,10 @@ public class SparManager {
         partitionIdToPartitionMap.get(removalPartitionId).removeReplica(user.getId());
     }
 
-    public void moveUser(SparUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
+    public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
-        Integer fromPid = user.getMasterPid();
+        Integer fromPid = user.getBasePid();
 
         moveMasterAndInformReplicas(uid, fromPid, toPid);
 
@@ -197,20 +197,20 @@ public class SparManager {
     }
 
     void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
-        SparUser user = getUserMasterById(uid);
+        RepUser user = getUserMasterById(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
 
         userIdToMasterPartitionIdMap.put(uid, toPid);
 
-        user.setMasterPid(toPid);
+        user.setBasePid(toPid);
 
         for (Integer rPid : user.getReplicaPids()) {
-            partitionIdToPartitionMap.get(rPid).getReplicaById(uid).setMasterPid(toPid);
+            partitionIdToPartitionMap.get(rPid).getReplicaById(uid).setBasePid(toPid);
         }
     }
 
-    public void befriend(SparUser smallerUser, SparUser largerUser) {
+    public void befriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
 
@@ -223,7 +223,7 @@ public class SparManager {
         }
     }
 
-    public void unfriend(SparUser smallerUser, SparUser largerUser) {
+    public void unfriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
 
@@ -238,8 +238,8 @@ public class SparManager {
 
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
         SparPartition partition = partitionIdToPartitionMap.get(partitionId);
-        SparUser user = partition.getReplicaById(userId);
-        user.setMasterPid(partitionId);
+        RepUser user = partition.getReplicaById(userId);
+        user.setBasePid(partitionId);
         user.removeReplicaPartitionId(partitionId);
         partition.addMaster(user);
         partition.removeReplica(userId);
@@ -247,8 +247,8 @@ public class SparManager {
         userIdToMasterPartitionIdMap.put(userId, partitionId);
 
         for (Integer replicaPartitionId : user.getReplicaPids()) {
-            SparUser replica = partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
-            replica.setMasterPid(partitionId);
+            RepUser replica = partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
+            replica.setBasePid(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
 
@@ -275,9 +275,9 @@ public class SparManager {
         return minId;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparUser user) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(partitionIdToPartitionMap.keySet());
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
@@ -308,8 +308,8 @@ public class SparManager {
     public Integer getEdgeCut() {
         int count = 0;
         for (Integer uid : userIdToMasterPartitionIdMap.keySet()) {
-            SparUser user = getUserMasterById(uid);
-            Integer pid = user.getMasterPid();
+            RepUser user = getUserMasterById(uid);
+            Integer pid = user.getBasePid();
             for (Integer friendId : user.getFriendIDs()) {
                 if (!pid.equals(userIdToMasterPartitionIdMap.get(friendId))) {
                     count++;
@@ -368,7 +368,7 @@ public class SparManager {
             if(!observedMasterPid.equals(userIdToMasterPartitionIdMap.get(uid))) {
                 throw new RuntimeException("Mismatch between uMap's location of user and partition's");
             }
-            if(!observedMasterPid.equals(getUserMasterById(uid).getMasterPid())) {
+            if(!observedMasterPid.equals(getUserMasterById(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
 
@@ -377,7 +377,7 @@ public class SparManager {
 
         //check replicas
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
-            SparUser user = getUserMasterById(uid);
+            RepUser user = getUserMasterById(uid);
             Set<Integer> observedReplicaPids = new HashSet<>();
             for(Integer pid : partitionIdToPartitionMap.keySet()) {
                 if(partitionIdToPartitionMap.get(pid).getIdsOfReplicas().contains(uid)) {

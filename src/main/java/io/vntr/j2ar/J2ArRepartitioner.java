@@ -1,5 +1,7 @@
 package io.vntr.j2ar;
 
+import io.vntr.User;
+
 import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
@@ -123,9 +125,9 @@ public class J2ArRepartitioner {
 
     void physicallyMigrate(Map<Integer, Integer> logicalPids) {
         for(Integer uid : logicalPids.keySet()) {
-            J2ArUser user = manager.getUser(uid);
+            User user = manager.getUser(uid);
             Integer newPid = logicalPids.get(uid);
-            if(!user.getPid().equals(newPid)) {
+            if(!user.getBasePid().equals(newPid)) {
                 manager.moveUser(uid, newPid, false);
             }
         }
@@ -150,7 +152,7 @@ public class J2ArRepartitioner {
     Map<Integer, Integer> getLogicalPids() {
         Map<Integer, Integer> logicalPids = new HashMap<>();
         for(Integer uid : manager.getUserIds()) {
-            logicalPids.put(uid, manager.getUser(uid).getPid());
+            logicalPids.put(uid, manager.getUser(uid).getBasePid());
         }
         return logicalPids;
     }

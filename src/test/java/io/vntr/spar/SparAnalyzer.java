@@ -56,13 +56,13 @@ public class SparAnalyzer {
 
         //Assert that replicas are consistent with the master in everything except partitionId
         for(int uid : friendships.keySet()) {
-            SparUser master = middleware.manager.getUserMasterById(uid);
+            RepUser master = middleware.manager.getUserMasterById(uid);
             Set<Integer> replicaPids = findKeysForUser(replicas, uid);
             for(int replicaPid : replicaPids) {
-                SparUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
+                RepUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
                 assertEquals(master.getId(), replica.getId());
                 assertEquals(master.getFriendIDs(), replica.getFriendIDs());
-                assertEquals(master.getMasterPid(), replica.getMasterPid());
+                assertEquals(master.getBasePid(), replica.getBasePid());
                 assertEquals(master.getReplicaPids(), replica.getReplicaPids());
             }
         }

@@ -1,5 +1,7 @@
 package io.vntr.replicadummy;
 
+import io.vntr.RepUser;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,9 +21,9 @@ public class ReplicaDummyTestUtils {
         Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
-            ReplicaDummyUser user = new ReplicaDummyUser(uid);
+            RepUser user = new RepUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPid(pid);
+            user.setBasePid(pid);
 
             manager.addUser(user, pid);
 

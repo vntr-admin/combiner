@@ -1,5 +1,7 @@
 package io.vntr.j2;
 
+import io.vntr.User;
+
 import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
@@ -35,7 +37,7 @@ public class J2Repartitioner {
                 List<Integer> randomUserList = new LinkedList<>(manager.getUserIds());
                 Collections.shuffle(randomUserList);
                 for(Integer uid : randomUserList) {
-                    Integer realPid = manager.getUser(uid).getPid();
+                    Integer realPid = manager.getUser(uid).getBasePid();
 
                     Integer partnerId = findPartner(uid, sample(k, manager.getPartition(realPid)), t, state);
                     if(partnerId == null) {
@@ -128,9 +130,9 @@ public class J2Repartitioner {
 
     void physicallyMigrate(Map<Integer, Integer> logicalPids) {
         for(Integer uid : logicalPids.keySet()) {
-            J2User user = manager.getUser(uid);
+            User user = manager.getUser(uid);
             Integer newPid = logicalPids.get(uid);
-            if(!user.getPid().equals(newPid)) {
+            if(!user.getBasePid().equals(newPid)) {
                 manager.moveUser(uid, newPid, false);
             }
         }

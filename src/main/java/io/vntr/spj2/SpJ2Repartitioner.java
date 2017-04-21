@@ -1,5 +1,7 @@
 package io.vntr.spj2;
 
+import io.vntr.RepUser;
+
 import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
@@ -39,7 +41,7 @@ public class SpJ2Repartitioner {
                 List<Integer> randomUserList = new LinkedList<>(manager.getAllUserIds());
                 Collections.shuffle(randomUserList);
                 for (Integer uid : randomUserList) {
-                    SpJ2User user = manager.getUserMasterById(uid);
+                    RepUser user = manager.getUserMasterById(uid);
                     Set<Integer> swapCandidates = getKDistinctValuesFromList(k, manager.getAllUserIds());
 
                     Integer partnerId = findPartner(uid, swapCandidates, t, state);
@@ -147,12 +149,12 @@ public class SpJ2Repartitioner {
             Integer newPid = newPids.get(uid);
             Set<Integer> newReplicas = newReplicaPids.get(uid);
 
-            SpJ2User user = manager.getUserMasterById(uid);
-            Integer oldPid = user.getMasterPid();
+            RepUser user = manager.getUserMasterById(uid);
+            Integer oldPid = user.getBasePid();
             Set<Integer> oldReplicas = user.getReplicaPids();
 
             if(!oldPid.equals(newPid)) {
-                manager.moveMasterAndInformReplicas(uid, user.getMasterPid(), newPid);
+                manager.moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
                 manager.increaseMigrationTally(1);
             }
 
