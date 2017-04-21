@@ -94,7 +94,7 @@ public class HermarManager {
     }
 
     void addUser(HermarUser user) {
-        Integer pid = user.getPhysicalPid();
+        Integer pid = user.getBasePid();
         getPartitionById(pid).addUser(user);
         uMap.put(user.getId(), pid);
         uMapLogical.put(user.getId(), pid);
@@ -225,7 +225,6 @@ public class HermarManager {
             changed |= !targets.isEmpty();
         }
 
-        //TODO: should I include logical migrations in the migration tally?
         for(Integer pid : pMap.keySet()) {
             for(Target target : stageTargets.get(pid)) {
                 increaseTallyLogical(1);
@@ -324,9 +323,9 @@ public class HermarManager {
         HermarUser user = getUser(uid);
         uMap.put(uid, pid);
         uMapLogical.put(uid, pid);
-        getPartitionById(user.getPhysicalPid()).removeUser(uid);
+        getPartitionById(user.getBasePid()).removeUser(uid);
         getPartitionById(pid).addUser(user);
-        user.setPhysicalPid(pid);
+        user.setBasePid(pid);
         user.setLogicalPid(pid);
     }
 
@@ -384,7 +383,7 @@ public class HermarManager {
             if(!observedMasterPid.equals(uMap.get(uid))) {
                 throw new RuntimeException("Mismatch between uMap's location of user and partition's");
             }
-            if(!observedMasterPid.equals(getUser(uid).getPhysicalPid())) {
+            if(!observedMasterPid.equals(getUser(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
 

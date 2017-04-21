@@ -26,8 +26,8 @@ public class HermarBefriendingStrategy {
         int to1  = calcEdgeCutMove(user2, user1);
 
         double usersPerPartition = ((double) manager.getNumUsers()) / manager.getAllPartitionIds().size();
-        int usersOn1 = manager.getPartitionById(user1.getPhysicalPid()).getNumUsers();
-        int usersOn2 = manager.getPartitionById(user2.getPhysicalPid()).getNumUsers();
+        int usersOn1 = manager.getPartitionById(user1.getBasePid()).getNumUsers();
+        int usersOn2 = manager.getPartitionById(user2.getBasePid()).getNumUsers();
 
         boolean oneWouldBeOverweight = ((1D + usersOn1) / usersPerPartition) > manager.getGamma();
         boolean twoWouldBeOverweight = ((1D + usersOn2) / usersPerPartition) > manager.getGamma();

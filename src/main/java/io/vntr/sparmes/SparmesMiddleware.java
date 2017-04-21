@@ -49,8 +49,8 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
         SparmesUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparmesUser largerUser = manager.getUserMasterById(largerUserId);
 
-        Integer smallerUserPid = smallerUser.getMasterPid();
-        Integer largerUserPid  = largerUser.getMasterPid();
+        Integer smallerUserPid = smallerUser.getBasePid();
+        Integer largerUserPid  = largerUser.getBasePid();
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
@@ -65,8 +65,8 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
         SparmesUser smallerUser = manager.getUserMasterById(smallUid);
         SparmesUser largerUser = manager.getUserMasterById(largeUid);
-        Integer smallerUserPid = smallerUser.getMasterPid();
-        Integer largerUserPid = largerUser.getMasterPid();
+        Integer smallerUserPid = smallerUser.getBasePid();
+        Integer largerUserPid = largerUser.getBasePid();
 
         if (strategy == NO_CHANGE) {
             if (!smallerUser.getReplicaPids().contains(largerUserPid)) {
@@ -90,15 +90,15 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
         SparmesUser smallerUser = manager.getUserMasterById(smallerUserId);
         SparmesUser largerUser = manager.getUserMasterById(largerUserId);
 
-        if (!smallerUser.getMasterPid().equals(largerUser.getMasterPid())) {
+        if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
             boolean smallerReplicaWasOnlyThereForLarger = sparmesBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
             boolean largerReplicaWasOnlyThereForSmaller = sparmesBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(smallerUser, largerUser.getMasterPid());
+                manager.removeReplica(smallerUser, largerUser.getBasePid());
             }
             if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(largerUser, smallerUser.getMasterPid());
+                manager.removeReplica(largerUser, smallerUser.getBasePid());
             }
         }
 
@@ -181,7 +181,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
         for(Integer uid : uids) {
             int count = 0;
             SparmesUser user = manager.getUserMasterById(uid);
-            count += user.getMasterPid().equals(pid) ? 0 : 1;
+            count += user.getBasePid().equals(pid) ? 0 : 1;
             Set<Integer> replicas = user.getReplicaPids();
             int numReplicas = replicas.size();
             count += replicas.contains(pid) ? numReplicas - 1 : numReplicas;
@@ -216,7 +216,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));

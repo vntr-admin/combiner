@@ -378,7 +378,7 @@ public class SparmesAnalyzer {
                 SparmesUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
                 assertEquals(master.getId(), replica.getId());
                 assertEquals(master.getFriendIDs(), replica.getFriendIDs());
-                assertEquals(master.getMasterPid(), replica.getMasterPid());
+                assertEquals(master.getBasePid(), replica.getBasePid());
                 assertEquals(master.getReplicaPids(), replica.getReplicaPids());
             }
         }

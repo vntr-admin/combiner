@@ -73,7 +73,7 @@ public class HermarPartition {
             HermarUser user = physicalUsers.get(iter.next());
             Integer logicalPid = user.getLogicalPid();
             if(!logicalPid.equals(id)) {
-                user.setPhysicalPid(logicalPid);
+                user.setBasePid(logicalPid);
                 iter.remove();
             }
         }

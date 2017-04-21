@@ -115,7 +115,7 @@ public class SparmesManager {
         SparmesUser user = getUserMasterById(userId);
 
         //Remove user from relevant partitions
-        getPartitionById(user.getMasterPid()).removeMaster(userId);
+        getPartitionById(user.getBasePid()).removeMaster(userId);
         for (Integer replicaPartitionId : user.getReplicaPids()) {
             getPartitionById(replicaPartitionId).removeReplica(userId);
         }
@@ -211,7 +211,7 @@ public class SparmesManager {
 
     public void moveUser(SparmesUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         Integer uid = user.getId();
-        Integer fromPid = user.getMasterPid();
+        Integer fromPid = user.getBasePid();
 
         //Step 1: move the actual user
         moveMasterAndInformReplicas(uid, fromPid, toPid);
@@ -251,7 +251,7 @@ public class SparmesManager {
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
         SparmesPartition partition = pMap.get(partitionId);
         SparmesUser user = partition.getReplicaById(userId);
-        user.setMasterPid(partitionId);
+        user.setBasePid(partitionId);
         user.setLogicalPid(partitionId);
         user.removeReplicaPartitionId(partitionId);
         partition.addMaster(user);
@@ -261,7 +261,7 @@ public class SparmesManager {
 
         for (Integer replicaPartitionId : user.getReplicaPids()) {
             SparmesUser replica = pMap.get(replicaPartitionId).getReplicaById(userId);
-            replica.setMasterPid(partitionId);
+            replica.setBasePid(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
 
@@ -290,7 +290,7 @@ public class SparmesManager {
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
@@ -322,7 +322,7 @@ public class SparmesManager {
         int count = 0;
         for (Integer uid : uMap.keySet()) {
             SparmesUser user = getUserMasterById(uid);
-            Integer pid = user.getMasterPid();
+            Integer pid = user.getBasePid();
             for (Integer friendId : user.getFriendIDs()) {
                 if (!pid.equals(uMap.get(friendId))) {
                     count++;
@@ -347,11 +347,11 @@ public class SparmesManager {
 
         uMap.put(uid, toPid);
 
-        user.setMasterPid(toPid);
+        user.setBasePid(toPid);
         user.setLogicalPid(toPid);
 
         for (Integer rPid : user.getReplicaPids()) {
-            pMap.get(rPid).getReplicaById(uid).setMasterPid(toPid);
+            pMap.get(rPid).getReplicaById(uid).setBasePid(toPid);
         }
     }
 
@@ -407,7 +407,7 @@ public class SparmesManager {
         if(deficit > 0) {
             Set<Integer> newLocations = new HashSet<>(pMap.keySet());
             newLocations.removeAll(replicaLocations);
-            newLocations.remove(user.getMasterPid());
+            newLocations.remove(user.getBasePid());
             for(int rPid : ProbabilityUtils.getKDistinctValuesFromList(deficit, newLocations)) {
                 addReplica(user, rPid);
             }
@@ -417,7 +417,7 @@ public class SparmesManager {
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(getAllPartitionIds());
         potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
@@ -599,7 +599,7 @@ public class SparmesManager {
             if(!observedMasterPid.equals(uMap.get(uid))) {
                 throw new RuntimeException("Mismatch between uMap's location of user and partition's");
             }
-            if(!observedMasterPid.equals(getUserMasterById(uid).getMasterPid())) {
+            if(!observedMasterPid.equals(getUserMasterById(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
 

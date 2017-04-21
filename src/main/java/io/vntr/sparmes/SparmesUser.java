@@ -1,5 +1,6 @@
 package io.vntr.sparmes;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 
 import java.util.*;
@@ -10,48 +11,20 @@ import static io.vntr.Utils.safeHashCode;
 /**
  * Created by robertlindquist on 9/28/16.
  */
-public class SparmesUser extends User {
-    private Integer masterPid;
-    private Integer logicalPid;
+public class SparmesUser extends RepUser {
     private float gamma;
-    private Set<Integer> replicaPids;
+    private Integer logicalPid;
     private Set<Integer> logicalPids;
     private SparmesManager manager;
     private int minNumReplicas;
 
     public SparmesUser(Integer id, Integer initialPid, float gamma, SparmesManager manager, int minNumReplicas) {
-        super(id);
-        replicaPids = new HashSet<>();
+        super(id, initialPid);
         logicalPids = new HashSet<>();
         this.gamma = gamma;
         this.manager = manager;
-        this.masterPid = initialPid;
         this.logicalPid = initialPid;
         this.minNumReplicas = minNumReplicas;
-    }
-
-    public Integer getMasterPid() {
-        return masterPid;
-    }
-
-    public void setMasterPid(Integer masterPid) {
-        this.masterPid = masterPid;
-    }
-
-    public void addReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPids.add(replicaPartitionId);
-    }
-
-    public void removeReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPids.remove(replicaPartitionId);
-    }
-
-    public void addReplicaPartitionIds(Collection<Integer> replicaPartitionIds) {
-        this.replicaPids.addAll(replicaPartitionIds);
-    }
-
-    public Set<Integer> getReplicaPids() {
-        return replicaPids;
     }
 
     public Integer getLogicalPid() {
@@ -76,10 +49,10 @@ public class SparmesUser extends User {
 
     @Override
     public SparmesUser clone() {
-        SparmesUser user = new SparmesUser(getId(), masterPid, gamma, manager, minNumReplicas);
-        user.setMasterPid(masterPid);
+        SparmesUser user = new SparmesUser(getId(), getBasePid(), gamma, manager, minNumReplicas);
+        user.setBasePid(getBasePid());
         user.setLogicalPid(logicalPid);
-        user.addReplicaPartitionIds(replicaPids);
+        user.addReplicaPartitionIds(getReplicaPids());
         for (Integer friendId : getFriendIDs()) {
             user.befriend(friendId);
         }
@@ -89,7 +62,7 @@ public class SparmesUser extends User {
 
     @Override
     public String toString() {
-        return super.toString() + "|M:" + masterPid + "|L:" + logicalPid + "|Reps:" + replicaPids.toString();
+        return super.toString() + "|L:" + logicalPid + "|LReps:" + logicalPids.toString();
     }
 
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
@@ -110,7 +83,7 @@ public class SparmesUser extends User {
 
         int numFriendsToDeleteInCurrentPartition = strat.findReplicasInMovingPartitionToDelete(this, Collections.<Integer>emptySet()).size();
         boolean replicateInSourcePartition = strat.shouldWeAddAReplicaOfMovingUserInMovingPartition(this, -1); //TODO: hmmnh
-        return new LogicalUser(getId(), masterPid, gamma, pToFriendCount, pToWeight, replicaPids, friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
+        return new LogicalUser(getId(), getBasePid(), gamma, pToFriendCount, pToWeight, getReplicaPids(), friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
     }
 
     Map<Integer, Integer> getFriendsToAddInEachPartitionLogical() {
@@ -192,29 +165,25 @@ outer:  for (Integer friendId : getFriendIDs()) {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof SparmesUser)) return false;
+        if (!super.equals(o)) return false;
 
         SparmesUser that = (SparmesUser) o;
 
-        return  this.minNumReplicas == that.minNumReplicas
-                && (Float.compare(that.gamma, gamma) == 0)
-                && safeEquals(this.masterPid, that.masterPid)
-                && safeEquals(this.logicalPid, that.logicalPid)
-                && safeEquals(this.getId(), that.getId())
-                && safeEquals(this.replicaPids, that.replicaPids)
-                && safeEquals(this.logicalPids, that.logicalPids)
-                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
+        if (Float.compare(that.gamma, gamma) != 0) return false;
+        if (minNumReplicas != that.minNumReplicas) return false;
+        if (logicalPid != null ? !logicalPid.equals(that.logicalPid) : that.logicalPid != null) return false;
+        if (logicalPids != null ? !logicalPids.equals(that.logicalPids) : that.logicalPids != null) return false;
+        return manager != null ? manager.equals(that.manager) : that.manager == null;
     }
 
     @Override
     public int hashCode() {
-        int result = minNumReplicas;
+        int result = super.hashCode();
+        result = 31 * result + (logicalPid != null ? logicalPid.hashCode() : 0);
         result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
-        result = 31 * result + safeHashCode(masterPid);
-        result = 31 * result + safeHashCode(logicalPid);
-        result = 31 * result + safeHashCode(getId());
-        result = 31 * result + safeHashCode(replicaPids);
-        result = 31 * result + safeHashCode(logicalPids);
-        result = 31 * result + safeHashCode(getFriendIDs());
+        result = 31 * result + (logicalPids != null ? logicalPids.hashCode() : 0);
+        result = 31 * result + (manager != null ? manager.hashCode() : 0);
+        result = 31 * result + minNumReplicas;
         return result;
     }
 }

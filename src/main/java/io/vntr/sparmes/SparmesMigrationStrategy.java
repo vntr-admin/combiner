@@ -112,7 +112,7 @@ public class SparmesMigrationStrategy {
         int numFriendsOnPartition = 0;
         for (Integer friendId : user.getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
-            if (friend.getMasterPid().equals(replicaPartitionId)) {
+            if (friend.getBasePid().equals(replicaPartitionId)) {
                 numFriendsOnPartition++;
             }
         }

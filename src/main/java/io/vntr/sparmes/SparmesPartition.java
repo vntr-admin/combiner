@@ -111,9 +111,9 @@ public class SparmesPartition {
         for(Integer newUid : newMasters) {
             SparmesUser user = manager.getUserMasterById(newUid);
             user.setLogicalPid(id);
-            user.setMasterPid(id);
+            user.setBasePid(id);
             for (Integer rPid : user.getReplicaPids()) {
-                manager.getPartitionById(rPid).getReplicaById(newUid).setMasterPid(id);
+                manager.getPartitionById(rPid).getReplicaById(newUid).setBasePid(id);
             }
             idToMasterMap.put(newUid, user);
         }

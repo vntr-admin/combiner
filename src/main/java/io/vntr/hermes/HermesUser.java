@@ -13,24 +13,14 @@ import static io.vntr.Utils.safeHashCode;
  */
 public class HermesUser extends User {
     private float gamma;
-    private Integer physicalPid;
     private Integer logicalPid;
     private HermesManager manager;
 
     public HermesUser(Integer id, Integer initialPid, float gamma, HermesManager manager) {
-        super(id);
+        super(id, initialPid);
         this.gamma = gamma;
         this.manager = manager;
-        this.physicalPid = initialPid;
         this.logicalPid = initialPid;
-    }
-
-    public Integer getPhysicalPid() {
-        return physicalPid;
-    }
-
-    public void setPhysicalPid(Integer physicalPid) {
-        this.physicalPid = physicalPid;
     }
 
     public Integer getLogicalPid() {
@@ -83,24 +73,22 @@ public class HermesUser extends User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof HermesUser)) return false;
+        if (!super.equals(o)) return false;
 
         HermesUser that = (HermesUser) o;
 
-        return  (Float.compare(that.gamma, gamma) == 0)
-                && safeEquals(this.physicalPid, that.physicalPid)
-                && safeEquals(this.logicalPid,  that.logicalPid)
-                && safeEquals(this.getId(), that.getId())
-                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
+        if (Float.compare(that.gamma, gamma) != 0) return false;
+        if (logicalPid != null ? !logicalPid.equals(that.logicalPid) : that.logicalPid != null) return false;
+        return manager != null ? manager.equals(that.manager) : that.manager == null;
     }
 
     @Override
     public int hashCode() {
-        int result = (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
-        result = 31 * result + safeHashCode(physicalPid);
-        result = 31 * result + safeHashCode(logicalPid);
-        result = 31 * result + safeHashCode(getId());
-        result = 31 * result + safeHashCode(getFriendIDs());
+        int result = super.hashCode();
+        result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
+        result = 31 * result + (logicalPid != null ? logicalPid.hashCode() : 0);
+        result = 31 * result + (manager != null ? manager.hashCode() : 0);
         return result;
     }
 }
