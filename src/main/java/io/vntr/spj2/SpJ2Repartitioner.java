@@ -281,31 +281,33 @@ public class SpJ2Repartitioner {
 
     }
 
-    static Set<Integer> findReplicasInMovingPartitionToDelete(Integer uid, Integer pid, Set<Integer> replicasToBeAdded, State state) {
-        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
+    static Set<Integer> findReplicasInMovingPartitionToDelete(int uid, int pid, Set<Integer> replicasToBeAdded, State state) {
+        Set<Integer> replicasToDelete = new HashSet<>();
+        int minNumReplicas = state.getMinNumReplicas();
+
 outer:  for(Integer friendId : state.getFriendships().get(uid)) {
             int friendPid = state.getLogicalPids().get(friendId);
             if (friendPid != pid) {
                 int numReplicas = state.getLogicalReplicaPids().get(friendId).size() + (replicasToBeAdded.contains(friendId) ? 1 : 0);
-                if(numReplicas <= state.getMinNumReplicas()) {
+                if(numReplicas <= minNumReplicas) {
                     continue;
                 }
                 for (Integer friendOfFriendId : state.getFriendships().get(friendId)) {
-                    if (friendOfFriendId.equals(uid)) {
+                    if (friendOfFriendId == uid) {
                         continue;
                     }
 
                     Integer friendOfFriendPid = state.getLogicalPids().get(friendOfFriendId);
-                    if (friendOfFriendPid.equals(pid)) {
+                    if (friendOfFriendPid == pid) {
                         continue outer;
                     }
                 }
 
-                replicasThatWereJustThereForThisUsersSake.add(friendId);
+                replicasToDelete.add(friendId);
             }
         }
 
-        return replicasThatWereJustThereForThisUsersSake;
+        return replicasToDelete;
     }
 
     static boolean shouldDeleteReplicaInTargetPartition(Integer uid, Integer targetPid, State state) {

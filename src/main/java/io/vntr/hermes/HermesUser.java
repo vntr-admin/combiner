@@ -42,6 +42,7 @@ public class HermesUser extends User {
         manager.updateLogicalPidCache(getId(), logicalPid);
     }
 
+    //TODO: you may as well move this junk into a new HermesRepartitioner class
     public LogicalUser getLogicalUser(boolean determineWeightsFromPhysicalPartitions) {
         Map<Integer, Integer> pToWeight = new HashMap<>();
         int totalWeight = 0;
