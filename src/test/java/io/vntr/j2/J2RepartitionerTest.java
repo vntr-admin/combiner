@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,7 +53,7 @@ public class J2RepartitionerTest {
     }
 
     @Test
-    public void testHowManyFriendsHaveLogicalPartition() {
+    public void testHowManyFriendsHaveLogicalPartitions() {
         Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
@@ -71,24 +72,11 @@ public class J2RepartitionerTest {
 
         J2Repartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
 
-        int numFriendsOf1On1 = J2Repartitioner.howManyFriendsHaveLogicalPartition(1, 1, state);
-        assertTrue(numFriendsOf1On1 == 4);
+        int[] numFriendsOf1 = J2Repartitioner.howManyFriendsHaveLogicalPartitions(1, new int[]{1, 2, 3}, state);
+        assertArrayEquals(numFriendsOf1, new int[]{4, 4, 3});
 
-        int numFriendsOf1On2 = J2Repartitioner.howManyFriendsHaveLogicalPartition(1, 2, state);
-        assertTrue(numFriendsOf1On2 == 4);
-
-        int numFriendsOf1On3 = J2Repartitioner.howManyFriendsHaveLogicalPartition(1, 3, state);
-        assertTrue(numFriendsOf1On3 == 3);
-
-
-        int numFriendsOf2On1 = J2Repartitioner.howManyFriendsHaveLogicalPartition(2, 1, state);
-        assertTrue(numFriendsOf2On1 == 4);
-
-        int numFriendsOf2On2 = J2Repartitioner.howManyFriendsHaveLogicalPartition(2, 2, state);
-        assertTrue(numFriendsOf2On2 == 4);
-
-        int numFriendsOf2On3 = J2Repartitioner.howManyFriendsHaveLogicalPartition(2, 3, state);
-        assertTrue(numFriendsOf2On3 == 4);
+        int[] numFriendsOf2 = J2Repartitioner.howManyFriendsHaveLogicalPartitions(2, new int[]{1, 2, 3}, state);
+        assertArrayEquals(numFriendsOf2, new int[]{4, 4, 4});
     }
 
     @Test
@@ -155,7 +143,7 @@ public class J2RepartitionerTest {
         }
 
         J2Repartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
-        J2Manager manager = J2InitUtils.initGraph(1, 1, 1, 1, 0, partitions, friendships);
+        J2Manager manager = J2InitUtils.initGraph(1, 1, 1, 1, 10, 0, partitions, friendships);
 
         J2Repartitioner.logicalSwap(1, 10, state);
         J2Repartitioner.logicalSwap(5, 7, state);

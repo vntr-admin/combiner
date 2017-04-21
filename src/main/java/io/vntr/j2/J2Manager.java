@@ -16,6 +16,7 @@ public class J2Manager {
     private float alpha;
     private float initialT;
     private float deltaT;
+    private int numRestarts;
     private long migrationTally;
     private long logicalMigrationTally;
     private double logicalMigrationRatio;
@@ -28,11 +29,12 @@ public class J2Manager {
     private int nextPid = 1;
     private int nextUid = 1;
 
-    public J2Manager(float alpha, float initialT, float deltaT, int k, double logicalMigrationRatio) {
+    public J2Manager(float alpha, float initialT, float deltaT, int k, int numRestarts, double logicalMigrationRatio) {
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
         this.k = k;
+        this.numRestarts = numRestarts;
         this.logicalMigrationRatio = logicalMigrationRatio;
         uMap = new HashMap<>();
         this.repartitioner = new J2Repartitioner(this, alpha, initialT, deltaT, k);
@@ -92,7 +94,7 @@ public class J2Manager {
     }
 
     public void repartition() {
-        increaseLogicalMigrationTally(repartitioner.repartition(10));
+        increaseLogicalMigrationTally(repartitioner.repartition(numRestarts));
     }
 
     Integer getInitialPartitionId() {

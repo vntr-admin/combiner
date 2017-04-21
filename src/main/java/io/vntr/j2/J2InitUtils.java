@@ -7,8 +7,8 @@ import java.util.Set;
  * Created by robertlindquist on 4/12/17.
  */
 public class J2InitUtils {
-    public static J2Manager initGraph(float alpha, float initialT, float deltaT, int k, double logicalMigrationRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        J2Manager manager = new J2Manager(alpha, initialT, deltaT, k, logicalMigrationRatio);
+    public static J2Manager initGraph(float alpha, float initialT, float deltaT, int k, int numRestarts, double logicalMigrationRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+        J2Manager manager = new J2Manager(alpha, initialT, deltaT, k, numRestarts, logicalMigrationRatio);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {

@@ -72,6 +72,8 @@ public class TraceRunner {
 
     public static void main(String[] args) throws Exception {
 
+        Thread.sleep(5000);
+
         Properties props = new Properties();
         props.load(new FileInputStream(CONFIG_FILE));
 
@@ -181,6 +183,7 @@ public class TraceRunner {
         private Float iterationCutoffRatio = 0.0025f;
         private Integer hermesK = 3;
         private Integer minNumReplicas = 0;
+        private Integer numRestarts = 10;
         private double assortivityCheckProbability = 1;
         private double latencyCheckProbability = 1;
         private double validityCheckProbability = 0;
@@ -310,6 +313,14 @@ public class TraceRunner {
             this.minNumReplicas = minNumReplicas;
         }
 
+        public Integer getNumRestarts() {
+            return numRestarts;
+        }
+
+        public void setNumRestarts(Integer numRestarts) {
+            this.numRestarts = numRestarts;
+        }
+
         public double getAssortivityCheckProbability() {
             return assortivityCheckProbability;
         }
@@ -352,7 +363,8 @@ public class TraceRunner {
         public static final String MAX_MOVES_FLAG = "-maxMove";
         public static final String CUTOFF_FLAG = "-cutoff";
         public static final String INITIAL_T_BEFRIEND_FLAG = "-initTfriend";
-        public static final String DELTA_T_BEFRIEND_FLAG = "-deltaTfriend";
+        public static final String NUM_RESTARTS_FLAG = "-restarts";
+        public static final String DELTA_T_BEFRIEND_FLAG = "-rest";
         public static final String ASSORTIVITY_FLAG = "-assortivity";
         public static final String LATENCY_FLAG = "-delay";
         public static final String VALIDITY_FLAG = "-validity";
@@ -373,6 +385,7 @@ public class TraceRunner {
                 case CUTOFF_FLAG:              setIterationCutoffRatio((float) parsed); break;
                 case INITIAL_T_BEFRIEND_FLAG:  setBefriendInitialT((float) parsed);     break;
                 case DELTA_T_BEFRIEND_FLAG:    setBefriendDeltaT((float) parsed);       break;
+                case NUM_RESTARTS_FLAG:        setNumRestarts((int) parsed);            break;
                 case ASSORTIVITY_FLAG:         setAssortivityCheckProbability(parsed);  break;
                 case LATENCY_FLAG:             setLatencyCheckProbability(parsed);      break;
                 case VALIDITY_FLAG:            setValidityCheckProbability(parsed);     break;
@@ -523,6 +536,7 @@ public class TraceRunner {
                         parsedArgs.getInitialT(),
                         parsedArgs.getDeltaT(),
                         parsedArgs.getJaK(),
+                        parsedArgs.getNumRestarts(),
                         parsedArgs.getLogicalMigrationRatio(),
                         trace.getPartitions(),
                         trace.getFriendships());
