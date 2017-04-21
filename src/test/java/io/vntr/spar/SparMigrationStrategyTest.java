@@ -64,20 +64,20 @@ public class SparMigrationStrategyTest {
         SparUser sparUser6 = manager.getUserMasterById(userId6);
 
         outer:
-        for (Integer partitionId : sparUser6.getReplicaPartitionIds()) {
+        for (Integer partitionId : sparUser6.getReplicaPids()) {
             for (Integer userId : userIdToUserMap.keySet()) {
                 SparUser sparUser = manager.getUserMasterById(userId);
-                if (sparUser.getMasterPartitionId().equals(partitionId)) {
+                if (sparUser.getMasterPid().equals(partitionId)) {
                     manager.befriend(sparUser, sparUser6);
                     break outer;
                 }
             }
         }
 
-        Integer friendPartitionId = manager.getUserMasterById(sparUser6.getFriendIDs().iterator().next()).getMasterPartitionId();
+        Integer friendPartitionId = manager.getUserMasterById(sparUser6.getFriendIDs().iterator().next()).getMasterPid();
 
         assertTrue(strategy.scoreReplicaPromotion(sparUser6, friendPartitionId) == 1f);
-        Set<Integer> replicaPartitionIds = new HashSet<>(sparUser6.getReplicaPartitionIds());
+        Set<Integer> replicaPartitionIds = new HashSet<>(sparUser6.getReplicaPids());
         replicaPartitionIds.remove(friendPartitionId);
         Integer nonFriendPartitionId = replicaPartitionIds.iterator().next();
         assertTrue(strategy.scoreReplicaPromotion(sparUser6, nonFriendPartitionId) == 0f);
@@ -92,7 +92,7 @@ public class SparMigrationStrategyTest {
         Set<SparUser> usersOnNonFriendPartition = new HashSet<>();
         for (Integer userId : userIdToUserMap.keySet()) {
             SparUser sparUser = manager.getUserMasterById(userId);
-            if (sparUser.getMasterPartitionId().equals(nonFriendPartitionId)) {
+            if (sparUser.getMasterPid().equals(nonFriendPartitionId)) {
                 usersOnNonFriendPartition.add(sparUser);
             }
         }

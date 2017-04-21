@@ -25,7 +25,7 @@ public class SparmesMigrationStrategy {
         NavigableSet<Score> scores = new TreeSet<>();
         for (Integer userId : masterIds) {
             SparmesUser user = manager.getUserMasterById(userId);
-            for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer replicaPartitionId : user.getReplicaPids()) {
                 scores.add(new Score(userId, replicaPartitionId, scoreReplicaPromotion(user, replicaPartitionId)));
             }
         }
@@ -97,7 +97,7 @@ public class SparmesMigrationStrategy {
         SparmesUser user = manager.getUserMasterById(uid);
         int minMasters = Integer.MAX_VALUE;
         Integer minPid = null;
-        for(Integer pid : user.getReplicaPartitionIds()) {
+        for(Integer pid : user.getReplicaPids()) {
             int numMasters = manager.getPartitionById(pid).getNumMasters() + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;
@@ -112,7 +112,7 @@ public class SparmesMigrationStrategy {
         int numFriendsOnPartition = 0;
         for (Integer friendId : user.getFriendIDs()) {
             SparmesUser friend = manager.getUserMasterById(friendId);
-            if (friend.getMasterPartitionId().equals(replicaPartitionId)) {
+            if (friend.getMasterPid().equals(replicaPartitionId)) {
                 numFriendsOnPartition++;
             }
         }

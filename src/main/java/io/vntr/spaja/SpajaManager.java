@@ -15,19 +15,17 @@ public class SpajaManager {
     private float initialT;
     private float deltaT;
 
-    private static final Integer defaultStartingId = 1;
-
     private int nextPid = 1;
     private int nextUid = 1;
     private long migrationTally;
 
-    private Map<Integer, SpajaPartition> partitionIdToPartitionMap;
+    private Map<Integer, SpajaPartition> pMap;
 
-    private Map<Integer, Integer> userIdToMasterPartitionIdMap = new HashMap<>();
+    private Map<Integer, Integer> uMap = new HashMap<>();
 
     public SpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int randomSamplingSize) {
         this.minNumReplicas = minNumReplicas;
-        this.partitionIdToPartitionMap = new HashMap<>();
+        this.pMap = new HashMap<>();
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
@@ -55,15 +53,15 @@ public class SpajaManager {
     }
 
     public SpajaPartition getPartitionById(Integer id) {
-        return partitionIdToPartitionMap.get(id);
+        return pMap.get(id);
     }
 
     public Integer getMasterPartitionIdForUser(Integer uid) {
-        return userIdToMasterPartitionIdMap.get(uid);
+        return uMap.get(uid);
     }
 
     public SpajaUser getUserMasterById(Integer id) {
-        Integer pid = userIdToMasterPartitionIdMap.get(id);
+        Integer pid = uMap.get(id);
         return getPartitionById(pid).getMasterById(id);
     }
 
@@ -76,15 +74,15 @@ public class SpajaManager {
     }
 
     public int getNumUsers() {
-        return userIdToMasterPartitionIdMap.size();
+        return uMap.size();
     }
 
     public Set<Integer> getAllPartitionIds() {
-        return partitionIdToPartitionMap.keySet();
+        return pMap.keySet();
     }
 
     public Set<Integer> getAllUserIds() {
-        return userIdToMasterPartitionIdMap.keySet();
+        return uMap.keySet();
     }
 
     public void addUser(User user) {
@@ -92,43 +90,42 @@ public class SpajaManager {
 
         int uid = user.getId();
         SpajaUser spajaUser = new SpajaUser(uid, alpha, minNumReplicas, this);
-        spajaUser.setMasterPartitionId(masterPartitionId);
-        spajaUser.setPartitionId(masterPartitionId);
+        spajaUser.setMasterPid(masterPartitionId);
 
         addUser(spajaUser, masterPartitionId);
 
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
             addReplica(spajaUser, id);
         }
-
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(SpajaUser user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
-        userIdToMasterPartitionIdMap.put(user.getId(), masterPartitionId);
+        uMap.put(user.getId(), masterPartitionId);
+        if(user.getId() >= nextUid) {
+            nextUid = user.getId() + 1;
+        }
+
     }
 
     public void removeUser(Integer userId) {
         SpajaUser user = getUserMasterById(userId);
 
         //Remove user from relevant partitions
-        getPartitionById(user.getMasterPartitionId()).removeMaster(userId);
-        for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
+        getPartitionById(user.getMasterPid()).removeMaster(userId);
+        for (Integer replicaPartitionId : user.getReplicaPids()) {
             getPartitionById(replicaPartitionId).removeReplica(userId);
         }
 
-        //Remove user from userIdToMasterPartitionIdMap
-        userIdToMasterPartitionIdMap.remove(userId);
+        //Remove user from uMap
+        uMap.remove(userId);
 
         //Remove friendships
         for (Integer friendId : user.getFriendIDs()) {
             SpajaUser friendMaster = getUserMasterById(friendId);
             friendMaster.unfriend(userId);
 
-            for (Integer friendReplicaPartitionId : friendMaster.getReplicaPartitionIds()) {
+            for (Integer friendReplicaPartitionId : friendMaster.getReplicaPids()) {
                 SpajaPartition friendReplicaPartition = getPartitionById(friendReplicaPartitionId);
                 friendReplicaPartition.getReplicaById(friendId).unfriend(userId);
             }
@@ -142,14 +139,14 @@ public class SpajaManager {
     }
 
     void addPartition(Integer pid) {
-        partitionIdToPartitionMap.put(pid, new SpajaPartition(pid));
+        pMap.put(pid, new SpajaPartition(pid));
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
     }
 
     public void removePartition(Integer id) {
-        partitionIdToPartitionMap.remove(id);
+        pMap.remove(id);
     }
 
     public void addReplica(SpajaUser user, Integer destPid) {
@@ -157,42 +154,41 @@ public class SpajaManager {
 
         //Update the replicaPartitionIds to reflect this addition
         replicaOfUser.addReplicaPartitionId(destPid);
-        for (Integer pid : user.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(pid).getReplicaById(user.getId()).addReplicaPartitionId(destPid);
+        for (Integer pid : user.getReplicaPids()) {
+            pMap.get(pid).getReplicaById(user.getId()).addReplicaPartitionId(destPid);
         }
         user.addReplicaPartitionId(destPid);
     }
 
     SpajaUser addReplicaNoUpdates(SpajaUser user, Integer destPid) {
         SpajaUser replica = user.clone();
-        replica.setPartitionId(destPid);
-        partitionIdToPartitionMap.get(destPid).addReplica(replica);
+        pMap.get(destPid).addReplica(replica);
         return replica;
     }
 
     public void removeReplica(SpajaUser user, Integer removalPartitionId) {
         //Delete it from each replica's replicaPartitionIds
-        for (Integer currentReplicaPartitionId : user.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(removalPartitionId);
+        for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
+            pMap.get(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(removalPartitionId);
         }
 
         //Delete it from the master's replicaPartitionIds
         user.removeReplicaPartitionId(removalPartitionId);
 
         //Actually remove the replica from the partition itself
-        partitionIdToPartitionMap.get(removalPartitionId).removeReplica(user.getId());
+        pMap.get(removalPartitionId).removeReplica(user.getId());
     }
 
     public void befriend(SpajaUser smallerUser, SpajaUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
 
-        for (Integer replicaPartitionId : smallerUser.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
+        for (Integer replicaPartitionId : smallerUser.getReplicaPids()) {
+            pMap.get(replicaPartitionId).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
         }
 
-        for (Integer replicaPartitionId : largerUser.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
+        for (Integer replicaPartitionId : largerUser.getReplicaPids()) {
+            pMap.get(replicaPartitionId).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
         }
     }
 
@@ -200,25 +196,25 @@ public class SpajaManager {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
 
-        for (Integer partitionId : smallerUser.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(partitionId).getReplicaById(smallerUser.getId()).unfriend(largerUser.getId());
+        for (Integer partitionId : smallerUser.getReplicaPids()) {
+            pMap.get(partitionId).getReplicaById(smallerUser.getId()).unfriend(largerUser.getId());
         }
 
-        for (Integer partitionId : largerUser.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(partitionId).getReplicaById(largerUser.getId()).unfriend(smallerUser.getId());
+        for (Integer partitionId : largerUser.getReplicaPids()) {
+            pMap.get(partitionId).getReplicaById(largerUser.getId()).unfriend(smallerUser.getId());
         }
     }
 
     public void moveUser(SpajaUser user, Integer toPid, Set<Integer> replicateInDestPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
-        Integer fromPid = user.getMasterPartitionId();
+        Integer fromPid = user.getMasterPid();
 
         moveMasterAndInformReplicas(uid, fromPid, toPid);
 
         //Step 2: add the necessary replicas
         for (Integer friendId : user.getFriendIDs()) {
-            if (userIdToMasterPartitionIdMap.get(friendId).equals(fromPid)) {
+            if (uMap.get(friendId).equals(fromPid)) {
                 addReplica(user, fromPid);
                 break;
             }
@@ -234,8 +230,8 @@ public class SpajaManager {
         // (2) replicas of user's friends in oldPartition with no other purpose
         // (3) [the replica of the new friend that prompted this move should already be accounted for in (2)]
 
-        if (user.getReplicaPartitionIds().contains(toPid)) {
-            if (user.getReplicaPartitionIds().size() <= minNumReplicas) {
+        if (user.getReplicaPids().contains(toPid)) {
+            if (user.getReplicaPids().size() <= minNumReplicas) {
                 //add one in another partition that doesn't yet have one of this user
                 addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user));
             }
@@ -251,18 +247,18 @@ public class SpajaManager {
     }
 
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
-        SpajaPartition partition = partitionIdToPartitionMap.get(partitionId);
+        SpajaPartition partition = pMap.get(partitionId);
         SpajaUser user = partition.getReplicaById(userId);
-        user.setMasterPartitionId(partitionId);
+        user.setMasterPid(partitionId);
         user.removeReplicaPartitionId(partitionId);
         partition.addMaster(user);
         partition.removeReplica(userId);
 
-        userIdToMasterPartitionIdMap.put(userId, partitionId);
+        uMap.put(userId, partitionId);
 
-        for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
-            SpajaUser replica = partitionIdToPartitionMap.get(replicaPartitionId).getReplicaById(userId);
-            replica.setMasterPartitionId(partitionId);
+        for (Integer replicaPartitionId : user.getReplicaPids()) {
+            SpajaUser replica = pMap.get(replicaPartitionId).getReplicaById(userId);
+            replica.setMasterPid(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
 
@@ -278,7 +274,7 @@ public class SpajaManager {
         int minMasters = Integer.MAX_VALUE;
         Integer minId = -1;
 
-        for (Integer id : partitionIdToPartitionMap.keySet()) {
+        for (Integer id : pMap.keySet()) {
             int numMasters = getPartitionById(id).getNumMasters();
             if (numMasters < minMasters) {
                 minMasters = numMasters;
@@ -290,22 +286,22 @@ public class SpajaManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SpajaUser user) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(partitionIdToPartitionMap.keySet());
-        potentialReplicaLocations.remove(user.getMasterPartitionId());
-        potentialReplicaLocations.removeAll(user.getReplicaPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
+        potentialReplicaLocations.remove(user.getMasterPid());
+        potentialReplicaLocations.removeAll(user.getReplicaPids());
         List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
     Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(partitionIdToPartitionMap.keySet());
+        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(pMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
-        for (Integer pid : partitionIdToPartitionMap.keySet()) {
+        for (Integer pid : pMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
         return map;
@@ -313,7 +309,7 @@ public class SpajaManager {
 
     Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
-        for (Integer pid : partitionIdToPartitionMap.keySet()) {
+        for (Integer pid : pMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
         return map;
@@ -321,11 +317,11 @@ public class SpajaManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for (Integer uid : userIdToMasterPartitionIdMap.keySet()) {
+        for (Integer uid : uMap.keySet()) {
             SpajaUser user = getUserMasterById(uid);
-            Integer pid = user.getMasterPartitionId();
+            Integer pid = user.getMasterPid();
             for (Integer friendId : user.getFriendIDs()) {
-                if (!pid.equals(userIdToMasterPartitionIdMap.get(friendId))) {
+                if (!pid.equals(uMap.get(friendId))) {
                     count++;
                 }
             }
@@ -346,13 +342,12 @@ public class SpajaManager {
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
 
-        userIdToMasterPartitionIdMap.put(uid, toPid);
+        uMap.put(uid, toPid);
 
-        user.setMasterPartitionId(toPid);
-        user.setPartitionId(toPid);
+        user.setMasterPid(toPid);
 
-        for (Integer rPid : user.getReplicaPartitionIds()) {
-            partitionIdToPartitionMap.get(rPid).getReplicaById(uid).setMasterPartitionId(toPid);
+        for (Integer rPid : user.getReplicaPids()) {
+            pMap.get(rPid).getReplicaById(uid).setMasterPid(toPid);
         }
     }
 
@@ -360,8 +355,8 @@ public class SpajaManager {
         SpajaUser u1 = getUserMasterById(uid1);
         SpajaUser u2 = getUserMasterById(uid2);
 
-        Integer pid1 = u1.getMasterPartitionId();
-        Integer pid2 = u2.getMasterPartitionId();
+        Integer pid1 = u1.getMasterPid();
+        Integer pid2 = u2.getMasterPid();
 
         //TODO: make sure this adds friend replicas on the new partition
         SwapChanges swapChanges = strategy.getSwapChanges(u1, u2);
@@ -395,7 +390,7 @@ public class SpajaManager {
 
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
+        for(Integer uid : uMap.keySet()) {
             friendships.put(uid, getUserMasterById(uid).getFriendIDs());
         }
         return friendships;
@@ -420,7 +415,7 @@ public class SpajaManager {
 
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
-        for(int pid : partitionIdToPartitionMap.keySet()) {
+        for(int pid : pMap.keySet()) {
             m.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
         return m;
@@ -436,7 +431,7 @@ public class SpajaManager {
 
     @Override
     public String toString() {
-        return "minNumReplicas:" + minNumReplicas + "|k:" + randomSamplingSize + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
+        return "minNumReplicas:" + minNumReplicas + "|k:" + randomSamplingSize + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
     }
 
 
@@ -444,10 +439,10 @@ public class SpajaManager {
     void checkValidity() {
 
         //Check masters
-        for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
+        for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
-            for(Integer pid : partitionIdToPartitionMap.keySet()) {
-                if(partitionIdToPartitionMap.get(pid).getIdsOfMasters().contains(uid)) {
+            for(Integer pid : pMap.keySet()) {
+                if(pMap.get(pid).getIdsOfMasters().contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");
                     }
@@ -458,27 +453,27 @@ public class SpajaManager {
             if(observedMasterPid == null) {
                 throw new RuntimeException("user must be in some partition");
             }
-            if(!observedMasterPid.equals(userIdToMasterPartitionIdMap.get(uid))) {
+            if(!observedMasterPid.equals(uMap.get(uid))) {
                 throw new RuntimeException("Mismatch between uMap's location of user and partition's");
             }
-            if(!observedMasterPid.equals(getUserMasterById(uid).getMasterPartitionId())) {
+            if(!observedMasterPid.equals(getUserMasterById(uid).getMasterPid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
         }
 
         //check replicas
-        for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
+        for(Integer uid : uMap.keySet()) {
             SpajaUser user = getUserMasterById(uid);
             Set<Integer> observedReplicaPids = new HashSet<>();
-            for(Integer pid : partitionIdToPartitionMap.keySet()) {
-                if(partitionIdToPartitionMap.get(pid).getIdsOfReplicas().contains(uid)) {
+            for(Integer pid : pMap.keySet()) {
+                if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {
                     observedReplicaPids.add(pid);
                 }
             }
             if(observedReplicaPids.size() < minNumReplicas) {
                 throw new RuntimeException("Insufficient replicas");
             }
-            if(!observedReplicaPids.equals(user.getReplicaPartitionIds())) {
+            if(!observedReplicaPids.equals(user.getReplicaPids())) {
                 throw new RuntimeException("Mismatch between user's replica PIDs and system's");
             }
         }

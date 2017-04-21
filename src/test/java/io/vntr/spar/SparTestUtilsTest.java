@@ -66,11 +66,11 @@ public class SparTestUtilsTest {
             SparUser user2 = manager.getUserMasterById(friendship.val2);
             assertTrue(user1.getFriendIDs().contains(friendship.val2));
             assertTrue(user2.getFriendIDs().contains(friendship.val1));
-            for (Integer replicaId : user1.getReplicaPartitionIds()) {
+            for (Integer replicaId : user1.getReplicaPids()) {
                 SparUser user1Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val1);
                 assertTrue(user1Replica.getFriendIDs().contains(friendship.val2));
             }
-            for (Integer replicaId : user2.getReplicaPartitionIds()) {
+            for (Integer replicaId : user2.getReplicaPids()) {
                 SparUser user2Replica = manager.getPartitionById(replicaId).getReplicaById(friendship.val2);
                 assertTrue(user2Replica.getFriendIDs().contains(friendship.val1));
             }
@@ -86,9 +86,9 @@ public class SparTestUtilsTest {
         //Ensure that masters and replicas are placed in the correct partition
         for (Integer userId : allUserIds) {
             SparUser user = manager.getUserMasterById(userId);
-            Integer masterPartitionId = user.getMasterPartitionId();
+            Integer masterPartitionId = user.getMasterPid();
             assertTrue(partitionIdToMastersMap.get(masterPartitionId).contains(userId));
-            for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer replicaPartitionId : user.getReplicaPids()) {
                 assertTrue(partitionIdToReplicasMap.get(replicaPartitionId).contains(userId));
             }
         }

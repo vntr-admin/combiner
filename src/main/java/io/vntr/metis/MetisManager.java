@@ -83,14 +83,15 @@ public class MetisManager {
         int uid = user.getId();
         MetisUser MetisUser = new MetisUser(uid, initialPartitionId);
         addUser(MetisUser);
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
-    void addUser(MetisUser MetisUser) {
-        uMap.put(MetisUser.getId(), MetisUser);
-        partitions.get(MetisUser.getPid()).add(MetisUser.getId());
+    void addUser(MetisUser metisUser) {
+        uMap.put(metisUser.getId(), metisUser);
+        partitions.get(metisUser.getPid()).add(metisUser.getId());
+        if(metisUser.getId() >= nextUid) {
+            nextUid = metisUser.getId() + 1;
+        }
+
     }
 
     public void removeUser(Integer uid) {

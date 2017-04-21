@@ -5,6 +5,7 @@ import java.util.Set;
 
 public class User {
     private Integer id;
+    //TODO: you may as well move pid or masterPid in here
     private Set<Integer> friendIDs;
 
     public User(Integer id) {

@@ -25,7 +25,7 @@ public class SpajaMigrationStrategy {
         NavigableSet<Score> scores = new TreeSet<>();
         for (Integer userId : masterIds) {
             SpajaUser user = manager.getUserMasterById(userId);
-            for (Integer replicaPartitionId : user.getReplicaPartitionIds()) {
+            for (Integer replicaPartitionId : user.getReplicaPids()) {
                 if(replicaPartitionId.intValue() == partitionId) {
                     continue;
                 }
@@ -101,7 +101,7 @@ public class SpajaMigrationStrategy {
         SpajaUser user = manager.getUserMasterById(uid);
         int minMasters = Integer.MAX_VALUE;
         Integer minPid = null;
-        for(Integer pid : user.getReplicaPartitionIds()) {
+        for(Integer pid : user.getReplicaPids()) {
             if(!allPids.contains(pid)) {
                 continue;
             }
@@ -119,7 +119,7 @@ public class SpajaMigrationStrategy {
         int numFriendsOnPartition = 0;
         for (Integer friendId : user.getFriendIDs()) {
             SpajaUser friend = manager.getUserMasterById(friendId);
-            if (friend.getMasterPartitionId().equals(replicaPartitionId)) {
+            if (friend.getMasterPid().equals(replicaPartitionId)) {
                 numFriendsOnPartition++;
             }
         }

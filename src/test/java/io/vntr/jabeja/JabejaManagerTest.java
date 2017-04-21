@@ -125,7 +125,7 @@ public class JabejaManagerTest {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
             friendships.put(uid1, new HashSet<Integer>());
-            for(Integer uid2 = 1; uid2 <= uid1; uid2++) {
+            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }

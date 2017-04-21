@@ -93,14 +93,15 @@ public class JabejaManager {
         int uid = user.getId();
         JabejaUser jabejaUser = new JabejaUser(uid, initialPartitionId, alpha, this);
         addUser(jabejaUser);
-        if(uid >= nextUid) {
-            nextUid = uid + 1;
-        }
     }
 
     void addUser(JabejaUser jabejaUser) {
         uMap.put(jabejaUser.getId(), jabejaUser);
         partitions.get(jabejaUser.getPid()).add(jabejaUser.getId());
+        if(jabejaUser.getId() >= nextUid) {
+            nextUid = jabejaUser.getId() + 1;
+        }
+
     }
 
     public void removeUser(Integer uid) {

@@ -317,10 +317,8 @@ public class SpajaAnalyzer {
                 SpajaUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
                 assertTrue(master.getId().equals(replica.getId()));
                 assertTrue(master.getFriendIDs().equals(replica.getFriendIDs()));
-                assertTrue(master.getMasterPartitionId().equals(replica.getMasterPartitionId()));
-                assertTrue(master.getReplicaPartitionIds().equals(replica.getReplicaPartitionIds()));
-                assertTrue(master.getPartitionId().equals(master.getMasterPartitionId()));
-                assertTrue(replica.getPartitionId().equals(replicaPid));
+                assertTrue(master.getMasterPid().equals(replica.getMasterPid()));
+                assertTrue(master.getReplicaPids().equals(replica.getReplicaPids()));
             }
         }
 

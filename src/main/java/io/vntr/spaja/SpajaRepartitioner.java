@@ -93,10 +93,8 @@ public class SpajaRepartitioner {
                 SpajaUser replica = manager.getPartitionById(replicaPid).getReplicaById(uid);
                 isValid &= (master.getId().equals(replica.getId()));
                 isValid &= (master.getFriendIDs().equals(replica.getFriendIDs()));
-                isValid &= (master.getMasterPartitionId().equals(replica.getMasterPartitionId()));
-                isValid &= (master.getReplicaPartitionIds().equals(replica.getReplicaPartitionIds()));
-                isValid &= (master.getPartitionId().equals(master.getMasterPartitionId()));
-                isValid &= (replica.getPartitionId().equals(replicaPid));
+                isValid &= (master.getMasterPid().equals(replica.getMasterPid()));
+                isValid &= (master.getReplicaPids().equals(replica.getReplicaPids()));
             }
         }
 

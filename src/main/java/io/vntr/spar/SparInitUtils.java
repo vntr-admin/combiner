@@ -22,8 +22,7 @@ public class SparInitUtils {
         for(Integer uid : friendships.keySet()) {
             SparUser user = new SparUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setMasterPartitionId(pid);
-            user.setPartitionId(pid);
+            user.setMasterPid(pid);
 
             manager.addUser(user, pid);
         }

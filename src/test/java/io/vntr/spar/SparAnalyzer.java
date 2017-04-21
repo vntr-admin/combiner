@@ -62,10 +62,8 @@ public class SparAnalyzer {
                 SparUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
                 assertEquals(master.getId(), replica.getId());
                 assertEquals(master.getFriendIDs(), replica.getFriendIDs());
-                assertEquals(master.getMasterPartitionId(), replica.getMasterPartitionId());
-                assertEquals(master.getReplicaPartitionIds(), replica.getReplicaPartitionIds());
-                assertEquals(master.getPartitionId(), master.getMasterPartitionId());
-                assertEquals(replica.getPartitionId(), (Integer) replicaPid);
+                assertEquals(master.getMasterPid(), replica.getMasterPid());
+                assertEquals(master.getReplicaPids(), replica.getReplicaPids());
             }
         }
 

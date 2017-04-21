@@ -6,54 +6,47 @@ import java.util.Set;
 
 import io.vntr.User;
 
+import static io.vntr.Utils.safeEquals;
+import static io.vntr.Utils.safeHashCode;
+
 public class SparUser extends User {
-    private Integer partitionId;
-    private Integer masterPartitionId;
-    private Set<Integer> replicaPartitionIds;
+    private Integer masterPid;
+    private Set<Integer> replicaPids;
 
     public SparUser(Integer id) {
         super(id);
-        replicaPartitionIds = new HashSet<>();
+        replicaPids = new HashSet<>();
     }
 
-    public Integer getPartitionId() {
-        return partitionId;
+    public Integer getMasterPid() {
+        return masterPid;
     }
 
-    public void setPartitionId(Integer partitionId) {
-        this.partitionId = partitionId;
-    }
-
-    public Integer getMasterPartitionId() {
-        return masterPartitionId;
-    }
-
-    public void setMasterPartitionId(Integer masterPartitionId) {
-        this.masterPartitionId = masterPartitionId;
+    public void setMasterPid(Integer masterPid) {
+        this.masterPid = masterPid;
     }
 
     public void addReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPartitionIds.add(replicaPartitionId);
+        this.replicaPids.add(replicaPartitionId);
     }
 
     public void removeReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPartitionIds.remove(replicaPartitionId);
+        this.replicaPids.remove(replicaPartitionId);
     }
 
     public void addReplicaPartitionIds(Collection<Integer> replicaPartitionIds) {
-        this.replicaPartitionIds.addAll(replicaPartitionIds);
+        this.replicaPids.addAll(replicaPartitionIds);
     }
 
-    public Set<Integer> getReplicaPartitionIds() {
-        return replicaPartitionIds;
+    public Set<Integer> getReplicaPids() {
+        return replicaPids;
     }
 
     @Override
     public SparUser clone() {
         SparUser user = new SparUser(getId());
-        user.setPartitionId(partitionId);
-        user.setMasterPartitionId(masterPartitionId);
-        user.addReplicaPartitionIds(replicaPartitionIds);
+        user.setMasterPid(masterPid);
+        user.addReplicaPartitionIds(replicaPids);
         for (Integer friendId : getFriendIDs()) {
             user.befriend(friendId);
         }
@@ -61,12 +54,30 @@ public class SparUser extends User {
         return user;
     }
 
-    public boolean isReplica() {
-        return !partitionId.equals(masterPartitionId);
+    @Override
+    public String toString() {
+        return super.toString() + "|masterP:" + masterPid + "|Reps:" + replicaPids.toString();
     }
 
     @Override
-    public String toString() {
-        return super.toString() + "|masterP:" + masterPartitionId + "|P:" + partitionId + "|Reps:" + replicaPartitionIds.toString();
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SparUser)) return false;
+
+        SparUser that = (SparUser) o;
+
+        return     safeEquals(masterPid,           that.masterPid)
+                && safeEquals(this.getId(),        that.getId())
+                && safeEquals(replicaPids,         that.getReplicaPids())
+                && safeEquals(this.getFriendIDs(), that.getFriendIDs());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = safeHashCode(masterPid);
+        result = 31 * result + safeHashCode(getId());
+        result = 31 * result + safeHashCode(replicaPids);
+        result = 31 * result + safeHashCode(getFriendIDs());
+        return result;
     }
 }
