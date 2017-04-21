@@ -997,6 +997,7 @@ public class SparBefriendingStrategyTest {
     }
 
     @Test
+    //TODO: this failed once
     public void testFindReplicasInMovingPartitionToDeleteIsolatedMoverFriendsMeetRedundancyRequirementWithNewlyAddedReplicas() {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
