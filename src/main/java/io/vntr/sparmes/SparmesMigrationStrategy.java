@@ -47,12 +47,12 @@ public class SparmesMigrationStrategy {
         usersYetUnplaced.removeAll(strategy.keySet());
 
         for (Integer uid : usersYetUnplaced) {
-            Integer leastOverloadedPid = getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getAllPartitionIds());
+            Integer leastOverloadedPid = getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, manager.getPids());
             if(leastOverloadedPid != null) {
                 strategy.put(uid, leastOverloadedPid);
             }
             else {
-                strategy.put(uid, getLeastOverloadedPartition(manager.getAllPartitionIds(), strategy, partitionId));
+                strategy.put(uid, getLeastOverloadedPartition(manager.getPids(), strategy, partitionId));
             }
         }
 
@@ -128,14 +128,14 @@ public class SparmesMigrationStrategy {
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {
         int numUsers = manager.getNumUsers();
-        int numPartitions = manager.getAllPartitionIds().size() - partitionIdsToSkip.size();
+        int numPartitions = manager.getPids().size() - partitionIdsToSkip.size();
         int maxUsersPerPartition = numUsers / numPartitions;
         if (numUsers % numPartitions != 0) {
             maxUsersPerPartition++;
         }
 
         Map<Integer, Integer> partitionToNumMastersMap = new HashMap<>();
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (partitionIdsToSkip.contains(partitionId)) {
                 continue;
             }

@@ -53,7 +53,7 @@ public class SpJ2MigrationStrategyTest {
 
         manager.befriend(sparUser3, sparUser1);
 
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             assertTrue(manager.getPartitionById(partitionId).getNumMasters() == 1);
         }
 
@@ -127,14 +127,14 @@ public class SpJ2MigrationStrategyTest {
         }
 
         Set<Integer> partitionsWithOnlyOneMaster = new HashSet<>();
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (manager.getPartitionById(partitionId).getNumMasters() == 1) {
                 partitionsWithOnlyOneMaster.add(partitionId);
             }
         }
 
         Map<Integer, Integer> remainingSpotsInPartitions = strategy.getRemainingSpotsInPartitions(new HashSet<Integer>());
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (partitionsWithOnlyOneMaster.contains(partitionId)) {
                 assertTrue(remainingSpotsInPartitions.get(partitionId) == 1);
             } else {
@@ -143,7 +143,7 @@ public class SpJ2MigrationStrategyTest {
         }
 
         Integer partitionIdToRob = partitionsWithOnlyOneMaster.iterator().next();
-        Set<Integer> partitionsWithTwoMasters = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithTwoMasters = new HashSet<>(manager.getPids());
         partitionsWithTwoMasters.removeAll(partitionsWithOnlyOneMaster);
         Integer partitionIdToSendTo = partitionsWithTwoMasters.iterator().next();
 
@@ -152,7 +152,7 @@ public class SpJ2MigrationStrategyTest {
 
         Map<Integer, Integer> remainingSpotsInPartitions2 = strategy.getRemainingSpotsInPartitions(new HashSet<Integer>());
 
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (partitionIdToRob.equals(partitionId)) {
                 assertTrue(remainingSpotsInPartitions2.get(partitionId) == 2);
             } else if (partitionIdToSendTo.equals(partitionId)) {
@@ -165,7 +165,7 @@ public class SpJ2MigrationStrategyTest {
         }
 
         Integer partitionIdWithTwoMasters = -1;
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (manager.getPartitionById(partitionId).getNumMasters() == 2) {
                 partitionIdWithTwoMasters = partitionId;
                 break;
@@ -173,7 +173,7 @@ public class SpJ2MigrationStrategyTest {
         }
 
         Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(new HashSet<>(Arrays.asList(partitionIdWithTwoMasters)));
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (!partitionId.equals(partitionIdWithTwoMasters)) {
                 int numMasters = manager.getPartitionById(partitionId).getNumMasters();
                 int claimedRemainingSpots = remainingSpotsInPartitions3.get(partitionId);

@@ -178,7 +178,7 @@ public class SpJ2TestUtils {
     public static Set<Integer> getUserIdsNotInPartition(SpJ2Manager manager, Integer partitionId) {
         Set<Integer> userIdsNotInPartition = new HashSet<>();
         SpJ2Partition partition = manager.getPartitionById(partitionId);
-        for (Integer userId : manager.getAllUserIds()) {
+        for (Integer userId : manager.getUids()) {
             if (!partition.getIdsOfMasters().contains(userId) && !partition.getIdsOfReplicas().contains(userId)) {
                 userIdsNotInPartition.add(userId);
             }
@@ -188,7 +188,7 @@ public class SpJ2TestUtils {
     }
 
     public static Set<Integer> getColocatedUserIds(SpJ2Manager manager, Integer userId) {
-        Set<Integer> userIds = new HashSet<>(manager.getAllUserIds());
+        Set<Integer> userIds = new HashSet<>(manager.getUids());
         userIds.removeAll(getNonColocatedUserIds(manager, userId));
         return userIds;
     }
@@ -197,7 +197,7 @@ public class SpJ2TestUtils {
         Set<Integer> nonColocatedUserIds = new HashSet<>();
 
         Set<Integer> otherUsersPartitions = getPartitionsWithAPresence(manager, userId);
-        for (Integer curUserId : manager.getAllUserIds()) {
+        for (Integer curUserId : manager.getUids()) {
             Set<Integer> distinctPartitions = new HashSet<>(otherUsersPartitions);
             int initialSize = distinctPartitions.size();
             distinctPartitions.removeAll(getPartitionsWithAPresence(manager, curUserId));
@@ -218,7 +218,7 @@ public class SpJ2TestUtils {
     }
 
     public static Set<Integer> getPartitionsWithNoPresence(SpJ2Manager manager, Integer userId) {
-        Set<Integer> partitionsWithoutAPresence = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAPresence = new HashSet<>(manager.getPids());
         partitionsWithoutAPresence.removeAll(getPartitionsWithAPresence(manager, userId));
         return partitionsWithoutAPresence;
     }
@@ -231,7 +231,7 @@ public class SpJ2TestUtils {
 
     public static Set<Integer> getPartitionIdsWithNMasters(SpJ2Manager manager, int n) {
         Set<Integer> partitionIdsWithNMasters = new HashSet<>();
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (manager.getPartitionById(partitionId).getNumMasters() == n) {
                 partitionIdsWithNMasters.add(partitionId);
             }

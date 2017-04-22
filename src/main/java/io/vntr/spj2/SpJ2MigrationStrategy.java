@@ -105,7 +105,7 @@ public class SpJ2MigrationStrategy {
         Set<Integer> usersYetUnplaced = new HashSet<>(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
 
-        Set<Integer> allPids = manager.getAllPartitionIds();
+        Set<Integer> allPids = manager.getPids();
         for (Integer uid : usersYetUnplaced) {
             Integer targetPid = getLeastOverloadedPartitionWhereThisUserHasAReplica(uid, strategy, allPids);
             if(targetPid != null) {
@@ -184,14 +184,14 @@ public class SpJ2MigrationStrategy {
 
     Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip) {
         int numUsers = manager.getNumUsers();
-        int numPartitions = manager.getAllPartitionIds().size() - partitionIdsToSkip.size();
+        int numPartitions = manager.getPids().size() - partitionIdsToSkip.size();
         int maxUsersPerPartition = numUsers / numPartitions;
         if (numUsers % numPartitions != 0) {
             maxUsersPerPartition++;
         }
 
         Map<Integer, Integer> partitionToNumMastersMap = new HashMap<>();
-        for (Integer partitionId : manager.getAllPartitionIds()) {
+        for (Integer partitionId : manager.getPids()) {
             if (partitionIdsToSkip.contains(partitionId)) {
                 continue;
             }

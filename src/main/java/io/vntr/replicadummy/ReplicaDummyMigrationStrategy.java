@@ -29,7 +29,7 @@ public class ReplicaDummyMigrationStrategy {
 
     Map<Integer, Integer> getPWeightMap(Integer partitionId) {
         Map<Integer, Integer> pWeightMap = new HashMap<>();
-        for(int pid : manager.getAllPartitionIds()) {
+        for(int pid : manager.getPids()) {
             if(pid != partitionId) {
                 pWeightMap.put(pid, manager.getPartitionById(pid).getNumMasters());
             }

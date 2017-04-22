@@ -217,7 +217,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getPids());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
@@ -227,7 +227,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
 
     @Override
     public Integer getNumberOfPartitions() {
-        return manager.getAllPartitionIds().size();
+        return manager.getPids().size();
     }
 
     @Override
@@ -247,12 +247,12 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
 
     @Override
     public Collection<Integer> getUserIds() {
-        return manager.getAllUserIds();
+        return manager.getUids();
     }
 
     @Override
     public Collection<Integer> getPartitionIds() {
-        return manager.getAllPartitionIds();
+        return manager.getPids();
     }
 
     @Override

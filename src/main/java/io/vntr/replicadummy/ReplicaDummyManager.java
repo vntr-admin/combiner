@@ -1,5 +1,6 @@
 package io.vntr.replicadummy;
 
+import io.vntr.IRepManager;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
@@ -9,7 +10,7 @@ import java.util.*;
 /**
  * Created by robertlindquist on 11/23/16.
  */
-public class ReplicaDummyManager {
+public class ReplicaDummyManager implements IRepManager {
 
     private int minNumReplicas;
 
@@ -24,6 +25,7 @@ public class ReplicaDummyManager {
         partitionIdToPartitionMap = new TreeMap<>();
     }
 
+    @Override
     public int getMinNumReplicas() {
         return minNumReplicas;
     }
@@ -32,6 +34,7 @@ public class ReplicaDummyManager {
         return partitionIdToPartitionMap.get(id);
     }
 
+    @Override
     public RepUser getUserMasterById(Integer id) {
         Integer partitionId = userIdToMasterPartitionIdMap.get(id);
         if (partitionId != null) {
@@ -43,24 +46,29 @@ public class ReplicaDummyManager {
         return null;
     }
 
+    @Override
     public int getNumUsers() {
         return userIdToMasterPartitionIdMap.size();
     }
 
-    public Set<Integer> getAllPartitionIds() {
+    @Override
+    public Set<Integer> getPids() {
         return partitionIdToPartitionMap.keySet();
     }
 
-    public Set<Integer> getAllUserIds() {
+    @Override
+    public Set<Integer> getUids() {
         return userIdToMasterPartitionIdMap.keySet();
     }
 
+    @Override
     public int addUser() {
         int newUid = userIdToMasterPartitionIdMap.lastKey() + 1;
         addUser(new User(newUid));
         return newUid;
     }
 
+    @Override
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
@@ -74,11 +82,13 @@ public class ReplicaDummyManager {
         }
     }
 
-    void addUser(RepUser user, Integer masterPartitionId) {
+    @Override
+    public void addUser(RepUser user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
         userIdToMasterPartitionIdMap.put(user.getId(), masterPartitionId);
     }
 
+    @Override
     public void removeUser(Integer userId) {
         RepUser user = getUserMasterById(userId);
 
@@ -103,20 +113,24 @@ public class ReplicaDummyManager {
         }
     }
 
+    @Override
     public Integer addPartition() {
         Integer newId = partitionIdToPartitionMap.isEmpty() ? defaultStartingId : partitionIdToPartitionMap.lastKey() + 1;
         addPartition(newId);
         return newId;
     }
 
-    void addPartition(Integer pid) {
+    @Override
+    public void addPartition(Integer pid) {
         partitionIdToPartitionMap.put(pid, new ReplicaDummyPartition(pid));
     }
 
+    @Override
     public void removePartition(Integer id) {
         partitionIdToPartitionMap.remove(id);
     }
 
+    @Override
     public void addReplica(RepUser user, Integer destPid) {
         RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
@@ -128,12 +142,14 @@ public class ReplicaDummyManager {
         user.addReplicaPartitionId(destPid);
     }
 
-    RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+    @Override
+    public RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
         RepUser replica = user.dupe();
         partitionIdToPartitionMap.get(destPid).addReplica(replica);
         return replica;
     }
 
+    @Override
     public void removeReplica(RepUser user, Integer removalPartitionId) {
         //Delete it from each replica's replicaPartitionIds
         for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
@@ -149,6 +165,7 @@ public class ReplicaDummyManager {
         partitionIdToPartitionMap.get(removalPartitionId).removeReplica(user.getId());
     }
 
+    @Override
     public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
@@ -188,7 +205,8 @@ public class ReplicaDummyManager {
         }
     }
 
-    void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
+    @Override
+    public void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
         RepUser user = getUserMasterById(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
@@ -202,6 +220,7 @@ public class ReplicaDummyManager {
         }
     }
 
+    @Override
     public void befriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
@@ -215,6 +234,7 @@ public class ReplicaDummyManager {
         }
     }
 
+    @Override
     public void unfriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
@@ -228,6 +248,7 @@ public class ReplicaDummyManager {
         }
     }
 
+    @Override
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
         ReplicaDummyPartition partition = partitionIdToPartitionMap.get(partitionId);
         RepUser user = partition.getReplicaById(userId);
@@ -252,7 +273,8 @@ public class ReplicaDummyManager {
         }
     }
 
-    Integer getPartitionIdWithFewestMasters() {
+    @Override
+    public Integer getPartitionIdWithFewestMasters() {
         int minMasters = Integer.MAX_VALUE;
         Integer minId = -1;
 
@@ -267,7 +289,8 @@ public class ReplicaDummyManager {
         return minId;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
+    @Override
+    public Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(partitionIdToPartitionMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
@@ -275,12 +298,14 @@ public class ReplicaDummyManager {
         return list.get((int) (list.size() * Math.random()));
     }
 
-    Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
+    @Override
+    public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
         List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(partitionIdToPartitionMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
@@ -289,7 +314,8 @@ public class ReplicaDummyManager {
         return map;
     }
 
-    Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
+    @Override
+    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : partitionIdToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
@@ -297,6 +323,7 @@ public class ReplicaDummyManager {
         return map;
     }
 
+    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for (Integer uid : userIdToMasterPartitionIdMap.keySet()) {
@@ -311,14 +338,16 @@ public class ReplicaDummyManager {
         return count / 2;
     }
 
+    @Override
     public Integer getReplicationCount() {
         int count = 0;
-        for(Integer pid : getAllPartitionIds()) {
+        for(Integer pid : getPids()) {
             count += getPartitionById(pid).getNumReplicas();
         }
         return count;
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
@@ -332,7 +361,8 @@ public class ReplicaDummyManager {
         return "minNumReplicas:" + minNumReplicas + "|#U:" + getNumUsers() + "|#P:" + partitionIdToPartitionMap.size();
     }
 
-    void checkValidity() {
+    @Override
+    public void checkValidity() {
         boolean valid = true;
         for(Integer uid : userIdToMasterPartitionIdMap.keySet()) {
             RepUser user = getUserMasterById(uid);
@@ -365,4 +395,20 @@ public class ReplicaDummyManager {
             }
         }
     }
+
+    @Override
+    public void increaseTally(int amount) {
+        //replica dummy does not migrate
+    }
+
+    @Override
+    public void increaseTallyLogical(int amount) {
+        //replica dummy does not migrate
+    }
+
+    @Override
+    public long getMigrationTally() {
+        return 0; //replica dummy does not migrate
+    }
+
 }

@@ -1,5 +1,6 @@
 package io.vntr.spj2;
 
+import io.vntr.IRepManager;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
@@ -8,7 +9,7 @@ import java.util.*;
 
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
-public class SpJ2Manager {
+public class SpJ2Manager implements IRepManager {
     private int minNumReplicas;
 
     private int nextPid = 1;
@@ -30,6 +31,7 @@ public class SpJ2Manager {
         this.repartitioner = new SpJ2Repartitioner(this, minNumReplicas, alpha, initialT, deltaT, k);
     }
 
+    @Override
     public int getMinNumReplicas() {
         return minNumReplicas;
     }
@@ -38,6 +40,7 @@ public class SpJ2Manager {
         return pidToPartitionMap.get(id);
     }
 
+    @Override
     public RepUser getUserMasterById(Integer id) {
         Integer partitionId = uidToMasterPidMap.get(id);
         if (partitionId != null) {
@@ -49,24 +52,29 @@ public class SpJ2Manager {
         return null;
     }
 
+    @Override
     public int getNumUsers() {
         return uidToMasterPidMap.size();
     }
 
-    public Set<Integer> getAllPartitionIds() {
+    @Override
+    public Set<Integer> getPids() {
         return pidToPartitionMap.keySet();
     }
 
-    public Set<Integer> getAllUserIds() {
+    @Override
+    public Set<Integer> getUids() {
         return uidToMasterPidMap.keySet();
     }
 
+    @Override
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
+    @Override
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
@@ -81,7 +89,8 @@ public class SpJ2Manager {
         }
     }
 
-    void addUser(RepUser user, Integer masterPartitionId) {
+    @Override
+    public void addUser(RepUser user, Integer masterPartitionId) {
         getPartitionById(masterPartitionId).addMaster(user);
         uidToMasterPidMap.put(user.getId(), masterPartitionId);
 
@@ -90,6 +99,7 @@ public class SpJ2Manager {
         }
     }
 
+    @Override
     public void removeUser(Integer userId) {
         RepUser user = getUserMasterById(userId);
 
@@ -114,23 +124,27 @@ public class SpJ2Manager {
         }
     }
 
+    @Override
     public Integer addPartition() {
         Integer newId = nextPid;
         addPartition(newId);
         return newId;
     }
 
-    void addPartition(Integer pid) {
+    @Override
+    public void addPartition(Integer pid) {
         pidToPartitionMap.put(pid, new SpJ2Partition(pid));
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
     }
 
+    @Override
     public void removePartition(Integer id) {
         pidToPartitionMap.remove(id);
     }
 
+    @Override
     public void addReplica(RepUser user, Integer destPid) {
         RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
@@ -142,12 +156,14 @@ public class SpJ2Manager {
         user.addReplicaPartitionId(destPid);
     }
 
-    RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+    @Override
+    public RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
         RepUser replica = user.dupe();
         pidToPartitionMap.get(destPid).addReplica(replica);
         return replica;
     }
 
+    @Override
     public void removeReplica(RepUser user, Integer removalPartitionId) {
         //Delete it from each replica's replicaPartitionIds
         for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
@@ -163,6 +179,7 @@ public class SpJ2Manager {
         pidToPartitionMap.get(removalPartitionId).removeReplica(user.getId());
     }
 
+    @Override
     public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
@@ -201,10 +218,11 @@ public class SpJ2Manager {
             removeReplica(getUserMasterById(replicaIdToDelete), fromPid);
         }
 
-        increaseMigrationTally(1);
+        increaseTally(1);
     }
 
-    void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
+    @Override
+    public void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
         RepUser user = getUserMasterById(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
@@ -218,6 +236,7 @@ public class SpJ2Manager {
         }
     }
 
+    @Override
     public void befriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
@@ -231,6 +250,7 @@ public class SpJ2Manager {
         }
     }
 
+    @Override
     public void unfriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
@@ -244,6 +264,7 @@ public class SpJ2Manager {
         }
     }
 
+    @Override
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
         SpJ2Partition partition = pidToPartitionMap.get(partitionId);
         RepUser user = partition.getReplicaById(userId);
@@ -268,7 +289,8 @@ public class SpJ2Manager {
         }
     }
 
-    Integer getPartitionIdWithFewestMasters() {
+    @Override
+    public Integer getPartitionIdWithFewestMasters() {
         int minMasters = Integer.MAX_VALUE;
         Integer minId = -1;
 
@@ -283,7 +305,8 @@ public class SpJ2Manager {
         return minId;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
+    @Override
+    public Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(pidToPartitionMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
@@ -291,12 +314,14 @@ public class SpJ2Manager {
         return list.get((int) (list.size() * Math.random()));
     }
 
-    Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
+    @Override
+    public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
         List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(pidToPartitionMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pidToPartitionMap.keySet()) {
@@ -305,7 +330,8 @@ public class SpJ2Manager {
         return map;
     }
 
-    Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
+    @Override
+    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pidToPartitionMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
@@ -313,6 +339,7 @@ public class SpJ2Manager {
         return map;
     }
 
+    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for (Integer uid : uidToMasterPidMap.keySet()) {
@@ -327,14 +354,16 @@ public class SpJ2Manager {
         return count;
     }
 
+    @Override
     public Integer getReplicationCount() {
         int count = 0;
-        for(Integer pid : getAllPartitionIds()) {
+        for(Integer pid : getPids()) {
             count += getPartitionById(pid).getNumReplicas();
         }
         return count;
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uidToMasterPidMap.keySet()) {
@@ -343,15 +372,18 @@ public class SpJ2Manager {
         return friendships;
     }
 
+    @Override
     public long getMigrationTally() {
         return migrationTally + (long) (logicalMigrationRatio * logicalMigrationTally);
     }
 
-    void increaseMigrationTally(int amount) {
+    @Override
+    public void increaseTally(int amount) {
         migrationTally += amount;
     }
 
-    void increaseLogicalMigrationTally(int amount) {
+    @Override
+    public void increaseTallyLogical(int amount) {
         logicalMigrationTally += amount;
     }
 
@@ -360,7 +392,8 @@ public class SpJ2Manager {
         return "minNumReplicas:" + minNumReplicas + "|#U:" + getNumUsers() + "|#P:" + pidToPartitionMap.size();
     }
 
-    void checkValidity() {
+    @Override
+    public void checkValidity() {
 
         //Check masters
         for(Integer uid : uidToMasterPidMap.keySet()) {

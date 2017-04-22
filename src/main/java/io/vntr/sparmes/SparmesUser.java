@@ -1,12 +1,8 @@
 package io.vntr.sparmes;
 
 import io.vntr.RepUser;
-import io.vntr.User;
 
 import java.util.*;
-
-import static io.vntr.Utils.safeEquals;
-import static io.vntr.Utils.safeHashCode;
 
 /**
  * Created by robertlindquist on 9/28/16.
@@ -77,7 +73,7 @@ public class SparmesUser extends RepUser {
         SparmesBefriendingStrategy strat = manager.getSparmesBefriendingStrategy();
 
         Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<>();
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             friendsToAddInEachPartition.put(pid, strat.findReplicasToAddToTargetPartition(this, pid).size());
         }
 
@@ -88,7 +84,7 @@ public class SparmesUser extends RepUser {
 
     Map<Integer, Integer> getFriendsToAddInEachPartitionLogical() {
         Map<Integer, Integer> friendsToAddInEachPartition = new HashMap<>();
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             friendsToAddInEachPartition.put(pid, findHowManyReplicasToAddToPartition(pid));
         }
         return friendsToAddInEachPartition;
@@ -117,7 +113,7 @@ public class SparmesUser extends RepUser {
 
     Map<Integer, Integer> getPToFriendCountLogical() {
         Map<Integer, Integer> pToFriendCount = new HashMap<>();
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             pToFriendCount.put(pid, 0);
         }
         for(Integer friendId : getFriendIDs()) {

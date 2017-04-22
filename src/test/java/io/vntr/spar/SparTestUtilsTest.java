@@ -58,8 +58,8 @@ public class SparTestUtilsTest {
         SparManager manager = SparTestUtils.buildGraphFromGraphSpec(spec, minNumReplicas);
 
         assertTrue(manager.getMinNumReplicas() == minNumReplicas);
-        assertEquals(new HashSet<>(partitionIdToMastersMap.keySet()), new HashSet<>(manager.getAllPartitionIds()));
-        assertEquals(allUserIds, new HashSet<>(manager.getAllUserIds()));
+        assertEquals(new HashSet<>(partitionIdToMastersMap.keySet()), new HashSet<>(manager.getPids()));
+        assertEquals(allUserIds, new HashSet<>(manager.getUids()));
 
         //Ensure all friendships are present
         for (IntegerPair friendship : friendships) {

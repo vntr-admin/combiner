@@ -64,7 +64,7 @@ public class SpJ2InitUtilsTest {
             }
         }
 
-        for(Integer uid : manager.getAllUserIds()) {
+        for(Integer uid : manager.getUids()) {
             assertEquals(manager.getUserMasterById(uid).getFriendIDs(), bidirectionalFriendships.get(uid));
             for(Integer replicaPid : manager.getUserMasterById(uid).getReplicaPids()) {
                 assertTrue(replicas.get(replicaPid).contains(uid));

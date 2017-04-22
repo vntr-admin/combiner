@@ -15,14 +15,12 @@ public class SparmesManager {
     private boolean probabilistic;
     private int k;
 
-    private static final Integer defaultStartingId = 1;
-
     private int nextUid = 1;
     private int nextPid = 1;
 
     private long migrationTally;
     private long migrationTallyLogical;
-    private double logicalMigrationRatio = 0;
+    private double logicalMigrationRatio;
 
     private Map<Integer, SparmesPartition> pMap;
 
@@ -37,6 +35,7 @@ public class SparmesManager {
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
         this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
+        this.logicalMigrationRatio = 0;
     }
 
     public SparmesManager(int minNumReplicas, float gamma, int k, boolean probabilistic, double logicalMigrationRatio) {
@@ -76,14 +75,13 @@ public class SparmesManager {
         return uMap.size();
     }
 
-    public Set<Integer> getAllPartitionIds() {
+    public Set<Integer> getPids() {
         return pMap.keySet();
     }
 
-    public Set<Integer> getAllUserIds() {
+    public Set<Integer> getUids() {
         return uMap.keySet();
     }
-
 
     public int addUser() {
         int newUid = nextUid;
@@ -335,7 +333,7 @@ public class SparmesManager {
 
     public Integer getReplicationCount() {
         int count = 0;
-        for(Integer pid : getAllPartitionIds()) {
+        for(Integer pid : getPids()) {
             count += getPartitionById(pid).getNumReplicas();
         }
         return count;
@@ -357,7 +355,6 @@ public class SparmesManager {
     }
 
     public void repartition() {
-        int k = 3; //TODO: set this intelligently
         for (SparmesPartition p : pMap.values()) {
             p.resetLogicalUsers();
         }
@@ -416,7 +413,7 @@ public class SparmesManager {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(getAllPartitionIds());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(getPids());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
@@ -537,7 +534,7 @@ public class SparmesManager {
 
     Map<Integer, Integer> getPToWeight(boolean determineWeightsFromPhysicalPartitions) {
         Map<Integer, Integer> pToWeight = new HashMap<>();
-        for(Integer partitionId : getAllPartitionIds()) {
+        for(Integer partitionId : getPids()) {
             int pWeight;
             if(determineWeightsFromPhysicalPartitions) {
                 pWeight = getPartitionById(partitionId).getNumMasters();

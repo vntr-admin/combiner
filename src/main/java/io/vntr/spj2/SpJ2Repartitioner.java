@@ -38,16 +38,16 @@ public class SpJ2Repartitioner {
             State state = getState();
 
             for(float t = initialT; t >= 1; t -= deltaT) {
-                List<Integer> randomUserList = new LinkedList<>(manager.getAllUserIds());
+                List<Integer> randomUserList = new LinkedList<>(manager.getUids());
                 Collections.shuffle(randomUserList);
                 for (Integer uid : randomUserList) {
                     RepUser user = manager.getUserMasterById(uid);
-                    Set<Integer> swapCandidates = getKDistinctValuesFromList(k, manager.getAllUserIds());
+                    Set<Integer> swapCandidates = getKDistinctValuesFromList(k, manager.getUids());
 
                     Integer partnerId = findPartner(uid, swapCandidates, t, state);
                     if(partnerId != null) {
                         swap(uid, partnerId, state);
-                        manager.increaseLogicalMigrationTally(2);
+                        manager.increaseTallyLogical(2);
                     }
                 }
             }
@@ -115,7 +115,7 @@ public class SpJ2Repartitioner {
         State state = new State(minNumReplicas, alpha, initialT, deltaT, k, manager.getFriendships());
 
         Map<Integer, Integer> logicalPids = new HashMap<>();
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             for(Integer masterUid : manager.getPartitionById(pid).getIdsOfMasters()) {
                 logicalPids.put(masterUid, pid);
             }
@@ -124,11 +124,11 @@ public class SpJ2Repartitioner {
 
 
         Map<Integer, Set<Integer>> logicalReplicaPids = new HashMap<>();
-        for(Integer uid : manager.getAllUserIds()) {
+        for(Integer uid : manager.getUids()) {
             logicalReplicaPids.put(uid, new HashSet<Integer>());
         }
 
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             for(Integer replicaUid : manager.getPartitionById(pid).getIdsOfReplicas()) {
                 logicalReplicaPids.get(replicaUid).add(pid);
             }
@@ -136,7 +136,7 @@ public class SpJ2Repartitioner {
         state.setLogicalReplicaPids(logicalReplicaPids);
 
         Map<Integer, Set<Integer>> logicalReplicaPartitions = new HashMap<>();
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             logicalReplicaPartitions.put(pid, new HashSet<Integer>(manager.getPartitionById(pid).getIdsOfReplicas()));
         }
         state.setLogicalReplicaPartitions(logicalReplicaPartitions);
@@ -155,7 +155,7 @@ public class SpJ2Repartitioner {
 
             if(!oldPid.equals(newPid)) {
                 manager.moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
-                manager.increaseMigrationTally(1);
+                manager.increaseTally(1);
             }
 
             if(!oldReplicas.equals(newReplicas)) {

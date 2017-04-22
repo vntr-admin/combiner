@@ -56,7 +56,7 @@ public class SpJ2ManagerTest {
         RepUser newUser = manager.getUserMasterById(newUid);
         Set<Integer> expectedUids = new HashSet<>(friendships.keySet());
         expectedUids.add(newUid);
-        assertEquals(manager.getAllUserIds(), expectedUids);
+        assertEquals(manager.getUids(), expectedUids);
         assertTrue(newUser.getFriendIDs().isEmpty());
 
         Integer newPid = newUser.getBasePid();
@@ -71,12 +71,12 @@ public class SpJ2ManagerTest {
         }
 
 
-        Integer manualUid = new TreeSet<>(manager.getAllUserIds()).last() + 1;
+        Integer manualUid = new TreeSet<>(manager.getUids()).last() + 1;
         manager.addUser(new User(manualUid));
         RepUser manualUser = manager.getUserMasterById(manualUid);
 
         expectedUids.add(manualUid);
-        assertEquals(manager.getAllUserIds(), expectedUids);
+        assertEquals(manager.getUids(), expectedUids);
         assertTrue(manualUser.getFriendIDs().isEmpty());
 
         Integer manualPid = manualUser.getBasePid();
@@ -132,9 +132,9 @@ public class SpJ2ManagerTest {
         manager.removeUser(uidToRemove);
         Set<Integer> expectedUids = new HashSet<>(friendships.keySet());
         expectedUids.remove(uidToRemove);
-        assertEquals(manager.getAllUserIds(), expectedUids);
+        assertEquals(manager.getUids(), expectedUids);
 
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             SpJ2Partition partition = manager.getPartitionById(pid);
             assertFalse(partition.getIdsOfMasters().contains(uidToRemove));
             assertFalse(partition.getIdsOfReplicas().contains(uidToRemove));
@@ -145,7 +145,7 @@ public class SpJ2ManagerTest {
             }
         }
 
-        for(Integer uid : manager.getAllUserIds()) {
+        for(Integer uid : manager.getUids()) {
             assertFalse(manager.getUserMasterById(uid).getFriendIDs().contains(uidToRemove));
         }
 
@@ -314,25 +314,25 @@ public class SpJ2ManagerTest {
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
         Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
 
-        assertEquals(manager.getAllPartitionIds(), partitions.keySet());
+        assertEquals(manager.getPids(), partitions.keySet());
 
         Integer newPid = manager.addPartition();
 
         Set<Integer> expectedPids = new HashSet<>(partitions.keySet());
         expectedPids.add(newPid);
 
-        assertEquals(manager.getAllPartitionIds(), expectedPids);
+        assertEquals(manager.getPids(), expectedPids);
 
         Integer pidToAdd = 1;
         for(; pidToAdd < 10; pidToAdd++) {
-            if(!manager.getAllPartitionIds().contains(pidToAdd)) {
+            if(!manager.getPids().contains(pidToAdd)) {
                 break;
             }
         }
 
         expectedPids.add(pidToAdd);
         manager.addPartition(pidToAdd);
-        assertEquals(manager.getAllPartitionIds(), expectedPids);
+        assertEquals(manager.getPids(), expectedPids);
         assertEquals(manager.getFriendships(), bidirectionalFriendships);
     }
 
@@ -371,14 +371,14 @@ public class SpJ2ManagerTest {
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
 
-        assertEquals(manager.getAllPartitionIds(), partitions.keySet());
+        assertEquals(manager.getPids(), partitions.keySet());
 
         Integer pidToRemove = 2;
 
         manager.removePartition(pidToRemove);
 
-        assertEquals(initSet(1, 3), manager.getAllPartitionIds());
-        assertEquals(manager.getAllUserIds(), friendships.keySet());
+        assertEquals(initSet(1, 3), manager.getPids());
+        assertEquals(manager.getUids(), friendships.keySet());
         assertEquals(manager.getPartitionById(1).getIdsOfMasters(),  partitions.get(1));
         assertEquals(manager.getPartitionById(1).getIdsOfReplicas(), replicas.get(1));
         assertEquals(manager.getPartitionById(3).getIdsOfMasters(),  partitions.get(3));

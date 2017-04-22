@@ -34,7 +34,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario1() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = SparTestUtils.getPartitionsWithNoPresence(manager, alpha.getId()).iterator().next();
@@ -47,7 +47,7 @@ public class SparBefriendingStrategyTest {
         }
 
         //ensure that A and B exceed redundancy requirements
-        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getPids());
         partitionsWithoutAlphaOrBetaMasters.remove(partitionAId);
         partitionsWithoutAlphaOrBetaMasters.remove(partitionBId);
         Integer extraAlphaReplicaLocation = null;
@@ -74,7 +74,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario2() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = alpha.getReplicaPids().iterator().next();
@@ -87,7 +87,7 @@ public class SparBefriendingStrategyTest {
         }
 
         //ensure that A and B exceed redundancy requirements
-        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getPids());
         partitionsWithoutAlphaOrBetaMasters.remove(partitionAId);
         partitionsWithoutAlphaOrBetaMasters.remove(partitionBId);
         Integer extraAlphaReplicaLocation = null;
@@ -114,7 +114,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario3() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = alpha.getReplicaPids().iterator().next();
@@ -139,7 +139,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario4() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = alpha.getReplicaPids().iterator().next();
@@ -151,7 +151,7 @@ public class SparBefriendingStrategyTest {
             manager.addReplica(beta, partitionAId);
         }
 
-        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getPids());
         partitionsWithoutAlphaOrBetaMasters.remove(partitionAId);
         partitionsWithoutAlphaOrBetaMasters.remove(partitionBId);
         Integer extraAlphaReplicaLocation = null;
@@ -177,7 +177,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario5() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = alpha.getReplicaPids().iterator().next();
@@ -200,7 +200,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario6() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = alpha.getReplicaPids().iterator().next();
@@ -223,7 +223,7 @@ public class SparBefriendingStrategyTest {
     private static Scenario getScenario7() {
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = alpha.getReplicaPids().iterator().next();
@@ -256,7 +256,7 @@ public class SparBefriendingStrategyTest {
             manager.addReplica(beta, newReplicaLocation);
         }
 
-        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getPids());
         partitionsWithoutAlphaOrBetaMasters.remove(partitionAId);
         partitionsWithoutAlphaOrBetaMasters.remove(partitionBId);
         Integer extraAlphaReplicaLocation = null;
@@ -307,7 +307,7 @@ public class SparBefriendingStrategyTest {
             manager.addReplica(beta, newReplicaLocation);
         }
 
-        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> partitionsWithoutAlphaOrBetaMasters = new HashSet<>(manager.getPids());
         partitionsWithoutAlphaOrBetaMasters.remove(partitionAId);
         partitionsWithoutAlphaOrBetaMasters.remove(partitionBId);
         Integer extraAlphaReplicaLocation = null;
@@ -457,13 +457,13 @@ public class SparBefriendingStrategyTest {
 
         SparManager manager = SparTestUtils.getStandardManager();
 
-        Integer partitionAId = manager.getAllPartitionIds().iterator().next();
+        Integer partitionAId = manager.getPids().iterator().next();
         RepUser alpha = SparTestUtils.getUserWithMasterOnPartition(manager, partitionAId);
 
         Integer partitionBId = SparTestUtils.getPartitionsWithNoPresence(manager, alpha.getId()).iterator().next();
         RepUser beta = SparTestUtils.getUserWithMasterOnPartition(manager, partitionBId);
 
-        Set<Integer> otherPartitions = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> otherPartitions = new HashSet<>(manager.getPids());
         otherPartitions.remove(partitionAId);
         otherPartitions.remove(partitionBId);
         Integer partitionCId = otherPartitions.iterator().next();
@@ -505,7 +505,7 @@ public class SparBefriendingStrategyTest {
         Integer partitionBId = SparTestUtils.getPartitionsWithNoPresence(manager, alpha.getId()).iterator().next();
         RepUser beta = SparTestUtils.getUserWithMasterOnPartition(manager, partitionBId);
 
-        Set<Integer> otherPartitions = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> otherPartitions = new HashSet<>(manager.getPids());
         otherPartitions.remove(partitionAId);
         otherPartitions.remove(partitionBId);
         Integer partitionCId = otherPartitions.iterator().next();
@@ -903,7 +903,7 @@ public class SparBefriendingStrategyTest {
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
         RepUser firstUser = manager.getUserMasterById(SparTestUtils.STANDAR_USER_ID_ARRAY[0]);
-        Set<Integer> targetPartitionIds = new HashSet<>(manager.getAllPartitionIds());
+        Set<Integer> targetPartitionIds = new HashSet<>(manager.getPids());
         targetPartitionIds.remove(firstUser.getBasePid());
         targetPartitionIds.removeAll(firstUser.getReplicaPids());
         Integer targetPartitionId = targetPartitionIds.iterator().next();
@@ -1082,7 +1082,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser movingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         Integer partitionWithoutThisUser = SparTestUtils.getPartitionsWithNoPresence(manager, movingUser.getId()).iterator().next();
         RepUser stayingUser = SparTestUtils.getUserWithMasterOnPartition(manager, partitionWithoutThisUser);
 
@@ -1095,7 +1095,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser movingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         RepUser stayingUser = SparTestUtils.getUserWithMasterOnPartition(manager, movingUser.getReplicaPids().iterator().next());
 
         assertFalse(strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser));
@@ -1107,7 +1107,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser movingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         Integer partitionInitiallyWithoutThisUser = SparTestUtils.getPartitionsWithNoPresence(manager, movingUser.getId()).iterator().next();
         RepUser stayingUser = SparTestUtils.getUserWithMasterOnPartition(manager, partitionInitiallyWithoutThisUser);
         manager.addReplica(movingUser, partitionInitiallyWithoutThisUser);
@@ -1122,7 +1122,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser stayingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser stayingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         Integer partitionWithoutThisUser = SparTestUtils.getPartitionsWithNoPresence(manager, stayingUser.getId()).iterator().next();
         RepUser movingUser = SparTestUtils.getUserWithMasterOnPartition(manager, partitionWithoutThisUser);
 
@@ -1156,7 +1156,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser movingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         RepUser stayingUser = SparTestUtils.getUserWithMasterOnPartition(manager, movingUser.getReplicaPids().iterator().next());
         assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser));
     }
@@ -1167,7 +1167,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser movingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         RepUser stayingUser = SparTestUtils.getUserWithMasterOnPartition(manager, movingUser.getReplicaPids().iterator().next());
         Integer paritionIdWithoutStayingUser = SparTestUtils.getPartitionsWithNoPresence(manager, stayingUser.getId()).iterator().next();
         manager.addReplica(stayingUser, paritionIdWithoutStayingUser);
@@ -1180,7 +1180,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser stayingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser stayingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         Integer partitionWithoutThisUser = SparTestUtils.getPartitionsWithNoPresence(manager, stayingUser.getId()).iterator().next();
         RepUser movingUser = SparTestUtils.getUserWithMasterOnPartition(manager, partitionWithoutThisUser);
 
@@ -1222,7 +1222,7 @@ public class SparBefriendingStrategyTest {
         SparManager manager = SparTestUtils.getStandardManager();
         SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 
-        RepUser stayingUser = manager.getUserMasterById(manager.getAllUserIds().iterator().next());
+        RepUser stayingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         RepUser movingUser = SparTestUtils.getUserWithMasterOnPartition(manager, stayingUser.getReplicaPids().iterator().next());
 
         assertTrue(strategy.couldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser));
