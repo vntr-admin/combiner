@@ -1,7 +1,6 @@
 package io.vntr.hermar;
 
 import io.vntr.User;
-import io.vntr.User;
 
 import java.util.*;
 
@@ -10,7 +9,7 @@ import java.util.*;
  */
 public class HermarManager {
     private Map<Integer, Set<Integer>> pMap;
-    private Map<Integer, User> uidToUserMap;
+    private Map<Integer, User> uMap;
     private float gamma;
     private int k;
     private boolean probabilistic;
@@ -30,7 +29,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-        this.uidToUserMap = new HashMap<>();
+        this.uMap = new HashMap<>();
         this.maxIterations = 100;
         maxIterationToNumUsersRatio = 1f;
         repartitioner = new HermarRepartitioner(this);
@@ -40,7 +39,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uidToUserMap = new HashMap<>();
+        this.uMap = new HashMap<>();
         this.maxIterations = maxIterations;
         maxIterationToNumUsersRatio = 1f;
         this.k=3;
@@ -51,7 +50,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uidToUserMap = new HashMap<>();
+        this.uMap = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k=3;
@@ -62,7 +61,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uidToUserMap = new HashMap<>();
+        this.uMap = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -73,7 +72,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uidToUserMap = new HashMap<>();
+        this.uMap = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -92,7 +91,7 @@ public class HermarManager {
             user.setBasePid(getInitialPartitionId());
         }
         Integer pid = user.getBasePid();
-        uidToUserMap.put(user.getId(), user);
+        uMap.put(user.getId(), user);
         getPartitionById(pid).add(user.getId());
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
@@ -108,7 +107,7 @@ public class HermarManager {
             unfriend(userId, friendId);
         }
         getPartitionById(getPartitionIdForUser(userId)).remove(userId);
-        uidToUserMap.remove(userId);
+        uMap.remove(userId);
     }
 
     public void befriend(Integer smallerUserId, Integer largerUserId) {
@@ -147,7 +146,7 @@ public class HermarManager {
     }
 
     public Integer getPartitionIdForUser(Integer uid) {
-        return uidToUserMap.get(uid).getBasePid();
+        return uMap.get(uid).getBasePid();
     }
 
     public void repartition() {
@@ -168,16 +167,16 @@ public class HermarManager {
     }
 
     User getUser(Integer uid) {
-        return uidToUserMap.get(uid);
+        return uMap.get(uid);
     }
 
     public Integer getNumUsers() {
-        return uidToUserMap.size();
+        return uMap.size();
     }
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(int uid : uidToUserMap.keySet()) {
+        for(int uid : uMap.keySet()) {
             User user = getUser(uid);
             Integer userPid = user.getBasePid();
 
@@ -208,14 +207,14 @@ public class HermarManager {
 
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid : uidToUserMap.keySet()) {
+        for(Integer uid : uMap.keySet()) {
             friendships.put(uid, new TreeSet<>(getUser(uid).getFriendIDs()));
         }
         return friendships;
     }
 
     public Collection<Integer> getUserIds() {
-        return uidToUserMap.keySet();
+        return uMap.keySet();
     }
 
     public float getGamma() {
@@ -239,7 +238,7 @@ public class HermarManager {
     }
 
     void checkValidity() {
-        for(Integer uid : uidToUserMap.keySet()) {
+        for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : pMap.keySet()) {
                 if(pMap.get(pid).contains(uid)) {
@@ -256,7 +255,7 @@ public class HermarManager {
             if(!observedMasterPid.equals(getUser(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
-            if(!observedMasterPid.equals(uidToUserMap.get(uid).getBasePid())) {
+            if(!observedMasterPid.equals(uMap.get(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's PID and system's");
             }
         }

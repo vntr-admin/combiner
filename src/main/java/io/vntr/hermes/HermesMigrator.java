@@ -62,15 +62,16 @@ public class HermesMigrator {
         List<Integer> options = new LinkedList<>(manager.getAllPartitionIds());
         options.remove(pid);
         NavigableSet<Target> preferredTargets = new TreeSet<>();
-        for(Integer uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
-            LogicalUser user = manager.getUser(uid).getLogicalUser(true);
+        for(Integer uid : manager.getPartitionById(pid)) {
+            Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid);
+//            LogicalUser user = manager.getUser(uid).getLogicalUser(true);
             int maxFriends = 0;
             Integer maxPid = null;
-            for(Integer friendPid : user.getpToFriendCount().keySet()) {
+            for(Integer friendPid : pToFriendCount.keySet()) {
                 if(friendPid.equals(pid)) {
                     continue;
                 }
-                int numFriends = user.getpToFriendCount().get(friendPid);
+                int numFriends = pToFriendCount.get(friendPid);
                 if(numFriends > maxFriends) {
                     maxPid = friendPid;
                     maxFriends = numFriends;
@@ -84,6 +85,18 @@ public class HermesMigrator {
             preferredTargets.add(target);
         }
         return preferredTargets;
+    }
+
+    Map<Integer, Integer> getPToFriendCount(Integer uid) {
+        Map<Integer, Integer> pToFriendCount = new HashMap<>();
+        for(Integer pid : manager.getAllPartitionIds()) {
+            pToFriendCount.put(pid, 0);
+        }
+        for(Integer friendId : manager.getUser(uid).getFriendIDs()) {
+            Integer pid = manager.getPartitionIdForUser(friendId);
+            pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
+        }
+        return pToFriendCount;
     }
 
     Integer getPartitionWithFewestUsers(Integer pid, Map<Integer, Integer> userCounts) {

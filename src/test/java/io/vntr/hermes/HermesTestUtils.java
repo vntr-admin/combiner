@@ -1,6 +1,7 @@
 package io.vntr.hermes;
 
 import io.vntr.TestUtils;
+import io.vntr.User;
 
 import java.util.*;
 
@@ -13,7 +14,7 @@ public class HermesTestUtils {
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new HermesUser(uid, pid, gamma, manager));
+                manager.addUser(new User(uid, pid));
             }
         }
         for(Integer uid1 : friendships.keySet()) {
@@ -29,7 +30,7 @@ public class HermesTestUtils {
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new HermesUser(uid, pid, gamma, manager));
+                manager.addUser(new User(uid, pid));
             }
         }
         for(Integer uid1 : friendships.keySet()) {

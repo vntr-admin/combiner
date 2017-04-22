@@ -8,9 +8,8 @@ import java.util.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesManager {
-    private Map<Integer, HermesPartition> pMap;
-    private Map<Integer, Integer> uMap;
-    private Map<Integer, Integer> uMapLogical;
+    private Map<Integer, Set<Integer>> pMap;
+    private Map<Integer, User> uidToUserMap;
     private float gamma;
     private int k;
     private boolean probabilistic;
@@ -24,14 +23,15 @@ public class HermesManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
+    private HermesRepartitioner repartitioner;
 
     public HermesManager(float gamma, boolean probabilistic) {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
-        this.maxIterations = Integer.MAX_VALUE;
+        this.uidToUserMap = new HashMap<>();
+        repartitioner = new HermesRepartitioner(this);
+        this.maxIterations = 100;
         maxIterationToNumUsersRatio = 1f;
     }
 
@@ -39,8 +39,8 @@ public class HermesManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
+        repartitioner = new HermesRepartitioner(this);
         this.maxIterations = maxIterations;
         maxIterationToNumUsersRatio = 1f;
         this.k=3;
@@ -50,8 +50,8 @@ public class HermesManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
+        repartitioner = new HermesRepartitioner(this);
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k=3;
@@ -61,8 +61,8 @@ public class HermesManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
+        repartitioner = new HermesRepartitioner(this);
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -72,8 +72,8 @@ public class HermesManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
+        repartitioner = new HermesRepartitioner(this);
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -87,17 +87,12 @@ public class HermesManager {
     }
 
     public void addUser(User user) {
-        Integer initialPid = getInitialPartitionId();
-        int uid = user.getId();
-        HermesUser hermesUser = new HermesUser(uid, initialPid, gamma, this);
-        addUser(hermesUser);
-    }
-
-    void addUser(HermesUser user) {
+        if(user.getBasePid() == null) {
+            user.setBasePid(getInitialPartitionId());
+        }
         Integer pid = user.getBasePid();
-        getPartitionById(pid).addUser(user);
-        uMap.put(user.getId(), pid);
-        uMapLogical.put(user.getId(), pid);
+        uidToUserMap.put(user.getId(), user);
+        getPartitionById(pid).add(user.getId());
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
         }
@@ -106,14 +101,13 @@ public class HermesManager {
         }
     }
 
-    public void removeUser(Integer userId) {
-        Set<Integer> friendIds = new HashSet<>(getUser(userId).getFriendIDs());
+    public void removeUser(Integer uid) {
+        Set<Integer> friendIds = new HashSet<>(getUser(uid).getFriendIDs());
         for(Integer friendId : friendIds) {
-            unfriend(userId, friendId);
+            unfriend(uid, friendId);
         }
-        getPartitionById(getPartitionIdForUser(userId)).removeUser(userId);
-        uMap.remove(userId);
-        uMapLogical.remove(userId);
+        getPartitionById(getPartitionIdForUser(uid)).remove(uid);
+        uidToUserMap.remove(uid);
     }
 
     public void befriend(Integer smallerUserId, Integer largerUserId) {
@@ -133,7 +127,7 @@ public class HermesManager {
     }
 
     void addPartition(Integer id) {
-        pMap.put(id, new HermesPartition(id, gamma, this));
+        pMap.put(id, new HashSet<Integer>());
         if(id >= nextPid) {
             nextPid = id + 1;
         }
@@ -147,131 +141,23 @@ public class HermesManager {
         return pMap.keySet();
     }
 
-    public HermesPartition getPartitionById(Integer pid) {
+    public Set<Integer> getPartitionById(Integer pid) {
         return pMap.get(pid);
     }
 
     public Integer getPartitionIdForUser(Integer uid) {
-        return uMap.get(uid);
-    }
-
-    public Integer getLogicalPartitionIdForUser(Integer uid) {
-        return uMapLogical.get(uid);
-    }
-
-    private Map<Integer, Set<Integer>> getFriendshipMap() {
-        Map<Integer, Set<Integer>> friendshipMap = new HashMap<>();
-        for(Integer uid : uMap.keySet()) {
-            friendshipMap.put(uid, new HashSet<Integer>());
-        }
-        for(Integer uid : friendshipMap.keySet()) {
-            for(Integer friendId : getUser(uid).getFriendIDs())
-            {
-                if(uid < friendId) {
-                    friendshipMap.get(uid).add(friendId);
-                }
-            }
-        }
-        return friendshipMap;
+        return uidToUserMap.get(uid).getBasePid();
     }
 
     public void repartition() {
-        for (HermesPartition p : pMap.values()) {
-            p.resetLogicalUsers();
-        }
-
-        LinkedList<Integer> lastFive = new LinkedList<>();
-
-        int iteration = 0;
-        boolean stoppingCondition = false;
-        while(!stoppingCondition && iteration++ < maxIterations) {
-            boolean changed;
-            changed  = performStage(true, k, probabilistic);
-            changed |= performStage(false, k, probabilistic);
-            stoppingCondition = !changed;
-            int edgeCut = getEdgeCut();
-            lastFive.add(edgeCut);
-            if(lastFive.size() > 5) {
-                lastFive.pop();
-                if(lastFive.get(0) == edgeCut && lastFive.get(1) == edgeCut && lastFive.get(2) == edgeCut && lastFive.get(3) == edgeCut) {
-                    break;
-                }
-            }
-        }
-        Map<Integer, Integer> usersWhoMoved = new HashMap<>();
-        for (HermesPartition p : pMap.values()) {
-            Set<Integer> moved = p.physicallyMigrateCopy();
-            for(Integer uid : moved) {
-                usersWhoMoved.put(uid, p.getId());
-            }
-        }
-
-        for (HermesPartition p : pMap.values()) {
-            p.physicallyMigrateDelete();
-        }
-
-        uMap.putAll(usersWhoMoved);
-        uMapLogical.putAll(usersWhoMoved);
-        increaseTally(usersWhoMoved.size());
-    }
-
-    boolean performStage(boolean firstStage, int k, boolean probabilistic) {
-        boolean changed = false;
-        Map<Integer, Set<Target>> stageTargets = new HashMap<>();
-        for (HermesPartition p : pMap.values()) {
-            Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
-            stageTargets.put(p.getId(), targets);
-            changed |= !targets.isEmpty();
-        }
-
-        //TODO: should I include logical migrations in the migration tally?
-        for(Integer pid : pMap.keySet()) {
-            for(Target target : stageTargets.get(pid)) {
-                increaseTallyLogical(1);
-                migrateLogically(target);
-            }
-        }
-
-        updateLogicalUsers();
-        return changed;
-    }
-
-    void migrateLogically(Target target) {
-        HermesPartition oldPart = getPartitionById(target.oldPartitionId);
-        HermesPartition newPart = getPartitionById(target.partitionId);
-        HermesUser user = getUser(target.userId);
-        user.setLogicalPid(target.partitionId);
-        oldPart.removeLogicalUser(target.userId);
-        newPart.addLogicalUser(user.getLogicalUser(false)); //TODO: is this actually what we want?
-    }
-
-    void updateLogicalUsers() {
-        Integer totalWeight = 0;
-        Map<Integer, Integer> pToWeight = new HashMap<>();
-        for (HermesPartition p : pMap.values()) {
-            int weight = p.getNumLogicalUsers();
-            totalWeight += weight;
-            pToWeight.put(p.getId(), weight);
-        }
-
-        for (HermesPartition p : pMap.values()) {
-            p.updateLogicalUsersPartitionWeights(pToWeight);
-            p.updateLogicalUsersTotalWeights(totalWeight);
-        }
-
-        for(HermesPartition p : pMap.values()) {
-            for(Integer logicalUid : p.getLogicalUserIds()) {
-                Map<Integer, Integer> updatedFriendCounts = getUser(logicalUid).getPToFriendCount();
-                p.updateLogicalUserFriendCounts(logicalUid, updatedFriendCounts);
-            }
-        }
+        repartitioner.repartition(k, maxIterations);
     }
 
     Integer getInitialPartitionId() {
         Integer minId = null;
         int minUsers = Integer.MAX_VALUE;
         for(Integer pid : pMap.keySet()) {
-            int numUsers = getPartitionById(pid).getNumUsers();
+            int numUsers = getPartitionById(pid).size();
             if(numUsers < minUsers) {
                 minUsers = numUsers;
                 minId = pid;
@@ -280,65 +166,55 @@ public class HermesManager {
         return minId;
     }
 
-    HermesUser getUser(Integer uid) {
-        return getPartitionById(getPartitionIdForUser(uid)).getUserById(uid);
+    User getUser(Integer uid) {
+        return uidToUserMap.get(uid);
     }
 
     public Integer getNumUsers() {
-        return uMap.size();
+        return uidToUserMap.size();
     }
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(Integer uid : uMap.keySet()) {
-            LogicalUser user = getUser(uid).getLogicalUser(true);
-            Map<Integer, Integer> pToFriendCount = user.getpToFriendCount();
-            for(Integer pid : getAllPartitionIds()) {
-                if(!pid.equals(user.getPid()) && pToFriendCount.containsKey(pid)) {
-                    count += pToFriendCount.get(pid);
-                }
+        for(int uid : uidToUserMap.keySet()) {
+            User user = getUser(uid);
+            Integer userPid = user.getBasePid();
 
+            for(int friendId : user.getFriendIDs()) {
+                Integer friendPid = getUser(friendId).getBasePid();
+                if(userPid < friendPid) {
+                    count++;
+                }
             }
         }
-        return count / 2;
+        return count;
     }
 
     public Map<Integer,Set<Integer>> getPartitionToUserMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : getAllPartitionIds()) {
-            map.put(pid, new TreeSet<>(getPartitionById(pid).getPhysicalUserIds()));
-        }
-        return map;
-    }
-
-    Map<Integer,Set<Integer>> getPartitionToLogicalUserMap() {
-        Map<Integer,Set<Integer>> map = new HashMap<>();
-        for(Integer pid : getAllPartitionIds()) {
-            map.put(pid, getPartitionById(pid).getLogicalUserIds());
+            map.put(pid, new HashSet<>(getPartitionById(pid)));
         }
         return map;
     }
 
     public void moveUser(Integer uid, Integer pid) {
-        HermesUser user = getUser(uid);
-        uMap.put(uid, pid);
-        uMapLogical.put(uid, pid);
-        getPartitionById(user.getBasePid()).removeUser(uid);
-        getPartitionById(pid).addUser(user);
+        User user = getUser(uid);
+        getPartitionById(user.getBasePid()).remove(uid);
+        getPartitionById(pid).add(uid);
         user.setBasePid(pid);
-        user.setLogicalPid(pid);
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uidToUserMap.keySet()) {
             friendships.put(uid, new TreeSet<>(getUser(uid).getFriendIDs()));
         }
         return friendships;
     }
 
     public Collection<Integer> getUserIds() {
-        return uMap.keySet();
+        return uidToUserMap.keySet();
     }
 
     public float getGamma() {
@@ -363,15 +239,11 @@ public class HermesManager {
         return "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
     }
 
-    void updateLogicalPidCache(Integer id, Integer logicalPid) {
-        uMapLogical.put(id, logicalPid);
-    }
-
     void checkValidity() {
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uidToUserMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : pMap.keySet()) {
-                if(pMap.get(pid).getPhysicalUserIds().contains(uid)) {
+                if(pMap.get(pid).contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");
                     }
@@ -382,14 +254,12 @@ public class HermesManager {
             if(observedMasterPid == null) {
                 throw new RuntimeException("user must be in some partition");
             }
-            if(!observedMasterPid.equals(uMap.get(uid))) {
-                throw new RuntimeException("Mismatch between uMap's location of user and partition's");
-            }
             if(!observedMasterPid.equals(getUser(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
-
-            //TODO: should we check the logical partitions?
+            if(!observedMasterPid.equals(uidToUserMap.get(uid).getBasePid())) {
+                throw new RuntimeException("Mismatch between user's PID and system's");
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package io.vntr.hermes;
 
+import io.vntr.User;
 import org.junit.Test;
 
 import java.util.*;
@@ -21,12 +22,12 @@ public class HermesManagerTest {
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
 
-        HermesUser user1 = new HermesUser(1, pid1, gamma, manager);
-        HermesUser user2 = new HermesUser(2, pid2, gamma, manager);
-        HermesUser user3 = new HermesUser(3, pid1, gamma, manager);
-        HermesUser user4 = new HermesUser(4, pid2, gamma, manager);
-        HermesUser user5 = new HermesUser(5, pid1, gamma, manager);
-        HermesUser user6 = new HermesUser(6, pid2, gamma, manager);
+        User user1 = new User(1, pid1);
+        User user2 = new User(2, pid2);
+        User user3 = new User(3, pid1);
+        User user4 = new User(4, pid2);
+        User user5 = new User(5, pid1);
+        User user6 = new User(6, pid2);
 
         manager.addUser(user1);
         manager.addUser(user2);
@@ -61,9 +62,9 @@ public class HermesManagerTest {
 
         Integer pid3 = manager.addPartition();
 
-        HermesUser user7 = new HermesUser(7, pid3, gamma, manager);
-        HermesUser user8 = new HermesUser(8, pid3, gamma, manager);
-        HermesUser user9 = new HermesUser(9, pid3, gamma, manager);
+        User user7 = new User(7, pid3);
+        User user8 = new User(8, pid3);
+        User user9 = new User(9, pid3);
 
         manager.addUser(user7);
         manager.addUser(user8);
