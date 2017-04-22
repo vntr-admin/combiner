@@ -1,6 +1,7 @@
 package io.vntr.hermar;
 
-import io.vntr.RepUser;
+import io.vntr.User;
+import io.vntr.User;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,15 +23,15 @@ public class HermarBefriendingStrategy {
         this.manager = manager;
     }
 
-    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser user1, RepUser user2) {
+    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(User user1, User user2) {
 
         int stay = calcEdgeCutStay(user1, user2);
         int to2  = calcEdgeCutMove(user1, user2);
         int to1  = calcEdgeCutMove(user2, user1);
 
         double usersPerPartition = ((double) manager.getNumUsers()) / manager.getAllPartitionIds().size();
-        int usersOn1 = manager.getPartitionById(user1.getBasePid()).getNumUsers();
-        int usersOn2 = manager.getPartitionById(user2.getBasePid()).getNumUsers();
+        int usersOn1 = manager.getPartitionById(user1.getBasePid()).size();
+        int usersOn2 = manager.getPartitionById(user2.getBasePid()).size();
 
         boolean oneWouldBeOverweight = ((1D + usersOn1) / usersPerPartition) > manager.getGamma();
         boolean twoWouldBeOverweight = ((1D + usersOn2) / usersPerPartition) > manager.getGamma();
@@ -70,11 +71,11 @@ public class HermarBefriendingStrategy {
         return NO_CHANGE;
     }
 
-    int calcEdgeCutStay(RepUser user1, RepUser user2) {
+    int calcEdgeCutStay(User user1, User user2) {
         return getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(user1.getBasePid(), user2.getBasePid());
     }
 
-    int calcEdgeCutMove(RepUser movingUser, RepUser stayingUser) {
+    int calcEdgeCutMove(User movingUser, User stayingUser) {
         int movingPid = movingUser.getBasePid();
         int stayingPid = stayingUser.getBasePid();
         int currentEdgeCut = getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(movingPid, stayingPid);
@@ -100,8 +101,8 @@ public class HermarBefriendingStrategy {
 
     Integer getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(int pid1, int pid2) {
         int count = 0;
-        Set<Integer> idsThatMatter = new HashSet<>(manager.getPartitionById(pid1).getPhysicalUserIds());
-        idsThatMatter.addAll(manager.getPartitionById(pid2).getPhysicalUserIds());
+        Set<Integer> idsThatMatter = new HashSet<>(manager.getPartitionById(pid1));
+        idsThatMatter.addAll(manager.getPartitionById(pid2));
 
         for(Integer uid : idsThatMatter) {
             Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid);

@@ -62,7 +62,7 @@ public class HermarMigrator {
         List<Integer> options = new LinkedList<>(manager.getAllPartitionIds());
         options.remove(pid);
         NavigableSet<Target> preferredTargets = new TreeSet<>();
-        for(Integer uid : manager.getPartitionById(pid).getPhysicalUserIds()) {
+        for(Integer uid : manager.getPartitionById(pid)) {
             Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid);
             int maxFriends = 0;
             Integer maxPid = null;

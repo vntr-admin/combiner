@@ -1,6 +1,7 @@
 package io.vntr.hermar;
 
 import io.vntr.RepUser;
+import io.vntr.User;
 
 import java.util.*;
 
@@ -40,8 +41,6 @@ public class HermarRepartitioner {
     }
 
     static int performStage(boolean firstStage, int k, State state) {
-        int moves = 0;
-
         Set<Target> targets = new HashSet<>();
         for(int pid : state.getLogicalPartitions().keySet()) {
             targets.addAll(getCandidates(pid, firstStage, k, state));
@@ -49,7 +48,7 @@ public class HermarRepartitioner {
 
         logicallyMigrate(targets, state);
 
-        return moves;
+        return targets.size();
     }
 
     static Set<Target> getCandidates(int pid, boolean firstIteration, int k, State state) {
@@ -80,7 +79,7 @@ public class HermarRepartitioner {
     void physicallyMigrate(Map<Integer, Set<Integer>> logicalPartitions) {
         for(int pid : logicalPartitions.keySet()) {
             for(int uid : logicalPartitions.get(pid)) {
-                RepUser user = manager.getUser(uid);
+                User user = manager.getUser(uid);
                 if(user.getBasePid() != pid) {
                     manager.moveUser(uid, pid);
                     manager.increaseTally(1);
@@ -95,20 +94,20 @@ public class HermarRepartitioner {
         float gamma = manager.getGamma();
 
         for(int pid : manager.getAllPartitionIds()) {
-            Set<Integer> uids = manager.getPartitionById(pid).getPhysicalUserIds();
+            Set<Integer> uids = manager.getPartitionById(pid);
             pToWeight.put(pid, uids.size());
             totalWeight += uids.size();
         }
 
         Map<Integer, LogicalUser> logicalUsers = new HashMap<>();
         for(int uid : manager.getUserIds()) {
-            RepUser user = manager.getUser(uid);
+            User user = manager.getUser(uid);
             Map<Integer, Integer> pToFriendCount = new HashMap<>();
+            for(int pid : manager.getAllPartitionIds()) {
+                pToFriendCount.put(pid, 0);
+            }
             for(Integer friendId : user.getFriendIDs()) {
                 int pid = manager.getPartitionIdForUser(friendId);
-                if(!pToFriendCount.containsKey(pid)) {
-                    pToFriendCount.put(pid, 0);
-                }
                 pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
             }
 
@@ -124,7 +123,7 @@ public class HermarRepartitioner {
         Map<Integer, Set<Integer>> logicalPartitions = new HashMap<>();
 
         for(int pid : manager.getAllPartitionIds()) {
-            Set<Integer> uids = manager.getPartitionById(pid).getPhysicalUserIds();
+            Set<Integer> uids = manager.getPartitionById(pid);
             logicalPartitions.put(pid, new HashSet<>(uids));
         }
 
@@ -218,16 +217,19 @@ public class HermarRepartitioner {
 
                 if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
 
-                    int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
-                    float balanceFactor = getImbalanceFactor(targetPid, 1);
+                    try {
+                        int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
+                        float balanceFactor = getImbalanceFactor(targetPid, 1);
 
-                    if(gain > maxGain && balanceFactor < gamma) {
-                        targets = new HashSet<>();
-                        targets.add(targetPid);
-                        maxGain = gain;
-                    }
-                    else if (gain == maxGain && (overweight || gain > 0)) {
-                        targets.add(targetPid);
+                        if (gain > maxGain && balanceFactor < gamma) {
+                            targets = new HashSet<>();
+                            targets.add(targetPid);
+                            maxGain = gain;
+                        } else if (gain == maxGain && (overweight || gain > 0)) {
+                            targets.add(targetPid);
+                        }
+                    } catch(Exception e) {
+                        System.out.println();
                     }
                 }
             }
@@ -278,10 +280,6 @@ public class HermarRepartitioner {
             result = 31 * result + pToWeight.hashCode();
             result = 31 * result + totalWeight.hashCode();
             return result;
-        }
-
-        public void setPToFriendCount(Map<Integer, Integer> updatedFriendCounts) {
-            pToFriendCount = updatedFriendCounts;
         }
 
         @Override

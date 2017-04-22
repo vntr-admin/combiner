@@ -46,8 +46,8 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
     }
 
     void handleRebalancing(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = manager.getUser(smallerUserId);
-        RepUser largerUser  = manager.getUser(largerUserId);
+        User smallerUser = manager.getUser(smallerUserId);
+        User largerUser  = manager.getUser(largerUserId);
 
         BEFRIEND_REBALANCE_STRATEGY strategy = befriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
 
@@ -98,7 +98,7 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
         for(Integer uid : friendships.keySet()) {
             numFriendships += friendships.get(uid).size();
         }
-        return numFriendships / 2; //TODO: make sure this is correct
+        return numFriendships / 2;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package io.vntr.hermar;
 
-import io.vntr.RepUser;
+import io.vntr.User;
 import io.vntr.User;
 
 import java.util.*;
@@ -9,8 +9,8 @@ import java.util.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermarManager {
-    private Map<Integer, HermarPartition> pMap;
-    private Map<Integer, Integer> uMap;
+    private Map<Integer, Set<Integer>> pMap;
+    private Map<Integer, User> uidToUserMap;
     private float gamma;
     private int k;
     private boolean probabilistic;
@@ -30,7 +30,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
         this.maxIterations = 100;
         maxIterationToNumUsersRatio = 1f;
         repartitioner = new HermarRepartitioner(this);
@@ -40,7 +40,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
         this.maxIterations = maxIterations;
         maxIterationToNumUsersRatio = 1f;
         this.k=3;
@@ -51,7 +51,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k=3;
@@ -62,7 +62,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -73,7 +73,7 @@ public class HermarManager {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
+        this.uidToUserMap = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -88,23 +88,18 @@ public class HermarManager {
     }
 
     public void addUser(User user) {
-        Integer initialPid = getInitialPartitionId();
-        int uid = user.getId();
-        RepUser RepUser = new RepUser(uid, initialPid);
-        addUser(RepUser);
-    }
-
-    void addUser(RepUser user) {
+        if(user.getBasePid() == null) {
+            user.setBasePid(getInitialPartitionId());
+        }
         Integer pid = user.getBasePid();
-        getPartitionById(pid).addUser(user);
-        uMap.put(user.getId(), pid);
+        uidToUserMap.put(user.getId(), user);
+        getPartitionById(pid).add(user.getId());
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
         }
         if(user.getId() >= nextUid) {
             nextUid = user.getId() + 1;
         }
-
     }
 
     public void removeUser(Integer userId) {
@@ -112,8 +107,8 @@ public class HermarManager {
         for(Integer friendId : friendIds) {
             unfriend(userId, friendId);
         }
-        getPartitionById(getPartitionIdForUser(userId)).removeUser(userId);
-        uMap.remove(userId);
+        getPartitionById(getPartitionIdForUser(userId)).remove(userId);
+        uidToUserMap.remove(userId);
     }
 
     public void befriend(Integer smallerUserId, Integer largerUserId) {
@@ -133,7 +128,7 @@ public class HermarManager {
     }
 
     void addPartition(Integer id) {
-        pMap.put(id, new HermarPartition(id));
+        pMap.put(id, new HashSet<Integer>());
         if(id >= nextPid) {
             nextPid = id + 1;
         }
@@ -147,12 +142,12 @@ public class HermarManager {
         return pMap.keySet();
     }
 
-    public HermarPartition getPartitionById(Integer pid) {
+    public Set<Integer> getPartitionById(Integer pid) {
         return pMap.get(pid);
     }
 
     public Integer getPartitionIdForUser(Integer uid) {
-        return uMap.get(uid);
+        return uidToUserMap.get(uid).getBasePid();
     }
 
     public void repartition() {
@@ -163,7 +158,7 @@ public class HermarManager {
         Integer minId = null;
         int minUsers = Integer.MAX_VALUE;
         for(Integer pid : pMap.keySet()) {
-            int numUsers = getPartitionById(pid).getNumUsers();
+            int numUsers = getPartitionById(pid).size();
             if(numUsers < minUsers) {
                 minUsers = numUsers;
                 minId = pid;
@@ -172,18 +167,18 @@ public class HermarManager {
         return minId;
     }
 
-    RepUser getUser(Integer uid) {
-        return getPartitionById(getPartitionIdForUser(uid)).getUserById(uid);
+    User getUser(Integer uid) {
+        return uidToUserMap.get(uid);
     }
 
     public Integer getNumUsers() {
-        return uMap.size();
+        return uidToUserMap.size();
     }
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(int uid : uMap.keySet()) {
-            RepUser user = getUser(uid);
+        for(int uid : uidToUserMap.keySet()) {
+            User user = getUser(uid);
             Integer userPid = user.getBasePid();
 
             for(int friendId : user.getFriendIDs()) {
@@ -199,29 +194,28 @@ public class HermarManager {
     public Map<Integer,Set<Integer>> getPartitionToUserMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : getAllPartitionIds()) {
-            map.put(pid, new TreeSet<>(getPartitionById(pid).getPhysicalUserIds()));
+            map.put(pid, new HashSet<Integer>(pMap.get(pid)));
         }
         return map;
     }
 
     public void moveUser(Integer uid, Integer pid) {
-        RepUser user = getUser(uid);
-        uMap.put(uid, pid);
-        getPartitionById(user.getBasePid()).removeUser(uid);
-        getPartitionById(pid).addUser(user);
+        User user = getUser(uid);
+        getPartitionById(user.getBasePid()).remove(uid);
+        getPartitionById(pid).add(uid);
         user.setBasePid(pid);
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uidToUserMap.keySet()) {
             friendships.put(uid, new TreeSet<>(getUser(uid).getFriendIDs()));
         }
         return friendships;
     }
 
     public Collection<Integer> getUserIds() {
-        return uMap.keySet();
+        return uidToUserMap.keySet();
     }
 
     public float getGamma() {
@@ -245,10 +239,10 @@ public class HermarManager {
     }
 
     void checkValidity() {
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uidToUserMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : pMap.keySet()) {
-                if(pMap.get(pid).getPhysicalUserIds().contains(uid)) {
+                if(pMap.get(pid).contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");
                     }
@@ -259,14 +253,12 @@ public class HermarManager {
             if(observedMasterPid == null) {
                 throw new RuntimeException("user must be in some partition");
             }
-            if(!observedMasterPid.equals(uMap.get(uid))) {
-                throw new RuntimeException("Mismatch between uMap's location of user and partition's");
-            }
             if(!observedMasterPid.equals(getUser(uid).getBasePid())) {
                 throw new RuntimeException("Mismatch between user's pid and partition's");
             }
-
-            //TODO: should we check the logical partitions?
+            if(!observedMasterPid.equals(uidToUserMap.get(uid).getBasePid())) {
+                throw new RuntimeException("Mismatch between user's PID and system's");
+            }
         }
     }
 }
