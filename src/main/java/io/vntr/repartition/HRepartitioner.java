@@ -1,48 +1,33 @@
-package io.vntr.hermar;
-
-import io.vntr.User;
+package io.vntr.repartition;
 
 import java.util.*;
 
 /**
  * Created by robertlindquist on 4/21/17.
  */
-public class HermarRepartitioner {
-
-    private HermarManager manager;
-
-    public HermarRepartitioner(HermarManager manager) {
-        this.manager = manager;
-    }
-
-    public void repartition(int k, int maxIterations) {
-        Map<Integer, Set<Integer>> friendships = manager.getFriendships();
+public class HRepartitioner {
+    public static Results repartition(int k, int maxIterations, float gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         int moves = 0;
-        State state = initState();
+        State state = initState(partitions, friendships, gamma);
         for(int i=0; i<maxIterations; i++) {
             int movesBeforeIteration = moves;
 
             moves += performStage(true, k, state);
-            state.setLogicalUsers(initLogicalUsers(state.getLogicalPartitions(), friendships, manager.getGamma()));
+            state.setLogicalUsers(initLogicalUsers(state.getLogicalPartitions(), friendships, gamma));
 
             moves += performStage(false, k, state);
-            state.setLogicalUsers(initLogicalUsers(state.getLogicalPartitions(), friendships, manager.getGamma()));
+            state.setLogicalUsers(initLogicalUsers(state.getLogicalPartitions(), friendships, gamma));
 
             if(moves == movesBeforeIteration) {
-                System.out.println("Early exit: " + i + " iterations!");
                 break;
             }
         }
 
-        if(moves > 0) {
-            physicallyMigrate(state.getLogicalPartitions());
-        }
-
-        manager.increaseTallyLogical(moves);
+        return new Results(invertMapSet(state.getLogicalPartitions()), moves);
     }
 
     static int performStage(boolean firstStage, int k, State state) {
-        Set<io.vntr.hermes.Target> targets = new HashSet<>();
+        Set<Target> targets = new HashSet<>();
         for(int pid : state.getLogicalPartitions().keySet()) {
             targets.addAll(getCandidates(pid, firstStage, k, state));
         }
@@ -52,50 +37,33 @@ public class HermarRepartitioner {
         return targets.size();
     }
 
-    static Set<io.vntr.hermes.Target> getCandidates(int pid, boolean firstIteration, int k, State state) {
-        NavigableSet<io.vntr.hermes.Target> candidates = new TreeSet<>();
+    static Set<Target> getCandidates(int pid, boolean firstIteration, int k, State state) {
+        NavigableSet<Target> candidates = new TreeSet<>();
         for(Integer uid : state.getLogicalPartitions().get(pid)) {
-            io.vntr.hermes.Target target = state.getLogicalUsers().get(uid).getTargetPart(firstIteration);
-            if(target.partitionId != null) {
+            Target target = state.getLogicalUsers().get(uid).getTargetPart(firstIteration);
+            if(target.pid != null) {
                 candidates.add(target);
             }
         }
 
-        Set<io.vntr.hermes.Target> topKCandidates = new HashSet<>();
+        Set<Target> topKCandidates = new HashSet<>();
         int i=0;
-        for(Iterator<io.vntr.hermes.Target> iter = candidates.descendingIterator(); iter.hasNext() && i++<k; ) {
+        for(Iterator<Target> iter = candidates.descendingIterator(); iter.hasNext() && i++<k; ) {
             topKCandidates.add(iter.next());
         }
 
         return topKCandidates;
     }
 
-    static void logicallyMigrate(Set<io.vntr.hermes.Target> targets, State state) {
-        for(io.vntr.hermes.Target target : targets) {
-            state.getLogicalPartitions().get(target.oldPartitionId).remove(target.userId);
-            state.getLogicalPartitions().get(target.partitionId).add(target.userId);
-        }
-    }
-
-    void physicallyMigrate(Map<Integer, Set<Integer>> logicalPartitions) {
-        for(int pid : logicalPartitions.keySet()) {
-            for(int uid : logicalPartitions.get(pid)) {
-                User user = manager.getUser(uid);
-                if(user.getBasePid() != pid) {
-                    manager.moveUser(uid, pid);
-                    manager.increaseTally(1);
-                }
-            }
+    static void logicallyMigrate(Set<Target> targets, State state) {
+        for(Target target : targets) {
+            state.getLogicalPartitions().get(target.oldPid).remove(target.uid);
+            state.getLogicalPartitions().get(target.pid).add(target.uid);
         }
     }
 
     static Map<Integer, LogicalUser> initLogicalUsers(Map<Integer, Set<Integer>> logicalPids, Map<Integer, Set<Integer>> friendships, float gamma) {
-        Map<Integer, Integer> uidToPidMap = new HashMap<>();
-        for(int pid : logicalPids.keySet()) {
-            for(int uid : logicalPids.get(pid)) {
-                uidToPidMap.put(uid, pid);
-            }
-        }
+        Map<Integer, Integer> uidToPidMap = invertMapSet(logicalPids);
 
         Map<Integer, Integer> pToWeight = new HashMap<>();
         int totalWeight = 0;
@@ -125,17 +93,17 @@ public class HermarRepartitioner {
         return logicalUsers;
     }
 
-    State initState() {
+    static State initState(Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, float gamma) {
         State state = new State();
         Map<Integer, Set<Integer>> logicalPartitions = new HashMap<>();
 
-        for(int pid : manager.getAllPartitionIds()) {
-            Set<Integer> uids = manager.getPartitionById(pid);
+        for(int pid : partitions.keySet()) {
+            Set<Integer> uids = partitions.get(pid);
             logicalPartitions.put(pid, new HashSet<>(uids));
         }
 
         state.setLogicalPartitions(logicalPartitions);
-        state.setLogicalUsers(initLogicalUsers(manager.getPartitionToUserMap(), manager.getFriendships(), manager.getGamma()));
+        state.setLogicalUsers(initLogicalUsers(partitions, friendships, gamma));
 
         return state;
     }
@@ -209,12 +177,12 @@ public class HermarRepartitioner {
             return pToFriendCount;
         }
 
-        public io.vntr.hermes.Target getTargetPart(boolean firstStage) {
+        public Target getTargetPart(boolean firstStage) {
             boolean underweight = getImbalanceFactor(pid, -1) < (2-gamma);
             boolean overweight = getImbalanceFactor(pid, 0) > gamma;
 
             if(underweight) {
-                return new io.vntr.hermes.Target(id, null, null, 0);
+                return new Target(id, null, null, 0);
             }
 
             Set<Integer> targets = new HashSet<>();
@@ -253,7 +221,7 @@ public class HermarRepartitioner {
                 }
             }
 
-            return new io.vntr.hermes.Target(id, targetPid, pid, maxGain);
+            return new Target(id, targetPid, pid, maxGain);
         }
 
         private float getImbalanceFactor(Integer pId, Integer offset) {
@@ -293,5 +261,15 @@ public class HermarRepartitioner {
         public String toString() {
             return "u" + id + "|, p" + pid + "|" + pToFriendCount;
         }
+    }
+
+    static Map<Integer, Integer> invertMapSet(Map<Integer, Set<Integer>> mapSet) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for(Integer key : mapSet.keySet()) {
+            for(Integer value : mapSet.get(key)) {
+                map.put(value, key);
+            }
+        }
+        return map;
     }
 }

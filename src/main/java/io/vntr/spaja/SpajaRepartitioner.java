@@ -85,7 +85,7 @@ public class SpajaRepartitioner {
             }
         }
 
-        //Assert that replicas are consistent with the master in everything except partitionId
+        //Assert that replicas are consistent with the master in everything except pid
         for(int uid : friendships.keySet()) {
             SpajaUser master = manager.getUserMasterById(uid);
             Set<Integer> replicaPids = findKeysForUser(replicas, uid);

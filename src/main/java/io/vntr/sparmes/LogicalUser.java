@@ -1,5 +1,7 @@
 package io.vntr.sparmes;
 
+import io.vntr.repartition.Target;
+
 import java.util.Map;
 import java.util.Set;
 

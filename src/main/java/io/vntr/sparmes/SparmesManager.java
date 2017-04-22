@@ -1,6 +1,7 @@
 package io.vntr.sparmes;
 
 import io.vntr.User;
+import io.vntr.repartition.Target;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -265,7 +266,7 @@ public class SparmesManager {
             replica.removeReplicaPartitionId(partitionId);
         }
 
-        //Add replicas of friends in partitionId if they don't already exist
+        //Add replicas of friends in pid if they don't already exist
         for(int friendId : user.getFriendIDs()) {
             if (!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
                 addReplica(getUserMasterById(friendId), partitionId);
@@ -460,11 +461,11 @@ public class SparmesManager {
 
     void migrateLogically(Target t) {
         SparmesPartition oldPart = getPartitionById(t.oldPid);
-        SparmesPartition newPart = getPartitionById(t.newPid);
+        SparmesPartition newPart = getPartitionById(t.pid);
         SparmesUser user = getUserMasterById(t.uid);
 
         //Add the actual user
-        user.setLogicalPid(t.newPid);
+        user.setLogicalPid(t.pid);
         oldPart.removeLogicalUser(t.uid);
         newPart.addLogicalUser(user.getLogicalUser(false));
 
@@ -480,15 +481,15 @@ public class SparmesManager {
         //Second, replicate friends in new partition if they aren't there already
         for(Integer friendId : user.getFriendIDs()) {
             SparmesUser friend = getUserMasterById(friendId);
-            if(!friend.getLogicalPid().equals(t.newPid) && !friend.getLogicalPids().contains(t.newPid)) {
-                addLogicalReplica(friendId, t.newPid);
+            if(!friend.getLogicalPid().equals(t.pid) && !friend.getLogicalPids().contains(t.pid)) {
+                addLogicalReplica(friendId, t.pid);
             }
         }
 
         //Remove replicas as allowed
         //First, remove user replica from new partition if one exists
         if(newPart.getLogicalReplicaIds().contains(t.uid)) {
-            removeLogicalReplica(t.uid, t.newPid);
+            removeLogicalReplica(t.uid, t.pid);
         }
 
         //TODO: this might not be working properly

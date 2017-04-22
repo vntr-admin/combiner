@@ -370,7 +370,7 @@ public class SparmesAnalyzer {
         assertTrue(uids.equals(friendships.keySet()));
         assertTrue(pids.equals(replicas.keySet()));
 
-        //Assert that replicas are consistent with the master in everything except partitionId
+        //Assert that replicas are consistent with the master in everything except pid
         for(int uid : friendships.keySet()) {
             SparmesUser master = middleware.manager.getUserMasterById(uid);
             Set<Integer> replicaPids = findKeysForUser(replicas, uid);

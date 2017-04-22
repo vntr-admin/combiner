@@ -1,5 +1,6 @@
 package io.vntr.hermes;
 
+import io.vntr.repartition.Target;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -23,16 +24,16 @@ public class HermesMigrator {
 
         for(Iterator<Target> iter = preferredTargets.descendingIterator(); iter.hasNext(); ) {
             Target target = iter.next();
-            if(!isOverloaded(target.partitionId, userCounts)) {
-                actualTargets.put(target.userId, target.partitionId);
-                userCounts.put(target.partitionId, userCounts.get(target.partitionId) + 1);
+            if(!isOverloaded(target.pid, userCounts)) {
+                actualTargets.put(target.uid, target.pid);
+                userCounts.put(target.pid, userCounts.get(target.pid) + 1);
                 iter.remove();
             }
         }
 
         for(Target target : preferredTargets) {
             Integer newPid = getPartitionWithFewestUsers(pid, userCounts);
-            actualTargets.put(target.userId, newPid);
+            actualTargets.put(target.uid, newPid);
             userCounts.put(newPid, userCounts.get(newPid) + 1);
         }
 

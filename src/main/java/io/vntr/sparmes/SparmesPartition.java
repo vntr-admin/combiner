@@ -1,6 +1,7 @@
 package io.vntr.sparmes;
 
 import io.vntr.User;
+import io.vntr.repartition.Target;
 
 import java.util.*;
 
@@ -91,7 +92,7 @@ public class SparmesPartition {
         NavigableSet<Target> candidates = new TreeSet<>();
         for(LogicalUser luser : logicalUsers.values()) {
             Target target = luser.getTargetPart(firstIteration, probabilistic);
-            if(target.newPid != null) {
+            if(target.pid != null) {
                 candidates.add(target);
             }
         }

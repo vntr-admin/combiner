@@ -1,6 +1,8 @@
 package io.vntr.j2ar;
 
 import io.vntr.User;
+import io.vntr.repartition.JRepartitioner;
+import io.vntr.repartition.Results;
 
 import java.util.*;
 
@@ -97,7 +99,21 @@ public class J2ArManager {
     }
 
     public void repartition() {
-        increaseLogicalMigrationTally(this.repartitioner.repartition(1));
+        Results results = JRepartitioner.repartition(alpha, initialT, deltaT, k, 1, partitions, getFriendships(), true);
+        increaseLogicalMigrationTally(results.getLogicalMoves());
+        if(results.getUidsToPids() != null) {
+            physicallyMigrate(results.getUidsToPids());
+        }
+    }
+
+    void physicallyMigrate(Map<Integer, Integer> logicalPids) {
+        for(Integer uid : logicalPids.keySet()) {
+            User user = getUser(uid);
+            Integer newPid = logicalPids.get(uid);
+            if(!user.getBasePid().equals(newPid)) {
+                moveUser(uid, newPid, false);
+            }
+        }
     }
 
     Integer getInitialPartitionId() {

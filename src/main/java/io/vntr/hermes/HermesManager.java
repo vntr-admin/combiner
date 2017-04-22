@@ -1,6 +1,8 @@
 package io.vntr.hermes;
 
 import io.vntr.User;
+import io.vntr.repartition.HRepartitioner;
+import io.vntr.repartition.Results;
 
 import java.util.*;
 
@@ -23,14 +25,11 @@ public class HermesManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
-    private HermesRepartitioner repartitioner;
-
     public HermesManager(float gamma, boolean probabilistic) {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
         this.uidToUserMap = new HashMap<>();
-        repartitioner = new HermesRepartitioner(this);
         this.maxIterations = 100;
         maxIterationToNumUsersRatio = 1f;
     }
@@ -40,7 +39,6 @@ public class HermesManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uidToUserMap = new HashMap<>();
-        repartitioner = new HermesRepartitioner(this);
         this.maxIterations = maxIterations;
         maxIterationToNumUsersRatio = 1f;
         this.k=3;
@@ -51,7 +49,6 @@ public class HermesManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uidToUserMap = new HashMap<>();
-        repartitioner = new HermesRepartitioner(this);
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k=3;
@@ -62,7 +59,6 @@ public class HermesManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uidToUserMap = new HashMap<>();
-        repartitioner = new HermesRepartitioner(this);
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -73,7 +69,6 @@ public class HermesManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uidToUserMap = new HashMap<>();
-        repartitioner = new HermesRepartitioner(this);
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
@@ -150,8 +145,25 @@ public class HermesManager {
     }
 
     public void repartition() {
-        repartitioner.repartition(k, maxIterations);
+        Results results = HRepartitioner.repartition(k, maxIterations, gamma, getPartitionToUserMap(), getFriendships());
+        int numMoves = results.getLogicalMoves();
+        if(numMoves > 0) {
+            increaseTallyLogical(numMoves);
+            physicallyMigrate(results.getUidsToPids());
+        }
     }
+
+    void physicallyMigrate(Map<Integer, Integer> uidsToPids) {
+        for(int uid : uidsToPids.keySet()) {
+            int pid = uidsToPids.get(uid);
+            User user = getUser(uid);
+            if(user.getBasePid() != pid) {
+                moveUser(uid, pid);
+                increaseTally(1);
+            }
+        }
+    }
+
 
     Integer getInitialPartitionId() {
         Integer minId = null;

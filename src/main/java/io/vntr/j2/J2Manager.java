@@ -1,6 +1,8 @@
 package io.vntr.j2;
 
 import io.vntr.User;
+import io.vntr.repartition.JRepartitioner;
+import io.vntr.repartition.Results;
 
 import java.util.*;
 
@@ -24,8 +26,6 @@ public class J2Manager {
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
-    private J2Repartitioner repartitioner;
-
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -37,7 +37,6 @@ public class J2Manager {
         this.numRestarts = numRestarts;
         this.logicalMigrationRatio = logicalMigrationRatio;
         uMap = new HashMap<>();
-        this.repartitioner = new J2Repartitioner(this, alpha, initialT, deltaT, k);
         partitions = new HashMap<>();
     }
 
@@ -90,7 +89,21 @@ public class J2Manager {
     }
 
     public void repartition() {
-        increaseLogicalMigrationTally(repartitioner.repartition(numRestarts));
+        Results results = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, partitions, getFriendships(), false);
+        increaseLogicalMigrationTally(results.getLogicalMoves());
+        if(results.getUidsToPids() != null) {
+            physicallyMigrate(results.getUidsToPids());
+        }
+    }
+
+    void physicallyMigrate(Map<Integer, Integer> logicalPids) {
+        for(Integer uid : logicalPids.keySet()) {
+            User user = getUser(uid);
+            Integer newPid = logicalPids.get(uid);
+            if(!user.getBasePid().equals(newPid)) {
+                moveUser(uid, newPid, false);
+            }
+        }
     }
 
     Integer getInitialPartitionId() {

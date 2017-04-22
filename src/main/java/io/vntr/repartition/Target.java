@@ -1,17 +1,17 @@
-package io.vntr.sparmes;
+package io.vntr.repartition;
 
 /**
- * Created by robertlindquist on 9/29/16.
+ * Created by robertlindquist on 4/21/17.
  */
 public class Target implements Comparable<Target> {
     public final Integer uid;
-    public final Integer newPid;
+    public final Integer pid;
     public final Integer oldPid;
     public final Integer gain;
 
-    public Target(Integer uid, Integer newPid, Integer oldPid, Integer gain) {
+    public Target(Integer uid, Integer pid, Integer oldPid, Integer gain) {
         this.uid = uid;
-        this.newPid = newPid;
+        this.pid = pid;
         this.oldPid = oldPid;
         this.gain = gain;
     }
@@ -22,7 +22,7 @@ public class Target implements Comparable<Target> {
         if(gainCompare != 0) {
             return gainCompare;
         }
-        int partCompare = newPid.compareTo(o.newPid);
+        int partCompare = pid.compareTo(o.pid);
         if(partCompare != 0) {
             return partCompare;
         }
@@ -41,7 +41,7 @@ public class Target implements Comparable<Target> {
         Target target = (Target) o;
 
         if (!uid.equals(target.uid)) return false;
-        if (!newPid.equals(target.newPid)) return false;
+        if (!pid.equals(target.pid)) return false;
         if (!oldPid.equals(target.oldPid)) return false;
         return gain.equals(target.gain);
 
@@ -50,7 +50,7 @@ public class Target implements Comparable<Target> {
     @Override
     public int hashCode() {
         int result = uid.hashCode();
-        result = 31 * result + newPid.hashCode();
+        result = 31 * result + pid.hashCode();
         result = 31 * result + oldPid.hashCode();
         result = 31 * result + gain.hashCode();
         return result;
@@ -59,7 +59,7 @@ public class Target implements Comparable<Target> {
     @Override
     public String toString() {
         String strGain = gain > 0 ? "+" + gain : "" + gain;
-        return uid + ": " + oldPid + "--(" + strGain + ")-->" + newPid;
+        return uid + ": " + oldPid + "--(" + strGain + ")-->" + pid;
     }
 }
 

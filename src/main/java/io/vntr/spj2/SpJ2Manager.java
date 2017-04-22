@@ -260,7 +260,7 @@ public class SpJ2Manager {
             replica.removeReplicaPartitionId(partitionId);
         }
 
-        //Add replicas of friends in partitionId if they don't already exist
+        //Add replicas of friends in pid if they don't already exist
         for(int friendId : user.getFriendIDs()) {
             if(!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
                 addReplica(getUserMasterById(friendId), partitionId);
