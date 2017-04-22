@@ -36,7 +36,7 @@ public class HermesManagerTest {
         manager.addUser(user5);
         manager.addUser(user6);
 
-        Map<Integer, Set<Integer>> pMap = manager.getPartitionToUserMap();
+        Map<Integer, Set<Integer>> pMap = manager.getPartitionToUsers();
         assertTrue(pMap.size() == 2);
         assertTrue(pMap.get(pid1).equals(new HashSet<>(Arrays.asList(1, 3, 5))));
         assertTrue(pMap.get(pid2).equals(new HashSet<>(Arrays.asList(2, 4, 6))));
@@ -80,17 +80,17 @@ public class HermesManagerTest {
 
         assertTrue(manager.getEdgeCut() == 4);
 
-        manager.moveUser(4, pid1);
+        manager.moveUser(4, pid1, false);
 
         assertTrue(manager.getEdgeCut() == 3);
 
-        manager.moveUser(4, pid3);
+        manager.moveUser(4, pid3, false);
 
         assertTrue(manager.getEdgeCut() == 4);
 
         for(int id=2; id<=9; id++) {
             if(id != 8) {
-                manager.moveUser(id, pid3);
+                manager.moveUser(id, pid3, false);
             }
         }
 

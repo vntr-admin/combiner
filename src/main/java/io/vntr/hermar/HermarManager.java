@@ -1,5 +1,6 @@
 package io.vntr.hermar;
 
+import io.vntr.INoRepManager;
 import io.vntr.User;
 import io.vntr.repartition.HRepartitioner;
 import io.vntr.repartition.Results;
@@ -9,7 +10,7 @@ import java.util.*;
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class HermarManager {
+public class HermarManager implements INoRepManager {
     private Map<Integer, Set<Integer>> pMap;
     private Map<Integer, User> uMap;
     private float gamma;
@@ -75,19 +76,21 @@ public class HermarManager {
         this.logicalMigrationRatio = logicalMigrationRatio;
     }
 
+    @Override
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
+    @Override
     public void addUser(User user) {
         if(user.getBasePid() == null) {
             user.setBasePid(getInitialPartitionId());
         }
         Integer pid = user.getBasePid();
         uMap.put(user.getId(), user);
-        getPartitionById(pid).add(user.getId());
+        getPartition(pid).add(user.getId());
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
         }
@@ -96,56 +99,65 @@ public class HermarManager {
         }
     }
 
+    @Override
     public void removeUser(Integer userId) {
         Set<Integer> friendIds = new HashSet<>(getUser(userId).getFriendIDs());
         for(Integer friendId : friendIds) {
             unfriend(userId, friendId);
         }
-        getPartitionById(getPartitionIdForUser(userId)).remove(userId);
+        getPartition(getPidForUser(userId)).remove(userId);
         uMap.remove(userId);
     }
 
+    @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
         getUser(smallerUserId).befriend(largerUserId);
         getUser(largerUserId).befriend(smallerUserId);
     }
 
+    @Override
     public void unfriend(Integer smallerUserId, Integer largerUserId) {
         getUser(smallerUserId).unfriend(largerUserId);
         getUser(largerUserId).unfriend(smallerUserId);
     }
 
+    @Override
     public Integer addPartition() {
         int pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
-    void addPartition(Integer id) {
+    @Override
+    public void addPartition(Integer id) {
         pMap.put(id, new HashSet<Integer>());
         if(id >= nextPid) {
             nextPid = id + 1;
         }
     }
 
+    @Override
     public void removePartition(Integer pid) {
         pMap.remove(pid);
     }
 
-    public Set<Integer> getAllPartitionIds() {
+    @Override
+    public Set<Integer> getPids() {
         return pMap.keySet();
     }
 
-    public Set<Integer> getPartitionById(Integer pid) {
+    @Override
+    public Set<Integer> getPartition(Integer pid) {
         return pMap.get(pid);
     }
 
-    public Integer getPartitionIdForUser(Integer uid) {
+    @Override
+    public Integer getPidForUser(Integer uid) {
         return uMap.get(uid).getBasePid();
     }
 
     public void repartition() {
-        Results results = HRepartitioner.repartition(k, maxIterations, gamma, getPartitionToUserMap(), getFriendships());
+        Results results = HRepartitioner.repartition(k, maxIterations, gamma, getPartitionToUsers(), getFriendships());
         int numMoves = results.getLogicalMoves();
         if(numMoves > 0) {
             increaseTallyLogical(numMoves);
@@ -158,17 +170,17 @@ public class HermarManager {
             int pid = uidsToPids.get(uid);
             User user = getUser(uid);
             if(user.getBasePid() != pid) {
-                moveUser(uid, pid);
-                increaseTally(1);
+                moveUser(uid, pid, false);
             }
         }
     }
 
-    Integer getInitialPartitionId() {
+    @Override
+    public Integer getInitialPartitionId() {
         Integer minId = null;
         int minUsers = Integer.MAX_VALUE;
         for(Integer pid : pMap.keySet()) {
-            int numUsers = getPartitionById(pid).size();
+            int numUsers = getPartition(pid).size();
             if(numUsers < minUsers) {
                 minUsers = numUsers;
                 minId = pid;
@@ -177,14 +189,20 @@ public class HermarManager {
         return minId;
     }
 
-    User getUser(Integer uid) {
+    @Override
+    public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
+    @Override
     public Integer getNumUsers() {
         return uMap.size();
     }
 
+    @Override
+    public Integer getNumPartitions() { return pMap.size(); }
+
+    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for(int uid : uMap.keySet()) {
@@ -201,21 +219,27 @@ public class HermarManager {
         return count;
     }
 
-    public Map<Integer,Set<Integer>> getPartitionToUserMap() {
+    @Override
+    public Map<Integer,Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
-        for(Integer pid : getAllPartitionIds()) {
+        for(Integer pid : getPids()) {
             map.put(pid, new HashSet<Integer>(pMap.get(pid)));
         }
         return map;
     }
 
-    public void moveUser(Integer uid, Integer pid) {
+    @Override
+    public void moveUser(Integer uid, Integer pid, boolean omitFromTally) {
         User user = getUser(uid);
-        getPartitionById(user.getBasePid()).remove(uid);
-        getPartitionById(pid).add(uid);
+        getPartition(user.getBasePid()).remove(uid);
+        getPartition(pid).add(uid);
         user.setBasePid(pid);
+        if(!omitFromTally) {
+            increaseTally(1);
+        }
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
@@ -224,7 +248,8 @@ public class HermarManager {
         return friendships;
     }
 
-    public Collection<Integer> getUserIds() {
+    @Override
+    public Set<Integer> getUids() {
         return uMap.keySet();
     }
 
@@ -232,23 +257,26 @@ public class HermarManager {
         return gamma;
     }
 
+    @Override
     public long getMigrationTally() {
         return migrationTally + (long) (logicalMigrationRatio * migrationTallyLogical);
     }
 
-    void increaseTally(int amount) {
+    @Override
+    public void increaseTally(int amount) {
         migrationTally += amount;
     }
 
-    void increaseTallyLogical(int amount) { migrationTallyLogical += amount; }
-
+    @Override
+    public void increaseTallyLogical(int amount) { migrationTallyLogical += amount; }
 
     @Override
     public String toString() {
         return "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
     }
 
-    void checkValidity() {
+    @Override
+    public void checkValidity() {
         for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : pMap.keySet()) {
@@ -271,4 +299,5 @@ public class HermarManager {
             }
         }
     }
+
 }

@@ -1,7 +1,6 @@
 package io.vntr.hermar;
 
 import io.vntr.IMiddlewareAnalyzer;
-import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -52,10 +51,10 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
         BEFRIEND_REBALANCE_STRATEGY strategy = befriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
 
         if(strategy == ONE_TO_TWO) {
-            manager.moveUser(smallerUserId, largerUser.getBasePid());
+            manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
         }
         else if(strategy == TWO_TO_ONE) {
-            manager.moveUser(largerUserId, smallerUser.getBasePid());
+            manager.moveUser(largerUserId, smallerUser.getBasePid(), false);
         }
     }
 
@@ -83,7 +82,7 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Integer getNumberOfPartitions() {
-        return manager.getAllPartitionIds().size();
+        return manager.getPids().size();
     }
 
     @Override
@@ -103,12 +102,12 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Collection<Integer> getUserIds() {
-        return manager.getUserIds();
+        return manager.getUids();
     }
 
     @Override
     public Collection<Integer> getPartitionIds() {
-        return manager.getAllPartitionIds();
+        return manager.getPids();
     }
 
     @Override
@@ -123,7 +122,7 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return manager.getPartitionToUserMap();
+        return manager.getPartitionToUsers();
     }
 
     @Override

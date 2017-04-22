@@ -1,5 +1,6 @@
 package io.vntr.metis;
 
+import io.vntr.INoRepManager;
 import io.vntr.User;
 
 import java.util.*;
@@ -10,7 +11,7 @@ import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 /**
  * Created by robertlindquist on 12/5/16.
  */
-public class MetisManager {
+public class MetisManager implements INoRepManager {
 
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
@@ -27,14 +28,17 @@ public class MetisManager {
         this.repartitioner = new MetisRepartitioner(gpmetisLocation, gpmetisTempdir);
     }
 
-    public Set<Integer> getUserIds() {
+    @Override
+    public Set<Integer> getUids() {
         return uMap.keySet();
     }
 
+    @Override
     public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
+    @Override
     public Set<Integer> getPartition(Integer pid) {
         return partitions.get(pid);
     }
@@ -47,12 +51,14 @@ public class MetisManager {
         return users;
     }
 
+    @Override
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
+    @Override
     public void addUser(User user) {
         if(user.getBasePid() == null) {
             user.setBasePid(getInitialPartitionId());
@@ -66,6 +72,7 @@ public class MetisManager {
         }
     }
 
+    @Override
     public void removeUser(Integer uid) {
         User user = uMap.remove(uid);
         for(Integer friendId : user.getFriendIDs()) {
@@ -74,14 +81,26 @@ public class MetisManager {
         partitions.get(user.getBasePid()).remove(uid);
     }
 
+    @Override
     public void befriend(Integer id1, Integer id2) {
         getUser(id1).befriend(id2);
         getUser(id2).befriend(id1);
     }
 
+    @Override
     public void unfriend(Integer id1, Integer id2) {
         getUser(id1).unfriend(id2);
         getUser(id2).unfriend(id1);
+    }
+
+    @Override
+    public Integer getPidForUser(Integer uid) {
+        for(Integer pid : partitions.keySet()) {
+            if(partitions.get(pid).contains(uid)) {
+                return pid;
+            }
+        }
+        return null;
     }
 
     public void repartition() {
@@ -89,54 +108,65 @@ public class MetisManager {
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);
             if(newPid != getUser(uid).getBasePid()) {
-                moveUser(uid, newPid);
+                moveUser(uid, newPid, true);
             }
         }
     }
 
-    Integer getInitialPartitionId() {
+    @Override
+    public Integer getInitialPartitionId() {
         return getRandomElement(partitions.keySet());
     }
 
+    @Override
     public Integer addPartition() {
         int pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
-    void addPartition(Integer pid) {
+    @Override
+    public void addPartition(Integer pid) {
         partitions.put(pid, new HashSet<Integer>());
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
     }
 
+    @Override
     public void removePartition(Integer partitionId) {
         partitions.remove(partitionId);
     }
 
-    public Collection<Integer> getPartitionIds() {
+    @Override
+    public Set<Integer> getPids() {
         return partitions.keySet();
     }
 
-    public void moveUser(Integer uid, Integer newPid) {
+    @Override
+    public void moveUser(Integer uid, Integer newPid, boolean omitFromTally) {
         User user = getUser(uid);
         if(partitions.containsKey(user.getBasePid())) {
             getPartition(user.getBasePid()).remove(uid);
         }
         getPartition(newPid).add(uid);
         user.setBasePid(newPid);
-        increaseMigrationTally(1);
+        if(!omitFromTally) {
+            increaseTally(1);
+        }
     }
 
+    @Override
     public Integer getNumPartitions() {
         return partitions.size();
     }
 
+    @Override
     public Integer getNumUsers() {
         return uMap.size();
     }
 
+    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for(User user : uMap.values()) {
@@ -150,6 +180,7 @@ public class MetisManager {
         return count;
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
@@ -158,10 +189,7 @@ public class MetisManager {
         return map;
     }
 
-    public Set<Integer> getAllPartitionIds() {
-        return partitions.keySet();
-    }
-
+    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
@@ -174,8 +202,14 @@ public class MetisManager {
         return migrationTally;
     }
 
-    void increaseMigrationTally(int amount) {
+    @Override
+    public void increaseTally(int amount) {
         migrationTally += amount;
+    }
+
+    @Override
+    public void increaseTallyLogical(int amount) {
+        //There's no such thing for METIS
     }
 
     @Override
@@ -183,7 +217,7 @@ public class MetisManager {
         return "#U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
-    void checkValidity() {
+    public void checkValidity() {
         for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : partitions.keySet()) {

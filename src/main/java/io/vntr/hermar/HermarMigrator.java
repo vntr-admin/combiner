@@ -38,12 +38,12 @@ public class HermarMigrator {
         }
 
         for(Integer uid : actualTargets.keySet()) {
-            manager.moveUser(uid, actualTargets.get(uid));
+            manager.moveUser(uid, actualTargets.get(uid), true);
         }
     }
 
     private Map<Integer, Integer> getUserCounts() {
-        Map<Integer,Set<Integer>> partitionToUserMap = manager.getPartitionToUserMap();
+        Map<Integer,Set<Integer>> partitionToUserMap = manager.getPartitionToUsers();
         Map<Integer, Integer> map = new HashMap<>();
         for(Integer pid : partitionToUserMap.keySet()) {
             map.put(pid, partitionToUserMap.get(pid).size());
@@ -53,17 +53,17 @@ public class HermarMigrator {
 
     boolean isOverloaded(Integer pid, Map<Integer, Integer> userCounts) {
         float numUsers = manager.getNumUsers();
-        float numPartitions = manager.getAllPartitionIds().size() - 1;
+        float numPartitions = manager.getPids().size() - 1;
         float avgUsers = numUsers / numPartitions;
         int cutoff = (int) (avgUsers * gamma) + 1;
         return userCounts.get(pid) > cutoff;
     }
 
     NavigableSet<Target> getPreferredTargets(Integer pid) {
-        List<Integer> options = new LinkedList<>(manager.getAllPartitionIds());
+        List<Integer> options = new LinkedList<>(manager.getPids());
         options.remove(pid);
         NavigableSet<Target> preferredTargets = new TreeSet<>();
-        for(Integer uid : manager.getPartitionById(pid)) {
+        for(Integer uid : manager.getPartition(pid)) {
             Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid);
             int maxFriends = 0;
             Integer maxPid = null;
@@ -89,11 +89,11 @@ public class HermarMigrator {
 
     Map<Integer, Integer> getPToFriendCount(Integer uid) {
         Map<Integer, Integer> pToFriendCount = new HashMap<>();
-        for(Integer pid : manager.getAllPartitionIds()) {
+        for(Integer pid : manager.getPids()) {
             pToFriendCount.put(pid, 0);
         }
         for(Integer friendId : manager.getUser(uid).getFriendIDs()) {
-            Integer pid = manager.getPartitionIdForUser(friendId);
+            Integer pid = manager.getPidForUser(friendId);
             pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
         }
         return pToFriendCount;
@@ -102,7 +102,7 @@ public class HermarMigrator {
     Integer getPartitionWithFewestUsers(Integer pid, Map<Integer, Integer> userCounts) {
         int minUsers = Integer.MAX_VALUE;
         Integer minPartition = null;
-        for(Integer newPid : manager.getAllPartitionIds()) {
+        for(Integer newPid : manager.getPids()) {
             if(newPid.equals(pid)) {
                 continue;
             }

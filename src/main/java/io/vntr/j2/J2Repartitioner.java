@@ -31,17 +31,17 @@ public class J2Repartitioner {
         int logicalMigrationCount = 0;
         for (int i = 0; i < numRestarts; i++) {
             State state = initState();
-            state.setLogicalPids(getRandomLogicalPids(manager.getUserIds(), manager.getAllPartitionIds()));
+            state.setLogicalPids(getRandomLogicalPids(manager.getUids(), manager.getPids()));
 
             for(float t = initialT; t >= 1; t -= deltaT) {
-                List<Integer> randomUserList = new LinkedList<>(manager.getUserIds());
+                List<Integer> randomUserList = new LinkedList<>(manager.getUids());
                 Collections.shuffle(randomUserList);
                 for(Integer uid : randomUserList) {
                     Integer realPid = manager.getUser(uid).getBasePid();
 
                     Integer partnerId = findPartner(uid, sample(k, manager.getPartition(realPid)), t, state);
                     if(partnerId == null) {
-                        partnerId = findPartner(uid, sample(k, manager.getUserIds()), t, state);
+                        partnerId = findPartner(uid, sample(k, manager.getUids()), t, state);
                     }
                     if(partnerId != null) {
                         logicalSwap(uid, partnerId, state);
@@ -122,7 +122,7 @@ public class J2Repartitioner {
 
     State initState() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid : manager.getUserIds()) {
+        for(Integer uid : manager.getUids()) {
             friendships.put(uid, new HashSet<>(manager.getFriendships().get(uid)));
         }
         return new State(alpha, initialT, deltaT, k, friendships);

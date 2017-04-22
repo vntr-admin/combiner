@@ -46,8 +46,8 @@ public class HermesUserTest {
 //        friendships.put(20, Collections.<Integer>emptySet());
 //
 //        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
-//        for(Integer pid : manager.getAllPartitionIds()) {
-//            manager.getPartitionById(pid).resetLogicalUsers();
+//        for(Integer pid : manager.getPids()) {
+//            manager.getPartition(pid).resetLogicalUsers();
 //        }
 //
 //        Map<Integer, Integer> pToFriendCount = new HashMap<>();

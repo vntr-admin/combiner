@@ -1,5 +1,6 @@
 package io.vntr.dummy;
 
+import io.vntr.INoRepManager;
 import io.vntr.User;
 
 import java.util.*;
@@ -7,7 +8,7 @@ import java.util.*;
 /**
  * Created by robertlindquist on 11/23/16.
  */
-public class DummyManager {
+public class DummyManager implements INoRepManager {
     private NavigableMap<Integer, Set<Integer>> partitions;
     private NavigableMap<Integer, User> uMap;
 
@@ -18,28 +19,34 @@ public class DummyManager {
         this.uMap = new TreeMap<>();
     }
 
-    public Integer getPartitionForUser(Integer uid) {
+    @Override
+    public Integer getPidForUser(Integer uid) {
         return uMap.get(uid).getBasePid();
     }
 
-    public Set<Integer> getUserIds() {
+    @Override
+    public Set<Integer> getUids() {
         return uMap.keySet();
     }
 
+    @Override
     public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
+    @Override
     public Set<Integer> getPartition(Integer pid) {
         return partitions.get(pid);
     }
 
+    @Override
     public int addUser() {
         int newUid = uMap.lastKey() + 1;
         addUser(new User(newUid));
         return newUid;
     }
 
+    @Override
     public void addUser(User user) {
         if(user.getBasePid() == null) {
             user.setBasePid(getInitialPartitionId());
@@ -48,6 +55,7 @@ public class DummyManager {
         partitions.get(user.getBasePid()).add(user.getId());
     }
 
+    @Override
     public void removeUser(Integer uid) {
         User user = uMap.remove(uid);
         for(Integer friendId : user.getFriendIDs()) {
@@ -56,17 +64,20 @@ public class DummyManager {
         partitions.get(user.getBasePid()).remove(uid);
     }
 
+    @Override
     public void befriend(Integer id1, Integer id2) {
         getUser(id1).befriend(id2);
         getUser(id2).befriend(id1);
     }
 
+    @Override
     public void unfriend(Integer id1, Integer id2) {
         getUser(id1).unfriend(id2);
         getUser(id2).unfriend(id1);
     }
 
-    Integer getInitialPartitionId() {
+    @Override
+    public Integer getInitialPartitionId() {
         int minUsers = Integer.MAX_VALUE;
         Integer minPartition = null;
         for(int pid : partitions.keySet()) {
@@ -78,25 +89,30 @@ public class DummyManager {
         return minPartition;
     }
 
+    @Override
     public Integer addPartition() {
         Integer pid = partitions.isEmpty() ? defaultInitialPid : partitions.lastKey() + 1;
         addPartition(pid);
         return pid;
     }
 
-    void addPartition(Integer pid) {
+    @Override
+    public void addPartition(Integer pid) {
         partitions.put(pid, new HashSet<Integer>());
     }
 
+    @Override
     public void removePartition(Integer partitionId) {
         partitions.remove(partitionId);
     }
 
-    public Collection<Integer> getPartitionIds() {
+    @Override
+    public Set<Integer> getPids() {
         return partitions.keySet();
     }
 
-    public void moveUser(Integer uid, Integer newPid) {
+    @Override
+    public void moveUser(Integer uid, Integer newPid, boolean omitFromTally) {
         User user = getUser(uid);
         if(partitions.containsKey(user.getBasePid())) {
             getPartition(user.getBasePid()).remove(uid);
@@ -105,14 +121,17 @@ public class DummyManager {
         user.setBasePid(newPid);
     }
 
+    @Override
     public Integer getNumPartitions() {
         return partitions.size();
     }
 
+    @Override
     public Integer getNumUsers() {
         return uMap.size();
     }
 
+    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for(User user : uMap.values()) {
@@ -126,6 +145,7 @@ public class DummyManager {
         return count;
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
@@ -138,6 +158,7 @@ public class DummyManager {
         return partitions.keySet();
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
@@ -146,7 +167,8 @@ public class DummyManager {
         return friendships;
     }
 
-    void checkValidity() {
+    @Override
+    public void checkValidity() {
         for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : partitions.keySet()) {
@@ -172,4 +194,18 @@ public class DummyManager {
         return "{Dummy} #U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
+    @Override
+    public long getMigrationTally() {
+        return 0;  //Dummy doesn't migrate
+    }
+
+    @Override
+    public void increaseTally(int amount) {
+        //Dummy doesn't migrate
+    }
+
+    @Override
+    public void increaseTallyLogical(int amount) {
+        //Dummy doesn't migrate
+    }
 }

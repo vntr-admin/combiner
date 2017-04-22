@@ -37,7 +37,7 @@ public class HermesMiddlewareTest {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
         }
 
-        Map<Integer, Set<Integer>> finalTopology = manager.getPartitionToUserMap();
+        Map<Integer, Set<Integer>> finalTopology = manager.getPartitionToUsers();
         Set<Integer> observedUsers = new HashSet<>();
         for(Integer pid : finalTopology.keySet()) {
             observedUsers.addAll(finalTopology.get(pid));

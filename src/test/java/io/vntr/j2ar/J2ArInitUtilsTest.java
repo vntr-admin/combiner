@@ -38,7 +38,7 @@ public class J2ArInitUtilsTest {
         int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
 
         J2ArManager manager = J2ArInitUtils.initGraph(1, 2, 0.5f, 15, 0, partitions, friendships);
-        assertEquals(manager.getAllPartitionIds(), partitions.keySet());
+        assertEquals(manager.getPids(), partitions.keySet());
         assertEquals(partitions, manager.getPartitionToUsers());
         assertEquals(bidirectionalFriendships, manager.getFriendships());
         assertTrue(manager.getMigrationTally() == 0);

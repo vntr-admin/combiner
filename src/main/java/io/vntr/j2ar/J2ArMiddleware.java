@@ -57,7 +57,7 @@ public class J2ArMiddleware implements IMiddlewareAnalyzer{
         Set<Integer> partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
         for(Integer uid : partition) {
-            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPartitionIds());
+            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPids());
             manager.moveUser(uid, newPid, true);
         }
     }
@@ -84,12 +84,12 @@ public class J2ArMiddleware implements IMiddlewareAnalyzer{
 
     @Override
     public Collection<Integer> getUserIds() {
-        return manager.getUserIds();
+        return manager.getUids();
     }
 
     @Override
     public Collection<Integer> getPartitionIds() {
-        return manager.getAllPartitionIds();
+        return manager.getPids();
     }
 
     @Override

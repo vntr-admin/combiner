@@ -1,5 +1,6 @@
 package io.vntr.j2;
 
+import io.vntr.INoRepManager;
 import io.vntr.User;
 import io.vntr.repartition.JRepartitioner;
 import io.vntr.repartition.Results;
@@ -12,7 +13,7 @@ import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 /**
  * Created by robertlindquist on 4/12/17.
  */
-public class J2Manager {
+public class J2Manager implements INoRepManager {
 
     private int k;
     private float alpha;
@@ -40,24 +41,29 @@ public class J2Manager {
         partitions = new HashMap<>();
     }
 
-    public Set<Integer> getUserIds() {
+    @Override
+    public Set<Integer> getUids() {
         return uMap.keySet();
     }
 
+    @Override
     public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
+    @Override
     public Set<Integer> getPartition(Integer pid) {
         return partitions.get(pid);
     }
 
+    @Override
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
+    @Override
     public void addUser(User user) {
         if(user.getBasePid() == null) {
             user.setBasePid(getInitialPartitionId());
@@ -70,6 +76,7 @@ public class J2Manager {
         }
     }
 
+    @Override
     public void removeUser(Integer uid) {
         User user = uMap.remove(uid);
         for(Integer friendId : user.getFriendIDs()) {
@@ -78,11 +85,13 @@ public class J2Manager {
         partitions.get(user.getBasePid()).remove(uid);
     }
 
+    @Override
     public void befriend(Integer id1, Integer id2) {
         getUser(id1).befriend(id2);
         getUser(id2).befriend(id1);
     }
 
+    @Override
     public void unfriend(Integer id1, Integer id2) {
         getUser(id1).unfriend(id2);
         getUser(id2).unfriend(id1);
@@ -90,7 +99,7 @@ public class J2Manager {
 
     public void repartition() {
         Results results = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, partitions, getFriendships(), false);
-        increaseLogicalMigrationTally(results.getLogicalMoves());
+        increaseTallyLogical(results.getLogicalMoves());
         if(results.getUidsToPids() != null) {
             physicallyMigrate(results.getUidsToPids());
         }
@@ -106,23 +115,27 @@ public class J2Manager {
         }
     }
 
-    Integer getInitialPartitionId() {
+    @Override
+    public Integer getInitialPartitionId() {
         return getRandomElement(partitions.keySet());
     }
 
+    @Override
     public Integer addPartition() {
         Integer pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
-    void addPartition(Integer pid) {
+    @Override
+    public void addPartition(Integer pid) {
         partitions.put(pid, new HashSet<Integer>());
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
     }
 
+    @Override
     public void removePartition(Integer partitionId) {
         partitions.remove(partitionId);
     }
@@ -131,6 +144,7 @@ public class J2Manager {
         return partitions.keySet();
     }
 
+    @Override
     public void moveUser(Integer uid, Integer newPid, boolean isFromPartitionRemoval) {
         User user = getUser(uid);
         if(partitions.containsKey(user.getBasePid())) {
@@ -140,18 +154,21 @@ public class J2Manager {
         user.setBasePid(newPid);
 
         if(!isFromPartitionRemoval) {
-            increaseMigrationTally(1);
+            increaseTally(1);
         }
     }
 
+    @Override
     public Integer getNumPartitions() {
         return partitions.size();
     }
 
+    @Override
     public Integer getNumUsers() {
         return uMap.size();
     }
 
+    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for(User user : uMap.values()) {
@@ -167,6 +184,7 @@ public class J2Manager {
         return count;
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
@@ -175,10 +193,12 @@ public class J2Manager {
         return map;
     }
 
-    public Set<Integer> getAllPartitionIds() {
+    @Override
+    public Set<Integer> getPids() {
         return partitions.keySet();
     }
 
+    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
@@ -192,19 +212,23 @@ public class J2Manager {
         return "k:" + k + "|alpha:" + alpha + "|initialT:" + initialT + "|deltaT:" + deltaT + "|#U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
+    @Override
     public long getMigrationTally() {
         return migrationTally + (long) (logicalMigrationRatio * logicalMigrationTally);
     }
 
-    void increaseMigrationTally(int amount) {
+    @Override
+    public void increaseTally(int amount) {
         migrationTally += amount;
     }
 
-    void increaseLogicalMigrationTally(int amount) {
+    @Override
+    public void increaseTallyLogical(int amount) {
         logicalMigrationTally += amount;
     }
 
-    void checkValidity() {
+    @Override
+    public void checkValidity() {
         for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
             for(Integer pid : partitions.keySet()) {
@@ -223,5 +247,15 @@ public class J2Manager {
                 throw new RuntimeException("Mismatch between user's PID and system's");
             }
         }
+    }
+
+    @Override
+    public Integer getPidForUser(Integer uid) {
+        for(Integer pid : partitions.keySet()) {
+            if(partitions.get(pid).contains(uid)) {
+                return pid;
+            }
+        }
+        return null;
     }
 }

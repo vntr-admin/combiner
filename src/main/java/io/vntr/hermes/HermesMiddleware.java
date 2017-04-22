@@ -62,7 +62,7 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Integer getNumberOfPartitions() {
-        return manager.getAllPartitionIds().size();
+        return manager.getPids().size();
     }
 
     @Override
@@ -82,12 +82,12 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Collection<Integer> getUserIds() {
-        return manager.getUserIds();
+        return manager.getUids();
     }
 
     @Override
     public Collection<Integer> getPartitionIds() {
-        return manager.getAllPartitionIds();
+        return manager.getPids();
     }
 
     @Override
@@ -102,7 +102,7 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return manager.getPartitionToUserMap();
+        return manager.getPartitionToUsers();
     }
 
     @Override

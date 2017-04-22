@@ -56,8 +56,8 @@ public class DummyMiddleware implements IMiddlewareAnalyzer {
         Set<Integer> partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
         for(Integer uid : partition) {
-            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPartitionIds());
-            manager.moveUser(uid, newPid);
+            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPids());
+            manager.moveUser(uid, newPid, true);
         }
     }
 
@@ -83,7 +83,7 @@ public class DummyMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Collection<Integer> getUserIds() {
-        return manager.getUserIds();
+        return manager.getUids();
     }
 
     @Override

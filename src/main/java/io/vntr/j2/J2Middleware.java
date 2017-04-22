@@ -83,12 +83,12 @@ public class J2Middleware implements IMiddlewareAnalyzer{
 
     @Override
     public Collection<Integer> getUserIds() {
-        return manager.getUserIds();
+        return manager.getUids();
     }
 
     @Override
     public Collection<Integer> getPartitionIds() {
-        return manager.getAllPartitionIds();
+        return manager.getPids();
     }
 
     @Override

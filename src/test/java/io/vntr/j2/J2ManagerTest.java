@@ -84,7 +84,7 @@ public class J2ManagerTest {
         Integer newUid = manager.addUser();
         Set<Integer> expectedUids = new HashSet<>(friendships.keySet());
         expectedUids.add(newUid);
-        assertEquals(manager.getUserIds(), expectedUids);
+        assertEquals(manager.getUids(), expectedUids);
         assertTrue(manager.getUser(newUid).getFriendIDs().isEmpty());
 
         assertTrue(manager.getPartition(manager.getUser(newUid).getBasePid()).contains(newUid));
@@ -95,10 +95,10 @@ public class J2ManagerTest {
 
 
         //Manual specification of user id
-        Integer uidToAddManually = new TreeSet<>(manager.getUserIds()).last()+1;
+        Integer uidToAddManually = new TreeSet<>(manager.getUids()).last()+1;
         manager.addUser(new User(uidToAddManually));
         expectedUids.add(uidToAddManually);
-        assertEquals(manager.getUserIds(), expectedUids);
+        assertEquals(manager.getUids(), expectedUids);
         assertTrue(manager.getUser(uidToAddManually).getFriendIDs().isEmpty());
 
         assertTrue(manager.getPartition(manager.getUser(uidToAddManually).getBasePid()).contains(uidToAddManually));
@@ -148,7 +148,7 @@ public class J2ManagerTest {
             }
         }
 
-        for(Integer uid : manager.getUserIds()) {
+        for(Integer uid : manager.getUids()) {
             assertFalse(manager.getUser(uid).getFriendIDs().contains(uidToRemove));
         }
     }
@@ -178,8 +178,8 @@ public class J2ManagerTest {
 
         J2Manager manager = J2InitUtils.initGraph(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
 
-        for(Integer uid1 : manager.getUserIds()) {
-            for(Integer uid2 : manager.getUserIds()) {
+        for(Integer uid1 : manager.getUids()) {
+            for(Integer uid2 : manager.getUids()) {
                 if(!uid1.equals(uid2)) {
                     if((uid1.equals(notFriend1Id) && uid2.equals(notFriend2Id)) || (uid1.equals(notFriend2Id) && uid2.equals(notFriend1Id))) {
                         assertFalse(manager.getUser(uid1).getFriendIDs().contains(uid2));
@@ -193,8 +193,8 @@ public class J2ManagerTest {
 
         manager.befriend(notFriend1Id, notFriend2Id);
 
-        for(Integer uid1 : manager.getUserIds()) {
-            for(Integer uid2 : manager.getUserIds()) {
+        for(Integer uid1 : manager.getUids()) {
+            for(Integer uid2 : manager.getUids()) {
                 if(!uid1.equals(uid2)) {
                     assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
                 }
@@ -223,8 +223,8 @@ public class J2ManagerTest {
 
         J2Manager manager = J2InitUtils.initGraph(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
 
-        for(Integer uid1 : manager.getUserIds()) {
-            for(Integer uid2 : manager.getUserIds()) {
+        for(Integer uid1 : manager.getUids()) {
+            for(Integer uid2 : manager.getUids()) {
                 if(!uid1.equals(uid2)) {
                     assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
                 }
@@ -233,8 +233,8 @@ public class J2ManagerTest {
 
         manager.unfriend(notFriend1Id, notFriend2Id);
 
-        for(Integer uid1 : manager.getUserIds()) {
-            for(Integer uid2 : manager.getUserIds()) {
+        for(Integer uid1 : manager.getUids()) {
+            for(Integer uid2 : manager.getUids()) {
                 if(!uid1.equals(uid2)) {
                     if((uid1.equals(notFriend1Id) && uid2.equals(notFriend2Id)) || (uid1.equals(notFriend2Id) && uid2.equals(notFriend1Id))) {
                         assertFalse(manager.getUser(uid1).getFriendIDs().contains(uid2));
@@ -265,25 +265,25 @@ public class J2ManagerTest {
 
         J2Manager manager = J2InitUtils.initGraph(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
 
-        assertEquals(manager.getAllPartitionIds(), partitions.keySet());
+        assertEquals(manager.getPids(), partitions.keySet());
 
         Integer newPid = manager.addPartition();
 
         Set<Integer> expectedPids = new HashSet<>(partitions.keySet());
         expectedPids.add(newPid);
 
-        assertEquals(manager.getAllPartitionIds(), expectedPids);
+        assertEquals(manager.getPids(), expectedPids);
 
         Integer pidToAdd = 1;
         for(; pidToAdd < 10; pidToAdd++) {
-            if(!manager.getAllPartitionIds().contains(pidToAdd)) {
+            if(!manager.getPids().contains(pidToAdd)) {
                 break;
             }
         }
 
         expectedPids.add(pidToAdd);
         manager.addPartition(pidToAdd);
-        assertEquals(manager.getAllPartitionIds(), expectedPids);
+        assertEquals(manager.getPids(), expectedPids);
     }
 
     @Test
@@ -304,14 +304,14 @@ public class J2ManagerTest {
 
         J2Manager manager = J2InitUtils.initGraph(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
 
-        assertEquals(manager.getAllPartitionIds(), partitions.keySet());
+        assertEquals(manager.getPids(), partitions.keySet());
 
         Integer pidToRemove = 2;
 
         manager.removePartition(pidToRemove);
 
-        assertEquals(initSet(1, 3), manager.getAllPartitionIds());
-        assertEquals(manager.getUserIds(), friendships.keySet());
+        assertEquals(initSet(1, 3), manager.getPids());
+        assertEquals(manager.getUids(), friendships.keySet());
         assertEquals(manager.getPartition(1), partitions.get(1));
         assertEquals(manager.getPartition(3), partitions.get(3));
 

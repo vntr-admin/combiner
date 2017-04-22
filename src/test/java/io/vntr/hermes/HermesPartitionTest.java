@@ -44,8 +44,8 @@ public class HermesPartitionTest {
 //        friendships.put(20, Collections.<Integer>emptySet());
 //
 //        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
-//        for(Integer pid : manager.getAllPartitionIds()) {
-//            manager.getPartitionById(pid).resetLogicalUsers();
+//        for(Integer pid : manager.getPids()) {
+//            manager.getPartition(pid).resetLogicalUsers();
 //        }
 //
 //        Set<Target> oneUp   = initSet(new Target(1, 2, 1, 1));
@@ -57,12 +57,12 @@ public class HermesPartitionTest {
 //        Set<Target> threeUp = Collections.emptySet(); //3 is the largest PID, so there's no up
 //        Set<Target> threeDown = initSet(new Target(16, 1, 3, 1), new Target(18, 1, 3, 1), new Target(20, 1, 3, 1));
 //
-//        assertEquals(oneUp,     manager.getPartitionById(1).getCandidates(true,  3, false));
-//        assertEquals(oneDown,   manager.getPartitionById(1).getCandidates(false, 3, false));
-//        assertEquals(twoUp,     manager.getPartitionById(2).getCandidates(true,  3, false));
-//        assertEquals(twoDown,   manager.getPartitionById(2).getCandidates(false, 3, false));
-//        assertEquals(threeUp,   manager.getPartitionById(3).getCandidates(true,  3, false));
-//        assertEquals(threeDown, manager.getPartitionById(3).getCandidates(false, 3, false));
+//        assertEquals(oneUp,     manager.getPartition(1).getCandidates(true,  3, false));
+//        assertEquals(oneDown,   manager.getPartition(1).getCandidates(false, 3, false));
+//        assertEquals(twoUp,     manager.getPartition(2).getCandidates(true,  3, false));
+//        assertEquals(twoDown,   manager.getPartition(2).getCandidates(false, 3, false));
+//        assertEquals(threeUp,   manager.getPartition(3).getCandidates(true,  3, false));
+//        assertEquals(threeDown, manager.getPartition(3).getCandidates(false, 3, false));
 //    }
 //
 //    @Test
@@ -88,20 +88,20 @@ public class HermesPartitionTest {
 //        friendships.put(12, Collections.<Integer>emptySet());
 //
 //        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
-//        for(Integer pid : manager.getAllPartitionIds()) {
-//            manager.getPartitionById(pid).resetLogicalUsers();
+//        for(Integer pid : manager.getPids()) {
+//            manager.getPartition(pid).resetLogicalUsers();
 //        }
 //
-//        assertEquals(Collections.emptySet(), manager.getPartitionById(1).getCandidates(false, 3, false));
-//        assertEquals(Collections.emptySet(), manager.getPartitionById(2).getCandidates(true,  3, false));
-//        assertEquals(Collections.emptySet(), manager.getPartitionById(2).getCandidates(false, 3, false));
-//        assertEquals(Collections.emptySet(), manager.getPartitionById(3).getCandidates(true,  3, false));
-//        assertEquals(Collections.emptySet(), manager.getPartitionById(3).getCandidates(false, 3, false));
+//        assertEquals(Collections.emptySet(), manager.getPartition(1).getCandidates(false, 3, false));
+//        assertEquals(Collections.emptySet(), manager.getPartition(2).getCandidates(true,  3, false));
+//        assertEquals(Collections.emptySet(), manager.getPartition(2).getCandidates(false, 3, false));
+//        assertEquals(Collections.emptySet(), manager.getPartition(3).getCandidates(true,  3, false));
+//        assertEquals(Collections.emptySet(), manager.getPartition(3).getCandidates(false, 3, false));
 //
 //        Target bestTarget = new Target(7, 2, 1, 0);
 //        Set<Target> secondPlaceTargets = initSet(new Target(1, 2, 1, -1), new Target(3, 2, 1, -1), new Target(3, 3, 1, -1), new Target(5, 3, 1, -1));
 //
-//        Set<Target> results = manager.getPartitionById(1).getCandidates(true,  3, false);
+//        Set<Target> results = manager.getPartition(1).getCandidates(true,  3, false);
 //        assertTrue(results.size() == 3);
 //        assertTrue(results.contains(bestTarget));
 //        secondPlaceTargets.retainAll(results);
@@ -139,24 +139,24 @@ public class HermesPartitionTest {
 //        friendships.put(20, Collections.<Integer>emptySet());
 //
 //        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
-//        for(Integer pid : manager.getAllPartitionIds()) {
-//            manager.getPartitionById(pid).resetLogicalUsers();
+//        for(Integer pid : manager.getPids()) {
+//            manager.getPartition(pid).resetLogicalUsers();
 //        }
 //
 //        assertEquals(partitions, manager.getPartitionToLogicalUserMap());
-//        assertEquals(partitions, manager.getPartitionToUserMap());
+//        assertEquals(partitions, manager.getPartitionToUsers());
 //
 //        manager.migrateLogically(new Target( 3, 3, 1, 0));
 //        manager.migrateLogically(new Target( 4, 3, 1, 0));
 //        manager.migrateLogically(new Target(20, 1, 3, 0));
 //
-//        assertEquals(initSet(3, 4), manager.getPartitionById(3).physicallyMigrateCopy());
+//        assertEquals(initSet(3, 4), manager.getPartition(3).physicallyMigrateCopy());
 //
 //        partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
 //        partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
 //        partitions.put(3, initSet( 3,  4, 15, 16, 17, 18, 19, 20));
 //
-//        assertEquals(partitions, manager.getPartitionToUserMap());
+//        assertEquals(partitions, manager.getPartitionToUsers());
 //
 //        partitions.put(1, initSet( 1,  2,  5,  6,  7, 20));
 //        partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
@@ -164,29 +164,29 @@ public class HermesPartitionTest {
 //
 //        assertEquals(partitions, manager.getPartitionToLogicalUserMap());
 //
-//        assertEquals(Collections.emptySet(), manager.getPartitionById(2).physicallyMigrateCopy());
-//        assertEquals(initSet(20), manager.getPartitionById(1).physicallyMigrateCopy());
+//        assertEquals(Collections.emptySet(), manager.getPartition(2).physicallyMigrateCopy());
+//        assertEquals(initSet(20), manager.getPartition(1).physicallyMigrateCopy());
 //
 //        partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7, 20));
 //        partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
 //        partitions.put(3, initSet( 3,  4, 15, 16, 17, 18, 19, 20));
 //
-//        assertEquals(partitions, manager.getPartitionToUserMap());
+//        assertEquals(partitions, manager.getPartitionToUsers());
 //
-//        manager.getPartitionById(1).physicallyMigrateDelete();
+//        manager.getPartition(1).physicallyMigrateDelete();
 //
 //        partitions.put(1, initSet( 1,  2,  5,  6,  7, 20));
 //
-//        assertEquals(partitions, manager.getPartitionToUserMap());
+//        assertEquals(partitions, manager.getPartitionToUsers());
 //
-//        manager.getPartitionById(2).physicallyMigrateDelete();
+//        manager.getPartition(2).physicallyMigrateDelete();
 //
-//        assertEquals(partitions, manager.getPartitionToUserMap());
+//        assertEquals(partitions, manager.getPartitionToUsers());
 //
-//        manager.getPartitionById(3).physicallyMigrateDelete();
+//        manager.getPartition(3).physicallyMigrateDelete();
 //
 //        partitions.put(3, initSet( 3,  4, 15, 16, 17, 18, 19));
 //
-//        assertEquals(partitions, manager.getPartitionToUserMap());
+//        assertEquals(partitions, manager.getPartitionToUsers());
 //    }
 }
