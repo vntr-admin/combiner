@@ -1,6 +1,7 @@
 package io.vntr.hermar;
 
 import io.vntr.IMiddlewareAnalyzer;
+import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -45,16 +46,16 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
     }
 
     void handleRebalancing(Integer smallerUserId, Integer largerUserId) {
-        HermarUser smallerUser = manager.getUser(smallerUserId);
-        HermarUser largerUser  = manager.getUser(largerUserId);
+        RepUser smallerUser = manager.getUser(smallerUserId);
+        RepUser largerUser  = manager.getUser(largerUserId);
 
         BEFRIEND_REBALANCE_STRATEGY strategy = befriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
 
         if(strategy == ONE_TO_TWO) {
-            manager.moveUser(smallerUserId, largerUser.getLogicalPid());
+            manager.moveUser(smallerUserId, largerUser.getBasePid());
         }
         else if(strategy == TWO_TO_ONE) {
-            manager.moveUser(largerUserId, smallerUser.getLogicalPid());
+            manager.moveUser(largerUserId, smallerUser.getBasePid());
         }
     }
 

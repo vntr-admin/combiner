@@ -1,5 +1,6 @@
 package io.vntr.hermar;
 
+import io.vntr.RepUser;
 import io.vntr.User;
 
 import java.util.*;
@@ -10,7 +11,6 @@ import java.util.*;
 public class HermarManager {
     private Map<Integer, HermarPartition> pMap;
     private Map<Integer, Integer> uMap;
-    private Map<Integer, Integer> uMapLogical;
     private float gamma;
     private int k;
     private boolean probabilistic;
@@ -24,15 +24,16 @@ public class HermarManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
+    private HermarRepartitioner repartitioner;
 
     public HermarManager(float gamma, boolean probabilistic) {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
-        this.maxIterations = Integer.MAX_VALUE;
+        this.maxIterations = 100;
         maxIterationToNumUsersRatio = 1f;
+        repartitioner = new HermarRepartitioner(this);
     }
 
     public HermarManager(float gamma, int maxIterations) {
@@ -40,10 +41,10 @@ public class HermarManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
         this.maxIterations = maxIterations;
         maxIterationToNumUsersRatio = 1f;
         this.k=3;
+        repartitioner = new HermarRepartitioner(this);
     }
 
     public HermarManager(float gamma, float maxIterationToNumUsersRatio) {
@@ -51,10 +52,10 @@ public class HermarManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k=3;
+        repartitioner = new HermarRepartitioner(this);
     }
 
     public HermarManager(float gamma, float maxIterationToNumUsersRatio, int k) {
@@ -62,10 +63,10 @@ public class HermarManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
+        repartitioner = new HermarRepartitioner(this);
     }
 
     public HermarManager(float gamma, float maxIterationToNumUsersRatio, int k, double logicalMigrationRatio) {
@@ -73,11 +74,11 @@ public class HermarManager {
         this.probabilistic = false;
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.uMapLogical = new HashMap<>();
         this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
         this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
         this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
+        repartitioner = new HermarRepartitioner(this);
     }
 
     public int addUser() {
@@ -89,15 +90,14 @@ public class HermarManager {
     public void addUser(User user) {
         Integer initialPid = getInitialPartitionId();
         int uid = user.getId();
-        HermarUser hermarUser = new HermarUser(uid, initialPid, gamma, this);
-        addUser(hermarUser);
+        RepUser RepUser = new RepUser(uid, initialPid);
+        addUser(RepUser);
     }
 
-    void addUser(HermarUser user) {
+    void addUser(RepUser user) {
         Integer pid = user.getBasePid();
         getPartitionById(pid).addUser(user);
         uMap.put(user.getId(), pid);
-        uMapLogical.put(user.getId(), pid);
         if(maxIterationToNumUsersRatio != 1f) {
             maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
         }
@@ -114,7 +114,6 @@ public class HermarManager {
         }
         getPartitionById(getPartitionIdForUser(userId)).removeUser(userId);
         uMap.remove(userId);
-        uMapLogical.remove(userId);
     }
 
     public void befriend(Integer smallerUserId, Integer largerUserId) {
@@ -134,7 +133,7 @@ public class HermarManager {
     }
 
     void addPartition(Integer id) {
-        pMap.put(id, new HermarPartition(id, gamma, this));
+        pMap.put(id, new HermarPartition(id));
         if(id >= nextPid) {
             nextPid = id + 1;
         }
@@ -156,115 +155,8 @@ public class HermarManager {
         return uMap.get(uid);
     }
 
-    public Integer getLogicalPartitionIdForUser(Integer uid) {
-        return uMapLogical.get(uid);
-    }
-
-    private Map<Integer, Set<Integer>> getFriendshipMap() {
-        Map<Integer, Set<Integer>> friendshipMap = new HashMap<>();
-        for(Integer uid : uMap.keySet()) {
-            friendshipMap.put(uid, new HashSet<Integer>());
-        }
-        for(Integer uid : friendshipMap.keySet()) {
-            for(Integer friendId : getUser(uid).getFriendIDs())
-            {
-                if(uid < friendId) {
-                    friendshipMap.get(uid).add(friendId);
-                }
-            }
-        }
-        return friendshipMap;
-    }
-
     public void repartition() {
-        for (HermarPartition p : pMap.values()) {
-            p.resetLogicalUsers();
-        }
-
-        LinkedList<Integer> lastFive = new LinkedList<>();
-
-        int iteration = 0;
-        boolean stoppingCondition = false;
-        while(!stoppingCondition && iteration++ < maxIterations) {
-            boolean changed;
-            changed  = performStage(true, k, probabilistic);
-            changed |= performStage(false, k, probabilistic);
-            stoppingCondition = !changed;
-            int edgeCut = getEdgeCut();
-            lastFive.add(edgeCut);
-            if(lastFive.size() > 5) {
-                lastFive.pop();
-                if(lastFive.get(0) == edgeCut && lastFive.get(1) == edgeCut && lastFive.get(2) == edgeCut && lastFive.get(3) == edgeCut) {
-                    break;
-                }
-            }
-        }
-        Map<Integer, Integer> usersWhoMoved = new HashMap<>();
-        for (HermarPartition p : pMap.values()) {
-            Set<Integer> moved = p.physicallyMigrateCopy();
-            for(Integer uid : moved) {
-                usersWhoMoved.put(uid, p.getId());
-            }
-        }
-
-        for (HermarPartition p : pMap.values()) {
-            p.physicallyMigrateDelete();
-        }
-
-        uMap.putAll(usersWhoMoved);
-        uMapLogical.putAll(usersWhoMoved);
-        increaseTally(usersWhoMoved.size());
-    }
-
-    boolean performStage(boolean firstStage, int k, boolean probabilistic) {
-        boolean changed = false;
-        Map<Integer, Set<Target>> stageTargets = new HashMap<>();
-        for (HermarPartition p : pMap.values()) {
-            Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
-            stageTargets.put(p.getId(), targets);
-            changed |= !targets.isEmpty();
-        }
-
-        for(Integer pid : pMap.keySet()) {
-            for(Target target : stageTargets.get(pid)) {
-                increaseTallyLogical(1);
-                migrateLogically(target);
-            }
-        }
-
-        updateLogicalUsers();
-        return changed;
-    }
-
-    void migrateLogically(Target target) {
-        HermarPartition oldPart = getPartitionById(target.oldPartitionId);
-        HermarPartition newPart = getPartitionById(target.partitionId);
-        HermarUser user = getUser(target.userId);
-        user.setLogicalPid(target.partitionId);
-        oldPart.removeLogicalUser(target.userId);
-        newPart.addLogicalUser(user.getLogicalUser(false)); //TODO: is this actually what we want?
-    }
-
-    void updateLogicalUsers() {
-        Integer totalWeight = 0;
-        Map<Integer, Integer> pToWeight = new HashMap<>();
-        for (HermarPartition p : pMap.values()) {
-            int weight = p.getNumLogicalUsers();
-            totalWeight += weight;
-            pToWeight.put(p.getId(), weight);
-        }
-
-        for (HermarPartition p : pMap.values()) {
-            p.updateLogicalUsersPartitionWeights(pToWeight);
-            p.updateLogicalUsersTotalWeights(totalWeight);
-        }
-
-        for(HermarPartition p : pMap.values()) {
-            for(Integer logicalUid : p.getLogicalUserIds()) {
-                Map<Integer, Integer> updatedFriendCounts = getUser(logicalUid).getPToFriendCount();
-                p.updateLogicalUserFriendCounts(logicalUid, updatedFriendCounts);
-            }
-        }
+        repartitioner.repartition(k, maxIterations);
     }
 
     Integer getInitialPartitionId() {
@@ -280,7 +172,7 @@ public class HermarManager {
         return minId;
     }
 
-    HermarUser getUser(Integer uid) {
+    RepUser getUser(Integer uid) {
         return getPartitionById(getPartitionIdForUser(uid)).getUserById(uid);
     }
 
@@ -290,17 +182,18 @@ public class HermarManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(Integer uid : uMap.keySet()) {
-            LogicalUser user = getUser(uid).getLogicalUser(true);
-            Map<Integer, Integer> pToFriendCount = user.getpToFriendCount();
-            for(Integer pid : getAllPartitionIds()) {
-                if(!pid.equals(user.getPid()) && pToFriendCount.containsKey(pid)) {
-                    count += pToFriendCount.get(pid);
-                }
+        for(int uid : uMap.keySet()) {
+            RepUser user = getUser(uid);
+            Integer userPid = user.getBasePid();
 
+            for(int friendId : user.getFriendIDs()) {
+                Integer friendPid = getUser(friendId).getBasePid();
+                if(userPid < friendPid) {
+                    count++;
+                }
             }
         }
-        return count / 2;
+        return count;
     }
 
     public Map<Integer,Set<Integer>> getPartitionToUserMap() {
@@ -311,22 +204,12 @@ public class HermarManager {
         return map;
     }
 
-    Map<Integer,Set<Integer>> getPartitionToLogicalUserMap() {
-        Map<Integer,Set<Integer>> map = new HashMap<>();
-        for(Integer pid : getAllPartitionIds()) {
-            map.put(pid, getPartitionById(pid).getLogicalUserIds());
-        }
-        return map;
-    }
-
     public void moveUser(Integer uid, Integer pid) {
-        HermarUser user = getUser(uid);
+        RepUser user = getUser(uid);
         uMap.put(uid, pid);
-        uMapLogical.put(uid, pid);
         getPartitionById(user.getBasePid()).removeUser(uid);
         getPartitionById(pid).addUser(user);
         user.setBasePid(pid);
-        user.setLogicalPid(pid);
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
@@ -359,10 +242,6 @@ public class HermarManager {
     @Override
     public String toString() {
         return "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
-    }
-
-    void updateLogicalPidCache(Integer id, Integer logicalPid) {
-        uMapLogical.put(id, logicalPid);
     }
 
     void checkValidity() {

@@ -1,5 +1,7 @@
 package io.vntr.hermar;
 
+import io.vntr.RepUser;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -13,7 +15,7 @@ public class HermarInitUtils {
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new HermarUser(uid, pid, gamma, manager));
+                manager.addUser(new RepUser(uid, pid));
             }
         }
         for(Integer uid1 : friendships.keySet()) {

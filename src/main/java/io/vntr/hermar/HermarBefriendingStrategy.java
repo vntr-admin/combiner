@@ -1,5 +1,8 @@
 package io.vntr.hermar;
 
+import io.vntr.RepUser;
+
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +22,7 @@ public class HermarBefriendingStrategy {
         this.manager = manager;
     }
 
-    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(HermarUser user1, HermarUser user2) {
+    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser user1, RepUser user2) {
 
         int stay = calcEdgeCutStay(user1, user2);
         int to2  = calcEdgeCutMove(user1, user2);
@@ -67,32 +70,43 @@ public class HermarBefriendingStrategy {
         return NO_CHANGE;
     }
 
-    int calcEdgeCutStay(HermarUser user1, HermarUser user2) {
-        return getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(user1.getLogicalPid(), user2.getLogicalPid());
+    int calcEdgeCutStay(RepUser user1, RepUser user2) {
+        return getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(user1.getBasePid(), user2.getBasePid());
     }
 
-    int calcEdgeCutMove(HermarUser movingUser, HermarUser stayingUser) {
-        int movingPid = movingUser.getLogicalPid();
-        int stayingPid = stayingUser.getLogicalPid();
+    int calcEdgeCutMove(RepUser movingUser, RepUser stayingUser) {
+        int movingPid = movingUser.getBasePid();
+        int stayingPid = stayingUser.getBasePid();
         int currentEdgeCut = getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(movingPid, stayingPid);
 
-        Map<Integer, Integer> pToFriendCount = movingUser.getLogicalUser(true).getpToFriendCount();
+        Map<Integer, Integer> pToFriendCount = getPToFriendCount(movingUser.getId());
         int friendsOnMovingPartition = pToFriendCount.get(movingPid);
         int friendsOnStayingPartition = pToFriendCount.get(stayingPid);
 
         return currentEdgeCut + friendsOnMovingPartition - friendsOnStayingPartition;
     }
 
+    Map<Integer, Integer> getPToFriendCount(Integer uid) {
+        Map<Integer, Integer> pToFriendCount = new HashMap<>();
+        for(Integer pid : manager.getAllPartitionIds()) {
+            pToFriendCount.put(pid, 0);
+        }
+        for(Integer friendId : manager.getUser(uid).getFriendIDs()) {
+            Integer pid = manager.getPartitionIdForUser(friendId);
+            pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
+        }
+        return pToFriendCount;
+    }
+
     Integer getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(int pid1, int pid2) {
         int count = 0;
-        Set<Integer> idsThatMatter = new HashSet<>(manager.getPartitionById(pid1).getLogicalUserIds());
-        idsThatMatter.addAll(manager.getPartitionById(pid2).getLogicalUserIds());
+        Set<Integer> idsThatMatter = new HashSet<>(manager.getPartitionById(pid1).getPhysicalUserIds());
+        idsThatMatter.addAll(manager.getPartitionById(pid2).getPhysicalUserIds());
 
         for(Integer uid : idsThatMatter) {
-            LogicalUser user = manager.getUser(uid).getLogicalUser(true);
-            Map<Integer, Integer> pToFriendCount = user.getpToFriendCount();
+            Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid);
             for(Integer pid : manager.getAllPartitionIds()) {
-                if(!pid.equals(user.getPid()) && pToFriendCount.containsKey(pid)) {
+                if(!pid.equals(manager.getPartitionIdForUser(uid)) && pToFriendCount.containsKey(pid)) {
                     count += pToFriendCount.get(pid);
                 }
 
@@ -101,17 +115,4 @@ public class HermarBefriendingStrategy {
         return count / 2;
     }
 
-//    Integer getNumberOfEdgesThatGoFromThisPartitionToThatOne(int pid1, int pid2) {
-//        int count = 0;
-//        Set<Integer> idsThatMatter = new HashSet<>(manager.getPartitionById(pid1).getLogicalUserIds());
-//
-//        for(Integer uid : idsThatMatter) {
-//            LogicalUser user = manager.getUser(uid).getLogicalUser(true);
-//            Map<Integer, Integer> pToFriendCount = user.getpToFriendCount();
-//            if(pToFriendCount.containsKey(pid2)) {
-//                count += pToFriendCount.get(pid2);
-//            }
-//        }
-//        return count / 2;
-//    }
 }
