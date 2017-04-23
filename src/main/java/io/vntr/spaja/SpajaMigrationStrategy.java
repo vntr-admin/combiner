@@ -18,7 +18,7 @@ public class SpajaMigrationStrategy {
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
         //Place the remaining nodes wherever they fit, following simple water-filling strategy.
 
-        Set<Integer> partitionIdsToSkip = new HashSet<>(Arrays.asList(partitionId));
+        Set<Integer> partitionIdsToSkip = Collections.singleton(partitionId);
         final SpajaPartition partition = manager.getPartitionById(partitionId);
         Set<Integer> masterIds = partition.getIdsOfMasters();
 

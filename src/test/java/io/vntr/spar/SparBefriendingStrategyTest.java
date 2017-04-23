@@ -1030,7 +1030,7 @@ public class SparBefriendingStrategyTest {
             }
         }
 
-        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, new HashSet<>(Arrays.asList(colocatedFriendId)));
+        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, Collections.singleton(colocatedFriendId));
         assertTrue(replicasToDelete.contains(colocatedFriendId));
         nonColocatedUsers.add(colocatedFriendId);
         assertEquals(replicasToDelete, nonColocatedUsers);

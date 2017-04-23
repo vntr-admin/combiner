@@ -88,7 +88,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
             RepUser user = manager.getUserMasterById(userId);
-            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
+            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Collections.singletonList(partitionId));
             manager.addReplica(user, newPid);
         }
 

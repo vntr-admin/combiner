@@ -1,9 +1,11 @@
 package io.vntr.j2ar;
 
+import io.vntr.InitUtils;
 import org.junit.Test;
 
 import java.util.*;
 
+import static io.vntr.InitUtils.getUToMasterMap;
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertArrayEquals;
@@ -183,15 +185,8 @@ public class J2ArRepartitionerTest {
     }
 
     private static J2ArRepartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Integer> inversePartitions = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                inversePartitions.put(uid, pid);
-            }
-        }
-
         J2ArRepartitioner.State state = new J2ArRepartitioner.State(alpha, initialT, deltaT, k, generateBidirectionalFriendshipSet(friendships));
-        state.setLogicalPids(inversePartitions);
+        state.setLogicalPids(getUToMasterMap(partitions));
         return state;
     }
 

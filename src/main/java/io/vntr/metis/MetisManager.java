@@ -5,7 +5,6 @@ import io.vntr.User;
 
 import java.util.*;
 
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 
 /**

@@ -2,6 +2,8 @@ package io.vntr.sparmes;
 
 import java.util.*;
 
+import static java.util.Collections.singleton;
+
 /**
  * Created by robertlindquist on 9/28/16.
  */
@@ -18,7 +20,6 @@ public class SparmesMigrationStrategy {
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
         //Place the remaining nodes wherever they fit, following simple water-filling strategy.
 
-        Set<Integer> partitionIdsToSkip = new HashSet<>(Arrays.asList(partitionId));
         final SparmesPartition partition = manager.getPartitionById(partitionId);
         Set<Integer> masterIds = partition.getIdsOfMasters();
 
@@ -30,7 +31,7 @@ public class SparmesMigrationStrategy {
             }
         }
 
-        Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(partitionIdsToSkip);
+        Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(partitionId));
 
         Map<Integer, Integer> strategy = new HashMap<>();
 

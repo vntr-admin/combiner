@@ -8,6 +8,7 @@ import java.util.*;
 import org.junit.Test;
 
 import static io.vntr.TestUtils.initSet;
+import static java.util.Collections.singleton;
 import static org.junit.Assert.*;
 
 public class SpJ2MigrationStrategyTest {
@@ -172,7 +173,7 @@ public class SpJ2MigrationStrategyTest {
             }
         }
 
-        Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(new HashSet<>(Arrays.asList(partitionIdWithTwoMasters)));
+        Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(singleton(partitionIdWithTwoMasters));
         for (Integer partitionId : manager.getPids()) {
             if (!partitionId.equals(partitionIdWithTwoMasters)) {
                 int numMasters = manager.getPartitionById(partitionId).getNumMasters();

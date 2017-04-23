@@ -7,6 +7,7 @@ import io.vntr.utils.ProbabilityUtils;
 import java.util.*;
 
 import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.*;
+import static java.util.Collections.singleton;
 
 /**
  * Created by robertlindquist on 9/28/16.
@@ -145,7 +146,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
             SparmesUser user = manager.getUserMasterById(userId);
-            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId)));
+            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
         }
 
         //TODO: ensure this is correct

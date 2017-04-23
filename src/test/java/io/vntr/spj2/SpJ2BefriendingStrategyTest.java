@@ -9,6 +9,7 @@ import static io.vntr.TestUtils.initSet;
 import static io.vntr.spj2.BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
 import static io.vntr.spj2.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
 import static io.vntr.spj2.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
+import static java.util.Collections.singleton;
 import static org.junit.Assert.*;
 
 public class SpJ2BefriendingStrategyTest {
@@ -1028,7 +1029,7 @@ public class SpJ2BefriendingStrategyTest {
             }
         }
 
-        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, new HashSet<>(Arrays.asList(colocatedFriendId)));
+        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, singleton(colocatedFriendId));
         assertTrue(replicasToDelete.contains(colocatedFriendId));
         nonColocatedUsers.add(colocatedFriendId);
         assertEquals(replicasToDelete, nonColocatedUsers);

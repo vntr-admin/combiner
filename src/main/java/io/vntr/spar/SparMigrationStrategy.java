@@ -2,14 +2,9 @@ package io.vntr.spar;
 
 import io.vntr.RepUser;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+
+import static java.util.Collections.singleton;
 
 public class SparMigrationStrategy {
     private SparManager manager;
@@ -24,7 +19,6 @@ public class SparMigrationStrategy {
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
         //Place the remaining nodes wherever they fit, following simple water-filling strategy.
 
-        Set<Integer> partitionIdsToSkip = new HashSet<>(Arrays.asList(partitionId));
         final SparPartition partition = manager.getPartitionById(partitionId);
         Set<Integer> masterIds = partition.getIdsOfMasters();
 
@@ -96,7 +90,7 @@ public class SparMigrationStrategy {
             }
         }
 
-        Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(partitionIdsToSkip);
+        Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(partitionId));
 
         Map<Integer, Integer> strategy = new HashMap<>();
 

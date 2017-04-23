@@ -102,22 +102,19 @@ public class SpajaRepartitioner {
         for(int pid : partitions.keySet()) {
             allMastersSeen.addAll(partitions.get(pid));
         }
-        allMastersSeen.removeAll(manager.getAllUserIds());
-        isValid &= (allMastersSeen.isEmpty());
+        isValid &= (manager.getAllUserIds().containsAll(allMastersSeen));
 
         Set<Integer> allReplicasSeen = new HashSet<>();
         for(int pid : replicas.keySet()) {
             allReplicasSeen.addAll(replicas.get(pid));
         }
-        allReplicasSeen.removeAll(manager.getAllUserIds());
-        isValid &= (allReplicasSeen.isEmpty());
+        isValid &= (manager.getAllUserIds().containsAll(allReplicasSeen));
 
         Set<Integer> allFriendsSeen = new HashSet<>();
         for(int pid : friendships.keySet()) {
             allFriendsSeen.addAll(friendships.get(pid));
         }
-        allFriendsSeen.removeAll(manager.getAllUserIds());
-        isValid &= (allFriendsSeen.isEmpty());
+        isValid &= (manager.getAllUserIds().containsAll(allFriendsSeen));
         return isValid;
     }
 

@@ -147,7 +147,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
             RepUser user = manager.getUserMasterById(userId);
-            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
+            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Collections.singleton(partitionId));
             manager.addReplica(user, newPid);
         }
 

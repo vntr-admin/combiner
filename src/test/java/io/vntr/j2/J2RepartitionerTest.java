@@ -1,5 +1,6 @@
 package io.vntr.j2;
 
+import io.vntr.InitUtils;
 import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
@@ -219,15 +220,8 @@ public class J2RepartitionerTest {
     }
 
     private static J2Repartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Integer> inversePartitions = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                inversePartitions.put(uid, pid);
-            }
-        }
-
         J2Repartitioner.State state = new J2Repartitioner.State(alpha, initialT, deltaT, k, ProbabilityUtils.generateBidirectionalFriendshipSet(friendships));
-        state.setLogicalPids(inversePartitions);
+        state.setLogicalPids(InitUtils.getUToMasterMap(partitions));
         return state;
     }
 

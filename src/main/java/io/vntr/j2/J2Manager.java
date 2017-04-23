@@ -7,7 +7,6 @@ import io.vntr.repartition.Results;
 
 import java.util.*;
 
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 
 /**

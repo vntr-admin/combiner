@@ -172,7 +172,7 @@ public class SparMigrationStrategyTest {
             }
         }
 
-        Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(new HashSet<>(Arrays.asList(partitionIdWithTwoMasters)));
+        Map<Integer, Integer> remainingSpotsInPartitions3 = strategy.getRemainingSpotsInPartitions(Collections.singleton(partitionIdWithTwoMasters));
         for (Integer partitionId : manager.getPids()) {
             if (!partitionId.equals(partitionIdWithTwoMasters)) {
                 int numMasters = manager.getPartitionById(partitionId).getNumMasters();

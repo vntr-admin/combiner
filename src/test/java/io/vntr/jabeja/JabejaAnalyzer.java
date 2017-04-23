@@ -258,8 +258,7 @@ public class JabejaAnalyzer {
         for(int pid : partitions.keySet()) {
             allMastersSeen.addAll(partitions.get(pid));
         }
-        allMastersSeen.removeAll(middleware.getUserIds());
-        valid &= (allMastersSeen.isEmpty());
+        valid &= (middleware.getUserIds().containsAll(allMastersSeen));
 
         Set<Integer> allFriendsSeen = new HashSet<>();
         for(int pid : friendships.keySet()) {

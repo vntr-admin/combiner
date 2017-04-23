@@ -3,10 +3,14 @@ package io.vntr.utils;
 import cern.jet.random.engine.DRand;
 import cern.jet.random.engine.RandomEngine;
 import cern.jet.random.sampling.RandomSampler;
+import io.vntr.InitUtils;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
 import java.util.*;
+
+import static io.vntr.InitUtils.getUToMasterMap;
+import static java.util.Collections.nCopies;
 
 public class ProbabilityUtils
 {
@@ -180,19 +184,8 @@ public class ProbabilityUtils
             1608847.201841079
     };
 
-    private static Map<Integer, Integer> invertPartitions(Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> inverse = new HashMap<>();
-        for(int pid : partitions.keySet()) {
-            for(int uid : partitions.get(pid)) {
-                inverse.put(uid, pid);
-            }
-        }
-        return inverse;
-
-    }
-
     public static double calculateExpectedQueryDelay(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> uidToPidMap = invertPartitions(partitions);
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToFriendPidsMap = new HashMap<>();
         for(int uid : friendships.keySet()) {
             uidToFriendPidsMap.put(uid, new HashSet<Integer>());
@@ -243,9 +236,8 @@ public class ProbabilityUtils
 	public static int chooseKeyFromMapSetInProportionToSetSize(Map<Integer, Set<Integer>> mapset) {
         List<Integer> keys = new ArrayList<>(mapset.size() * 100);
         for(int key : mapset.keySet()) {
-            for(int i=0; i<mapset.get(key).size(); i++) {
-                keys.add(key); //this is intentional: we want mapset.get(key).size() copies of key in there
-            }
+            //this is intentional: we want mapset.get(key).size() copies of key in there
+            keys.addAll(nCopies(mapset.get(key).size(), key));
         }
 
         return ProbabilityUtils.getRandomElement(keys);

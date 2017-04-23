@@ -6,6 +6,8 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
+import static java.util.Collections.disjoint;
+
 /**
  * Created by robertlindquist on 9/28/16.
  */
@@ -505,9 +507,7 @@ public class SparmesManager {
         friendReplicasToRemove.retainAll(oldPart.getLogicalReplicaIds());
         for(Integer friendId : friendReplicasToRemove) {
             SparmesUser friend = getUserMasterById(friendId);
-            Set<Integer> friendsOfFriend = new HashSet<>(friend.getFriendIDs());
-            friendsOfFriend.retainAll(oldPart.getLogicalUserIds());
-            if(friendsOfFriend.isEmpty() && friend.getLogicalPids().size() > minNumReplicas) {
+            if(disjoint(friend.getFriendIDs(), oldPart.getLogicalUserIds()) && friend.getLogicalPids().size() > minNumReplicas) {
                 oldPart.removeLogicalReplicaId(friendId);
             }
         }

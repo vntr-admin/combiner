@@ -24,22 +24,6 @@ public class TestUtils {
         return set;
     }
 
-    //TODO: test this
-    public static Map<Integer, Set<Integer>> getTopographyForForestFireSocialNetwork(int numUsers, float forwardProbability, float backwardProbability) {
-        NavigableMap<Integer, Set<Integer>> friendships = new TreeMap<>();
-        friendships.put(0, new HashSet<Integer>());
-        for(int i=1; i<numUsers; i++) {
-            ForestFireGenerator ffg = new ForestFireGenerator(forwardProbability, backwardProbability, new TreeMap<>(copyMapSet(friendships)));
-            Set<Integer> newFriendships = ffg.run();
-            int uid = ffg.getV();
-            for(int friendId : newFriendships) {
-                friendships.get(friendId).add(uid);
-            }
-        }
-        return friendships;
-    }
-
-
     public static Map<Integer, Set<Integer>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
         Map<Integer, Set<Integer>> userIdToFriendIds = new HashMap<>();
         for(int id=0; id<numUsers; id++) {
@@ -86,12 +70,7 @@ public class TestUtils {
             replicaLocations.put(uid, new HashSet<Integer>());
         }
 
-        Map<Integer, Integer> uMap = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                uMap.put(uid, pid);
-            }
-        }
+        Map<Integer, Integer> uMap = InitUtils.getUToMasterMap(partitions);
 
         //Step 1: add replicas for friends in different partitions
         for(Integer uid1 : friendships.keySet()) {

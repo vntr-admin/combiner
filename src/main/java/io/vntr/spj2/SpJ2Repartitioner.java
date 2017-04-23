@@ -1,9 +1,12 @@
 package io.vntr.spj2;
 
+import io.vntr.InitUtils;
 import io.vntr.RepUser;
 
 import java.util.*;
 
+import static io.vntr.InitUtils.getUToMasterMap;
+import static io.vntr.InitUtils.getUToReplicasMap;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
@@ -114,30 +117,14 @@ public class SpJ2Repartitioner {
     State getState() {
         State state = new State(minNumReplicas, alpha, initialT, deltaT, k, manager.getFriendships());
 
-        Map<Integer, Integer> logicalPids = new HashMap<>();
-        for(Integer pid : manager.getPids()) {
-            for(Integer masterUid : manager.getPartitionById(pid).getIdsOfMasters()) {
-                logicalPids.put(masterUid, pid);
-            }
-        }
-        state.setLogicalPids(logicalPids);
+        Map<Integer, Set<Integer>> replicaPartitions = manager.getPartitionToReplicasMap();
 
-
-        Map<Integer, Set<Integer>> logicalReplicaPids = new HashMap<>();
-        for(Integer uid : manager.getUids()) {
-            logicalReplicaPids.put(uid, new HashSet<Integer>());
-        }
-
-        for(Integer pid : manager.getPids()) {
-            for(Integer replicaUid : manager.getPartitionById(pid).getIdsOfReplicas()) {
-                logicalReplicaPids.get(replicaUid).add(pid);
-            }
-        }
-        state.setLogicalReplicaPids(logicalReplicaPids);
+        state.setLogicalPids(getUToMasterMap(manager.getPartitionToUserMap()));
+        state.setLogicalReplicaPids(getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids()));
 
         Map<Integer, Set<Integer>> logicalReplicaPartitions = new HashMap<>();
         for(Integer pid : manager.getPids()) {
-            logicalReplicaPartitions.put(pid, new HashSet<Integer>(manager.getPartitionById(pid).getIdsOfReplicas()));
+            logicalReplicaPartitions.put(pid, new HashSet<>(replicaPartitions.get(pid)));
         }
         state.setLogicalReplicaPartitions(logicalReplicaPartitions);
 

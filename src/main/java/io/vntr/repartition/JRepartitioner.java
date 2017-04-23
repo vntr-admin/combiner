@@ -1,7 +1,10 @@
 package io.vntr.repartition;
 
+import io.vntr.InitUtils;
+
 import java.util.*;
 
+import static io.vntr.InitUtils.getUToMasterMap;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
@@ -10,12 +13,7 @@ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 public class JRepartitioner {
 
     public static Results repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, boolean incremental) {
-        Map<Integer, Integer> uidToPidMap = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            for(int uid : partitions.get(pid)) {
-                uidToPidMap.put(uid, pid);
-            }
-        }
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         int bestEdgeCut = getEdgeCut(uidToPidMap, friendships);
         Map<Integer, Integer> bestLogicalPids = null;
 

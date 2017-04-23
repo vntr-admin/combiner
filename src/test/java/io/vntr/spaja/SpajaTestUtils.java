@@ -1,11 +1,15 @@
 package io.vntr.spaja;
 
+import io.vntr.InitUtils;
 import io.vntr.TestUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static io.vntr.InitUtils.getUToMasterMap;
+import static io.vntr.InitUtils.getUToReplicasMap;
 
 /**
  * Created by robertlindquist on 10/3/16.
@@ -49,28 +53,5 @@ public class SpajaTestUtils {
         }
 
         return manager;
-    }
-
-    private static Map<Integer, Integer> getUToMasterMap(Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> map = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                map.put(uid, pid);
-            }
-        }
-        return map;
-    }
-
-    private static Map<Integer, Set<Integer>> getUToReplicasMap(Map<Integer, Set<Integer>> replicaPartitions, Set<Integer> allUids) {
-        Map<Integer, Set<Integer>> map = new HashMap<>();
-        for(Integer uid : allUids) {
-            map.put(uid, new HashSet<Integer>());
-        }
-        for(Integer pid : replicaPartitions.keySet()) {
-            for(Integer uid : replicaPartitions.get(pid)) {
-                map.get(uid).add(pid);
-            }
-        }
-        return map;
     }
 }

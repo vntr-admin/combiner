@@ -1,10 +1,13 @@
 package io.vntr.spj2;
 
+import io.vntr.InitUtils;
 import io.vntr.RepUser;
 import org.junit.Test;
 
 import java.util.*;
 
+import static io.vntr.InitUtils.getUToMasterMap;
+import static io.vntr.InitUtils.getUToReplicasMap;
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.spj2.SpJ2Repartitioner.*;
 import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
@@ -475,25 +478,8 @@ uidLoop:    for (Integer uid : friendships.keySet()) {
 
 
     private static void fillState(SpJ2Repartitioner.State state, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        Map<Integer, Integer> logicalPids = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                logicalPids.put(uid, pid);
-            }
-        }
-
-        Map<Integer, Set<Integer>> logicalReplicaPids = new HashMap<>();
-        for(Integer pid : replicas.keySet()) {
-            for(Integer uid : replicas.get(pid)) {
-                if(!logicalReplicaPids.containsKey(uid)) {
-                    logicalReplicaPids.put(uid, new HashSet<Integer>());
-                }
-                logicalReplicaPids.get(uid).add(pid);
-            }
-        }
-
-        state.setLogicalPids(logicalPids);
-        state.setLogicalReplicaPids(logicalReplicaPids);
+        state.setLogicalPids(getUToMasterMap(partitions));
+        state.setLogicalReplicaPids(getUToReplicasMap(replicas, state.getFriendships().keySet()));
         state.setLogicalReplicaPartitions(replicas);
     }
 }

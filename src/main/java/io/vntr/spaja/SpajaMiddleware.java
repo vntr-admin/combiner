@@ -145,7 +145,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
             SpajaUser user = manager.getUserMasterById(userId);
-            Integer newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Arrays.asList(partitionId));
+            Integer newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Collections.singletonList(partitionId));
             manager.addReplica(user, newPid);
         }
 

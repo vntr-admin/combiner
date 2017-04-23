@@ -192,19 +192,15 @@ public class HRepartitioner {
 
                 if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
 
-                    try {
-                        int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
-                        float balanceFactor = getImbalanceFactor(targetPid, 1);
+                    int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
+                    float balanceFactor = getImbalanceFactor(targetPid, 1);
 
-                        if (gain > maxGain && balanceFactor < gamma) {
-                            targets = new HashSet<>();
-                            targets.add(targetPid);
-                            maxGain = gain;
-                        } else if (gain == maxGain && (overweight || gain > 0)) {
-                            targets.add(targetPid);
-                        }
-                    } catch(Exception e) {
-                        System.out.println();
+                    if (gain > maxGain && balanceFactor < gamma) {
+                        targets = new HashSet<>();
+                        targets.add(targetPid);
+                        maxGain = gain;
+                    } else if (gain == maxGain && (overweight || gain > 0)) {
+                        targets.add(targetPid);
                     }
                 }
             }
