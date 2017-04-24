@@ -1,15 +1,14 @@
-package io.vntr.spj2;
+package io.vntr.repartition;
 
-import io.vntr.InitUtils;
-import io.vntr.RepUser;
+import io.vntr.spj2.SpJ2InitUtils;
+import io.vntr.spj2.SpJ2Manager;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.InitUtils.getUToMasterMap;
-import static io.vntr.InitUtils.getUToReplicasMap;
+import static io.vntr.Utils.*;
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.spj2.SpJ2Repartitioner.*;
+import static io.vntr.repartition.SpJ2Repartitioner.*;
 import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -60,7 +59,7 @@ public class SpJ2RepartitionerTest {
         fillState(state, partitions, replicas);
 
         int expectedReplication = replicas.get(1).size() + replicas.get(2).size() + replicas.get(3).size();
-        assertTrue(expectedReplication == SpJ2Repartitioner.getLogicalReplicationCount(state));
+        assertTrue(expectedReplication == SpJ2Repartitioner.getLogicalReplicationCount(state.getLogicalReplicaPartitions()));
     }
 
     @Test
@@ -129,7 +128,7 @@ public class SpJ2RepartitionerTest {
     }
 
     @Test
-    public void testGetSwapChangesThenSwapThenPhysicallyMigrate() {
+    public void testGetSwapChangesThenSwap() {
         int minNumReplicas = 1;
         float alpha = 1f;
         float initialT = 2f;
@@ -216,82 +215,6 @@ public class SpJ2RepartitionerTest {
         }
         for(Integer removedFromPid2 : swapChanges.getRemoveFromP2()) {
             assertFalse(state.getLogicalReplicaPartitions().get(pid2).contains(removedFromPid2));
-        }
-
-
-        //Physically migrate
-        SpJ2Repartitioner repartitioner = new SpJ2Repartitioner(manager, minNumReplicas, alpha, initialT, deltaT, k);
-        repartitioner.physicallyMigrate(state.getLogicalPids(), state.getLogicalReplicaPids());
-
-        RepUser user1Master = manager.getUserMasterById(uid1);
-        RepUser user2Master = manager.getUserMasterById(uid2);
-        SpJ2Partition partition1 = manager.getPartitionById(pid1);
-        SpJ2Partition partition2 = manager.getPartitionById(pid2);
-
-        //Check master partitions
-        assertTrue  (partition1.getIdsOfMasters().contains(uid2));
-        assertTrue  (partition2.getIdsOfMasters().contains(uid1));
-
-        assertFalse (partition1.getIdsOfMasters().contains(uid1));
-        assertFalse (partition2.getIdsOfMasters().contains(uid2));
-
-        assertEquals(user1Master.getBasePid(), pid2);
-        assertEquals(user2Master.getBasePid(), pid1);
-
-        for(Integer replicaPid : user1Master.getReplicaPids()) {
-            assertEquals(manager.getPartitionById(replicaPid).getReplicaById(uid1).getBasePid(), pid2);
-        }
-
-        for(Integer replicaPid : user2Master.getReplicaPids()) {
-            assertEquals(manager.getPartitionById(replicaPid).getReplicaById(uid2).getBasePid(), pid1);
-        }
-
-        //Check replica partitions
-        assertTrue(partition1.getIdsOfReplicas().containsAll(swapChanges.getAddToP1()));
-        assertTrue(partition2.getIdsOfReplicas().containsAll(swapChanges.getAddToP2()));
-
-        for(Integer shouldNotBeIn1 : swapChanges.getRemoveFromP1()) {
-            assertFalse(partition1.getIdsOfReplicas().contains(shouldNotBeIn1));
-        }
-        for(Integer shouldNotBeIn2 : swapChanges.getRemoveFromP2()) {
-            assertFalse(partition2.getIdsOfReplicas().contains(shouldNotBeIn2));
-        }
-
-
-        for(Integer shouldBeIn1 : swapChanges.getAddToP1()) {
-            RepUser user = manager.getUserMasterById(shouldBeIn1);
-            assertTrue(user.getReplicaPids().contains(pid1));
-            for(Integer replicaPid : user.getReplicaPids()) {
-                RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(shouldBeIn1);
-                assertTrue(replica.getReplicaPids().contains(pid1));
-            }
-        }
-
-        for(Integer shouldBeIn2 : swapChanges.getAddToP2()) {
-            RepUser user = manager.getUserMasterById(shouldBeIn2);
-            assertTrue(user.getReplicaPids().contains(pid2));
-            for(Integer replicaPid : user.getReplicaPids()) {
-                RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(shouldBeIn2);
-                assertTrue(replica.getReplicaPids().contains(pid2));
-            }
-        }
-
-        for(Integer shouldNotBeIn1 : swapChanges.getRemoveFromP1()) {
-            RepUser user = manager.getUserMasterById(shouldNotBeIn1);
-            assertFalse(user.getReplicaPids().contains(pid1));
-            for(Integer replicaPid : user.getReplicaPids()) {
-                RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(shouldNotBeIn1);
-                assertFalse(replica.getReplicaPids().contains(pid1));
-            }
-        }
-
-        for(Integer shouldNotBeIn2 : swapChanges.getRemoveFromP2()) {
-            RepUser user = manager.getUserMasterById(shouldNotBeIn2);
-            assertFalse(user.getReplicaPids().contains(pid2));
-            for(Integer replicaPid : user.getReplicaPids()) {
-                RepUser replica = manager.getPartitionById(replicaPid).getReplicaById(shouldNotBeIn2);
-                assertFalse(replica.getReplicaPids().contains(pid2));
-            }
         }
     }
 

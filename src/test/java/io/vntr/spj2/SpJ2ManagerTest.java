@@ -605,4 +605,10 @@ public class SpJ2ManagerTest {
             }
         }
     }
+
+
+    @Test
+    public void testPhysicallyMigrate() {
+        //TODO: do this
+    }
 }

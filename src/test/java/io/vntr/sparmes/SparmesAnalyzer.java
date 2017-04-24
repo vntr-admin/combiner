@@ -1,9 +1,6 @@
 package io.vntr.sparmes;
 
-import io.vntr.Analyzer;
-import io.vntr.ForestFireGenerator;
-import io.vntr.TestUtils;
-import io.vntr.User;
+import io.vntr.*;
 import io.vntr.utils.ProbabilityUtils;
 import org.apache.log4j.Logger;
 
@@ -372,10 +369,10 @@ public class SparmesAnalyzer {
 
         //Assert that replicas are consistent with the master in everything except pid
         for(int uid : friendships.keySet()) {
-            SparmesUser master = middleware.manager.getUserMasterById(uid);
+            RepUser master = middleware.manager.getUserMasterById(uid);
             Set<Integer> replicaPids = findKeysForUser(replicas, uid);
             for(int replicaPid : replicaPids) {
-                SparmesUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
+                RepUser replica = middleware.manager.getPartitionById(replicaPid).getReplicaById(uid);
                 assertEquals(master.getId(), replica.getId());
                 assertEquals(master.getFriendIDs(), replica.getFriendIDs());
                 assertEquals(master.getBasePid(), replica.getBasePid());

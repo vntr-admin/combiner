@@ -3,13 +3,12 @@ package io.vntr.utils;
 import cern.jet.random.engine.DRand;
 import cern.jet.random.engine.RandomEngine;
 import cern.jet.random.sampling.RandomSampler;
-import io.vntr.InitUtils;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
 import java.util.*;
 
-import static io.vntr.InitUtils.getUToMasterMap;
+import static io.vntr.Utils.getUToMasterMap;
 import static java.util.Collections.nCopies;
 
 public class ProbabilityUtils

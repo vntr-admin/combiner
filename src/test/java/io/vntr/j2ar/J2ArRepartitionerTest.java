@@ -1,11 +1,10 @@
 package io.vntr.j2ar;
 
-import io.vntr.InitUtils;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.InitUtils.getUToMasterMap;
+import static io.vntr.Utils.getUToMasterMap;
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertArrayEquals;

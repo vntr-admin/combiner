@@ -1,12 +1,13 @@
 package io.vntr.sparmes;
 
+import io.vntr.RepUser;
 import io.vntr.User;
-import io.vntr.repartition.Target;
+import io.vntr.repartition.SparmesRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-import static java.util.Collections.disjoint;
+import static io.vntr.Utils.*;
 
 /**
  * Created by robertlindquist on 9/28/16.
@@ -62,7 +63,7 @@ public class SparmesManager {
         return pMap.get(id);
     }
 
-    public SparmesUser getUserMasterById(Integer id) {
+    public RepUser getUserMasterById(Integer id) {
         Integer partitionId = uMap.get(id);
         if (partitionId != null) {
             SparmesPartition partition = getPartitionById(partitionId);
@@ -94,16 +95,16 @@ public class SparmesManager {
     public void addUser(User user) {
         Integer masterPartitionId = getPartitionIdWithFewestMasters();
 
-        SparmesUser sparmesUser = new SparmesUser(user.getId(), masterPartitionId, gamma, this, minNumReplicas);
+        RepUser RepUser = new RepUser(user.getId(), masterPartitionId);//, gamma, this, minNumReplicas);
 
-        addUser(sparmesUser, masterPartitionId);
+        addUser(RepUser, masterPartitionId);
 
         for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
-            addReplica(sparmesUser, id);
+            addReplica(RepUser, id);
         }
     }
 
-    void addUser(SparmesUser user, Integer masterPartitionId) {
+    void addUser(RepUser user, Integer masterPartitionId) {
         int uid = user.getId();
         getPartitionById(masterPartitionId).addMaster(user);
         uMap.put(uid, masterPartitionId);
@@ -113,7 +114,7 @@ public class SparmesManager {
     }
 
     public void removeUser(Integer userId) {
-        SparmesUser user = getUserMasterById(userId);
+        RepUser user = getUserMasterById(userId);
 
         //Remove user from relevant partitions
         getPartitionById(user.getBasePid()).removeMaster(userId);
@@ -126,7 +127,7 @@ public class SparmesManager {
 
         //Remove friendships
         for (Integer friendId : user.getFriendIDs()) {
-            SparmesUser friendMaster = getUserMasterById(friendId);
+            RepUser friendMaster = getUserMasterById(friendId);
             friendMaster.unfriend(userId);
 
             for (Integer friendReplicaPartitionId : friendMaster.getReplicaPids()) {
@@ -143,7 +144,7 @@ public class SparmesManager {
     }
 
     void addPartition(Integer pid) {
-        pMap.put(pid, new SparmesPartition(pid, gamma, this));
+        pMap.put(pid, new SparmesPartition(pid));//, gamma, this));
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
@@ -153,8 +154,8 @@ public class SparmesManager {
         pMap.remove(id);
     }
 
-    public void addReplica(SparmesUser user, Integer destPid) {
-        SparmesUser replicaOfUser = addReplicaNoUpdates(user, destPid);
+    public void addReplica(RepUser user, Integer destPid) {
+        RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
         //Update the replicaPartitionIds to reflect this addition
         replicaOfUser.addReplicaPartitionId(destPid);
@@ -164,13 +165,13 @@ public class SparmesManager {
         user.addReplicaPartitionId(destPid);
     }
 
-    SparmesUser addReplicaNoUpdates(SparmesUser user, Integer destPid) {
-        SparmesUser replica = user.clone();
+    RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+        RepUser replica = user.dupe();
         pMap.get(destPid).addReplica(replica);
         return replica;
     }
 
-    public void removeReplica(SparmesUser user, Integer removalPartitionId) {
+    public void removeReplica(RepUser user, Integer removalPartitionId) {
         //Delete it from each replica's replicaPartitionIds
         for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
             pMap.get(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(removalPartitionId);
@@ -184,7 +185,7 @@ public class SparmesManager {
 
     }
 
-    public void befriend(SparmesUser smallerUser, SparmesUser largerUser) {
+    public void befriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
 
@@ -197,7 +198,7 @@ public class SparmesManager {
         }
     }
 
-    public void unfriend(SparmesUser smallerUser, SparmesUser largerUser) {
+    public void unfriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
 
@@ -210,7 +211,7 @@ public class SparmesManager {
         }
     }
 
-    public void moveUser(SparmesUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
+    public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         Integer uid = user.getId();
         Integer fromPid = user.getBasePid();
 
@@ -251,9 +252,8 @@ public class SparmesManager {
 
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
         SparmesPartition partition = pMap.get(partitionId);
-        SparmesUser user = partition.getReplicaById(userId);
+        RepUser user = partition.getReplicaById(userId);
         user.setBasePid(partitionId);
-        user.setLogicalPid(partitionId);
         user.removeReplicaPartitionId(partitionId);
         partition.addMaster(user);
         partition.removeReplica(userId);
@@ -261,7 +261,7 @@ public class SparmesManager {
         uMap.put(userId, partitionId);
 
         for (Integer replicaPartitionId : user.getReplicaPids()) {
-            SparmesUser replica = pMap.get(replicaPartitionId).getReplicaById(userId);
+            RepUser replica = pMap.get(replicaPartitionId).getReplicaById(userId);
             replica.setBasePid(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
@@ -289,7 +289,7 @@ public class SparmesManager {
         return minId;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
@@ -322,7 +322,7 @@ public class SparmesManager {
     public Integer getEdgeCut() {
         int count = 0;
         for (Integer uid : uMap.keySet()) {
-            SparmesUser user = getUserMasterById(uid);
+            RepUser user = getUserMasterById(uid);
             Integer pid = user.getBasePid();
             for (Integer friendId : user.getFriendIDs()) {
                 if (!pid.equals(uMap.get(friendId))) {
@@ -342,66 +342,81 @@ public class SparmesManager {
     }
 
     void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
-        SparmesUser user = getUserMasterById(uid);
+        RepUser user = getUserMasterById(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
 
         uMap.put(uid, toPid);
 
         user.setBasePid(toPid);
-        user.setLogicalPid(toPid);
 
         for (Integer rPid : user.getReplicaPids()) {
             pMap.get(rPid).getReplicaById(uid).setBasePid(toPid);
         }
     }
 
-    public void repartition() {
-        for (SparmesPartition p : pMap.values()) {
-            p.resetLogicalUsers();
-        }
+    public void reformedRepartition() {
+        SparmesRepartitioner.Results results = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), getPartitionToReplicasMap(), getFriendships());
+        increaseTallyLogical(results.getNumLogicalMoves());
+        physicallyMigrate(results);
+    }
 
-        iteration = 0;
-        boolean stoppingCondition = false;
-        while (!stoppingCondition) {
-            boolean changed;
-            changed  = performStage(true,  k);
-            changed |= performStage(false, k);
-            stoppingCondition = !changed;
-            iteration++;
-        }
+    void physicallyMigrate(SparmesRepartitioner.Results results) {
+        Map<Integer, Integer> currentUidToPidMap = getUToMasterMap(getPartitionToUserMap());
+        Map<Integer, Set<Integer>> currentUidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getUids());
 
-        Map<Integer, Integer> usersWhoMoved = new HashMap<>();
-        for (SparmesPartition p : pMap.values()) {
-            Set<Integer> moved = p.physicallyCopyNewMasters();
-            for(Integer uid : moved) {
-                usersWhoMoved.put(uid, p.getId());
+        for(int uid : getUids()) {
+            int currentPid = currentUidToPidMap.get(uid);
+            int newPid = results.getUidsToPids().get(uid);
+
+            //move master
+            if(currentPid != newPid) {
+                moveMasterAndInformReplicas(uid, currentPid, newPid);
+                increaseTally(1);
+            }
+
+            //add and remove replicas as specified in the results
+            Set<Integer> newReplicas = results.getUidsToReplicaPids().get(uid);
+            Set<Integer> currentReplicas = currentUidToReplicasMap.get(uid);
+            if(!currentReplicas.equals(newReplicas)) {
+                for(int newReplica : newReplicas) {
+                    if(!currentReplicas.contains(newReplica)) {
+                        addReplica(getUserMasterById(uid), newReplica);
+                    }
+                }
+                for(int oldReplica : currentReplicas) {
+                    if(!newReplicas.contains(oldReplica)) {
+                        removeReplica(getUserMasterById(uid), oldReplica);
+                    }
+                }
             }
         }
 
-        uMap.putAll(usersWhoMoved);
-
-        for (SparmesPartition p : pMap.values()) {
-            p.physicallyCopyNewReplicas();
+        //shore up friend replicas (ideally would be unnecessary)
+        for(int uid : getUids()) {
+            shoreUpFriendReplicas(uid);
         }
 
-        for (SparmesPartition p : pMap.values()) {
-            p.physicallyMigrateDelete();
-        }
-
-        for (SparmesPartition p : pMap.values()) {
-            p.shoreUpFriendReplicas();
-        }
-
-        for (int uid : uMap.keySet()) {
+        //ensure k replication
+        for(int uid : getUids()) {
             ensureKReplication(uid);
         }
+    }
 
-        increaseTally(usersWhoMoved.size());
+    void shoreUpFriendReplicas(int uid) {
+        RepUser user = getUserMasterById(uid);
+        int pid = user.getBasePid();
+        SparmesPartition partition = getPartitionById(pid);
+        Set<Integer> friends = new HashSet<>(user.getFriendIDs());
+        friends.removeAll(partition.getIdsOfMasters());
+        friends.removeAll(partition.getIdsOfReplicas());
+        for(int friendId : friends) {
+            addReplica(getUserMasterById(friendId), pid);
+        }
     }
 
     void ensureKReplication(int uid) {
-        SparmesUser user = getUserMasterById(uid);
+        RepUser user = getUserMasterById(uid);
         Set<Integer> replicaLocations = user.getReplicaPids();
         int deficit = minNumReplicas - replicaLocations.size();
         if(deficit > 0) {
@@ -412,139 +427,6 @@ public class SparmesManager {
                 addReplica(user, rPid);
             }
         }
-    }
-
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(SparmesUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(getPids());
-        potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getBasePid());
-        potentialReplicaLocations.removeAll(user.getReplicaPids());
-        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
-        return list.get((int) (list.size() * Math.random()));
-    }
-
-    static int iteration = 0;
-
-    boolean performStage(boolean firstStage, int k) {
-        if(iteration > 100) {
-            return false;
-        }
-        boolean changed = false;
-        Map<Integer, Set<Target>> stageTargets = new HashMap<>();
-        for (SparmesPartition p : pMap.values()) {
-            Set<Target> targets = p.getCandidates(firstStage, k, probabilistic);
-            stageTargets.put(p.getId(), targets);
-            changed |= !targets.isEmpty();
-        }
-
-        for(Integer pid : pMap.keySet()) {
-            for(Target target : stageTargets.get(pid)) {
-                migrateLogically(target);
-            }
-        }
-
-        updateLogicalUsers();
-
-        return changed;
-    }
-
-    private void addLogicalReplica(Integer uid, Integer pid) {
-        getUserMasterById(uid).addLogicalPartitionId(pid);
-        getPartitionById(pid).addLogicalReplicaId(uid);
-    }
-
-    private void removeLogicalReplica(Integer uid, Integer pid) {
-        getUserMasterById(uid).removeLogicalPartitionId(pid);
-        getPartitionById(pid).removeLogicalReplicaId(uid);
-    }
-
-    void migrateLogically(Target t) {
-        SparmesPartition oldPart = getPartitionById(t.oldPid);
-        SparmesPartition newPart = getPartitionById(t.pid);
-        SparmesUser user = getUserMasterById(t.uid);
-
-        //Add the actual user
-        user.setLogicalPid(t.pid);
-        oldPart.removeLogicalUser(t.uid);
-        newPart.addLogicalUser(user.getLogicalUser(false));
-
-        //Add replicas as necessary
-        //First, replicate user in old partition if necessary
-        for(Integer friendId : user.getFriendIDs()) {
-            if(getUserMasterById(friendId).getLogicalPid().equals(t.oldPid)) {
-                addLogicalReplica(t.uid, t.oldPid);
-                break;
-            }
-        }
-
-        //Second, replicate friends in new partition if they aren't there already
-        for(Integer friendId : user.getFriendIDs()) {
-            SparmesUser friend = getUserMasterById(friendId);
-            if(!friend.getLogicalPid().equals(t.pid) && !friend.getLogicalPids().contains(t.pid)) {
-                addLogicalReplica(friendId, t.pid);
-            }
-        }
-
-        //Remove replicas as allowed
-        //First, remove user replica from new partition if one exists
-        if(newPart.getLogicalReplicaIds().contains(t.uid)) {
-            removeLogicalReplica(t.uid, t.pid);
-        }
-
-        //TODO: this might not be working properly
-        //Second, if we've violated k-constraints, choose another partition at random and replicate this user there
-        if(user.getLogicalPids().size() < minNumReplicas) {
-            Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
-            potentialReplicaLocations.remove(user.getLogicalPid());
-            potentialReplicaLocations.removeAll(user.getLogicalPids());
-            List<Integer> list = new LinkedList<>(potentialReplicaLocations);
-            Integer newReplicaPid = list.get((int) (list.size() * Math.random()));
-            addLogicalReplica(t.uid, newReplicaPid);
-        }
-
-        //Third, remove friends replicas from old partition if they weren't being used for any other reason and don't violate k-replication
-        Set<Integer> friendReplicasToRemove = new HashSet<>(user.getFriendIDs());
-        friendReplicasToRemove.retainAll(oldPart.getLogicalReplicaIds());
-        for(Integer friendId : friendReplicasToRemove) {
-            SparmesUser friend = getUserMasterById(friendId);
-            if(disjoint(friend.getFriendIDs(), oldPart.getLogicalUserIds()) && friend.getLogicalPids().size() > minNumReplicas) {
-                oldPart.removeLogicalReplicaId(friendId);
-            }
-        }
-    }
-
-    void updateLogicalUsers() {
-        Map<Integer, Integer> pToWeight = getPToWeight(false);
-        int totalWeight = 0;
-        for(Integer pWeight: pToWeight.values()) {
-            totalWeight += pWeight;
-        }
-        for(SparmesPartition p : pMap.values()) {
-            for(Integer logicalUid : p.getLogicalUserIds()) {
-                SparmesUser user = getUserMasterById(logicalUid);
-                Map<Integer, Integer> updatedFriendCounts = user.getPToFriendCountLogical();
-                boolean replicateInSourcePartition = user.shouldReplicateInSourcePartitionLogical();
-                int numFriendsToDeleteInCurrentPartition = user.getNumFriendsToDeleteInCurrentPartitionLogical();
-                Map<Integer, Integer> friendsToAddInEachPartition = user.getFriendsToAddInEachPartitionLogical();
-                LogicalUser luser = new LogicalUser(user.getId(), user.getLogicalPid(), gamma, updatedFriendCounts, pToWeight, user.getLogicalPids(), friendsToAddInEachPartition, numFriendsToDeleteInCurrentPartition, replicateInSourcePartition, totalWeight, minNumReplicas);
-                p.addLogicalUser(luser);
-            }
-        }
-    }
-
-    Map<Integer, Integer> getPToWeight(boolean determineWeightsFromPhysicalPartitions) {
-        Map<Integer, Integer> pToWeight = new HashMap<>();
-        for(Integer partitionId : getPids()) {
-            int pWeight;
-            if(determineWeightsFromPhysicalPartitions) {
-                pWeight = getPartitionById(partitionId).getNumMasters();
-            }
-            else {
-                pWeight = getPartitionById(partitionId).getNumLogicalUsers();
-            }
-            pToWeight.put(partitionId, pWeight);
-        }
-        return pToWeight;
     }
 
     public Map<Integer, Set<Integer>> getFriendships() {
@@ -606,7 +488,7 @@ public class SparmesManager {
 
         //check replicas
         for(Integer uid : uMap.keySet()) {
-            SparmesUser user = getUserMasterById(uid);
+            RepUser user = getUserMasterById(uid);
             Set<Integer> observedReplicaPids = new HashSet<>();
             for(Integer pid : pMap.keySet()) {
                 if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {

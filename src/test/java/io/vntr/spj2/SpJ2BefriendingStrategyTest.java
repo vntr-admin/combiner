@@ -674,7 +674,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario1.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario1.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario1.alpha, scenario1.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario1.alpha, scenario1.beta, manager.getMinNumReplicas());
         assertTrue(curNumReplicas == calculatedNumReplicas);
     }
 
@@ -688,7 +688,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario2.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario2.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario2.alpha, scenario2.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario2.alpha, scenario2.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -703,7 +703,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario3.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario3.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario3.alpha, scenario3.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario3.alpha, scenario3.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -718,7 +718,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario4.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario4.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario4.alpha, scenario4.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario4.alpha, scenario4.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 2);
     }
@@ -733,7 +733,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario5.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario5.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario5.alpha, scenario5.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario5.alpha, scenario5.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -748,7 +748,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario6.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario6.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario6.alpha, scenario6.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario6.alpha, scenario6.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -763,7 +763,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario7.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario7.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario7.alpha, scenario7.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario7.alpha, scenario7.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -778,7 +778,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario8.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario8.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario8.alpha, scenario8.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario8.alpha, scenario8.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 1);
     }
@@ -793,7 +793,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario9.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario9.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario9.alpha, scenario9.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario9.alpha, scenario9.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 2);
     }
@@ -833,7 +833,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(A).getNumReplicas() + manager.getPartitionById(B).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(manager.getUserMasterById(alpha), manager.getUserMasterById(beta));
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(manager.getUserMasterById(alpha), manager.getUserMasterById(beta), manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -848,7 +848,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario11.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario11.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario11.alpha, scenario11.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario11.alpha, scenario11.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 1);
     }
@@ -863,7 +863,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario12.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario12.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario12.alpha, scenario12.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario12.alpha, scenario12.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas);
     }
@@ -878,7 +878,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario13.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario13.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario13.alpha, scenario13.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario13.alpha, scenario13.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas - 1);
     }
@@ -893,7 +893,7 @@ public class SpJ2BefriendingStrategyTest {
         SpJ2BefriendingStrategy strategy = new SpJ2BefriendingStrategy(manager);
 
         int curNumReplicas = manager.getPartitionById(scenario.alpha.getBasePid()).getNumReplicas() + manager.getPartitionById(scenario.beta.getBasePid()).getNumReplicas();
-        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario.alpha, scenario.beta);
+        int calculatedNumReplicas = strategy.calcNumReplicasMove(scenario.alpha, scenario.beta, manager.getMinNumReplicas());
 
         assertTrue(calculatedNumReplicas == curNumReplicas + 1);
     }
@@ -956,7 +956,7 @@ public class SpJ2BefriendingStrategyTest {
             }
         }
 
-        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, new HashSet<Integer>());
+        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, new HashSet<Integer>(), manager.getMinNumReplicas());
         assertEquals(replicasToDelete, nonColocatedUsers);
     }
 
@@ -992,7 +992,7 @@ public class SpJ2BefriendingStrategyTest {
 
         manager.befriend(isolatedUser, manager.getUserMasterById(colocatedFriendId));
 
-        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, new HashSet<Integer>());
+        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, new HashSet<Integer>(), manager.getMinNumReplicas());
         assertFalse(replicasToDelete.contains(colocatedFriendId));
         assertEquals(replicasToDelete, nonColocatedUsers);
     }
@@ -1029,7 +1029,7 @@ public class SpJ2BefriendingStrategyTest {
             }
         }
 
-        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, singleton(colocatedFriendId));
+        Set<Integer> replicasToDelete = strategy.findReplicasInMovingPartitionToDelete(isolatedUser, singleton(colocatedFriendId), manager.getMinNumReplicas());
         assertTrue(replicasToDelete.contains(colocatedFriendId));
         nonColocatedUsers.add(colocatedFriendId);
         assertEquals(replicasToDelete, nonColocatedUsers);
@@ -1085,7 +1085,7 @@ public class SpJ2BefriendingStrategyTest {
         Integer partitionWithoutThisUser = SpJ2TestUtils.getPartitionsWithNoPresence(manager, movingUser.getId()).iterator().next();
         RepUser stayingUser = SpJ2TestUtils.getUserWithMasterOnPartition(manager, partitionWithoutThisUser);
 
-        assertFalse(strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser));
+        assertFalse(strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser, manager.getMinNumReplicas()));
     }
 
     @Test
@@ -1097,7 +1097,7 @@ public class SpJ2BefriendingStrategyTest {
         RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         RepUser stayingUser = SpJ2TestUtils.getUserWithMasterOnPartition(manager, movingUser.getReplicaPids().iterator().next());
 
-        assertFalse(strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser));
+        assertFalse(strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser, manager.getMinNumReplicas()));
     }
 
     @Test
@@ -1111,7 +1111,7 @@ public class SpJ2BefriendingStrategyTest {
         RepUser stayingUser = SpJ2TestUtils.getUserWithMasterOnPartition(manager, partitionInitiallyWithoutThisUser);
         manager.addReplica(movingUser, partitionInitiallyWithoutThisUser);
 
-        boolean result = strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser);
+        boolean result = strategy.shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser, manager.getMinNumReplicas());
         assertTrue(result);
     }
 
@@ -1125,7 +1125,7 @@ public class SpJ2BefriendingStrategyTest {
         Integer partitionWithoutThisUser = SpJ2TestUtils.getPartitionsWithNoPresence(manager, stayingUser.getId()).iterator().next();
         RepUser movingUser = SpJ2TestUtils.getUserWithMasterOnPartition(manager, partitionWithoutThisUser);
 
-        assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser));
+        assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, manager.getMinNumReplicas()));
     }
 
     @Test
@@ -1146,7 +1146,7 @@ public class SpJ2BefriendingStrategyTest {
         Integer partitionIdWithoutStayingUser = SpJ2TestUtils.getPartitionsWithNoPresence(manager, stayingUser.getId()).iterator().next();
         manager.addReplica(stayingUser, partitionIdWithoutStayingUser);
 
-        assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser));
+        assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, manager.getMinNumReplicas()));
     }
 
     @Test
@@ -1157,7 +1157,7 @@ public class SpJ2BefriendingStrategyTest {
 
         RepUser movingUser = manager.getUserMasterById(manager.getUids().iterator().next());
         RepUser stayingUser = SpJ2TestUtils.getUserWithMasterOnPartition(manager, movingUser.getReplicaPids().iterator().next());
-        assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser));
+        assertFalse(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, manager.getMinNumReplicas()));
     }
 
     @Test
@@ -1170,7 +1170,7 @@ public class SpJ2BefriendingStrategyTest {
         RepUser stayingUser = SpJ2TestUtils.getUserWithMasterOnPartition(manager, movingUser.getReplicaPids().iterator().next());
         Integer paritionIdWithoutStayingUser = SpJ2TestUtils.getPartitionsWithNoPresence(manager, stayingUser.getId()).iterator().next();
         manager.addReplica(stayingUser, paritionIdWithoutStayingUser);
-        assertTrue(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser));
+        assertTrue(strategy.shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, manager.getMinNumReplicas()));
     }
 
     @Test

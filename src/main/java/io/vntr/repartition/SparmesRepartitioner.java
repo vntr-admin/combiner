@@ -1,11 +1,14 @@
-package io.vntr.sparmes;
+package io.vntr.repartition;
 
-import io.vntr.repartition.Target;
+/**
+ * Created by robertlindquist on 4/24/17.
+ */
+import io.vntr.Utils;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-import static io.vntr.InitUtils.*;
+import static io.vntr.Utils.*;
 import static java.util.Collections.disjoint;
 
 /**
@@ -171,8 +174,6 @@ public class SparmesRepartitioner {
             state.gamma = gamma;
             state.friendships = friendships;
 
-            state.updateLogicalUsers();
-
             Map<Integer, Set<Integer>> logicalPartitions = new HashMap<>();
             for(int pid : partitions.keySet()) {
                 logicalPartitions.put(pid, new HashSet<>(partitions.get(pid)));
@@ -184,6 +185,8 @@ public class SparmesRepartitioner {
                 logicalReplicas.put(pid, new HashSet<>(replicas.get(pid)));
             }
             state.setLogicalReplicaPartitions(logicalReplicas);
+
+            state.updateLogicalUsers();
 
             return state;
         }
@@ -199,10 +202,11 @@ public class SparmesRepartitioner {
             int maxUid = Collections.max(friendships.keySet());
 
             Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+            Map<Integer, Set<Integer>> uidToReplicaMap = getUToReplicasMap(replicas, friendships.keySet());
             int[] numDeletionCandidates = getNumDeletionCandidates(maxUid, friendships, replicas, uidToPidMap);
-            Map<Integer, Map<Integer, Integer>> uidToNumFriendsToAddInEachPartition = getUidToNumFriendsToAddInEachPartition(friendships, uidToPidMap, partitions.keySet(), maxPid);
+            Map<Integer, Map<Integer, Integer>> uidToNumFriendsToAddInEachPartition = getUidToNumFriendsToAddInEachPartition(friendships, uidToReplicaMap, uidToPidMap, partitions.keySet(), maxPid);
 
-            Map<Integer, Integer> pToWeight = getPToWeight(partitions);
+            Map<Integer, Integer> pToWeight = getUserCounts(partitions);
             int totalWeight = 0;
             for(int weight : pToWeight.values()) {
                 totalWeight += weight;
@@ -213,8 +217,8 @@ public class SparmesRepartitioner {
                 Map<Integer, Integer> pToFriendCount = getPToFriendCount(friendIds, uidToPidMap, partitions.keySet(), maxPid);
 
                 Set<Integer> replicaLocations = new HashSet<>();
-                for(int pid : partitions.keySet()) {
-                    if(partitions.get(pid).contains(uid)) {
+                for(int pid : replicas.keySet()) {
+                    if(replicas.get(pid).contains(uid)) {
                         replicaLocations.add(pid);
                     }
                 }
@@ -247,7 +251,7 @@ public class SparmesRepartitioner {
             int[] numDeletionCandidates = new int[maxUid+1];
 
             for(int pid : replicas.keySet()) {
-                middle:     for(int replicaId : replicas.get(pid)) {
+                middle:         for(int replicaId : replicas.get(pid)) {
                     Integer friendOnPartition = null;
                     for(int friendId : friendships.get(replicaId)) {
                         if(friendOnPartition != null) {
@@ -266,28 +270,27 @@ public class SparmesRepartitioner {
             return numDeletionCandidates;
         }
 
-        static Map<Integer, Integer> getPToWeight(Map<Integer, Set<Integer>> partitions) {
-            Map<Integer, Integer> pToWeight = new HashMap<>();
-            for(int pid : partitions.keySet()) {
-                int numUsersOnPartition = partitions.get(pid).size();
-                pToWeight.put(pid, numUsersOnPartition);
-            }
-            return pToWeight;
-        }
-
-        static Map<Integer, Map<Integer, Integer>> getUidToNumFriendsToAddInEachPartition(Map<Integer, Set<Integer>> friendships, Map<Integer, Integer> uidToPidMap, Set<Integer> pids, int maxPid) {
+        static Map<Integer, Map<Integer, Integer>> getUidToNumFriendsToAddInEachPartition(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> uidToReplicaMap, Map<Integer, Integer> uidToPidMap, Set<Integer> pids, int maxPid) {
             Map<Integer, Map<Integer, Integer>> uidToNumFriendsToAddInEachPartition = new HashMap<>();
             for(int uid : friendships.keySet()) {
-                int[] friendCounts = new int[maxPid+1];
-                for(int friendId : friendships.get(uid)) {
-                    friendCounts[uidToPidMap.get(friendId)]++;
+
+                //you have to add a replica of each friend who isn't present in the partition
+                Set<Integer> friendIds = friendships.get(uid);
+                int[] friendsToAdd = new int[maxPid+1];
+                Arrays.fill(friendsToAdd, friendIds.size());
+
+                for(int friendId : friendIds) {
+                    for(int friendLocation : uidToReplicaMap.get(friendId)) {
+                        friendsToAdd[friendLocation]--;
+                    }
+                    friendsToAdd[uidToPidMap.get(friendId)]--;
                 }
 
                 int pid = uidToPidMap.get(uid);
                 Map<Integer, Integer> numFriendsToAddInEachPartition = new HashMap<>();
                 for(int pid1 : pids) {
                     if(pid1 != pid) {
-                        numFriendsToAddInEachPartition.put(pid1, friendCounts[pid1]);
+                        numFriendsToAddInEachPartition.put(pid1, friendsToAdd[pid1]);
                     }
                 }
                 uidToNumFriendsToAddInEachPartition.put(uid, numFriendsToAddInEachPartition);
@@ -306,6 +309,36 @@ public class SparmesRepartitioner {
             }
             return pToFriendCount;
         }
+
+        void checkStateValidity() {
+            for(LogicalUser user : this.getLogicalUsers().values()) {
+                if(user.replicaLocations.size() < this.minNumReplicas) {
+                    throw new RuntimeException("User " + user.id + " has " + this.minNumReplicas + "-replication problem.");
+                }
+                for(int pid : this.getLogicalPartitions().keySet()) {
+                    boolean userHasMasterHere = this.getLogicalPartitions().get(pid).contains(user.id);
+                    boolean userIsReplicatedHere = this.getLogicalReplicaPartitions().get(pid).contains(user.id);
+
+                    boolean userThinksItsMasterIsHere = user.pid == pid;
+                    boolean userThinksItIsReplicatedHere = user.replicaLocations.contains(pid);
+
+                    if(userHasMasterHere != userThinksItsMasterIsHere) {
+                        throw new RuntimeException("User " + user.id + " has a master problem in " + pid);
+                    }
+                    if(userIsReplicatedHere != userThinksItIsReplicatedHere) {
+                        throw new RuntimeException("User " + user.id + " has a replica problem in " + pid);
+                    }
+                }
+                for(int friendId : user.friendIds) {
+                    boolean friendHasMasterHere = this.logicalPartitions.get(user.pid).contains(friendId);
+                    boolean friendHasReplicaHere = this.logicalReplicaPartitions.get(user.pid).contains(friendId);
+                    if(!friendHasMasterHere && !friendHasReplicaHere) {
+                        throw new RuntimeException("User " + user.id + "'s friend " + friendId + " has no presence on " + user.pid);
+                    }
+                }
+            }
+        }
+
     }
 
     static class LogicalUser {
@@ -425,7 +458,7 @@ public class SparmesRepartitioner {
         }
     }
 
-    static class Results {
+    public static class Results {
         private final int numLogicalMoves;
         private final Map<Integer, Integer> uidsToPids;
         private final Map<Integer, Set<Integer>> uidsToReplicaPids;
@@ -448,4 +481,5 @@ public class SparmesRepartitioner {
             return uidsToReplicaPids;
         }
     }
+
 }

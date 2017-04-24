@@ -1,61 +1,44 @@
-package io.vntr.spj2;
+package io.vntr.repartition;
 
-import io.vntr.InitUtils;
-import io.vntr.RepUser;
-
+/**
+ * Created by robertlindquist on 4/24/17.
+ */
 import java.util.*;
 
-import static io.vntr.InitUtils.getUToMasterMap;
-import static io.vntr.InitUtils.getUToReplicasMap;
+import static io.vntr.Utils.*;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
  * Created by robertlindquist on 4/15/17.
  */
 public class SpJ2Repartitioner {
-    private SpJ2Manager manager;
 
-    private int minNumReplicas;
-    private float alpha;
-    private float initialT;
-    private float deltaT;
-    private int k;
-
-    public SpJ2Repartitioner(SpJ2Manager manager, int minNumReplicas, float alpha, float initialT, float deltaT, int k) {
-        this.manager = manager;
-        this.minNumReplicas = minNumReplicas;
-        this.alpha = alpha;
-        this.initialT = initialT;
-        this.deltaT = deltaT;
-        this.k = k;
-    }
-
-    public void repartition() {
+    public static Results repartition(int minNumReplicas, float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         int numRestarts = 1;
+        int moves = 0;
 
-        int bestNumReplicas = manager.getReplicationCount();
+        int bestNumReplicas = getLogicalReplicationCount(replicas);
 
         Map<Integer, Integer> bestLogicalPids = new HashMap<>();
         Map<Integer, Set<Integer>> bestLogicalReplicaPids = new HashMap<>();
         for(int i=0; i<numRestarts; i++) {
-            State state = getState();
+            State state = getState(minNumReplicas, alpha, initialT, deltaT, k, friendships, partitions, replicas);
 
             for(float t = initialT; t >= 1; t -= deltaT) {
-                List<Integer> randomUserList = new LinkedList<>(manager.getUids());
+                List<Integer> randomUserList = new LinkedList<>(friendships.keySet());
                 Collections.shuffle(randomUserList);
                 for (Integer uid : randomUserList) {
-                    RepUser user = manager.getUserMasterById(uid);
-                    Set<Integer> swapCandidates = getKDistinctValuesFromList(k, manager.getUids());
+                    Set<Integer> swapCandidates = getKDistinctValuesFromList(k, friendships.keySet());
 
                     Integer partnerId = findPartner(uid, swapCandidates, t, state);
                     if(partnerId != null) {
                         swap(uid, partnerId, state);
-                        manager.increaseTallyLogical(2);
+                        moves += 2;
                     }
                 }
             }
 
-            int numReplicas = getLogicalReplicationCount(state);
+            int numReplicas = getLogicalReplicationCount(state.getLogicalReplicaPartitions());
             if(numReplicas < bestNumReplicas) {
                 bestNumReplicas = numReplicas;
                 bestLogicalPids = new HashMap<>(state.getLogicalPids());
@@ -63,9 +46,8 @@ public class SpJ2Repartitioner {
             }
         }
 
-        if(!bestLogicalPids.isEmpty()) {
-            physicallyMigrate(bestLogicalPids, bestLogicalReplicaPids);
-        }
+        Results results = new Results(moves, bestLogicalPids, bestLogicalReplicaPids);
+        return results;
     }
 
     static Integer findPartner(Integer uid, Set<Integer> candidateIds, float t, State state) {
@@ -106,59 +88,27 @@ public class SpJ2Repartitioner {
         return bestPartnerId;
     }
 
-    static Integer getLogicalReplicationCount(State state) {
+    static Integer getLogicalReplicationCount(Map<Integer, Set<Integer>> replicas) {
         int count = 0;
-        for(Set<Integer> replicas : state.getLogicalReplicaPids().values()) {
-            count += replicas.size();
+        for(Set<Integer> reps : replicas.values()) {
+            count += reps.size();
         }
         return count;
     }
 
-    State getState() {
-        State state = new State(minNumReplicas, alpha, initialT, deltaT, k, manager.getFriendships());
+    static State getState(int minNumReplicas, float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
+        State state = new State(minNumReplicas, alpha, initialT, deltaT, k, friendships);
 
-        Map<Integer, Set<Integer>> replicaPartitions = manager.getPartitionToReplicasMap();
-
-        state.setLogicalPids(getUToMasterMap(manager.getPartitionToUserMap()));
-        state.setLogicalReplicaPids(getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids()));
+        state.setLogicalPids(getUToMasterMap(partitions));
+        state.setLogicalReplicaPids(getUToReplicasMap(replicas, friendships.keySet()));
 
         Map<Integer, Set<Integer>> logicalReplicaPartitions = new HashMap<>();
-        for(Integer pid : manager.getPids()) {
-            logicalReplicaPartitions.put(pid, new HashSet<>(replicaPartitions.get(pid)));
+        for(Integer pid : partitions.keySet()) {
+            logicalReplicaPartitions.put(pid, new HashSet<>(replicas.get(pid)));
         }
         state.setLogicalReplicaPartitions(logicalReplicaPartitions);
 
         return state;
-    }
-
-    void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
-        for(Integer uid : newPids.keySet()) {
-            Integer newPid = newPids.get(uid);
-            Set<Integer> newReplicas = newReplicaPids.get(uid);
-
-            RepUser user = manager.getUserMasterById(uid);
-            Integer oldPid = user.getBasePid();
-            Set<Integer> oldReplicas = user.getReplicaPids();
-
-            if(!oldPid.equals(newPid)) {
-                manager.moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
-                manager.increaseTally(1);
-            }
-
-            if(!oldReplicas.equals(newReplicas)) {
-                Set<Integer> replicasToAdd = new HashSet<>(newReplicas);
-                replicasToAdd.removeAll(oldReplicas);
-                for(Integer replicaPid : replicasToAdd) {
-                    manager.addReplica(user, replicaPid);
-                }
-
-                Set<Integer> replicasToRemove = new HashSet<>(oldReplicas);
-                replicasToRemove.removeAll(newReplicas);
-                for(Integer replicaPid : replicasToRemove) {
-                    manager.removeReplica(user, replicaPid);
-                }
-            }
-        }
     }
 
     static float calcScore(int replicasInP1, int replicasInP2, float alpha) {
@@ -274,7 +224,7 @@ public class SpJ2Repartitioner {
         Set<Integer> replicasToDelete = new HashSet<>();
         int minNumReplicas = state.getMinNumReplicas();
 
-outer:  for(Integer friendId : state.getFriendships().get(uid)) {
+        outer:  for(Integer friendId : state.getFriendships().get(uid)) {
             int friendPid = state.getLogicalPids().get(friendId);
             if (friendPid != pid) {
                 int numReplicas = state.getLogicalReplicaPids().get(friendId).size() + (replicasToBeAdded.contains(friendId) ? 1 : 0);
@@ -432,6 +382,30 @@ outer:  for(Integer friendId : state.getFriendships().get(uid)) {
 
         public void setLogicalReplicaPartitions(Map<Integer, Set<Integer>> logicalReplicaPartitions) {
             this.logicalReplicaPartitions = logicalReplicaPartitions;
+        }
+    }
+
+    public static class Results {
+        private final int moves;
+        private final Map<Integer, Integer> newPids;
+        private final Map<Integer, Set<Integer>> newReplicaPids;
+
+        public Results(int moves, Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
+            this.moves = moves;
+            this.newPids = newPids;
+            this.newReplicaPids = newReplicaPids;
+        }
+
+        public int getMoves() {
+            return moves;
+        }
+
+        public Map<Integer, Integer> getNewPids() {
+            return newPids;
+        }
+
+        public Map<Integer, Set<Integer>> getNewReplicaPids() {
+            return newReplicaPids;
         }
     }
 }

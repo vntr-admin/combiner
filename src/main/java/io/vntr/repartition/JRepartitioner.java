@@ -1,10 +1,8 @@
 package io.vntr.repartition;
 
-import io.vntr.InitUtils;
-
 import java.util.*;
 
-import static io.vntr.InitUtils.getUToMasterMap;
+import static io.vntr.Utils.getUToMasterMap;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**

@@ -3,6 +3,7 @@ package io.vntr.spj2;
 import io.vntr.IRepManager;
 import io.vntr.RepUser;
 import io.vntr.User;
+import io.vntr.repartition.SpJ2Repartitioner;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -11,6 +12,10 @@ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 public class SpJ2Manager implements IRepManager {
     private int minNumReplicas;
+    private float alpha;
+    private float initialT;
+    private float deltaT;
+    private int k;
 
     private int nextPid = 1;
     private int nextUid = 1;
@@ -22,13 +27,14 @@ public class SpJ2Manager implements IRepManager {
     private Map<Integer, SpJ2Partition> pidToPartitionMap;
     private Map<Integer, Integer> uidToMasterPidMap = new HashMap<>();
 
-    private SpJ2Repartitioner repartitioner;
-
     public SpJ2Manager(int minNumReplicas, float alpha, float initialT, float deltaT, int k, double logicalMigrationRatio) {
         this.minNumReplicas = minNumReplicas;
+        this.alpha = alpha;
+        this.initialT = initialT;
+        this.deltaT = deltaT;
+        this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
         this.pidToPartitionMap = new HashMap<>();
-        this.repartitioner = new SpJ2Repartitioner(this, minNumReplicas, alpha, initialT, deltaT, k);
     }
 
     @Override
@@ -475,6 +481,39 @@ public class SpJ2Manager implements IRepManager {
     }
 
     void repartition() {
-        repartitioner.repartition();
+        SpJ2Repartitioner.Results results = SpJ2Repartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap());
+        increaseTallyLogical(results.getMoves());
+        physicallyMigrate(results.getNewPids(), results.getNewReplicaPids());
     }
+
+    void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
+        for(Integer uid : newPids.keySet()) {
+            Integer newPid = newPids.get(uid);
+            Set<Integer> newReplicas = newReplicaPids.get(uid);
+
+            RepUser user = getUserMasterById(uid);
+            Integer oldPid = user.getBasePid();
+            Set<Integer> oldReplicas = user.getReplicaPids();
+
+            if(!oldPid.equals(newPid)) {
+                moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
+                increaseTally(1);
+            }
+
+            if(!oldReplicas.equals(newReplicas)) {
+                Set<Integer> replicasToAdd = new HashSet<>(newReplicas);
+                replicasToAdd.removeAll(oldReplicas);
+                for(Integer replicaPid : replicasToAdd) {
+                    addReplica(user, replicaPid);
+                }
+
+                Set<Integer> replicasToRemove = new HashSet<>(oldReplicas);
+                replicasToRemove.removeAll(newReplicas);
+                for(Integer replicaPid : replicasToRemove) {
+                    removeReplica(user, replicaPid);
+                }
+            }
+        }
+    }
+
 }

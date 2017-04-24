@@ -47,7 +47,11 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
         if (!colocatedMasters && !colocatedReplicas) {
-            BEFRIEND_REBALANCE_STRATEGY strategy = spJ2BefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
+
+            int smallerMasters = manager.getPartitionById(smallerUser.getBasePid()).getNumMasters();
+            int largerMasters  = manager.getPartitionById(largerUser.getBasePid()).getNumMasters();
+
+            BEFRIEND_REBALANCE_STRATEGY strategy = spJ2BefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, smallerMasters, largerMasters, manager.getMinNumReplicas());
             performRebalace(strategy, smallerUserId, largerUserId);
         }
 
@@ -72,7 +76,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
             RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
             Set<Integer> replicasToAddInDestinationPartition = spJ2BefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
-            Set<Integer> replicasToDeleteInSourcePartition = spJ2BefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
+            Set<Integer> replicasToDeleteInSourcePartition = spJ2BefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, manager.getMinNumReplicas());
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }

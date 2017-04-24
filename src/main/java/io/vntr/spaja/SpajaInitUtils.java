@@ -3,8 +3,7 @@ package io.vntr.spaja;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.InitUtils.getUToMasterMap;
-import static io.vntr.InitUtils.getUToReplicasMap;
+import static io.vntr.Utils.*;
 
 /**
  * Created by robertlindquist on 4/1/17.

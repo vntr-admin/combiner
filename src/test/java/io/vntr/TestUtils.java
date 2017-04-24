@@ -70,7 +70,7 @@ public class TestUtils {
             replicaLocations.put(uid, new HashSet<Integer>());
         }
 
-        Map<Integer, Integer> uMap = InitUtils.getUToMasterMap(partitions);
+        Map<Integer, Integer> uMap = Utils.getUToMasterMap(partitions);
 
         //Step 1: add replicas for friends in different partitions
         for(Integer uid1 : friendships.keySet()) {

@@ -1,20 +1,14 @@
 package io.vntr.spar;
 
-import io.vntr.InitUtils;
 import io.vntr.RepUser;
 import io.vntr.TestUtils;
 import io.vntr.User;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.InitUtils.getUToMasterMap;
-import static io.vntr.InitUtils.getUToReplicasMap;
+import static io.vntr.Utils.*;
 
 public class SparTestUtils {
     public static final Integer[] STANDAR_USER_ID_ARRAY = {3, 4, 5, 6, 8, 10, 11, 12};

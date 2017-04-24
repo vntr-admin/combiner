@@ -65,7 +65,6 @@ public class HermesMigrator {
         NavigableSet<Target> preferredTargets = new TreeSet<>();
         for(Integer uid : manager.getPartition(pid)) {
             Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid);
-//            LogicalUser user = manager.getUser(uid).getLogicalUser(true);
             int maxFriends = 0;
             Integer maxPid = null;
             for(Integer friendPid : pToFriendCount.keySet()) {

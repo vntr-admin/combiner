@@ -16,20 +16,17 @@ public class SpJ2BefriendingStrategy {
         this.manager = manager;
     }
 
-    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser smallerUser, RepUser largerUser) {
+    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser smallerUser, RepUser largerUser, int mastersOnSmallerUsersPid, int mastersOnLargerUsersPid, int minNumReplicas) {
         //calculate the number of replicas that would be generated for each of the three possible configurations:
         //  1) no movements of masters, which maintains the status-quo
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
         //  3) the opposite of (3)
 
         int stay      = calcNumReplicasStay(smallerUser, largerUser);
-        int toLarger  = calcNumReplicasMove(smallerUser, largerUser);
-        int toSmaller = calcNumReplicasMove(largerUser, smallerUser);
+        int toLarger  = calcNumReplicasMove(smallerUser, largerUser, minNumReplicas);
+        int toSmaller = calcNumReplicasMove(largerUser, smallerUser, minNumReplicas);
 
-        int smallerMasters = manager.getPartitionById(smallerUser.getBasePid()).getNumMasters();
-        int largerMasters  = manager.getPartitionById(largerUser.getBasePid()).getNumMasters();
-
-        return determineStrategy(stay, toSmaller, toLarger, smallerMasters, largerMasters);
+        return determineStrategy(stay, toSmaller, toLarger, mastersOnSmallerUsersPid, mastersOnLargerUsersPid);
     }
 
     static BEFRIEND_REBALANCE_STRATEGY determineStrategy(int stay, int toSmaller, int toLarger, int smallerMasters, int largerMasters) {
@@ -74,7 +71,7 @@ public class SpJ2BefriendingStrategy {
         return curReplicas + deltaReplicas;
     }
 
-    int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser) {
+    int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser, int minNumReplicas) {
         int curReplicas = manager.getPartitionById(movingUser.getBasePid()).getNumReplicas() + manager.getPartitionById(stayingUser.getBasePid()).getNumReplicas();
 
         //Find replicas that need to be added
@@ -82,9 +79,9 @@ public class SpJ2BefriendingStrategy {
         Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getBasePid());
 
         //Find replicas that should be deleted
-        boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser);
-        boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
-        Set<Integer> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition);
+        boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser, minNumReplicas);
+        boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, minNumReplicas);
+        Set<Integer> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition, minNumReplicas);
 
         //Calculate net change
         int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
@@ -107,11 +104,11 @@ public class SpJ2BefriendingStrategy {
         return replicasToAddInStayingPartition;
     }
 
-    Set<Integer> findReplicasInMovingPartitionToDelete(RepUser movingUser, Set<Integer> replicasToBeAdded) {
+    Set<Integer> findReplicasInMovingPartitionToDelete(RepUser movingUser, Set<Integer> replicasToBeAdded, int minNumReplicas) {
         Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
         for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
             int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPids().size();
-            if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > manager.getMinNumReplicas()) {
+            if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > minNumReplicas) {
                 replicasInMovingPartitionToDelete.add(replicaId);
             }
         }
@@ -154,16 +151,16 @@ public class SpJ2BefriendingStrategy {
         return false;
     }
 
-    boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(RepUser movingUser, RepUser stayingUser) {
+    boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(RepUser movingUser, RepUser stayingUser, int minNumReplicas) {
         boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = movingUser.getReplicaPids().contains(stayingUser.getBasePid());
         int redundancyOfMovingUser = movingUser.getReplicaPids().size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser) ? 1 : 0);
-        return couldWeDeleteReplicaOfMovingUserInStayingPartition && redundancyOfMovingUser > manager.getMinNumReplicas();
+        return couldWeDeleteReplicaOfMovingUserInStayingPartition && redundancyOfMovingUser > minNumReplicas;
     }
 
-    boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser) {
+    boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser, int minNumReplicas) {
         boolean couldWeDeleteReplicaOfStayingUserInMovingPartition = couldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
         int redundancyOfStayingUser = stayingUser.getReplicaPids().size();
-        return couldWeDeleteReplicaOfStayingUserInMovingPartition && redundancyOfStayingUser > manager.getMinNumReplicas();
+        return couldWeDeleteReplicaOfStayingUserInMovingPartition && redundancyOfStayingUser > minNumReplicas;
     }
 
     boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser) {

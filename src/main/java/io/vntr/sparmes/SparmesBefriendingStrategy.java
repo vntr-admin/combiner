@@ -1,5 +1,7 @@
 package io.vntr.sparmes;
 
+import io.vntr.RepUser;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +17,7 @@ public class SparmesBefriendingStrategy {
         this.manager = manager;
     }
 
-    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(SparmesUser smallerUser, SparmesUser largerUser) {
+    public BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser smallerUser, RepUser largerUser) {
         //calculate the number of replicas that would be generated for each of the three possible configurations:
         //  1) no movements of masters, which maintains the status-quo
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
@@ -63,7 +65,7 @@ public class SparmesBefriendingStrategy {
         return NO_CHANGE;
     }
 
-    int calcNumReplicasStay(SparmesUser smallerUser, SparmesUser largerUser) {
+    int calcNumReplicasStay(RepUser smallerUser, RepUser largerUser) {
         Integer smallerPartitionId = smallerUser.getBasePid();
         Integer largerPartitionId = largerUser.getBasePid();
         boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPids().contains(smallerPartitionId);
@@ -73,7 +75,7 @@ public class SparmesBefriendingStrategy {
         return curReplicas + deltaReplicas;
     }
 
-    int calcNumReplicasMove(SparmesUser movingUser, SparmesUser stayingUser) {
+    int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser) {
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser, stayingUser.getBasePid());
         Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getBasePid());
@@ -91,10 +93,10 @@ public class SparmesBefriendingStrategy {
         return curReplicas + deltaReplicas;
     }
 
-    Set<Integer> findReplicasToAddToTargetPartition(SparmesUser movingUser, Integer targetPartitionId) {
+    Set<Integer> findReplicasToAddToTargetPartition(RepUser movingUser, Integer targetPartitionId) {
         Set<Integer> replicasToAddInStayingPartition = new HashSet<>();
         for (Integer friendId : movingUser.getFriendIDs()) {
-            SparmesUser friend = manager.getUserMasterById(friendId);
+            RepUser friend = manager.getUserMasterById(friendId);
             if (!targetPartitionId.equals(friend.getBasePid()) && !friend.getReplicaPids().contains(targetPartitionId)) {
                 replicasToAddInStayingPartition.add(friendId);
             }
@@ -103,7 +105,7 @@ public class SparmesBefriendingStrategy {
         return replicasToAddInStayingPartition;
     }
 
-    Set<Integer> findReplicasInMovingPartitionToDelete(SparmesUser movingUser, Set<Integer> replicasToBeAdded) {
+    Set<Integer> findReplicasInMovingPartitionToDelete(RepUser movingUser, Set<Integer> replicasToBeAdded) {
         Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
         for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser)) {
             int numExistingReplicas = manager.getUserMasterById(replicaId).getReplicaPids().size();
@@ -115,18 +117,18 @@ public class SparmesBefriendingStrategy {
         return replicasInMovingPartitionToDelete;
     }
 
-    Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(SparmesUser user) {
+    Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(RepUser user) {
         Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
         outer:
         for (Integer friendId : user.getFriendIDs()) {
-            SparmesUser friend = manager.getUserMasterById(friendId);
+            RepUser friend = manager.getUserMasterById(friendId);
             if (!friend.getBasePid().equals(user.getBasePid())) {
                 for (Integer friendOfFriendId : friend.getFriendIDs()) {
                     if (friendOfFriendId.equals(user.getId())) {
                         continue;
                     }
 
-                    SparmesUser friendOfFriend = manager.getUserMasterById(friendOfFriendId);
+                    RepUser friendOfFriend = manager.getUserMasterById(friendOfFriendId);
                     if (friendOfFriend.getBasePid().equals(user.getBasePid())) {
                         continue outer;
                     }
@@ -139,7 +141,7 @@ public class SparmesBefriendingStrategy {
         return replicasThatWereJustThereForThisUsersSake;
     }
 
-    boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(SparmesUser movingUser, int targetPid) {
+    boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(RepUser movingUser, int targetPid) {
         for (Integer friendId : movingUser.getFriendIDs()) {
             Integer friendMasterPartitionId = manager.getUserMasterById(friendId).getBasePid();
             if (movingUser.getBasePid().equals(friendMasterPartitionId)) {
@@ -152,7 +154,7 @@ public class SparmesBefriendingStrategy {
 
     }
 
-    boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(SparmesUser movingUser, SparmesUser stayingUser) {
+    boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(RepUser movingUser, RepUser stayingUser) {
         int targetPid = stayingUser.getBasePid();
         Set<Integer> moversReplicas = movingUser.getReplicaPids();
         boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = moversReplicas.contains(targetPid);
@@ -160,13 +162,13 @@ public class SparmesBefriendingStrategy {
         return couldWeDeleteReplicaOfMovingUserInStayingPartition && redundancyOfMovingUser > manager.getMinNumReplicas();
     }
 
-    boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(SparmesUser movingUser, SparmesUser stayingUser) {
+    boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser) {
         boolean couldWeDeleteReplicaOfStayingUserInMovingPartition = couldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser);
         int redundancyOfStayingUser = stayingUser.getReplicaPids().size();
         return couldWeDeleteReplicaOfStayingUserInMovingPartition && redundancyOfStayingUser > manager.getMinNumReplicas();
     }
 
-    boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(SparmesUser movingUser, SparmesUser stayingUser) {
+    boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser) {
         boolean movingPartitionHasStayingUserReplica = stayingUser.getReplicaPids().contains(movingUser.getBasePid());
         boolean stayingUserHasNoOtherFriendMastersInMovingPartition = true; //deleting staying user replica is a possibility, if it exists, subject to balance constraints
         for (Integer friendId : stayingUser.getFriendIDs()) {

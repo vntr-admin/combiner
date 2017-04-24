@@ -1,12 +1,11 @@
 package io.vntr.replicadummy;
 
-import io.vntr.InitUtils;
 import io.vntr.RepUser;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static io.vntr.Utils.*;
 
 /**
  * Created by robertlindquist on 11/23/16.
@@ -18,8 +17,8 @@ public class ReplicaDummyTestUtils {
             manager.addPartition(pid);
         }
 
-        Map<Integer, Integer> uToMasterMap = InitUtils.getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uToReplicasMap = InitUtils.getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
+        Map<Integer, Integer> uToMasterMap = getUToMasterMap(partitions);
+        Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
             RepUser user = new RepUser(uid);

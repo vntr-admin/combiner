@@ -1,5 +1,6 @@
 package io.vntr.sparmes;
 
+import io.vntr.RepUser;
 import io.vntr.TestUtils;
 
 import java.util.HashMap;
@@ -7,8 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.InitUtils.getUToMasterMap;
-import static io.vntr.InitUtils.getUToReplicasMap;
+import static io.vntr.Utils.*;
 
 /**
  * Created by robertlindquist on 10/3/16.
@@ -36,7 +36,7 @@ public class SparmesTestUtils {
 
         for(Integer uid : friendships.keySet()) {
             Integer pid = uToMasterMap.get(uid);
-            SparmesUser user = new SparmesUser(uid, pid, gamma, manager, manager.getMinNumReplicas());
+            RepUser user = new RepUser(uid, pid);//, gamma, manager, manager.getMinNumReplicas());
             manager.addUser(user, pid);
 
             for (Integer rPid : uToReplicasMap.get(uid)) {

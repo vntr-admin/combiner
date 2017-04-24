@@ -1,15 +1,13 @@
 package io.vntr.j2;
 
-import io.vntr.InitUtils;
 import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static io.vntr.Utils.getUToMasterMap;
+import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 4/17/17.
@@ -221,7 +219,7 @@ public class J2RepartitionerTest {
 
     private static J2Repartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         J2Repartitioner.State state = new J2Repartitioner.State(alpha, initialT, deltaT, k, ProbabilityUtils.generateBidirectionalFriendshipSet(friendships));
-        state.setLogicalPids(InitUtils.getUToMasterMap(partitions));
+        state.setLogicalPids(getUToMasterMap(partitions));
         return state;
     }
 
