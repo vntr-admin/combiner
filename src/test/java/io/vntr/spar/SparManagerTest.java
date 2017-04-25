@@ -171,7 +171,6 @@ public class SparManagerTest {
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
                 assertTrue(containsReplica == shouldContainReplica);
                 if (shouldContainReplica) {
-                    System.out.println("Boom");
                     RepUser replica = partition.getReplicaById(userId);
                     assertEquals(replica.getId(), RepUser.getId());
                     assertEquals(replica.getBasePid(), RepUser.getBasePid());

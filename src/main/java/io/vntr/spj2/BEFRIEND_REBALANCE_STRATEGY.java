@@ -1,3 +1,0 @@
-//package io.vntr.spj2;
-//
-//public enum BEFRIEND_REBALANCE_STRATEGY{ SMALL_TO_LARGE, LARGE_TO_SMALL, NO_CHANGE}

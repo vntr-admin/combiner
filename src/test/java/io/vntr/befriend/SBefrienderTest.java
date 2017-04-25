@@ -281,12 +281,10 @@ public class SBefrienderTest {
         expectedResults.get(13).put(2, Collections.<Integer>emptySet());
 
         for(int uid : friendships.keySet()) {
-            System.out.println("U" + uid);
             for(int pid : partitions.keySet()) {
                 if(pid == uidToPidMap.get(uid)) {
                     continue;
                 }
-                System.out.println("\tP" + pid);
                 RepUser movingUser = manager.getUserMasterById(uid);
                 Set<Integer> replicasToAdd = findReplicasToAddToTargetPartition(movingUser, pid, uidToPidMap, uidToReplicasMap);
                 Set<Integer> results = findReplicasInMovingPartitionToDelete(movingUser, replicasToAdd, minNumReplicas, uidToReplicasMap, uidToPidMap, bidirectionalFriendships);
@@ -344,7 +342,6 @@ public class SBefrienderTest {
         expectedResults.put(13, Collections.<Integer>emptySet());
 
         for(int uid : friendships.keySet()) {
-            System.out.println(uid);
             assertEquals(expectedResults.get(uid), findReplicasInPartitionThatWereOnlyThereForThisUsersSake(manager.getUserMasterById(uid), uidToPidMap, bidirectionalFriendships));
         }
     }
