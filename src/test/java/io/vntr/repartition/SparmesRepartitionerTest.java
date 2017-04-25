@@ -47,7 +47,6 @@ public class SparmesRepartitionerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
@@ -55,7 +54,7 @@ public class SparmesRepartitionerTest {
         assertEquals(targets, initSet(new Target(9, 3, 2, 1)));
 
         targets = SparmesRepartitioner.getPartitionCandidates(2, false, 3, state);
-        assertEquals(targets, initSet(new Target(6, 1, 2, 1)));
+        assertEquals(targets, initSet(new Target(6, 1, 2, 1), new Target(8, 1, 2, 1), new Target(9, 1, 2, 1)));
         //TODO: do this
     }
 
