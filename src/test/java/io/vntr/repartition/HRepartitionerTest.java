@@ -107,7 +107,7 @@ public class HRepartitionerTest {
         assertEquals(state.getLogicalUsers().get(uid1).getPid(), pid1);
         assertEquals(state.getLogicalUsers().get(uid2).getPid(), pid2);
 
-        Set<Target> targets = initSet(new Target(uid1, pid2, pid1, 1), new Target(uid2, pid1, pid2, 1));
+        Set<Target> targets = initSet(new Target(uid1, pid2, pid1, 1f), new Target(uid2, pid1, pid2, 1f));
 
         HRepartitioner.logicallyMigrate(targets, state);
         state.updateLogicalUsers(friendships, gamma);
@@ -148,7 +148,7 @@ public class HRepartitionerTest {
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
         Set<Target> targets = HRepartitioner.getCandidates(2, true, 3, state);
-        assertEquals(targets, initSet(new Target(6, 3, 2, 1)));
+        assertEquals(targets, initSet(new Target(6, 3, 2, 1f)));
     }
 
     @Test
@@ -180,6 +180,6 @@ public class HRepartitionerTest {
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
         Set<Target> targets = HRepartitioner.getCandidates(2, false, 3, state);
-        assertEquals(targets, initSet(new Target(6, 1, 2, 2)));
+        assertEquals(targets, initSet(new Target(6, 1, 2, 2f)));
     }
 }

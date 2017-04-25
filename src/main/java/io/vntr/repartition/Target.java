@@ -7,9 +7,9 @@ public class Target implements Comparable<Target> {
     public final Integer uid;
     public final Integer pid;
     public final Integer oldPid;
-    public final Integer gain;
+    public final Float gain;
 
-    public Target(Integer uid, Integer pid, Integer oldPid, Integer gain) {
+    public Target(Integer uid, Integer pid, Integer oldPid, Float gain) {
         this.uid = uid;
         this.pid = pid;
         this.oldPid = oldPid;

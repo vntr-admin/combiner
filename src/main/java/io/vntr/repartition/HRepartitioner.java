@@ -182,7 +182,7 @@ public class HRepartitioner {
             boolean overweight = getImbalanceFactor(pid, 0) > gamma;
 
             if(underweight) {
-                return new Target(id, null, null, 0);
+                return new Target(id, null, null, 0f);
             }
 
             Set<Integer> targets = new HashSet<>();
@@ -217,7 +217,7 @@ public class HRepartitioner {
                 }
             }
 
-            return new Target(id, targetPid, pid, maxGain);
+            return new Target(id, targetPid, pid, (float) maxGain);
         }
 
         private float getImbalanceFactor(Integer pId, Integer offset) {

@@ -1,6 +1,8 @@
 package io.vntr.migration;
 
 
+import io.vntr.repartition.Target;
+
 import java.util.*;
 
 import static io.vntr.Utils.*;
@@ -24,11 +26,12 @@ public class SMigrator {
 
         Set<Integer> masterIds = partitions.get(partitionId);
 
-        NavigableSet<Score> scores = new TreeSet<>();
+        NavigableSet<Target> targets = new TreeSet<>();
         for (Integer userId : masterIds) {
             for (Integer replicaPartitionId : uidToReplicasMap.get(userId)) {
                 float score = scoreReplicaPromotion(friendships.get(userId), replicaPartitionId, uidToPidMap);
-                scores.add(new Score(userId, replicaPartitionId, score));
+                Target target = new Target(userId, replicaPartitionId, partitionId, score);
+                targets.add(target);
             }
         }
 
@@ -36,12 +39,12 @@ public class SMigrator {
 
         Map<Integer, Integer> strategy = new HashMap<>();
 
-        for (Iterator<Score> iter = scores.descendingIterator(); iter.hasNext(); ) {
-            Score score = iter.next();
-            int remainingSpotsInPartition = remainingSpotsInPartitions.get(score.partitionId);
-            if (!strategy.containsKey(score.userId) && remainingSpotsInPartition > 0 && score.score > 0) {
-                strategy.put(score.userId, score.partitionId);
-                remainingSpotsInPartitions.put(score.partitionId, remainingSpotsInPartition - 1);
+        for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
+            Target target = iter.next();
+            int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
+            if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0 && target.gain > 0) {
+                strategy.put(target.uid, target.pid);
+                remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
             }
         }
 
@@ -141,63 +144,4 @@ public class SMigrator {
         return remainingSpotsInPartitions;
     }
 
-    private static class Score implements Comparable<Score> {
-        public final int userId;
-        public final int partitionId;
-        public final float score;
-
-        public Score(Integer userId, Integer partitionId, float score) {
-            this.userId = userId;
-            this.partitionId = partitionId;
-            this.score = score;
-        }
-
-        public int compareTo(Score o) {
-            if (this.score > o.score) {
-                return 1;
-            } else if (this.score < o.score) {
-                return -1;
-            } else {
-                if (this.partitionId > o.partitionId) {
-                    return 1;
-                } else if (this.partitionId > o.partitionId) {
-                    return -1;
-                } else {
-                    if (this.userId > o.userId) {
-                        return 1;
-                    } else if (this.userId < o.userId) {
-                        return -1;
-                    }
-
-                    return 0;
-                }
-            }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Score score1 = (Score) o;
-
-            if (userId != score1.userId) return false;
-            if (partitionId != score1.partitionId) return false;
-            return Float.compare(score1.score, score) == 0;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = userId;
-            result = 31 * result + partitionId;
-            result = 31 * result + (score != +0.0f ? Float.floatToIntBits(score) : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("%3d: --(%.2f)--> %3d", userId, score, partitionId);
-        }
-    }
 }

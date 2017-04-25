@@ -460,7 +460,7 @@ middle:         for(int replicaId : replicas.get(pid)) {
             boolean underweight = getImbalanceFactor(pid, -1) < (2-gamma);
             boolean overweight = getImbalanceFactor(pid, 0) > gamma;
             if(underweight) {
-                return new Target(id, null, null, 0);
+                return new Target(id, null, null, 0f);
             }
 
             Integer target = null;
@@ -480,7 +480,7 @@ middle:         for(int replicaId : replicas.get(pid)) {
                     }
                 }
             }
-            return new Target(id, target, pid, maxGain);
+            return new Target(id, target, pid, (float) maxGain);
         }
 
         private int calculateGain(Integer targetPid) {

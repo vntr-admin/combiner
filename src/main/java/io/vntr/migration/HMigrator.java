@@ -3,11 +3,12 @@ package io.vntr.migration;
 /**
  * Created by robertlindquist on 4/24/17.
  */
-import io.vntr.Utils;
 import io.vntr.repartition.Target;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
+
+import static io.vntr.Utils.*;
 
 /**
  * Created by robertlindquist on 9/23/16.
@@ -16,13 +17,13 @@ public class HMigrator {
 
     public static Map<Integer, Integer> migrateOffPartition(Integer pid, float gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         Map<Integer, Integer> actualTargets = new HashMap<>();
-        Map<Integer, Integer> userCounts = Utils.getUserCounts(partitions);
-        Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(partitions);
+        Map<Integer, Integer> userCounts = getUserCounts(partitions);
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         NavigableSet<Target> preferredTargets = getPreferredTargets(pid, uidToPidMap, partitions, friendships);
 
         for(Iterator<Target> iter = preferredTargets.descendingIterator(); iter.hasNext(); ) {
             Target target = iter.next();
-            if(!isOverloaded(target.pid, userCounts, gamma, uidToPidMap.size(), partitions.size())) {
+            if(!isOverloaded(target.pid, userCounts, gamma, uidToPidMap.size())) {
                 actualTargets.put(target.uid, target.pid);
                 userCounts.put(target.pid, userCounts.get(target.pid) + 1);
                 iter.remove();
@@ -38,8 +39,8 @@ public class HMigrator {
         return actualTargets;
     }
 
-    static boolean isOverloaded(Integer pid, Map<Integer, Integer> userCounts, float gamma, int numUsers, int numPartitions) {
-        float avgUsers = ((float)numUsers) / ((float)numPartitions-1);
+    static boolean isOverloaded(Integer pid, Map<Integer, Integer> userCounts, float gamma, int numUsers) {
+        float avgUsers = ((float)numUsers) / ((float)userCounts.size()-1);
         int cutoff = (int) (avgUsers * gamma) + 1;
         return userCounts.get(pid) > cutoff;
     }
@@ -49,13 +50,10 @@ public class HMigrator {
         options.remove(pid);
         NavigableSet<Target> preferredTargets = new TreeSet<>();
         for(Integer uid : partitions.get(pid)) {
-            Map<Integer, Integer> pToFriendCount = Utils.getPToFriendCount(uid, friendships, uidToPidMap, partitions.keySet());
+            Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid, friendships, uidToPidMap, partitions.keySet());
             int maxFriends = 0;
             Integer maxPid = null;
-            for(Integer friendPid : pToFriendCount.keySet()) {
-                if(friendPid.equals(pid)) {
-                    continue;
-                }
+            for(Integer friendPid : options) {
                 int numFriends = pToFriendCount.get(friendPid);
                 if(numFriends > maxFriends) {
                     maxPid = friendPid;
@@ -66,7 +64,8 @@ public class HMigrator {
             if(maxPid == null) {
                 maxPid = ProbabilityUtils.getRandomElement(options);
             }
-            Target target = new Target(uid, maxPid, pid, maxFriends);
+
+            Target target = new Target(uid, maxPid, pid, (float) maxFriends);
             preferredTargets.add(target);
         }
         return preferredTargets;

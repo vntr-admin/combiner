@@ -51,10 +51,10 @@ public class SparmesRepartitionerTest {
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
         Set<Target> targets = SparmesRepartitioner.getPartitionCandidates(2, true, 3, state);
-        assertEquals(targets, initSet(new Target(9, 3, 2, 1)));
+        assertEquals(targets, initSet(new Target(9, 3, 2, 1f)));
 
         targets = SparmesRepartitioner.getPartitionCandidates(2, false, 3, state);
-        assertEquals(targets, initSet(new Target(6, 1, 2, 1), new Target(8, 1, 2, 1), new Target(9, 1, 2, 1)));
+        assertEquals(targets, initSet(new Target(6, 1, 2, 1f), new Target(8, 1, 2, 1f), new Target(9, 1, 2, 1f)));
         //TODO: do this
     }
 
@@ -94,7 +94,7 @@ public class SparmesRepartitionerTest {
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
         Set<Target> targets = SparmesRepartitioner.getPartitionCandidates(2, false, 3, state);
-        assertEquals(targets, initSet(new Target(9, 1, 2, 1)));
+        assertEquals(targets, initSet(new Target(9, 1, 2, 1f)));
     }
 
     @Test
@@ -145,7 +145,7 @@ public class SparmesRepartitionerTest {
         assertEquals(state.getLogicalReplicaPartitions().get(pid1), replicas.get(pid1));
         assertEquals(state.getLogicalReplicaPartitions().get(pid2), replicas.get(pid2));
 
-        Set<Target> targets = initSet(new Target(1, 3, 1, 2), new Target(13, 1, 3, 2));
+        Set<Target> targets = initSet(new Target(1, 3, 1, 2f), new Target(13, 1, 3, 2f));
         for(Target target : targets) {
             SparmesRepartitioner.migrateLogically(target, state, uidToReplicasMap);
         }
