@@ -1,4 +1,4 @@
-package io.vntr.metis;
+package io.vntr.repartition;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,18 +6,10 @@ import java.io.PrintWriter;
 import java.util.*;
 
 /**
- * Created by robertlindquist on 12/5/16.
+ * Created by robertlindquist on 4/24/17.
  */
 public class MetisRepartitioner {
-    private final String commandLiteral;
-    private final String tempDir;
-
-    public MetisRepartitioner(String commandLiteral, String tempDir) {
-        this.commandLiteral = commandLiteral;
-        this.tempDir = tempDir;
-    }
-
-    public Map<Integer, Integer> partition(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    public static Map<Integer, Integer> partition(String commandLiteral, String tempDir, Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
         int numPartitions = pids.size();
         try {
             String inputFile = tempDir + File.separator + "e_pluribus_unum__" + System.nanoTime() + ".txt";
@@ -28,7 +20,7 @@ public class MetisRepartitioner {
             Map<Integer, Set<Integer>> translatedFriendships = translateFriendshipsToZNBased(friendships, mapping);
             writeAdjacencyGraphMetisStyle(translatedFriendships, inputFile);
 
-            Map<Integer, Integer> results = innerPartition(outputFile, inputFile, numPartitions);
+            Map<Integer, Integer> results = innerPartition(commandLiteral, outputFile, inputFile, numPartitions);
 
             Map<Integer, Integer> reversePidMap = getReversePidMap(pids);
             Map<Integer, Integer> translatedResults = translatePartitioningFromZNBased(results, reverseUidMap, reversePidMap);
@@ -50,7 +42,7 @@ public class MetisRepartitioner {
         return reversePidMap;
     }
 
-    private Map<Integer, Integer> innerPartition(String outputFile, String inputFile, int numPartitions) throws Exception {
+    private static Map<Integer, Integer> innerPartition(String commandLiteral, String outputFile, String inputFile, int numPartitions) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(commandLiteral, inputFile, "" + numPartitions);
         Process p = pb.start();
         p.waitFor();
@@ -64,7 +56,7 @@ public class MetisRepartitioner {
         return results;
     }
 
-    private static void writeAdjacencyGraphMetisStyle(Map<Integer, Set<Integer>> friendships, String filename) throws FileNotFoundException{
+    private static void writeAdjacencyGraphMetisStyle(Map<Integer, Set<Integer>> friendships, String filename) throws FileNotFoundException {
         NavigableMap<Integer, Set<Integer>> navMap = new TreeMap<>(friendships);
         PrintWriter pw = new PrintWriter(filename);
 

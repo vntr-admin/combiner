@@ -2,6 +2,7 @@ package io.vntr.metis;
 
 import io.vntr.INoRepManager;
 import io.vntr.User;
+import io.vntr.repartition.MetisRepartitioner;
 
 import java.util.*;
 
@@ -14,7 +15,9 @@ public class MetisManager implements INoRepManager {
 
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
-    private MetisRepartitioner repartitioner;
+
+    private final String gpmetisLocation;
+    private final String gpmetisTempdir;
 
     private long migrationTally;
 
@@ -22,9 +25,10 @@ public class MetisManager implements INoRepManager {
     private int nextUid = 1;
 
     public MetisManager(String gpmetisLocation, String gpmetisTempdir) {
+        this.gpmetisLocation = gpmetisLocation;
+        this.gpmetisTempdir = gpmetisTempdir;
         uMap = new HashMap<>();
         partitions = new HashMap<>();
-        this.repartitioner = new MetisRepartitioner(gpmetisLocation, gpmetisTempdir);
     }
 
     @Override
@@ -103,7 +107,7 @@ public class MetisManager implements INoRepManager {
     }
 
     public void repartition() {
-        Map<Integer, Integer> newPartitioning = repartitioner.partition(getFriendships(), partitions.keySet());
+        Map<Integer, Integer> newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, getFriendships(), partitions.keySet());
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);
             if(newPid != getUser(uid).getBasePid()) {

@@ -1,9 +1,5 @@
 package io.vntr.repartition;
 
-/**
- * Created by robertlindquist on 4/24/17.
- */
-import io.vntr.Utils;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -203,7 +199,7 @@ public class SparmesRepartitioner {
 
             Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
             Map<Integer, Set<Integer>> uidToReplicaMap = getUToReplicasMap(replicas, friendships.keySet());
-            int[] numDeletionCandidates = getNumDeletionCandidates(maxUid, friendships, replicas, uidToPidMap);
+            int[] numDeletionCandidates = getNumDeletionCandidates(maxUid, minNumReplicas, friendships, replicas, uidToPidMap, uidToReplicaMap);
             Map<Integer, Map<Integer, Integer>> uidToNumFriendsToAddInEachPartition = getUidToNumFriendsToAddInEachPartition(friendships, uidToReplicaMap, uidToPidMap, partitions.keySet(), maxPid);
 
             Map<Integer, Integer> pToWeight = getUserCounts(partitions);
@@ -247,21 +243,21 @@ public class SparmesRepartitioner {
             return logicalUsers;
         }
 
-        static int[] getNumDeletionCandidates(int maxUid, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicas, Map<Integer, Integer> uidToPidMap) {
+        static int[] getNumDeletionCandidates(int maxUid, int minNumReplicas, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> replicas, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> uidToReplicasMap) {
             int[] numDeletionCandidates = new int[maxUid+1];
 
             for(int pid : replicas.keySet()) {
-                middle:         for(int replicaId : replicas.get(pid)) {
+middle:         for(int replicaId : replicas.get(pid)) {
                     Integer friendOnPartition = null;
                     for(int friendId : friendships.get(replicaId)) {
-                        if(friendOnPartition != null) {
-                            continue middle;
-                        }
                         if(uidToPidMap.get(friendId) == pid) {
+                            if(friendOnPartition != null) {
+                                continue middle;
+                            }
                             friendOnPartition = friendId;
                         }
                     }
-                    if(friendOnPartition != null) {
+                    if(friendOnPartition != null && uidToReplicasMap.get(replicaId).size() > minNumReplicas) {
                         numDeletionCandidates[friendOnPartition]++;
                     }
                 }
@@ -373,6 +369,46 @@ public class SparmesRepartitioner {
 
         public Set<Integer> getFriendIds() {
             return friendIds;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public int getPid() {
+            return pid;
+        }
+
+        public float getGamma() {
+            return gamma;
+        }
+
+        public Integer getTotalWeight() {
+            return totalWeight;
+        }
+
+        public Map<Integer, Integer> getpToFriendCount() {
+            return pToFriendCount;
+        }
+
+        public Map<Integer, Integer> getpToWeight() {
+            return pToWeight;
+        }
+
+        public Set<Integer> getReplicaLocations() {
+            return replicaLocations;
+        }
+
+        public Map<Integer, Integer> getNumFriendsToAddInEachPartition() {
+            return numFriendsToAddInEachPartition;
+        }
+
+        public int getNumFriendReplicasToDeleteInSourcePartition() {
+            return numFriendReplicasToDeleteInSourcePartition;
+        }
+
+        public boolean isReplicateInSourcePartition() {
+            return replicateInSourcePartition;
         }
 
         private float getImbalanceFactor(Integer pId, Integer offset) {

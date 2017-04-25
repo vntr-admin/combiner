@@ -1,6 +1,7 @@
 package io.vntr.sparmes;
 
 import io.vntr.*;
+import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.utils.ProbabilityUtils;
 import org.apache.log4j.Logger;
 
@@ -8,8 +9,8 @@ import java.util.*;
 
 import static io.vntr.Analyzer.ACTIONS.*;
 import static io.vntr.TestUtils.*;
-import static io.vntr.sparmes.BEFRIEND_REBALANCE_STRATEGY.*;
-import static io.vntr.sparmes.SparmesBefriendingStrategy.determineStrategy;
+import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
+import static io.vntr.befriend.SBefriender.determineStrategy;
 import static org.junit.Assert.*;
 
 /**

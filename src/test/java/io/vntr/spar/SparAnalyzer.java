@@ -1,6 +1,8 @@
 package io.vntr.spar;
 
 import io.vntr.*;
+import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
+import io.vntr.befriend.SBefriender;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -10,7 +12,7 @@ import org.apache.log4j.Logger;
 
 import static io.vntr.Analyzer.ACTIONS.*;
 import static io.vntr.TestUtils.*;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.*;
+import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static org.junit.Assert.*;
 
 /**
@@ -138,7 +140,7 @@ public class SparAnalyzer {
             int maxToMin = curNumReplicas + calcDeltaNumReplicasMove(maxUid, minUid, maxPid, minPid, oldMasters, oldReplicas, oldFriendships);
             int minMasters = oldMasters.get(minPid).size();
             int maxMasters = oldMasters.get(maxPid).size();
-            BEFRIEND_REBALANCE_STRATEGY strat = SparBefriendingStrategy.determineStrategy(noChange, maxToMin, minToMax, minMasters, maxMasters);
+            BEFRIEND_REBALANCE_STRATEGY strat = SBefriender.determineStrategy(noChange, maxToMin, minToMax, minMasters, maxMasters);
 
             if(strat == NO_CHANGE) {
                 assertTrue (newMasters.get(maxPid).contains(maxUid));

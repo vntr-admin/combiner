@@ -5,9 +5,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
+import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static org.junit.Assert.*;
 
 public class SparMiddlewareTest {

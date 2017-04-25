@@ -1,4 +1,4 @@
-package io.vntr.j2;
+package io.vntr.repartition;
 
 import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
@@ -10,9 +10,10 @@ import static io.vntr.Utils.getUToMasterMap;
 import static org.junit.Assert.*;
 
 /**
- * Created by robertlindquist on 4/17/17.
+ * Created by robertlindquist on 4/24/17.
  */
-public class J2RepartitionerTest {
+public class JRepartitionerTest {
+    //TODO: do this
 
     @Test
     public void testFindPartner() {
@@ -36,18 +37,18 @@ public class J2RepartitionerTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        J2Repartitioner.State state = initState(1, 2, 0.5f, 5, partitions, friendships);
+        JRepartitioner.State state = initState(1, 2, 0.5f, 5, partitions, friendships);
 
-        Integer partnerId = J2Repartitioner.findPartner(6, initSet(1), 2f, state);
+        Integer partnerId = JRepartitioner.findPartner(6, initSet(1), 2f, state);
         assertTrue(partnerId == 1);
 
-        partnerId = J2Repartitioner.findPartner(6, initSet(3, 4), 2f, state);
+        partnerId = JRepartitioner.findPartner(6, initSet(3, 4), 2f, state);
         assertTrue(partnerId == 3);
 
-        partnerId = J2Repartitioner.findPartner(6, initSet(10, 11, 12, 13), 2f, state);
+        partnerId = JRepartitioner.findPartner(6, initSet(10, 11, 12, 13), 2f, state);
         assertTrue(partnerId == null);
 
-        partnerId = J2Repartitioner.findPartner(6, initSet(10, 11, 12, 13), 2.001f, state);
+        partnerId = JRepartitioner.findPartner(6, initSet(10, 11, 12, 13), 2.001f, state);
         assertTrue(partnerId == 10);
     }
 
@@ -69,12 +70,12 @@ public class J2RepartitionerTest {
         friendships.get(1).remove(12);
         friendships.get(12).remove(1);
 
-        J2Repartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
+        JRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
 
-        int[] numFriendsOf1 = J2Repartitioner.howManyFriendsHaveLogicalPartitions(1, new int[]{1, 2, 3}, state);
+        int[] numFriendsOf1 = JRepartitioner.howManyFriendsHaveLogicalPartitions(1, new int[]{1, 2, 3}, state);
         assertArrayEquals(numFriendsOf1, new int[]{4, 4, 3});
 
-        int[] numFriendsOf2 = J2Repartitioner.howManyFriendsHaveLogicalPartitions(2, new int[]{1, 2, 3}, state);
+        int[] numFriendsOf2 = JRepartitioner.howManyFriendsHaveLogicalPartitions(2, new int[]{1, 2, 3}, state);
         assertArrayEquals(numFriendsOf2, new int[]{4, 4, 4});
     }
 
@@ -93,7 +94,7 @@ public class J2RepartitionerTest {
             }
         }
 
-        J2Repartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
+        JRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
 
         assertTrue(state.getLogicalPids().get(1) == 1);
         assertTrue(state.getLogicalPids().get(2) == 1);
@@ -109,7 +110,7 @@ public class J2RepartitionerTest {
         assertTrue(state.getLogicalPids().get(12) == 3);
         assertTrue(state.getLogicalPids().get(13) == 3);
 
-        J2Repartitioner.logicalSwap(1, 6, state);
+        JRepartitioner.logicalSwap(1, 6, state);
 
         assertTrue(state.getLogicalPids().get(1) == 2);
         assertTrue(state.getLogicalPids().get(2) == 1);
@@ -127,7 +128,7 @@ public class J2RepartitionerTest {
     }
 
     @Test
-    public void testPhysicallyMigrate() {
+    public void testGetEdgeCut() {
         Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
@@ -141,44 +142,9 @@ public class J2RepartitionerTest {
             }
         }
 
-        J2Repartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
-        J2Manager manager = J2InitUtils.initGraph(1, 1, 1, 1, 10, 0, partitions, friendships);
+        JRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
 
-        J2Repartitioner.logicalSwap(1, 10, state);
-        J2Repartitioner.logicalSwap(5, 7, state);
-
-        J2Repartitioner repartitioner = new J2Repartitioner(manager, 1, 1, 1, 1);
-
-        assertEquals(partitions, manager.getPartitionToUsers());
-
-        repartitioner.physicallyMigrate(state.getLogicalPids());
-
-        Map<Integer, Set<Integer>> newPartitions = new HashMap<>();
-        newPartitions.put(1, initSet( 10,  2,  3,  4, 7));
-        newPartitions.put(2, initSet( 6,  5,  8,  9));
-        newPartitions.put(3, initSet(1, 11, 12, 13));
-
-        assertEquals(newPartitions, manager.getPartitionToUsers());
-    }
-
-    @Test
-    public void testGetLogicalEdgeCut() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
-
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
-                friendships.get(uid1).add(uid2);
-            }
-        }
-
-        J2Repartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
-
-        assertEquals(56, J2Repartitioner.getLogicalEdgeCut(state));
+        assertEquals(56, JRepartitioner.getEdgeCut(state.getLogicalPids(), state.getFriendships()));
     }
 
     @Test
@@ -186,16 +152,16 @@ public class J2RepartitionerTest {
         Set<Integer> pids = initSet(1, 2, 4, 5);
 
         int numUsers = 29;
-        Integer[] results = J2Repartitioner.getPidsToAssign(numUsers, pids);
+        Integer[] results = JRepartitioner.getPidsToAssign(numUsers, pids);
         assertResultsAreCorrect(results, numUsers, pids, Arrays.asList(7, 7, 7, 8));
 
         numUsers = 144;
-        results = J2Repartitioner.getPidsToAssign(numUsers, pids);
+        results = JRepartitioner.getPidsToAssign(numUsers, pids);
         assertResultsAreCorrect(results, numUsers, pids, Arrays.asList(36, 36, 36, 36));
 
         pids = initSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80);
         numUsers = 100000;
-        results = J2Repartitioner.getPidsToAssign(numUsers, pids);
+        results = JRepartitioner.getPidsToAssign(numUsers, pids);
         assertResultsAreCorrect(results, numUsers, pids, Arrays.asList(1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250));
     }
 
@@ -217,10 +183,9 @@ public class J2RepartitionerTest {
         assertEquals(countList, expectedFrequencies);
     }
 
-    private static J2Repartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        J2Repartitioner.State state = new J2Repartitioner.State(alpha, initialT, deltaT, k, ProbabilityUtils.generateBidirectionalFriendshipSet(friendships));
+    private static JRepartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+        JRepartitioner.State state = new JRepartitioner.State(alpha, initialT, deltaT, k, ProbabilityUtils.generateBidirectionalFriendshipSet(friendships));
         state.setLogicalPids(getUToMasterMap(partitions));
         return state;
     }
-
 }

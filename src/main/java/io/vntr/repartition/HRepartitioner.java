@@ -1,6 +1,10 @@
 package io.vntr.repartition;
 
+import io.vntr.Utils;
+
 import java.util.*;
+
+import static io.vntr.Utils.getUToMasterMap;
 
 /**
  * Created by robertlindquist on 4/21/17.
@@ -13,17 +17,17 @@ public class HRepartitioner {
             int movesBeforeIteration = moves;
 
             moves += performStage(true, k, state);
-            state.setLogicalUsers(initLogicalUsers(state.getLogicalPartitions(), friendships, gamma));
+            state.updateLogicalUsers(friendships, gamma);
 
             moves += performStage(false, k, state);
-            state.setLogicalUsers(initLogicalUsers(state.getLogicalPartitions(), friendships, gamma));
+            state.updateLogicalUsers(friendships, gamma);
 
             if(moves == movesBeforeIteration) {
                 break;
             }
         }
 
-        return new Results(invertMapSet(state.getLogicalPartitions()), moves);
+        return new Results(getUToMasterMap(state.getLogicalPartitions()), moves);
     }
 
     static int performStage(boolean firstStage, int k, State state) {
@@ -62,37 +66,6 @@ public class HRepartitioner {
         }
     }
 
-    static Map<Integer, LogicalUser> initLogicalUsers(Map<Integer, Set<Integer>> logicalPids, Map<Integer, Set<Integer>> friendships, float gamma) {
-        Map<Integer, Integer> uidToPidMap = invertMapSet(logicalPids);
-
-        Map<Integer, Integer> pToWeight = new HashMap<>();
-        int totalWeight = 0;
-        for(int pid : logicalPids.keySet()) {
-            int numUsersOnPartition = logicalPids.get(pid).size();
-            pToWeight.put(pid, numUsersOnPartition);
-            totalWeight += numUsersOnPartition;
-        }
-
-        Map<Integer, LogicalUser> logicalUsers = new HashMap<>();
-        for(Set<Integer> partition : logicalPids.values()) {
-            for(int uid : partition) {
-                Map<Integer, Integer> pToFriendCount = new HashMap<>();
-                for(int pid : logicalPids.keySet()) {
-                    pToFriendCount.put(pid, 0);
-                }
-                for(Integer friendId : friendships.get(uid)) {
-                    int pid = uidToPidMap.get(friendId);
-                    pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
-                }
-
-                int pid = uidToPidMap.get(uid);
-                logicalUsers.put(uid, new LogicalUser(uid, pid, gamma, pToFriendCount, new HashMap<>(pToWeight), totalWeight));
-            }
-        }
-
-        return logicalUsers;
-    }
-
     static State initState(Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, float gamma) {
         State state = new State();
         Map<Integer, Set<Integer>> logicalPartitions = new HashMap<>();
@@ -103,15 +76,15 @@ public class HRepartitioner {
         }
 
         state.setLogicalPartitions(logicalPartitions);
-        state.setLogicalUsers(initLogicalUsers(partitions, friendships, gamma));
+        state.updateLogicalUsers(friendships, gamma);
 
         return state;
     }
 
     static class State {
+
         private Map<Integer, Set<Integer>> logicalPartitions;
         private Map<Integer, LogicalUser> logicalUsers;
-
         public State() {
         }
 
@@ -127,8 +100,43 @@ public class HRepartitioner {
             return logicalUsers;
         }
 
+        public void updateLogicalUsers(Map<Integer, Set<Integer>> friendships, float gamma) {
+            setLogicalUsers(initLogicalUsers(logicalPartitions, friendships, gamma));
+        }
+
         public void setLogicalUsers(Map<Integer, LogicalUser> logicalUsers) {
             this.logicalUsers = logicalUsers;
+        }
+
+        static Map<Integer, LogicalUser> initLogicalUsers(Map<Integer, Set<Integer>> logicalPids, Map<Integer, Set<Integer>> friendships, float gamma) {
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(logicalPids);
+
+            Map<Integer, Integer> pToWeight = new HashMap<>();
+            int totalWeight = 0;
+            for(int pid : logicalPids.keySet()) {
+                int numUsersOnPartition = logicalPids.get(pid).size();
+                pToWeight.put(pid, numUsersOnPartition);
+                totalWeight += numUsersOnPartition;
+            }
+
+            Map<Integer, LogicalUser> logicalUsers = new HashMap<>();
+            for(Set<Integer> partition : logicalPids.values()) {
+                for(int uid : partition) {
+                    Map<Integer, Integer> pToFriendCount = new HashMap<>();
+                    for(int pid : logicalPids.keySet()) {
+                        pToFriendCount.put(pid, 0);
+                    }
+                    for(Integer friendId : friendships.get(uid)) {
+                        int pid = uidToPidMap.get(friendId);
+                        pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
+                    }
+
+                    int pid = uidToPidMap.get(uid);
+                    logicalUsers.put(uid, new LogicalUser(uid, pid, gamma, pToFriendCount, new HashMap<>(pToWeight), totalWeight));
+                }
+            }
+
+            return logicalUsers;
         }
     }
 
@@ -157,16 +165,8 @@ public class HRepartitioner {
             return pToWeight;
         }
 
-        public void setpToWeight(Map<Integer, Integer> pToWeight) {
-            this.pToWeight = pToWeight;
-        }
-
         public Integer getTotalWeight() {
             return totalWeight;
-        }
-
-        public void setTotalWeight(Integer totalWeight) {
-            this.totalWeight = totalWeight;
         }
 
         public Integer getPid() {
@@ -259,13 +259,4 @@ public class HRepartitioner {
         }
     }
 
-    static Map<Integer, Integer> invertMapSet(Map<Integer, Set<Integer>> mapSet) {
-        Map<Integer, Integer> map = new HashMap<>();
-        for(Integer key : mapSet.keySet()) {
-            for(Integer value : mapSet.get(key)) {
-                map.put(value, key);
-            }
-        }
-        return map;
-    }
 }

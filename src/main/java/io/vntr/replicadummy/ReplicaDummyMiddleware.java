@@ -3,6 +3,7 @@ package io.vntr.replicadummy;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.RepUser;
 import io.vntr.User;
+import io.vntr.migration.DummyMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -12,16 +13,9 @@ import java.util.*;
  */
 public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     private ReplicaDummyManager manager;
-    private ReplicaDummyMigrationStrategy migrationStrategy;
-
-    public ReplicaDummyMiddleware(int minNumReplicas) {
-        manager = new ReplicaDummyManager(minNumReplicas);
-        migrationStrategy = new ReplicaDummyMigrationStrategy(manager);
-    }
 
     public ReplicaDummyMiddleware(ReplicaDummyManager manager) {
         this.manager = manager;
-        migrationStrategy = new ReplicaDummyMigrationStrategy(this.manager);
     }
 
     @Override
@@ -70,7 +64,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
         
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = this.migrationStrategy.getUserMigrationStrategy(partitionId);  //TODO: do this
+        Map<Integer, Integer> migrationStrategy = DummyMigrator.getUserMigrationStrategy(partitionId, manager.getPartitionToUserMap(), manager.getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {

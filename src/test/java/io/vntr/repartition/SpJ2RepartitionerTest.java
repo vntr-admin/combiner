@@ -54,7 +54,6 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
         SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 

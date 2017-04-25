@@ -86,7 +86,8 @@ public class SparMigrationStrategy {
         for (Integer userId : masterIds) {
             RepUser user = manager.getUserMasterById(userId);
             for (Integer replicaPartitionId : user.getReplicaPids()) {
-                scores.add(new Score(userId, replicaPartitionId, scoreReplicaPromotion(user, replicaPartitionId)));
+                float score = scoreReplicaPromotion(user, replicaPartitionId);
+                scores.add(new Score(userId, replicaPartitionId, score));
             }
         }
 

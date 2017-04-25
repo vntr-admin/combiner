@@ -2,6 +2,7 @@ package io.vntr.hermes;
 
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.migration.HMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -11,11 +12,9 @@ import java.util.*;
  */
 public class HermesMiddleware implements IMiddlewareAnalyzer {
     private HermesManager manager;
-    private HermesMigrator migrator;
 
     public HermesMiddleware(HermesManager manager, float gamma) {
         this.manager = manager;
-        migrator = new HermesMigrator(manager, gamma);
     }
 
     @Override
@@ -56,7 +55,10 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void removePartition(Integer partitionId) {
-        migrator.migrateOffPartition(partitionId);
+        Map<Integer, Integer> targets = HMigrator.migrateOffPartition(partitionId, manager.getGamma(), manager.getPartitionToUsers(), manager.getFriendships());
+        for(Integer uid : targets.keySet()) {
+            manager.moveUser(uid, targets.get(uid), true);
+        }
         manager.removePartition(partitionId);
     }
 

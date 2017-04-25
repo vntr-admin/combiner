@@ -5,25 +5,25 @@ import java.util.*;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.RepUser;
 import io.vntr.User;
+import io.vntr.Utils;
+import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
+import io.vntr.befriend.SBefriender;
+import io.vntr.migration.SMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
-import static io.vntr.spar.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
+import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 public class SparMiddleware implements IMiddlewareAnalyzer {
     SparManager manager;
-    private SparBefriendingStrategy sparBefriendingStrategy;
     private SparMigrationStrategy sparMigrationStrategy;
 
     public SparMiddleware(int minNumReplicas) {
         manager = new SparManager(minNumReplicas);
-        sparBefriendingStrategy = new SparBefriendingStrategy(manager);
         sparMigrationStrategy = new SparMigrationStrategy(manager);
     }
 
     public SparMiddleware(SparManager manager) {
         this.manager = manager;
-        sparBefriendingStrategy = new SparBefriendingStrategy(manager);
         sparMigrationStrategy = new SparMigrationStrategy(manager);
     }
 
@@ -53,7 +53,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
         if (!colocatedMasters && !colocatedReplicas) {
-            BEFRIEND_REBALANCE_STRATEGY strategy = sparBefriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
+            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, manager.getMinNumReplicas(), manager.getFriendships(), manager.getPartitionToUserMap(), manager.getPartitionToReplicasMap());
             performRebalace(strategy, smallerUserId, largerUserId);
         }
 
@@ -76,8 +76,11 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         } else {
             RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Set<Integer> replicasToAddInDestinationPartition = sparBefriendingStrategy.findReplicasToAddToTargetPartition(moving, targetPid);
-            Set<Integer> replicasToDeleteInSourcePartition = sparBefriendingStrategy.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition);
+            Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(manager.getPartitionToUserMap());
+            Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
+
+            Set<Integer> replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, uidToPidMap, uidToReplicasMap);
+            Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, manager.getMinNumReplicas(), uidToReplicasMap, uidToPidMap, manager.getFriendships());
             manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
@@ -93,8 +96,10 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         RepUser largerUser = manager.getUserMasterById(largerUserId);
 
         if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
-            boolean smallerReplicaWasOnlyThereForLarger = sparBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser).contains(smallerUserId);
-            boolean largerReplicaWasOnlyThereForSmaller = sparBefriendingStrategy.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser).contains(largerUserId);
+            Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(manager.getPartitionToUserMap());
+            Map<Integer, Set<Integer>> friendships = manager.getFriendships();
+            boolean smallerReplicaWasOnlyThereForLarger = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser, uidToPidMap, friendships).contains(smallerUserId);
+            boolean largerReplicaWasOnlyThereForSmaller = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser, uidToPidMap, friendships).contains(largerUserId);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
                 manager.removeReplica(smallerUser, largerUser.getBasePid());
@@ -125,7 +130,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
         Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = sparMigrationStrategy.getUserMigrationStrategy(partitionId);
+        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, manager.getFriendships(), manager.getPartitionToUserMap(), manager.getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {

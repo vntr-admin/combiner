@@ -2,6 +2,7 @@ package io.vntr.hermar;
 
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.migration.HMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -14,12 +15,10 @@ import static io.vntr.hermar.BEFRIEND_REBALANCE_STRATEGY.TWO_TO_ONE;
  */
 public class HermarMiddleware implements IMiddlewareAnalyzer {
     private HermarManager manager;
-    private HermarMigrator migrator;
     private HermarBefriendingStrategy befriendingStrategy;
 
     public HermarMiddleware(HermarManager manager, float gamma) {
         this.manager = manager;
-        migrator = new HermarMigrator(manager, gamma);
         befriendingStrategy = new HermarBefriendingStrategy(manager);
     }
 
@@ -75,7 +74,10 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void removePartition(Integer partitionId) {
-        migrator.migrateOffPartition(partitionId);
+        Map<Integer, Integer> targets = HMigrator.migrateOffPartition(partitionId, manager.getGamma(), manager.getPartitionToUsers(), manager.getFriendships());
+        for(Integer uid : targets.keySet()) {
+            manager.moveUser(uid, targets.get(uid), true);
+        }
         manager.removePartition(partitionId);
         manager.repartition();
     }

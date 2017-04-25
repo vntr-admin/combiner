@@ -29,7 +29,7 @@ public class SparmesManager {
 
     private Map<Integer, Integer> uMap = new HashMap<>();
 
-    private SparmesBefriendingStrategy sparmesBefriendingStrategy;
+//    private SparmesBefriendingStrategy sparmesBefriendingStrategy;
 
     public SparmesManager(int minNumReplicas, float gamma, int k, boolean probabilistic) {
         this.minNumReplicas = minNumReplicas;
@@ -37,7 +37,7 @@ public class SparmesManager {
         this.k = k;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
+//        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
         this.logicalMigrationRatio = 0;
     }
 
@@ -47,7 +47,7 @@ public class SparmesManager {
         this.k = k;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
+//        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
         this.logicalMigrationRatio = logicalMigrationRatio;
     }
 
@@ -55,9 +55,9 @@ public class SparmesManager {
         return minNumReplicas;
     }
 
-    public SparmesBefriendingStrategy getSparmesBefriendingStrategy() {
-        return sparmesBefriendingStrategy;
-    }
+//    public SparmesBefriendingStrategy getSparmesBefriendingStrategy() {
+//        return sparmesBefriendingStrategy;
+//    }
 
     public SparmesPartition getPartitionById(Integer id) {
         return pMap.get(id);

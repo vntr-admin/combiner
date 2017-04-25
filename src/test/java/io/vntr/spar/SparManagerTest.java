@@ -5,6 +5,8 @@ import io.vntr.User;
 
 import java.util.*;
 
+import io.vntr.Utils;
+import io.vntr.befriend.SBefriender;
 import org.junit.Test;
 
 import static io.vntr.TestUtils.initSet;
@@ -370,7 +372,8 @@ public class SparManagerTest {
 
     @Test
     public void testMoveUser() {
-        SparManager manager = new SparManager(2);
+        int minNumReplicas = 2;
+        SparManager manager = new SparManager(minNumReplicas);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -393,13 +396,13 @@ public class SparManagerTest {
         manager.addUser(user3);
         userIdToUserMap.put(userId3, user3);
 
-        RepUser RepUser1 = manager.getUserMasterById(userId1);
+        RepUser repUser1 = manager.getUserMasterById(userId1);
         RepUser RepUser3 = manager.getUserMasterById(userId3);
 
-        manager.befriend(RepUser3, RepUser1);
+        manager.befriend(RepUser3, repUser1);
 
-        Integer oldPartitionId = RepUser1.getBasePid();
-        Set<Integer> oldReplicaIds = RepUser1.getReplicaPids();
+        Integer oldPartitionId = repUser1.getBasePid();
+        Set<Integer> oldReplicaIds = repUser1.getReplicaPids();
 
         //Check that the partitions are correct
         assertNotNull(manager.getPartitionById(oldPartitionId).getMasterById(userId1));
@@ -410,7 +413,7 @@ public class SparManagerTest {
         }
 
         //Check that the replicas are correct:
-        for (Integer partitionId : RepUser1.getReplicaPids()) {
+        for (Integer partitionId : repUser1.getReplicaPids()) {
             RepUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
             assertEquals(replica.getBasePid(), oldPartitionId);
             assertEquals(replica.getReplicaPids(), oldReplicaIds);
@@ -418,16 +421,19 @@ public class SparManagerTest {
 
         Integer newPartitionId = manager.getPartitionIdWithFewestMasters();
         Set<Integer> replicasToAddInDestinationPartition = new HashSet<>();
-        for (Integer friendId : RepUser1.getFriendIDs()) {
+        for (Integer friendId : repUser1.getFriendIDs()) {
             RepUser friend = manager.getUserMasterById(friendId);
             if (!friend.getBasePid().equals(newPartitionId) && !friend.getReplicaPids().contains(newPartitionId)) {
                 replicasToAddInDestinationPartition.add(friendId);
             }
         }
 
-        SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
-        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<>(strategy.findReplicasInMovingPartitionToDelete(RepUser1, replicasToAddInDestinationPartition));
-        manager.moveUser(RepUser1, newPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
+//        SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
+//        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<>(strategy.findReplicasInMovingPartitionToDelete(repUser1, replicasToAddInDestinationPartition));
+        Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(manager.getPartitionToUserMap());
+        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
+        Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(repUser1, replicasToAddInDestinationPartition, minNumReplicas, uidToReplicasMap, uidToPidMap, manager.getFriendships());
+        manager.moveUser(repUser1, newPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
 
         RepUser RepUser1Again = manager.getUserMasterById(userId1);
         Set<Integer> expectedReplicaIds = new HashSet<>(oldReplicaIds);
