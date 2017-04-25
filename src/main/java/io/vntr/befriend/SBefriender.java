@@ -2,7 +2,6 @@ package io.vntr.befriend;
 
 import io.vntr.RepUser;
 import io.vntr.Utils;
-import io.vntr.spar.SparManager;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -20,9 +19,9 @@ public class SBefriender {
         Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(replicas, friendships.keySet());
 
-        int stay      = calcNumReplicasStay(smallerUser, largerUser, partitions);
-        int toLarger  = calcNumReplicasMove(smallerUser, largerUser, partitions, minNumReplicas, uidToPidMap, uidToReplicasMap, friendships);
-        int toSmaller = calcNumReplicasMove(largerUser, smallerUser, partitions, minNumReplicas, uidToPidMap, uidToReplicasMap, friendships);
+        int stay      = calcNumReplicasStay(smallerUser, largerUser, replicas);
+        int toLarger  = calcNumReplicasMove(smallerUser, largerUser, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, friendships);
+        int toSmaller = calcNumReplicasMove(largerUser, smallerUser, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, friendships);
 
         int smallerMasters = partitions.get(smallerUser.getBasePid()).size();
         int largerMasters  = partitions.get(largerUser.getBasePid()).size();
@@ -63,18 +62,18 @@ public class SBefriender {
         return NO_CHANGE;
     }
 
-    static int calcNumReplicasStay(RepUser smallerUser, RepUser largerUser, Map<Integer, Set<Integer>> partitions) {
+    static int calcNumReplicasStay(RepUser smallerUser, RepUser largerUser, Map<Integer, Set<Integer>> replicas) {
         Integer smallerPartitionId = smallerUser.getBasePid();
         Integer largerPartitionId = largerUser.getBasePid();
         boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPids().contains(smallerPartitionId);
         boolean smallerReplicaExistsOnLargerMaster = smallerUser.getReplicaPids().contains(largerPartitionId);
         int deltaReplicas = (largerReplicaExistsOnSmallerMaster ? 0 : 1) + (smallerReplicaExistsOnLargerMaster ? 0 : 1);
-        int curReplicas = partitions.get(smallerPartitionId).size() + partitions.get(largerPartitionId).size();
+        int curReplicas = replicas.get(smallerPartitionId).size() + replicas.get(largerPartitionId).size();
         return curReplicas + deltaReplicas;
     }
 
-    static int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser, Map<Integer, Set<Integer>> partitions, int minNumReplicas, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> uidToReplicasMap, Map<Integer, Set<Integer>> friendships) {
-        int curReplicas = partitions.get(movingUser.getBasePid()).size() + partitions.get(stayingUser.getBasePid()).size();
+    static int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser, Map<Integer, Set<Integer>> replicas, int minNumReplicas, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> uidToReplicasMap, Map<Integer, Set<Integer>> friendships) {
+        int curReplicas = replicas.get(movingUser.getBasePid()).size() + replicas.get(stayingUser.getBasePid()).size();
 
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser, uidToPidMap);
@@ -141,7 +140,7 @@ public class SBefriender {
         return replicasThatWereJustThereForThisUsersSake;
     }
 
-    private static boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(RepUser movingUser, Map<Integer, Integer> uidToPidMap) {
+    static boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(RepUser movingUser, Map<Integer, Integer> uidToPidMap) {
         for (Integer friendId : movingUser.getFriendIDs()) {
             if (movingUser.getBasePid().equals(uidToPidMap.get(friendId))) {
                 return true;
