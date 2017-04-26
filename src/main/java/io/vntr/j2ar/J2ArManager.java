@@ -26,8 +26,6 @@ public class J2ArManager implements INoRepManager {
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
-//    private J2ArBefriendingStrategy befriendingStrategy;
-
     private int nextPid = 1;
     private int nextUid = 1;
 
@@ -37,7 +35,6 @@ public class J2ArManager implements INoRepManager {
         this.deltaT = deltaT;
         this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
-//        befriendingStrategy = new J2ArBefriendingStrategy(alpha, k, this);
         uMap = new HashMap<>();
         partitions = new HashMap<>();
     }
@@ -264,7 +261,6 @@ public class J2ArManager implements INoRepManager {
             moveUser(uid1, pid2, false);
             moveUser(uid2, pid1, false);
         }
-//        befriendingStrategy.rebalance(smallerUserId, largerUserId);
     }
 
     @Override

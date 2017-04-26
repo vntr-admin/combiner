@@ -158,7 +158,6 @@ public class TraceGenerator {
             friendships.get(friendId).remove(userToRemove);
         }
 
-//        System.out.println("Removing u" + userToRemove);
         friendships.remove(userToRemove);
         return new FullTraceAction(REMOVE_USER, userToRemove);
     }

@@ -3,12 +3,6 @@ package io.vntr;
 import io.vntr.hermes.HManager;
 import io.vntr.hermes.HermesMiddleware;
 import io.vntr.hermes.HermesTestUtils;
-import io.vntr.jabeja.JabejaManager;
-import io.vntr.jabeja.JabejaMiddleware;
-import io.vntr.jabeja.JabejaTestUtils;
-import io.vntr.spaja.SpajaManager;
-import io.vntr.spaja.SpajaMiddleware;
-import io.vntr.spaja.SpajaTestUtils;
 import io.vntr.spar.SparManager;
 import io.vntr.spar.SparMiddleware;
 import io.vntr.spar.SparTestUtils;
@@ -75,24 +69,18 @@ public class Analyzer {
 //            logger.warn("partitions:        " + partitions);
 //            logger.warn("replicas:          " + replicas);
 
-            JabejaManager  jabejaManager  = initJabejaManager (friendships, partitions);
             HManager hManager = initHermesManager (friendships, partitions);
             SparManager    sparManager    = initSparManager   (friendships, partitions, replicas);
-            SpajaManager   spajaManager   = initSpajaManager  (friendships, partitions, replicas);
 //            SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
-            JabejaMiddleware  jabejaMiddleware  = initJabejaMiddleware (jabejaManager);
             HermesMiddleware  hermesMiddleware  = initHermesMiddleware (hManager);
             SparMiddleware    sparMiddleware    = initSparMiddleware   (sparManager);
-            SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware  (spajaManager);
 //            SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(friendships));
             Set<Integer> newFriendships = generator.run();
-            runTest(jabejaMiddleware,  generator.getV(), newFriendships);
             runTest(hermesMiddleware,  generator.getV(), newFriendships);
             runTest(sparMiddleware,    generator.getV(), newFriendships);
-            runTest(spajaMiddleware,   generator.getV(), newFriendships);
 //            runTest(sparmesMiddleware, generator.getV(), newFriendships);
         }
     }
@@ -157,21 +145,15 @@ public class Analyzer {
             Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, friendships);
 
 
-            System.out.println("Starting Ja-be-Ja");
-            JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
             System.out.println("Starting Hermes");
             HManager hManager = initHermesManager(friendships, partitions);
             System.out.println("Starting SPAR");
             SparManager sparManager = initSparManager(friendships, partitions, replicas);
-            System.out.println("Starting Spaja");
-            SpajaManager spajaManager = initSpajaManager(friendships, partitions, replicas);
             System.out.println("Starting Sparmes");
             SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
-            JabejaMiddleware  jabejaMiddleware  = initJabejaMiddleware(jabejaManager);
             HermesMiddleware  hermesMiddleware  = initHermesMiddleware(hManager);
             SparMiddleware    sparMiddleware    = initSparMiddleware(sparManager);
-            SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware(spajaManager);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             ForestFireGenerator generator = new ForestFireGenerator(.34f, .34f, new TreeMap<>(friendships));
@@ -179,12 +161,12 @@ public class Analyzer {
             Set<Integer> newFriendships = generator.run();
             Integer newUid = generator.getV();
             System.out.println("Starting edge cuts");
-            List<IMiddlewareAnalyzer> analyzers = Arrays.asList(jabejaMiddleware, hermesMiddleware, sparMiddleware, spajaMiddleware, sparmesMiddleware);
+            List<IMiddlewareAnalyzer> analyzers = Arrays.asList(hermesMiddleware, sparMiddleware, sparmesMiddleware);
             for(IMiddlewareAnalyzer iMiddlewareAnalyzer : analyzers) {
                 long timeDiff = System.nanoTime() - start;
                 System.out.println((timeDiff / 1000000) + "." + (timeDiff % 1000000) + "ms\n\t" + iMiddlewareAnalyzer + "\n\t\t" + iMiddlewareAnalyzer.getEdgeCut() + "\n\t\t" + iMiddlewareAnalyzer.getReplicationCount() + "\n");
             }
-            List<IMiddleware> middlewares = Arrays.<IMiddleware>asList(jabejaMiddleware, hermesMiddleware, sparMiddleware, spajaMiddleware);//TODO: reenable this , sparmesMiddleware);
+            List<IMiddleware> middlewares = Arrays.<IMiddleware>asList(hermesMiddleware, sparMiddleware);//TODO: reenable this , sparmesMiddleware);
 //            List<IMiddleware> middlewares = Arrays.<IMiddleware>asList(sparmesMiddleware);
             for(IMiddleware iMiddleware : middlewares) {
                 System.out.println(iMiddleware + "\n");
@@ -215,22 +197,6 @@ public class Analyzer {
 
     private HermesMiddleware initHermesMiddleware(HManager manager) {
         return new HermesMiddleware(manager, 1.2f);
-    }
-
-    private JabejaManager initJabejaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return JabejaTestUtils.initGraph(1.5f, 2f, 0.2f, 2f, 0.2f, 9, partitions, friendships);
-    }
-
-    private JabejaMiddleware initJabejaMiddleware(JabejaManager manager) {
-        return new JabejaMiddleware(manager);
-    }
-
-    private SpajaManager initSpajaManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SpajaTestUtils.initGraph(2, 1.5f, 2f, 0.2f, 9, partitions, friendships, replicas);
-    }
-
-    private SpajaMiddleware initSpajaMiddleware(SpajaManager manager) {
-        return new SpajaMiddleware(manager);
     }
 
     private SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
@@ -279,16 +245,12 @@ public class Analyzer {
             logger.warn("partitions:        " + partitions);
             logger.warn("replicas:          " + replicas);
 
-            JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
             HManager hManager = initHermesManager(friendships, partitions);
             SparManager sparManager = initSparManager(friendships, partitions, replicas);
-            SpajaManager spajaManager = initSpajaManager(friendships, partitions, replicas);
             SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
-            JabejaMiddleware jabejaMiddleware = initJabejaMiddleware(jabejaManager);
             HermesMiddleware hermesMiddleware = initHermesMiddleware(hManager);
             SparMiddleware sparMiddleware = initSparMiddleware(sparManager);
-            SpajaMiddleware spajaMiddleware = initSpajaMiddleware(spajaManager);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
 
             Map<ACTIONS, Double> actionsProbability = new HashMap<>();
@@ -308,9 +270,7 @@ public class Analyzer {
             script[script.length-1] = DOWNTIME;
 
             runScriptedTest(sparMiddleware,    script);
-            runScriptedTest(jabejaMiddleware,  script);
             runScriptedTest(hermesMiddleware,  script);
-            runScriptedTest(spajaMiddleware,   script);
             runScriptedTest(sparmesMiddleware, script);
         }
     }

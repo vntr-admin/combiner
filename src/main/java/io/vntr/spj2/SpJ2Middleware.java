@@ -15,11 +15,9 @@ import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 public class SpJ2Middleware implements IMiddlewareAnalyzer {
     private SpJ2Manager manager;
-//    private SpJ2BefriendingStrategy spJ2BefriendingStrategy;
 
     public SpJ2Middleware(SpJ2Manager manager) {
         this.manager = manager;
-//        spJ2BefriendingStrategy = new SpJ2BefriendingStrategy(manager);
     }
 
     @Override

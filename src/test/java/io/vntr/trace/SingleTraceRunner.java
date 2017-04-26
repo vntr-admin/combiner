@@ -9,18 +9,12 @@ import io.vntr.dummy.DummyTestUtils;
 import io.vntr.hermes.HManager;
 import io.vntr.hermes.HermesMiddleware;
 import io.vntr.hermes.HermesTestUtils;
-import io.vntr.jabeja.JabejaManager;
-import io.vntr.jabeja.JabejaMiddleware;
-import io.vntr.jabeja.JabejaTestUtils;
 import io.vntr.metis.MetisManager;
 import io.vntr.metis.MetisMiddleware;
 import io.vntr.metis.MetisTestUtils;
 import io.vntr.replicadummy.ReplicaDummyManager;
 import io.vntr.replicadummy.ReplicaDummyMiddleware;
 import io.vntr.replicadummy.ReplicaDummyTestUtils;
-import io.vntr.spaja.SpajaManager;
-import io.vntr.spaja.SpajaMiddleware;
-import io.vntr.spaja.SpajaTestUtils;
 import io.vntr.spar.SparManager;
 import io.vntr.spar.SparMiddleware;
 import io.vntr.spar.SparTestUtils;
@@ -88,18 +82,6 @@ public class SingleTraceRunner {
             int minNumReplicas = Integer.parseInt(args[3]);
             ReplicaDummyManager sparManager = initReplicaDummyManager(trace.getFriendships(), trace.getPartitions(), trace.getReplicas(), minNumReplicas);
             middleware = initReplicaDummyMiddleware(sparManager);
-        } else if(JABEJA_TYPE.equals(type)) {
-            if(args.length != 9) {
-                throw new IllegalArgumentException("JABEJA requires 9 arguments");
-            }
-            float alpha = Float.parseFloat(args[3]);
-            float initialT = Float.parseFloat(args[4]);
-            float deltaT = Float.parseFloat(args[5]);
-            float befriendInitialT = Float.parseFloat(args[6]);
-            float befriendDeltaT = Float.parseFloat(args[7]);
-            int k = Integer.parseInt(args[8]);
-            JabejaManager jabejaManager = initJabejaManager(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, trace.getFriendships(), trace.getPartitions());
-            middleware = initJabejaMiddleware(jabejaManager);
         } else if(HERMES_TYPE.equals(type)) {
             HManager hManager;
             float gamma = Float.parseFloat(args[3]);
@@ -116,17 +98,6 @@ public class SingleTraceRunner {
                 hManager = initHermesManager(gamma, trace.getFriendships(), trace.getPartitions());
             }
             middleware = initHermesMiddleware(hManager);
-        } else if(SPAJA_TYPE.equals(type)) {
-            if(args.length != 8) {
-                throw new IllegalArgumentException("SPAJA requires 8 arguments");
-            }
-            int minNumReplicas = Integer.parseInt(args[3]);
-            float alpha = Float.parseFloat(args[4]);
-            float initialT = Float.parseFloat(args[5]);
-            float deltaT = Float.parseFloat(args[6]);
-            int k = Integer.parseInt(args[7]);
-            SpajaManager spajaManager = initSpajaManager(minNumReplicas, alpha, initialT, deltaT, k, trace.getFriendships(), trace.getPartitions(), trace.getReplicas());
-            middleware = initSpajaMiddleware(spajaManager);
         } else if(DUMMY_TYPE.equals(type)){
             DummyManager dummyManager = initDummyManager(trace.getFriendships(), trace.getPartitions());
             middleware = initDummyMiddleware(dummyManager);
@@ -236,22 +207,6 @@ public class SingleTraceRunner {
 
     private static HermesMiddleware initHermesMiddleware(HManager manager) {
         return new HermesMiddleware(manager, manager.getGamma());
-    }
-
-    private static JabejaManager initJabejaManager(float alpha, float initialT, float deltaT, float befriendInitialT, float befriendDeltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
-        return JabejaTestUtils.initGraph(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, partitions, friendships);
-    }
-
-    private static JabejaMiddleware initJabejaMiddleware(JabejaManager manager) {
-        return new JabejaMiddleware(manager);
-    }
-
-    private static SpajaManager initSpajaManager(int minNumReplicas, float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        return SpajaTestUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, partitions, friendships, replicas);
-    }
-
-    private static SpajaMiddleware initSpajaMiddleware(SpajaManager manager) {
-        return new SpajaMiddleware(manager);
     }
 
     private static SparmesManager initSparmesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, int minNumReplicas, float gamma) {
