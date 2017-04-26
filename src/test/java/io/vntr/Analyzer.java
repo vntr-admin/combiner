@@ -1,6 +1,6 @@
 package io.vntr;
 
-import io.vntr.hermes.HermesManager;
+import io.vntr.hermes.HManager;
 import io.vntr.hermes.HermesMiddleware;
 import io.vntr.hermes.HermesTestUtils;
 import io.vntr.jabeja.JabejaManager;
@@ -76,13 +76,13 @@ public class Analyzer {
 //            logger.warn("replicas:          " + replicas);
 
             JabejaManager  jabejaManager  = initJabejaManager (friendships, partitions);
-            HermesManager  hermesManager  = initHermesManager (friendships, partitions);
+            HManager hManager = initHermesManager (friendships, partitions);
             SparManager    sparManager    = initSparManager   (friendships, partitions, replicas);
             SpajaManager   spajaManager   = initSpajaManager  (friendships, partitions, replicas);
 //            SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
             JabejaMiddleware  jabejaMiddleware  = initJabejaMiddleware (jabejaManager);
-            HermesMiddleware  hermesMiddleware  = initHermesMiddleware (hermesManager);
+            HermesMiddleware  hermesMiddleware  = initHermesMiddleware (hManager);
             SparMiddleware    sparMiddleware    = initSparMiddleware   (sparManager);
             SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware  (spajaManager);
 //            SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
@@ -160,7 +160,7 @@ public class Analyzer {
             System.out.println("Starting Ja-be-Ja");
             JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
             System.out.println("Starting Hermes");
-            HermesManager hermesManager = initHermesManager(friendships, partitions);
+            HManager hManager = initHermesManager(friendships, partitions);
             System.out.println("Starting SPAR");
             SparManager sparManager = initSparManager(friendships, partitions, replicas);
             System.out.println("Starting Spaja");
@@ -169,7 +169,7 @@ public class Analyzer {
             SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
             JabejaMiddleware  jabejaMiddleware  = initJabejaMiddleware(jabejaManager);
-            HermesMiddleware  hermesMiddleware  = initHermesMiddleware(hermesManager);
+            HermesMiddleware  hermesMiddleware  = initHermesMiddleware(hManager);
             SparMiddleware    sparMiddleware    = initSparMiddleware(sparManager);
             SpajaMiddleware   spajaMiddleware   = initSpajaMiddleware(spajaManager);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);
@@ -209,11 +209,11 @@ public class Analyzer {
         return new SparMiddleware(manager);
     }
 
-    private HermesManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
+    private HManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
         return HermesTestUtils.initGraph(1.2f, true, partitions, friendships);
     }
 
-    private HermesMiddleware initHermesMiddleware(HermesManager manager) {
+    private HermesMiddleware initHermesMiddleware(HManager manager) {
         return new HermesMiddleware(manager, 1.2f);
     }
 
@@ -280,13 +280,13 @@ public class Analyzer {
             logger.warn("replicas:          " + replicas);
 
             JabejaManager jabejaManager = initJabejaManager(friendships, partitions);
-            HermesManager hermesManager = initHermesManager(friendships, partitions);
+            HManager hManager = initHermesManager(friendships, partitions);
             SparManager sparManager = initSparManager(friendships, partitions, replicas);
             SpajaManager spajaManager = initSpajaManager(friendships, partitions, replicas);
             SparmesManager sparmesManager = initSparmesManager(friendships, partitions, replicas);
 
             JabejaMiddleware jabejaMiddleware = initJabejaMiddleware(jabejaManager);
-            HermesMiddleware hermesMiddleware = initHermesMiddleware(hermesManager);
+            HermesMiddleware hermesMiddleware = initHermesMiddleware(hManager);
             SparMiddleware sparMiddleware = initSparMiddleware(sparManager);
             SpajaMiddleware spajaMiddleware = initSpajaMiddleware(spajaManager);
             SparmesMiddleware sparmesMiddleware = initSparmesMiddleware(sparmesManager);

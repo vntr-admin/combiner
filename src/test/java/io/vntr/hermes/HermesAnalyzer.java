@@ -53,8 +53,8 @@ public class HermesAnalyzer {
             logger.warn("friendships:       " + friendships);
             logger.warn("partitions:        " + partitions);
 
-            HermesManager hermesManager = initHermesManager(friendships, partitions);
-            HermesMiddleware hermesMiddleware = initHermesMiddleware(hermesManager);
+            HManager hManager = initHermesManager(friendships, partitions);
+            HermesMiddleware hermesMiddleware = initHermesMiddleware(hManager);
 
             Map<Analyzer.ACTIONS, Double> actionsProbability = new HashMap<>();
             actionsProbability.put(ADD_USER,         0.125D);
@@ -223,11 +223,11 @@ public class HermesAnalyzer {
         return DOWNTIME;
     }
 
-    private HermesManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
+    private HManager initHermesManager(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
         return HermesTestUtils.initGraph(1.3f, 3, 0.03f, partitions, friendships);
     }
 
-    private HermesMiddleware initHermesMiddleware(HermesManager manager) {
+    private HermesMiddleware initHermesMiddleware(HManager manager) {
         return new HermesMiddleware(manager, 1.3f);
     }
 

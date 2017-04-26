@@ -78,7 +78,7 @@ public class DummyMiddleware implements IMiddlewareAnalyzer {
         for(Integer uid : friendships.keySet()) {
             numFriendships += friendships.get(uid).size();
         }
-        return numFriendships / 2; //TODO: make sure this is correct
+        return numFriendships / 2;
     }
 
     @Override

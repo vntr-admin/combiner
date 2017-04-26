@@ -6,7 +6,7 @@ import io.vntr.User;
 import io.vntr.dummy.DummyManager;
 import io.vntr.dummy.DummyMiddleware;
 import io.vntr.dummy.DummyTestUtils;
-import io.vntr.hermes.HermesManager;
+import io.vntr.hermes.HManager;
 import io.vntr.hermes.HermesMiddleware;
 import io.vntr.hermes.HermesTestUtils;
 import io.vntr.jabeja.JabejaManager;
@@ -101,21 +101,21 @@ public class SingleTraceRunner {
             JabejaManager jabejaManager = initJabejaManager(alpha, initialT, deltaT, befriendInitialT, befriendDeltaT, k, trace.getFriendships(), trace.getPartitions());
             middleware = initJabejaMiddleware(jabejaManager);
         } else if(HERMES_TYPE.equals(type)) {
-            HermesManager hermesManager;
+            HManager hManager;
             float gamma = Float.parseFloat(args[3]);
 
             if(args.length == 6) {
                 float maxIterationToNumUsersRatio = Float.parseFloat(args[4]);
                 int k = Integer.parseInt((args[5]));
-                hermesManager = initHermesManager(gamma, maxIterationToNumUsersRatio, k, trace.getFriendships(), trace.getPartitions());
+                hManager = initHermesManager(gamma, maxIterationToNumUsersRatio, k, trace.getFriendships(), trace.getPartitions());
             }
             else if(args.length == 5) {
                 float maxIterationToNumUsersRatio = Float.parseFloat(args[4]);
-                hermesManager = initHermesManager(gamma, maxIterationToNumUsersRatio, 3, trace.getFriendships(), trace.getPartitions());
+                hManager = initHermesManager(gamma, maxIterationToNumUsersRatio, 3, trace.getFriendships(), trace.getPartitions());
             } else {
-                hermesManager = initHermesManager(gamma, trace.getFriendships(), trace.getPartitions());
+                hManager = initHermesManager(gamma, trace.getFriendships(), trace.getPartitions());
             }
-            middleware = initHermesMiddleware(hermesManager);
+            middleware = initHermesMiddleware(hManager);
         } else if(SPAJA_TYPE.equals(type)) {
             if(args.length != 8) {
                 throw new IllegalArgumentException("SPAJA requires 8 arguments");
@@ -226,15 +226,15 @@ public class SingleTraceRunner {
         return new SparMiddleware(manager);
     }
 
-    private static HermesManager initHermesManager(float gamma, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
+    private static HManager initHermesManager(float gamma, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
         return HermesTestUtils.initGraph(gamma, true, partitions, friendships);
     }
 
-    private static HermesManager initHermesManager(float gamma, float maxIterationToNumUsersRatio, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
+    private static HManager initHermesManager(float gamma, float maxIterationToNumUsersRatio, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) throws Exception {
         return HermesTestUtils.initGraph(gamma, k, maxIterationToNumUsersRatio, partitions, friendships);
     }
 
-    private static HermesMiddleware initHermesMiddleware(HermesManager manager) {
+    private static HermesMiddleware initHermesMiddleware(HManager manager) {
         return new HermesMiddleware(manager, manager.getGamma());
     }
 

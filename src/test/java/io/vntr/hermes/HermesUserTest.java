@@ -45,7 +45,7 @@ public class HermesUserTest {
 //        friendships.put(19, initSet(20));
 //        friendships.put(20, Collections.<Integer>emptySet());
 //
-//        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
+//        HManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
 //        for(Integer pid : manager.getPids()) {
 //            manager.getPartition(pid).resetLogicalUsers();
 //        }

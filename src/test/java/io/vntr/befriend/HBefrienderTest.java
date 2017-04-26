@@ -8,16 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.generateBidirectionalFriendshipSet;
-import static io.vntr.Utils.getPToFriendCount;
-import static io.vntr.Utils.getUToMasterMap;
-import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL;
-import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE;
-import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE;
-import static io.vntr.befriend.HBefriender.calcEdgeCutMove;
-import static io.vntr.befriend.HBefriender.determineStrategy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static io.vntr.Utils.*;
+import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
+import static io.vntr.befriend.HBefriender.*;
+import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 4/25/17.
@@ -183,7 +177,7 @@ public class HBefrienderTest {
             for(int pid2 : partitions.keySet()) {
                 if(pid1 != pid2) {
                     int expectedCut = partitionsToExpectedCut.get(initSet(pid1, pid2));
-                    int cut = HBefriender.getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(pid1, pid2, bidirectionalFriendships, partitions, uidToPidMap);
+                    int cut = getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(pid1, pid2, bidirectionalFriendships, partitions, uidToPidMap);
                     assertTrue(expectedCut == cut);
                 }
             }

@@ -1,6 +1,6 @@
-package io.vntr.hermar;
+package io.vntr.hermes;
 
-import io.vntr.RepUser;
+import io.vntr.User;
 
 import java.util.Map;
 import java.util.Set;
@@ -8,14 +8,13 @@ import java.util.Set;
 /**
  * Created by robertlindquist on 4/1/17.
  */
-public class HermarInitUtils {
-
-    public static HermarManager initGraph(float gamma, int k, float maxIterationToNumUsersRatio, double logicalMigrationRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        HermarManager manager = new HermarManager(gamma, maxIterationToNumUsersRatio, k, logicalMigrationRatio);
+public class HInitUtils {
+    public static HManager initGraph(float gamma, int k, float maxIterationToNumUsersRatio, double logicalMigrationRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+        HManager manager = new HManager(gamma, maxIterationToNumUsersRatio, k, logicalMigrationRatio);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
-                manager.addUser(new RepUser(uid, pid));
+                manager.addUser(new User(uid, pid));
             }
         }
         for(Integer uid1 : friendships.keySet()) {

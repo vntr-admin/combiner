@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class HermesManager implements INoRepManager {
+public class HManager implements INoRepManager {
     private Map<Integer, Set<Integer>> pMap;
     private Map<Integer, User> uMap;
     private float gamma;
@@ -26,7 +26,7 @@ public class HermesManager implements INoRepManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
-    public HermesManager(float gamma, boolean probabilistic) {
+    public HManager(float gamma, boolean probabilistic) {
         this.gamma = gamma;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
@@ -35,7 +35,7 @@ public class HermesManager implements INoRepManager {
         maxIterationToNumUsersRatio = 1f;
     }
 
-    public HermesManager(float gamma, int maxIterations) {
+    public HManager(float gamma, int maxIterations) {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
@@ -45,7 +45,7 @@ public class HermesManager implements INoRepManager {
         this.k=3;
     }
 
-    public HermesManager(float gamma, float maxIterationToNumUsersRatio) {
+    public HManager(float gamma, float maxIterationToNumUsersRatio) {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
@@ -55,7 +55,7 @@ public class HermesManager implements INoRepManager {
         this.k=3;
     }
 
-    public HermesManager(float gamma, float maxIterationToNumUsersRatio, int k) {
+    public HManager(float gamma, float maxIterationToNumUsersRatio, int k) {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
@@ -65,7 +65,7 @@ public class HermesManager implements INoRepManager {
         this.k = k;
     }
 
-    public HermesManager(float gamma, float maxIterationToNumUsersRatio, int k, double logicalMigrationRatio) {
+    public HManager(float gamma, float maxIterationToNumUsersRatio, int k, double logicalMigrationRatio) {
         this.gamma = gamma;
         this.probabilistic = false;
         this.pMap = new HashMap<>();
@@ -225,7 +225,7 @@ public class HermesManager implements INoRepManager {
     public Map<Integer,Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : getPids()) {
-            map.put(pid, new HashSet<>(getPartition(pid)));
+            map.put(pid, new HashSet<>(pMap.get(pid)));
         }
         return map;
     }

@@ -1,5 +1,6 @@
 package io.vntr.sparmes;
 
+import io.vntr.IRepManager;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.repartition.SparmesRepartitioner;
@@ -12,7 +13,7 @@ import static io.vntr.Utils.*;
 /**
  * Created by robertlindquist on 9/28/16.
  */
-public class SparmesManager {
+public class SparmesManager implements IRepManager {
     private int minNumReplicas;
     private float gamma;
     private boolean probabilistic;
@@ -29,15 +30,12 @@ public class SparmesManager {
 
     private Map<Integer, Integer> uMap = new HashMap<>();
 
-//    private SparmesBefriendingStrategy sparmesBefriendingStrategy;
-
     public SparmesManager(int minNumReplicas, float gamma, int k, boolean probabilistic) {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.k = k;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-//        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
         this.logicalMigrationRatio = 0;
     }
 
@@ -47,17 +45,12 @@ public class SparmesManager {
         this.k = k;
         this.probabilistic = probabilistic;
         this.pMap = new HashMap<>();
-//        this.sparmesBefriendingStrategy = new SparmesBefriendingStrategy(this);
         this.logicalMigrationRatio = logicalMigrationRatio;
     }
 
     public int getMinNumReplicas() {
         return minNumReplicas;
     }
-
-//    public SparmesBefriendingStrategy getSparmesBefriendingStrategy() {
-//        return sparmesBefriendingStrategy;
-//    }
 
     public SparmesPartition getPartitionById(Integer id) {
         return pMap.get(id);
@@ -104,7 +97,7 @@ public class SparmesManager {
         }
     }
 
-    void addUser(RepUser user, Integer masterPartitionId) {
+    public void addUser(RepUser user, Integer masterPartitionId) {
         int uid = user.getId();
         getPartitionById(masterPartitionId).addMaster(user);
         uMap.put(uid, masterPartitionId);
@@ -143,7 +136,7 @@ public class SparmesManager {
         return newId;
     }
 
-    void addPartition(Integer pid) {
+    public void addPartition(Integer pid) {
         pMap.put(pid, new SparmesPartition(pid));//, gamma, this));
         if(pid >= nextPid) {
             nextPid = pid + 1;
@@ -165,7 +158,7 @@ public class SparmesManager {
         user.addReplicaPartitionId(destPid);
     }
 
-    RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+    public RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
         RepUser replica = user.dupe();
         pMap.get(destPid).addReplica(replica);
         return replica;
@@ -274,7 +267,7 @@ public class SparmesManager {
         }
     }
 
-    Integer getPartitionIdWithFewestMasters() {
+    public Integer getPartitionIdWithFewestMasters() {
         int minMasters = Integer.MAX_VALUE;
         Integer minId = -1;
 
@@ -289,7 +282,7 @@ public class SparmesManager {
         return minId;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
+    public Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
@@ -297,7 +290,7 @@ public class SparmesManager {
         return list.get((int) (list.size() * Math.random()));
     }
 
-    Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
+    public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
         List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(pMap.keySet());
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
@@ -311,7 +304,7 @@ public class SparmesManager {
         return map;
     }
 
-    Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
+    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pMap.keySet()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
@@ -341,7 +334,7 @@ public class SparmesManager {
         return count;
     }
 
-    void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
+    public void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
         RepUser user = getUserMasterById(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
@@ -451,15 +444,15 @@ public class SparmesManager {
         return migrationTally + (long) (logicalMigrationRatio * migrationTallyLogical);
     }
 
-    void increaseTally(int amount) {
+    public void increaseTally(int amount) {
         migrationTally += amount;
     }
 
-    void increaseTallyLogical(int amount) {
+    public void increaseTallyLogical(int amount) {
         migrationTallyLogical += amount;
     }
 
-    void checkValidity() {
+    public void checkValidity() {
 
         //Check masters
         for(Integer uid : uMap.keySet()) {

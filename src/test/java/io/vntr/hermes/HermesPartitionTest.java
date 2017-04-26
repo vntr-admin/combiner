@@ -43,7 +43,7 @@ public class HermesPartitionTest {
 //        friendships.put(19, initSet(20));
 //        friendships.put(20, Collections.<Integer>emptySet());
 //
-//        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
+//        HManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
 //        for(Integer pid : manager.getPids()) {
 //            manager.getPartition(pid).resetLogicalUsers();
 //        }
@@ -87,7 +87,7 @@ public class HermesPartitionTest {
 //        friendships.put(11, initSet(12));
 //        friendships.put(12, Collections.<Integer>emptySet());
 //
-//        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
+//        HManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
 //        for(Integer pid : manager.getPids()) {
 //            manager.getPartition(pid).resetLogicalUsers();
 //        }
@@ -138,7 +138,7 @@ public class HermesPartitionTest {
 //        friendships.put(19, initSet(20));
 //        friendships.put(20, Collections.<Integer>emptySet());
 //
-//        HermesManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
+//        HManager manager = HermesTestUtils.initGraph(gamma, false, partitions, friendships);
 //        for(Integer pid : manager.getPids()) {
 //            manager.getPartition(pid).resetLogicalUsers();
 //        }

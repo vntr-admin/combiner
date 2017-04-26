@@ -11,9 +11,9 @@ import java.util.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesMiddleware implements IMiddlewareAnalyzer {
-    private HermesManager manager;
+    private HManager manager;
 
-    public HermesMiddleware(HermesManager manager, float gamma) {
+    public HermesMiddleware(HManager manager, float gamma) {
         this.manager = manager;
     }
 

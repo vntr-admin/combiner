@@ -9,8 +9,8 @@ import java.util.*;
  * Created by robertlindquist on 9/23/16.
  */
 public class HermesTestUtils {
-    public static HermesManager initGraph(float gamma, boolean probabilistic, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        HermesManager manager = new HermesManager(gamma, probabilistic);
+    public static HManager initGraph(float gamma, boolean probabilistic, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+        HManager manager = new HManager(gamma, probabilistic);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
@@ -25,8 +25,8 @@ public class HermesTestUtils {
         return manager;
     }
 
-    public static HermesManager initGraph(float gamma, int k, float maxIterationToNumUsersRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        HermesManager manager = new HermesManager(gamma, maxIterationToNumUsersRatio, k);
+    public static HManager initGraph(float gamma, int k, float maxIterationToNumUsersRatio, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+        HManager manager = new HManager(gamma, maxIterationToNumUsersRatio, k);
         for(Integer pid : partitions.keySet()) {
             manager.addPartition(pid);
             for(Integer uid : partitions.get(pid)) {
@@ -41,7 +41,7 @@ public class HermesTestUtils {
         return manager;
     }
 
-    public static HermesManager initGraph(float gamma, boolean probabilistic, int numPartitions, Map<Integer, Set<Integer>> friendships) {
+    public static HManager initGraph(float gamma, boolean probabilistic, int numPartitions, Map<Integer, Set<Integer>> friendships) {
         Set<Integer> pids = new HashSet<>();
         for(int pid = 0; pid < numPartitions; pid++) {
             pids.add(pid);

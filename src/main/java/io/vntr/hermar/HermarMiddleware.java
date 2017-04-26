@@ -4,6 +4,7 @@ import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.HBefriender;
+import io.vntr.hermes.HManager;
 import io.vntr.migration.HMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -15,9 +16,9 @@ import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermarMiddleware implements IMiddlewareAnalyzer {
-    private HermarManager manager;
+    private HManager manager;
 
-    public HermarMiddleware(HermarManager manager) {
+    public HermarMiddleware(HManager manager) {
         this.manager = manager;
     }
 

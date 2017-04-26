@@ -3,11 +3,9 @@ package io.vntr.trace;
 import io.vntr.IMiddleware;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
-import io.vntr.hermar.HermarInitUtils;
-import io.vntr.hermar.HermarManager;
+import io.vntr.hermes.HManager;
 import io.vntr.hermar.HermarMiddleware;
-import io.vntr.hermes.HermesInitUtils;
-import io.vntr.hermes.HermesManager;
+import io.vntr.hermes.HInitUtils;
 import io.vntr.hermes.HermesMiddleware;
 import io.vntr.j2.J2InitUtils;
 import io.vntr.j2.J2Manager;
@@ -571,20 +569,20 @@ public class TraceRunner {
 
 
     static HermesMiddleware initHermesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        HermesManager hermesManager =
-                HermesInitUtils.initGraph(parsedArgs.getGamma(),
+        HManager hManager =
+                HInitUtils.initGraph(parsedArgs.getGamma(),
                         parsedArgs.getHermesK(),
                         parsedArgs.getIterationCutoffRatio(),
                         parsedArgs.getLogicalMigrationRatio(),
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new HermesMiddleware(hermesManager, hermesManager.getGamma());
+        return new HermesMiddleware(hManager, hManager.getGamma());
     }
 
     static HermarMiddleware initHermarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        HermarManager hermarManager =
-                HermarInitUtils.initGraph(parsedArgs.getGamma(),
+        HManager hermarManager =
+                HInitUtils.initGraph(parsedArgs.getGamma(),
                         parsedArgs.getHermesK(),
                         parsedArgs.getIterationCutoffRatio(),
                         parsedArgs.getLogicalMigrationRatio(),
