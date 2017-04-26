@@ -1,6 +1,5 @@
 package io.vntr.migration;
 
-
 import io.vntr.repartition.Target;
 
 import java.util.*;
@@ -42,7 +41,7 @@ public class SMigrator {
         for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
             Target target = iter.next();
             int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
-            if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0 && target.gain > 0) {
+            if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
                 strategy.put(target.uid, target.pid);
                 remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
             }
@@ -71,7 +70,7 @@ public class SMigrator {
         }
         for(Integer uid1 : strategy.keySet()) {
             int pid = strategy.get(uid1);
-            pToStrategyCount.put(pid, pToStrategyCount.get(pid));
+            pToStrategyCount.put(pid, pToStrategyCount.get(pid) + 1);
         }
 
         int minMasters = Integer.MAX_VALUE;
@@ -96,7 +95,7 @@ public class SMigrator {
         }
         for(Integer uid1 : strategy.keySet()) {
             int pid = strategy.get(uid1);
-            pToStrategyCount.put(pid, pToStrategyCount.get(pid));
+            pToStrategyCount.put(pid, pToStrategyCount.get(pid) + 1);
         }
 
         int minMasters = Integer.MAX_VALUE;

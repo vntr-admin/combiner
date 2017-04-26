@@ -130,7 +130,7 @@ public class HMigratorTest {
 
         Set<Target> p3Targets = HMigrator.getPreferredTargets(3, uidToPidMap, partitions, bidirectionalFriendships);
         assertTrue(p3Targets.contains(new Target(10, 1, 3, 2f)));
-        assertTrue(p3Targets.contains(new Target(11, 1, 3, 0f)) || p3Targets.contains(new Target(1, 2, 3, 0f)));
+        assertTrue(p3Targets.contains(new Target(11, 1, 3, 0f)) || p3Targets.contains(new Target(11, 2, 3, 0f)));
         assertTrue(p3Targets.contains(new Target(12, 1, 3, 4f)));
         assertTrue(p3Targets.contains(new Target(13, 1, 3, 1f)));
     }
