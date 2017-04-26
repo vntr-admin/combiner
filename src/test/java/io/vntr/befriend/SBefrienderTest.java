@@ -1,14 +1,14 @@
 package io.vntr.befriend;
 
 import io.vntr.RepUser;
-import io.vntr.spar.SparManager;
-import io.vntr.spar.SparTestUtils;
+import io.vntr.manager.SManager;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.*;
+import static io.vntr.utils.InitUtils.initSManager;
+import static io.vntr.utils.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.befriend.SBefriender.*;
 import static org.junit.Assert.*;
@@ -68,15 +68,15 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
 
         int uid1 = 7;
         int pid1 = 2;
-        RepUser u1 = manager.getUserMasterById(uid1);
+        RepUser u1 = manager.getUserMaster(uid1);
 
         int uid2 = 11;
         int pid2 = 3;
-        RepUser u2 = manager.getUserMasterById(uid2);
+        RepUser u2 = manager.getUserMaster(uid2);
 
         int curNumReplicas = replicas.get(pid1).size() + replicas.get(pid2).size();
 
@@ -113,18 +113,18 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         int uid1 = 7;
         int pid1 = 2;
-        RepUser u1 = manager.getUserMasterById(uid1);
+        RepUser u1 = manager.getUserMaster(uid1);
 
         int uid2 = 11;
         int pid2 = 3;
-        RepUser u2 = manager.getUserMasterById(uid2);
+        RepUser u2 = manager.getUserMaster(uid2);
 
         int curNumReplicas = replicas.get(pid1).size() + replicas.get(pid2).size();
 
@@ -164,7 +164,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
@@ -206,7 +206,7 @@ public class SBefrienderTest {
                 if(uidToPidMap.get(uid) == pid) {
                     continue;
                 }
-                Set<Integer> result = findReplicasToAddToTargetPartition(manager.getUserMasterById(uid), pid, uidToPidMap, uidToReplicasMap);
+                Set<Integer> result = findReplicasToAddToTargetPartition(manager.getUserMaster(uid), pid, uidToPidMap, uidToReplicasMap);
                 assertEquals(result, expectedResults.get(uid).get(pid));
             }
         }
@@ -241,7 +241,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
@@ -284,7 +284,7 @@ public class SBefrienderTest {
                 if(pid == uidToPidMap.get(uid)) {
                     continue;
                 }
-                RepUser movingUser = manager.getUserMasterById(uid);
+                RepUser movingUser = manager.getUserMaster(uid);
                 Set<Integer> replicasToAdd = findReplicasToAddToTargetPartition(movingUser, pid, uidToPidMap, uidToReplicasMap);
                 Set<Integer> results = findReplicasInMovingPartitionToDelete(movingUser, replicasToAdd, minNumReplicas, uidToReplicasMap, uidToPidMap, bidirectionalFriendships);
                 assertEquals(results, expectedResults.get(uid).get(pid));
@@ -321,7 +321,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
@@ -341,7 +341,7 @@ public class SBefrienderTest {
         expectedResults.put(13, Collections.<Integer>emptySet());
 
         for(int uid : friendships.keySet()) {
-            assertEquals(expectedResults.get(uid), findReplicasInPartitionThatWereOnlyThereForThisUsersSake(manager.getUserMasterById(uid), uidToPidMap, bidirectionalFriendships));
+            assertEquals(expectedResults.get(uid), findReplicasInPartitionThatWereOnlyThereForThisUsersSake(manager.getUserMaster(uid), uidToPidMap, bidirectionalFriendships));
         }
     }
 
@@ -374,7 +374,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
         Boolean[] expectedResults = {null,
@@ -383,7 +383,7 @@ public class SBefrienderTest {
                 true,  true,  true };
 
         for(int uid : friendships.keySet()) {
-            RepUser user = manager.getUserMasterById(uid);
+            RepUser user = manager.getUserMaster(uid);
             boolean result = shouldWeAddAReplicaOfMovingUserInMovingPartition(user, uidToPidMap);
             assertTrue(result == expectedResults[uid]);
         }
@@ -418,27 +418,27 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
 
         //Case 1: user has no replica on partition.
         //Should be false.
-        assertFalse(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMasterById(13), manager.getUserMasterById(6), minNumReplicas, uidToPidMap));
+        assertFalse(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMaster(13), manager.getUserMaster(6), minNumReplicas, uidToPidMap));
 
         //Case 2: user has a replica on partition, and has numReplicas > minNumReplicas.
         //Should be true.
-        assertTrue(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMasterById(6), manager.getUserMasterById(13), minNumReplicas, uidToPidMap));
+        assertTrue(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMaster(6), manager.getUserMaster(13), minNumReplicas, uidToPidMap));
 
         //Case 3: user has a replica on partition, has numReplicas == minNumReplicas, and is adding one to moving partition.
         //Should be true.
-        assertTrue(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMasterById(11), manager.getUserMasterById(6), minNumReplicas, uidToPidMap));
+        assertTrue(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMaster(11), manager.getUserMaster(6), minNumReplicas, uidToPidMap));
 
         //Case 4: user has a replica on partition, has numReplicas == minNumReplicas, and is not adding one to moving partition.
         //Should be false.
-        manager.unfriend(manager.getUserMasterById(11), manager.getUserMasterById(12));
-        manager.unfriend(manager.getUserMasterById(11), manager.getUserMasterById(10));
-        assertFalse(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMasterById(11), manager.getUserMasterById(6), minNumReplicas, uidToPidMap));
+        manager.unfriend(manager.getUserMaster(11), manager.getUserMaster(12));
+        manager.unfriend(manager.getUserMaster(11), manager.getUserMaster(10));
+        assertFalse(shouldWeDeleteReplicaOfMovingUserInStayingPartition(manager.getUserMaster(11), manager.getUserMaster(6), minNumReplicas, uidToPidMap));
     }
 
     @Test
@@ -470,29 +470,29 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SparManager manager = SparTestUtils.initGraph(minNumReplicas, partitions, friendships, replicas);
+        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
         //Case 1: staying user has no replica in moving partition
         //Should: false, Could: false
-        assertFalse(shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMasterById(6), manager.getUserMasterById(13), minNumReplicas, uidToPidMap));
-        assertFalse(couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMasterById(6), manager.getUserMasterById(13), uidToPidMap));
+        assertFalse(shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMaster(6), manager.getUserMaster(13), minNumReplicas, uidToPidMap));
+        assertFalse(couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMaster(6), manager.getUserMaster(13), uidToPidMap));
 
         //Case 2: staying user has a replica in moving partition and has another friend there
         //Should: false, Could: false
-        assertFalse(shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMasterById(6), manager.getUserMasterById(1), minNumReplicas, uidToPidMap));
-        assertFalse(couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMasterById(6), manager.getUserMasterById(1), uidToPidMap));
+        assertFalse(shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMaster(6), manager.getUserMaster(1), minNumReplicas, uidToPidMap));
+        assertFalse(couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMaster(6), manager.getUserMaster(1), uidToPidMap));
 
         //Case 3: staying user has a replica in moving partition, doesn't have another friend there, and has numReplicas == minNumReplicas
         //Should: false, Could: true
-        assertFalse(shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMasterById(1), manager.getUserMasterById(13), minNumReplicas, uidToPidMap));
-        assertTrue (couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMasterById(1), manager.getUserMasterById(13), uidToPidMap));
+        assertFalse(shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMaster(1), manager.getUserMaster(13), minNumReplicas, uidToPidMap));
+        assertTrue (couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMaster(1), manager.getUserMaster(13), uidToPidMap));
 
         //Case 4: staying user has a replica in moving partition, doesn't have another friend there, and has numReplicas > minNumReplicas
         //Should be true
-        manager.addReplica(manager.getUserMasterById(13), 2);
-        assertTrue (shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMasterById(1), manager.getUserMasterById(13), minNumReplicas, uidToPidMap));
-        assertTrue (couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMasterById(1), manager.getUserMasterById(13), uidToPidMap));
+        manager.addReplica(manager.getUserMaster(13), 2);
+        assertTrue (shouldWeDeleteReplicaOfStayingUserInMovingPartition(manager.getUserMaster(1), manager.getUserMaster(13), minNumReplicas, uidToPidMap));
+        assertTrue (couldWeDeleteReplicaOfStayingUserInMovingPartition (manager.getUserMaster(1), manager.getUserMaster(13), uidToPidMap));
     }
 
 }

@@ -1,13 +1,11 @@
 package io.vntr.befriend;
 
-import io.vntr.User;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.Utils.getPToFriendCount;
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.getPToFriendCount;
+import static io.vntr.utils.Utils.getUToMasterMap;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 /**

@@ -1,12 +1,11 @@
 package io.vntr.repartition;
 
-import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.*;
+import static io.vntr.utils.Utils.*;
 import static org.junit.Assert.*;
 
 /**

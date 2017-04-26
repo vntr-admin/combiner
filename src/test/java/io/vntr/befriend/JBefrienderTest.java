@@ -5,9 +5,9 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.generateBidirectionalFriendshipSet;
-import static io.vntr.Utils.getPToFriendCount;
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
+import static io.vntr.utils.Utils.getPToFriendCount;
+import static io.vntr.utils.Utils.getUToMasterMap;
 import static org.junit.Assert.*;
 
 /**

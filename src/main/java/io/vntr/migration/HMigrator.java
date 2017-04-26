@@ -8,7 +8,7 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-import static io.vntr.Utils.*;
+import static io.vntr.utils.Utils.*;
 
 /**
  * Created by robertlindquist on 9/23/16.

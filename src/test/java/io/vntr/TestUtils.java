@@ -5,7 +5,7 @@ package io.vntr;
  import java.io.File;
  import java.util.*;
 
- import static io.vntr.Utils.getUToMasterMap;
+ import static io.vntr.utils.Utils.getUToMasterMap;
  import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
@@ -174,14 +174,6 @@ public class TestUtils {
         return idSet;
     }
 
-    public static NavigableMap<Integer, NavigableSet<Integer>> copyMapSetNavigable(Map<Integer, Set<Integer>> m) {
-        NavigableMap<Integer, NavigableSet<Integer>> copy = new TreeMap<>();
-        for(Integer key : m.keySet()) {
-            copy.put(key, new TreeSet<>(m.get(key)));
-        }
-        return copy;
-    }
-
     public static Map<Integer, Set<Integer>> copyMapSet(Map<Integer, Set<Integer>> m) {
         Map<Integer, Set<Integer>> copy = new HashMap<>();
         for(Integer key : m.keySet()) {
@@ -200,29 +192,4 @@ public class TestUtils {
         return keys;
     }
 
-    public static int[] getNonFriendship(Map<Integer, Set<Integer>> friendships) {
-        Integer userWhoIsntFriendsWithEveryone = null;
-        while(userWhoIsntFriendsWithEveryone == null) {
-            int chosenOne = ProbabilityUtils.getRandomElement(friendships.keySet());
-            if(friendships.get(chosenOne).size() < friendships.size() - 1) {
-                userWhoIsntFriendsWithEveryone = chosenOne;
-            }
-        }
-        Set<Integer> nonfriends = new HashSet<>(friendships.keySet());
-        nonfriends.removeAll(friendships.get(userWhoIsntFriendsWithEveryone));
-        int friend = ProbabilityUtils.getRandomElement(nonfriends);
-        return new int[] {userWhoIsntFriendsWithEveryone, friend};
-    }
-
-    public static int[] getFriendship(Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> possibilities = new HashSet<>();
-        for(int uid : friendships.keySet()) {
-            if(!friendships.get(uid).isEmpty()) {
-                possibilities.add(uid);
-            }
-        }
-
-        int chosenOne = ProbabilityUtils.getRandomElement(possibilities);
-        return new int[]{chosenOne, ProbabilityUtils.getRandomElement(friendships.get(chosenOne))};
-    }
 }

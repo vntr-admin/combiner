@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.*;
+import static io.vntr.utils.Utils.*;
 import static java.util.Collections.disjoint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

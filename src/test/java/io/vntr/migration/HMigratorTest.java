@@ -1,8 +1,6 @@
 package io.vntr.migration;
 
-import io.vntr.Utils;
 import io.vntr.repartition.Target;
-import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -11,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.*;
+import static io.vntr.utils.Utils.*;
 import static org.junit.Assert.assertTrue;
 
 /**

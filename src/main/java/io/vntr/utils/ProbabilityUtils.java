@@ -8,7 +8,7 @@ import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
 import java.util.*;
 
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.getUToMasterMap;
 import static java.util.Collections.nCopies;
 
 public class ProbabilityUtils

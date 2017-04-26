@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.getUToMasterMap;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**

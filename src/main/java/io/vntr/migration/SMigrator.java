@@ -4,7 +4,7 @@ import io.vntr.repartition.Target;
 
 import java.util.*;
 
-import static io.vntr.Utils.*;
+import static io.vntr.utils.Utils.*;
 import static java.util.Collections.singleton;
 
 /**

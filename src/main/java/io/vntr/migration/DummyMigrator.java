@@ -2,7 +2,7 @@ package io.vntr.migration;
 
 import java.util.*;
 
-import static io.vntr.Utils.getUserCounts;
+import static io.vntr.utils.Utils.getUserCounts;
 
 /**
  * Created by robertlindquist on 4/24/17.

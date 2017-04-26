@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.*;
+import static io.vntr.utils.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.befriend.HBefriender.*;
 import static org.junit.Assert.*;

@@ -1,10 +1,8 @@
 package io.vntr.repartition;
 
-import io.vntr.Utils;
-
 import java.util.*;
 
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.getUToMasterMap;
 
 /**
  * Created by robertlindquist on 4/21/17.

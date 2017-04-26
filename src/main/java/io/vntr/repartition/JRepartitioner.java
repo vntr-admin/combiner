@@ -2,7 +2,7 @@ package io.vntr.repartition;
 
 import java.util.*;
 
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.getUToMasterMap;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
