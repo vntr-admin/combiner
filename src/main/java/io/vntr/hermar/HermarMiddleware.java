@@ -46,7 +46,7 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
-        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getGamma(), getFriendships(), getPartitionToUserMap());
+        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), getFriendships(), getPartitionToUserMap());
 
         if(strategy == SMALL_TO_LARGE) {
             manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
