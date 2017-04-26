@@ -6,6 +6,7 @@ import io.vntr.utils.ProbabilityUtils;
 import java.util.*;
 
 import static io.vntr.TestUtils.*;
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static io.vntr.trace.TRACE_ACTION.*;
 import static io.vntr.utils.ProbabilityUtils.*;
 

@@ -591,7 +591,7 @@ public class TraceRunner {
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new HermarMiddleware(hermarManager, hermarManager.getGamma());
+        return new HermarMiddleware(hermarManager);
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {

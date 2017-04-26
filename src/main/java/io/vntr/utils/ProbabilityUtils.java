@@ -118,20 +118,6 @@ public class ProbabilityUtils
 		return returnSet;
 	}
 
-    public static Map<Integer, Set<Integer>> generateBidirectionalFriendshipSet(Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> bidirectionalFriendshipSet = new HashMap<>();
-        for(Integer uid : friendships.keySet()) {
-            bidirectionalFriendshipSet.put(uid, new HashSet<Integer>());
-        }
-        for(Integer uid1 : friendships.keySet()) {
-            for(Integer uid2 : friendships.get(uid1)) {
-                bidirectionalFriendshipSet.get(uid1).add(uid2);
-                bidirectionalFriendshipSet.get(uid2).add(uid1);
-            }
-        }
-        return bidirectionalFriendshipSet;
-    }
-
     //Take a LogNormal distribution with mean=12.08... and std. dev=0.4463... and sample (index) times at random, returning the largest of those samples.
     //Run this many, many times, average it out, and you get the following.
     private static final double[] LND_12_08441436510468D__0_44631395858726847 = {

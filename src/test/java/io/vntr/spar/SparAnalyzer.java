@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import static io.vntr.Analyzer.ACTIONS.*;
 import static io.vntr.TestUtils.*;
+import static io.vntr.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static org.junit.Assert.*;
 
@@ -132,7 +133,7 @@ public class SparAnalyzer {
                 return;
             }
 
-            Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(oldFriendships);
+            Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(oldFriendships);
 
             int curNumReplicas = minPidReplicas.size() + maxPidReplicas.size();
             int noChange = curNumReplicas + (maxPidReplicas.contains(minUid) ? 0 : 1) +  + (minPidReplicas.contains(maxUid) ? 0 : 1);
@@ -173,7 +174,7 @@ public class SparAnalyzer {
 
     private static int calcDeltaNumReplicasMove(int mover, int stayer, int sourcePid, int targetPid, Map<Integer, Set<Integer>> masters, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
         //Find replicas that need to be added
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         Set<Integer> friendsOfMoverInSource = new HashSet<>(bidirectionalFriendships.get(mover));
         friendsOfMoverInSource.retainAll(masters.get(sourcePid));
@@ -233,7 +234,7 @@ outer:  for(Iterator<Integer> iter = replicasInMovingPartitionToDelete.iterator(
             assertTrue(oldReplicas.get(minPid).contains(maxUid));
             assertTrue(oldReplicas.get(maxPid).contains(minUid));
 
-            Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(newFriendships);
+            Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(newFriendships);
 
             boolean minUidHasExtraReplicas = findKeysForUser(oldReplicas, minUid).size() > 2;
             boolean maxUidHasExtraReplicas = findKeysForUser(oldReplicas, maxUid).size() > 2;

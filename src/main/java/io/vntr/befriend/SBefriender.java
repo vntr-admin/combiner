@@ -1,12 +1,12 @@
 package io.vntr.befriend;
 
 import io.vntr.RepUser;
-import io.vntr.Utils;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static io.vntr.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 public class SBefriender {
@@ -16,8 +16,8 @@ public class SBefriender {
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
         //  3) the opposite of (3)
 
-        Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(replicas, friendships.keySet());
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         int stay      = calcNumReplicasStay(smallerUser, largerUser, replicas);
         int toLarger  = calcNumReplicasMove(smallerUser, largerUser, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, friendships);

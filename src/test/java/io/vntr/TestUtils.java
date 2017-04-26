@@ -5,7 +5,8 @@ package io.vntr;
  import java.io.File;
  import java.util.*;
 
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
+ import static io.vntr.Utils.getUToMasterMap;
+ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
  * Created by robertlindquist on 9/24/16.
@@ -70,7 +71,7 @@ public class TestUtils {
             replicaLocations.put(uid, new HashSet<Integer>());
         }
 
-        Map<Integer, Integer> uMap = Utils.getUToMasterMap(partitions);
+        Map<Integer, Integer> uMap = getUToMasterMap(partitions);
 
         //Step 1: add replicas for friends in different partitions
         for(Integer uid1 : friendships.keySet()) {

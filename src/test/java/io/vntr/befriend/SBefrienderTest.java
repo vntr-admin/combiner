@@ -11,7 +11,6 @@ import static io.vntr.TestUtils.initSet;
 import static io.vntr.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.befriend.SBefriender.*;
-import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.*;
 
 /**

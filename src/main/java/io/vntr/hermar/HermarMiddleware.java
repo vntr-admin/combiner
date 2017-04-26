@@ -2,24 +2,23 @@ package io.vntr.hermar;
 
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.User;
+import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
+import io.vntr.befriend.HBefriender;
 import io.vntr.migration.HMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-import static io.vntr.hermar.BEFRIEND_REBALANCE_STRATEGY.ONE_TO_TWO;
-import static io.vntr.hermar.BEFRIEND_REBALANCE_STRATEGY.TWO_TO_ONE;
+import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 /**
  * Created by robertlindquist on 9/19/16.
  */
 public class HermarMiddleware implements IMiddlewareAnalyzer {
     private HermarManager manager;
-    private HermarBefriendingStrategy befriendingStrategy;
 
-    public HermarMiddleware(HermarManager manager, float gamma) {
+    public HermarMiddleware(HermarManager manager) {
         this.manager = manager;
-        befriendingStrategy = new HermarBefriendingStrategy(manager);
     }
 
     @Override
@@ -47,12 +46,12 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
-        BEFRIEND_REBALANCE_STRATEGY strategy = befriendingStrategy.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser);
+        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getGamma(), getFriendships(), getPartitionToUserMap());
 
-        if(strategy == ONE_TO_TWO) {
+        if(strategy == SMALL_TO_LARGE) {
             manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
         }
-        else if(strategy == TWO_TO_ONE) {
+        else if(strategy == LARGE_TO_SMALL) {
             manager.moveUser(largerUserId, smallerUser.getBasePid(), false);
         }
     }

@@ -1,13 +1,12 @@
 package io.vntr.migration;
 
-import io.vntr.Utils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
+import static io.vntr.Utils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -128,7 +127,7 @@ public class SMigratorTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(partitions);
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
         Map<Integer, Map<Integer, Float>> expectedResults = new HashMap<>();
         for(int i : friendships.keySet()) {

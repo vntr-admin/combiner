@@ -66,4 +66,18 @@ public class Utils {
         }
         return map;
     }
+
+    public static Map<Integer, Set<Integer>> generateBidirectionalFriendshipSet(Map<Integer, Set<Integer>> friendships) {
+        Map<Integer, Set<Integer>> bidirectionalFriendshipSet = new HashMap<>();
+        for(Integer uid : friendships.keySet()) {
+            bidirectionalFriendshipSet.put(uid, new HashSet<Integer>());
+        }
+        for(Integer uid1 : friendships.keySet()) {
+            for(Integer uid2 : friendships.get(uid1)) {
+                bidirectionalFriendshipSet.get(uid1).add(uid2);
+                bidirectionalFriendshipSet.get(uid2).add(uid1);
+            }
+        }
+        return bidirectionalFriendshipSet;
+    }
 }

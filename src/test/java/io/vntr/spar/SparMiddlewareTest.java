@@ -233,7 +233,7 @@ public class SparMiddlewareTest {
         assertEquals(manager.getUserMasterById(18).getReplicaPids(), initSet(1, 2));
     }
 
-//    @Test TODO: reenable this
+    @Test
     public void testRemovePartition() {
         int minNumReplicas = 1;
         Map<Integer, Set<Integer>> partitions = new HashMap<>();

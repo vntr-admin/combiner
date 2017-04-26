@@ -3,7 +3,6 @@ package io.vntr.spj2;
 import io.vntr.IMiddlewareAnalyzer;
 import io.vntr.RepUser;
 import io.vntr.User;
-import io.vntr.Utils;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
 import io.vntr.migration.SMigrator;
@@ -11,6 +10,7 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
+import static io.vntr.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 public class SpJ2Middleware implements IMiddlewareAnalyzer {
@@ -72,8 +72,8 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         } else {
             RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(manager.getPartitionToUserMap());
-            Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
+            Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
 
             Set<Integer> replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, uidToPidMap, uidToReplicasMap);
             Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, manager.getMinNumReplicas(), uidToReplicasMap, uidToPidMap, manager.getFriendships());
@@ -92,7 +92,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         RepUser largerUser = manager.getUserMasterById(largerUserId);
 
         if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
-            Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(manager.getPartitionToUserMap());
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
             Map<Integer, Set<Integer>> friendships = manager.getFriendships();
             boolean smallerReplicaWasOnlyThereForLarger = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser, uidToPidMap, friendships).contains(smallerUserId);
             boolean largerReplicaWasOnlyThereForSmaller = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser, uidToPidMap, friendships).contains(largerUserId);
@@ -248,7 +248,7 @@ public class SpJ2Middleware implements IMiddlewareAnalyzer {
         for(Integer uid : friendships.keySet()) {
             numFriendships += friendships.get(uid).size();
         }
-        return numFriendships / 2; //TODO: make sure this is correct
+        return numFriendships / 2;
     }
 
     @Override

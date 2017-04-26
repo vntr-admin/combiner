@@ -101,7 +101,6 @@ public class HermesManagerTest {
 
     @Test
     public void testRepartitionInDepth() {
-        //TODO: this occasionally doesn't terminate
 //        for(int i=0; i<10000; i++) {
 //            System.out.println("Outer loop " + i);
             int numUsers = 1000;

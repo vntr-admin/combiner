@@ -1,19 +1,17 @@
 package io.vntr.repartition;
 
-import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.Utils.getUToMasterMap;
+import static io.vntr.Utils.*;
 import static org.junit.Assert.*;
 
 /**
  * Created by robertlindquist on 4/24/17.
  */
 public class JRepartitionerTest {
-    //TODO: do this
 
     @Test
     public void testFindPartner() {
@@ -184,7 +182,7 @@ public class JRepartitionerTest {
     }
 
     private static JRepartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        JRepartitioner.State state = new JRepartitioner.State(alpha, initialT, deltaT, k, ProbabilityUtils.generateBidirectionalFriendshipSet(friendships));
+        JRepartitioner.State state = new JRepartitioner.State(alpha, initialT, deltaT, k, generateBidirectionalFriendshipSet(friendships));
         state.setLogicalPids(getUToMasterMap(partitions));
         return state;
     }

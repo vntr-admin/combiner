@@ -1,7 +1,6 @@
 package io.vntr.j2ar;
 
 import io.vntr.User;
-import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -10,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -33,7 +33,7 @@ public class J2ArInitUtilsTest {
             }
         }
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
 

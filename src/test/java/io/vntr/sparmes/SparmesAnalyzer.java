@@ -9,6 +9,7 @@ import java.util.*;
 
 import static io.vntr.Analyzer.ACTIONS.*;
 import static io.vntr.TestUtils.*;
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.befriend.SBefriender.determineStrategy;
 import static org.junit.Assert.*;
@@ -279,7 +280,7 @@ public class SparmesAnalyzer {
     }
 
     private static int calcDeltaNumReplicasMove(int mover, int stayer, int sourcePid, int targetPid, Map<Integer, Set<Integer>> masters, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         //TODO: this is just copied from SpajaAnalyzer
         Set<Integer> friendsOfMoverInSource = new HashSet<>(bidirectionalFriendships.get(mover));
@@ -462,7 +463,7 @@ public class SparmesAnalyzer {
             assertTrue(oldReplicas.get(minPid).contains(maxUid));
             assertTrue(oldReplicas.get(maxPid).contains(minUid));
 
-            Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(newFriendships);
+            Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(newFriendships);
 
             boolean minUidHasExtraReplicas = findKeysForUser(oldReplicas, minUid).size() > 2;
             boolean maxUidHasExtraReplicas = findKeysForUser(oldReplicas, maxUid).size() > 2;

@@ -112,7 +112,7 @@ public class HMigratorTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
         Set<Target> p1Targets = HMigrator.getPreferredTargets(1, uidToPidMap, partitions, bidirectionalFriendships);

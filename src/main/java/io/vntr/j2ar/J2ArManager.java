@@ -2,6 +2,7 @@ package io.vntr.j2ar;
 
 import io.vntr.INoRepManager;
 import io.vntr.User;
+import io.vntr.befriend.JBefriender;
 import io.vntr.repartition.JRepartitioner;
 import io.vntr.repartition.Results;
 
@@ -25,7 +26,7 @@ public class J2ArManager implements INoRepManager {
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> partitions;
 
-    private J2ArBefriendingStrategy befriendingStrategy;
+//    private J2ArBefriendingStrategy befriendingStrategy;
 
     private int nextPid = 1;
     private int nextUid = 1;
@@ -36,7 +37,7 @@ public class J2ArManager implements INoRepManager {
         this.deltaT = deltaT;
         this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
-        befriendingStrategy = new J2ArBefriendingStrategy(alpha, k, this);
+//        befriendingStrategy = new J2ArBefriendingStrategy(alpha, k, this);
         uMap = new HashMap<>();
         partitions = new HashMap<>();
     }
@@ -254,7 +255,16 @@ public class J2ArManager implements INoRepManager {
     }
 
     void rebalance(Integer smallerUserId, Integer largerUserId) {
-        befriendingStrategy.rebalance(smallerUserId, largerUserId);
+        JBefriender.Result result = JBefriender.rebalance(smallerUserId, largerUserId, k, alpha, getFriendships(), getPartitionToUsers());
+        Integer uid1 = result.getUid1();
+        Integer uid2 = result.getUid2();
+        if(uid1 != null && uid2 != null) {
+            int pid1 = getPidForUser(uid1);
+            int pid2 = getPidForUser(uid2);
+            moveUser(uid1, pid2, false);
+            moveUser(uid2, pid1, false);
+        }
+//        befriendingStrategy.rebalance(smallerUserId, largerUserId);
     }
 
     @Override

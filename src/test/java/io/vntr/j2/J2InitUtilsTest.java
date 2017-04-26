@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -33,7 +34,7 @@ public class J2InitUtilsTest {
             }
         }
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
 

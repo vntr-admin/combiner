@@ -38,7 +38,7 @@ public class HRepartitionerTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
@@ -91,7 +91,7 @@ public class HRepartitionerTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
@@ -143,7 +143,7 @@ public class HRepartitionerTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
@@ -175,7 +175,7 @@ public class HRepartitionerTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 

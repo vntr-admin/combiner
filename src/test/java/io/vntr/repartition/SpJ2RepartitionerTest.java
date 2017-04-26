@@ -9,7 +9,6 @@ import java.util.*;
 import static io.vntr.Utils.*;
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.repartition.SpJ2Repartitioner.*;
-import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

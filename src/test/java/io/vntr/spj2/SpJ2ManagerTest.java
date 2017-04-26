@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -50,7 +51,7 @@ public class SpJ2ManagerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         Integer newUid = manager.addUser();
         RepUser newUser = manager.getUserMasterById(newUid);
@@ -125,7 +126,7 @@ public class SpJ2ManagerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         Integer uidToRemove = 6;
 
@@ -191,7 +192,7 @@ public class SpJ2ManagerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         Integer newFriendId1 = 6;
         Integer newFriendId2 = 13;
@@ -251,7 +252,7 @@ public class SpJ2ManagerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         Integer unfriendId1 = 2;
         Integer unfriendId2 = 6;
@@ -312,7 +313,7 @@ public class SpJ2ManagerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(manager.getPids(), partitions.keySet());
 
@@ -573,7 +574,7 @@ public class SpJ2ManagerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(minNumReplicas, alpha, initialT, deltaT, k, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(manager.getPartitionToReplicasMap(), replicas);
 

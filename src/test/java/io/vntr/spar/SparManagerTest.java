@@ -5,11 +5,11 @@ import io.vntr.User;
 
 import java.util.*;
 
-import io.vntr.Utils;
 import io.vntr.befriend.SBefriender;
 import org.junit.Test;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.Utils.*;
 import static org.junit.Assert.*;
 
 public class SparManagerTest {
@@ -429,8 +429,8 @@ public class SparManagerTest {
 
 //        SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 //        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<>(strategy.findReplicasInMovingPartitionToDelete(repUser1, replicasToAddInDestinationPartition));
-        Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(manager.getPartitionToUserMap());
-        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
         Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(repUser1, replicasToAddInDestinationPartition, minNumReplicas, uidToReplicasMap, uidToPidMap, manager.getFriendships());
         manager.moveUser(repUser1, newPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
 
@@ -688,11 +688,6 @@ public class SparManagerTest {
         Set<Integer> initialReplicaLocations = manager.getPartitionsToAddInitialReplicas(thirdPartitionId);
 
         assertFalse(initialReplicaLocations.contains(thirdPartitionId));
-    }
-
-    @Test
-    public void testExport() {
-        //TODO: do this
     }
 
     @Test

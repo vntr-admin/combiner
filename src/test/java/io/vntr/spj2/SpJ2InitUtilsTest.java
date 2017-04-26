@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -44,7 +45,7 @@ public class SpJ2InitUtilsTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         SpJ2Manager manager = SpJ2InitUtils.initGraph(1, 1, 2, 0.5f, 7, 0, partitions, friendships, replicas);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = ProbabilityUtils.generateBidirectionalFriendshipSet(friendships);
+        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(partitions, manager.getPartitionToUserMap());
         assertEquals(bidirectionalFriendships, manager.getFriendships());

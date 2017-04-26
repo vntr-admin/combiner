@@ -5,6 +5,7 @@ import org.apache.commons.math3.distribution.GeometricDistribution;
 
 import java.util.*;
 
+import static io.vntr.Utils.generateBidirectionalFriendshipSet;
 import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 
@@ -23,7 +24,7 @@ public class ForestFireGenerator {
         v = friendships.lastKey() + 1;
         this.friendships = friendships;
         this.friendships.put(v, new HashSet<Integer>());
-        bidirectionalFriendshipSet = ProbabilityUtils.generateBidirectionalFriendshipSet(this.friendships);
+        bidirectionalFriendshipSet = generateBidirectionalFriendshipSet(this.friendships);
         visited = new HashSet<>();
         geoDistX = new GeometricDistribution(forward / (1-forward));
         geoDistY = new GeometricDistribution(forward*backward / (1-(forward*backward)));

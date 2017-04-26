@@ -1,12 +1,11 @@
 package io.vntr.repartition;
 
-import io.vntr.Utils;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.ProbabilityUtils.generateBidirectionalFriendshipSet;
+import static io.vntr.Utils.*;
 import static java.util.Collections.disjoint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -55,7 +54,6 @@ public class SparmesRepartitionerTest {
 
         targets = SparmesRepartitioner.getPartitionCandidates(2, false, 3, state);
         assertEquals(targets, initSet(new Target(6, 1, 2, 1f), new Target(8, 1, 2, 1f), new Target(9, 1, 2, 1f)));
-        //TODO: do this
     }
 
     @Test
@@ -89,7 +87,7 @@ public class SparmesRepartitionerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(replicas, friendships.keySet());
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
@@ -128,7 +126,7 @@ public class SparmesRepartitionerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(replicas, friendships.keySet());
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
@@ -190,8 +188,8 @@ public class SparmesRepartitionerTest {
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = Utils.getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uidToReplicasMap = Utils.getUToReplicasMap(replicas, friendships.keySet());
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
