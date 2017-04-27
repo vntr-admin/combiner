@@ -64,7 +64,7 @@ public class HBefriender {
     }
 
     static int calcEdgeCutStay(int uid1, int uid2, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Integer> uidToPidMap) {
-        return getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(uid1, uid2, friendships, partitions, uidToPidMap);
+        return getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(uidToPidMap.get(uid1), uidToPidMap.get(uid2), friendships, partitions, uidToPidMap);
     }
 
     static int calcEdgeCutMove(int movingUserId, int stayingUserId, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Integer> uidToPidMap) {
