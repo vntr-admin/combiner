@@ -33,18 +33,6 @@ public class TraceAction {
     private int val1 = -1;
     private int val2 = -1;
 
-    public TraceAction() {
-    }
-
-    public TraceAction(ACTION action) {
-        this.action = action;
-    }
-
-    public TraceAction(ACTION action, int val1) {
-        this.action = action;
-        this.val1 = val1;
-    }
-
     public TraceAction(ACTION action, int val1, int val2) {
         this.action = action;
         this.val1 = val1;

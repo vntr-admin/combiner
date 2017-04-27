@@ -1,19 +1,11 @@
 package io.vntr.trace;
 
-import io.vntr.middleware.IMiddleware;
-import io.vntr.middleware.IMiddlewareAnalyzer;
+import io.vntr.middleware.*;
 import io.vntr.User;
-import io.vntr.middleware.HermarMiddleware;
-import io.vntr.middleware.HermesMiddleware;
 import io.vntr.manager.NoRepManager;
-import io.vntr.middleware.JabejaMiddleware;
-import io.vntr.middleware.JabarMiddleware;
+import io.vntr.migration.DummyMigrator;
 import io.vntr.utils.InitUtils;
-import io.vntr.middleware.MetisMiddleware;
 import io.vntr.manager.RepManager;
-import io.vntr.middleware.SparMiddleware;
-import io.vntr.middleware.SparmesMiddleware;
-import io.vntr.middleware.SpajaMiddleware;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,17 +22,18 @@ public class TraceRunner {
     public static final String HERMAR_TYPE = "HERMAR";
     public static final String SPARMES_TYPE = "SPARMES";
     public static final String METIS_TYPE = "METIS";
-    public static final String J2_TYPE = "J2";
-    public static final String J2AR_TYPE = "J2AR";
-    public static final String SPJ2_TYPE = "SPJ2";
-
+    public static final String JABEJA_TYPE = "JABEJA";
+    public static final String JABAR_TYPE = "JABAR";
+    public static final String SPAJA_TYPE = "SPAJA";
+    public static final String DUMMY_TYPE = "DUMMY";
+    public static final String RDUMMY_TYPE = "RDUMMY";
 
     public static final long MILLION = 1000000;
     public static final long BILLION = 1000000000;
 
     private static final String CONFIG_FILE = "config.properties";
 
-    private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPARMES_TYPE, METIS_TYPE, J2_TYPE, J2AR_TYPE, SPJ2_TYPE));
+    private static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPARMES_TYPE, METIS_TYPE, JABEJA_TYPE, JABAR_TYPE, SPAJA_TYPE, DUMMY_TYPE, RDUMMY_TYPE));
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private static final SimpleDateFormat filenameSdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -94,14 +87,16 @@ public class TraceRunner {
 
     static IMiddlewareAnalyzer initMiddleware(ParsedArgs parsedArgs, Trace trace, Properties props) {
         switch (parsedArgs.getType()) {
-            case HERMES_TYPE:  return initHermesMiddleware (trace, parsedArgs, props);
-            case HERMAR_TYPE:  return initHermarMiddleware (trace, parsedArgs, props);
-            case SPAR_TYPE:    return initSparMiddleware   (trace, parsedArgs, props);
-            case SPARMES_TYPE: return initSparmesMiddleware(trace, parsedArgs, props);
-            case METIS_TYPE:   return initMetisMiddleware  (trace, parsedArgs, props);
-            case J2_TYPE:      return initJ2Middleware     (trace, parsedArgs, props);
-            case J2AR_TYPE:    return initJ2ArMiddleware   (trace, parsedArgs, props);
-            case SPJ2_TYPE:    return initSpJ2Middleware   (trace, parsedArgs, props);
+            case HERMES_TYPE:  return initHermesMiddleware         (trace, parsedArgs, props);
+            case HERMAR_TYPE:  return initHermarMiddleware         (trace, parsedArgs, props);
+            case SPAR_TYPE:    return initSparMiddleware           (trace, parsedArgs, props);
+            case SPARMES_TYPE: return initSparmesMiddleware        (trace, parsedArgs, props);
+            case METIS_TYPE:   return initMetisMiddleware          (trace, parsedArgs, props);
+            case JABEJA_TYPE:  return initJ2Middleware             (trace, parsedArgs, props);
+            case JABAR_TYPE:   return initJ2ArMiddleware           (trace, parsedArgs, props);
+            case SPAJA_TYPE:   return initSpJ2Middleware           (trace, parsedArgs, props);
+            case DUMMY_TYPE:   return initDummyMiddleware          (trace, parsedArgs, props);
+            case RDUMMY_TYPE:  return initReplicaDummyMiddleware   (trace, parsedArgs, props);
             default: throw new RuntimeException("args[1] must be one of " + allowedTypes);
         }
     }
@@ -154,6 +149,7 @@ public class TraceRunner {
         private Integer hermesK = 3;
         private Integer minNumReplicas = 0;
         private Integer numRestarts = 10;
+        private Integer maxIterations = 100;
         private double assortivityCheckProbability = 1;
         private double latencyCheckProbability = 1;
         private double validityCheckProbability = 0;
@@ -163,11 +159,11 @@ public class TraceRunner {
         public ParsedArgs(String type) {
             this.type = type;
             switch(type) {
-                case J2_TYPE:      alpha = 3f;    deltaT = 0.025f; numRestarts = 10; break;
-                case J2AR_TYPE:    alpha = 3f;    deltaT = 0.025f; numRestarts = 1;  break;
+                case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; numRestarts = 10; break;
+                case JABAR_TYPE:   alpha = 3f;    deltaT = 0.025f; numRestarts = 1;  break;
                 case HERMES_TYPE:  gamma = 1.15f;                                    break;
                 case HERMAR_TYPE:  gamma = 1.15f;                                    break;
-                case SPJ2_TYPE:    alpha = 1f;    deltaT = 0.5f;                     break;
+                case SPAJA_TYPE:   alpha = 1f;    deltaT = 0.5f;                     break;
                 case SPARMES_TYPE: gamma = 1.01f;                                    break;
             }
         }
@@ -240,14 +236,6 @@ public class TraceRunner {
             this.gamma = gamma;
         }
 
-        public Float getIterationCutoffRatio() {
-            return iterationCutoffRatio;
-        }
-
-        public void setIterationCutoffRatio(Float iterationCutoffRatio) {
-            this.iterationCutoffRatio = iterationCutoffRatio;
-        }
-
         public Integer getHermesK() {
             return hermesK;
         }
@@ -270,6 +258,14 @@ public class TraceRunner {
 
         public void setNumRestarts(Integer numRestarts) {
             this.numRestarts = numRestarts;
+        }
+
+        public Integer getMaxIterations() {
+            return maxIterations;
+        }
+
+        public void setMaxIterations(Integer maxIterations) {
+            this.maxIterations = maxIterations;
         }
 
         public double getAssortivityCheckProbability() {
@@ -312,10 +308,8 @@ public class TraceRunner {
         public static final String DELTA_T_FLAG = "-deltaT";
         public static final String NEIGHBORHOOD_FLAG = "-nbhd";
         public static final String MAX_MOVES_FLAG = "-maxMove";
-        public static final String CUTOFF_FLAG = "-cutoff";
-        public static final String INITIAL_T_BEFRIEND_FLAG = "-initTfriend";
+        public static final String ITERATIONS_FLAG = "-maxIter";
         public static final String NUM_RESTARTS_FLAG = "-restarts";
-        public static final String DELTA_T_BEFRIEND_FLAG = "-rest";
         public static final String ASSORTIVITY_FLAG = "-assortivity";
         public static final String LATENCY_FLAG = "-delay";
         public static final String VALIDITY_FLAG = "-validity";
@@ -333,12 +327,12 @@ public class TraceRunner {
                 case DELTA_T_FLAG:             setDeltaT((float) parsed);               break;
                 case NEIGHBORHOOD_FLAG:        setJaK((int) parsed);                    break;
                 case MAX_MOVES_FLAG:           setHermesK((int) parsed);                break;
-                case CUTOFF_FLAG:              setIterationCutoffRatio((float) parsed); break;
                 case NUM_RESTARTS_FLAG:        setNumRestarts((int) parsed);            break;
                 case ASSORTIVITY_FLAG:         setAssortivityCheckProbability(parsed);  break;
                 case LATENCY_FLAG:             setLatencyCheckProbability(parsed);      break;
                 case VALIDITY_FLAG:            setValidityCheckProbability(parsed);     break;
                 case LOGICAL_FLAG:             setLogicalMigrationRatio(parsed);        break;
+                case ITERATIONS_FLAG:          setMaxIterations((int) parsed);          break;
                 default: throw new RuntimeException(flag + " is not a valid flag");
             }
         }
@@ -351,24 +345,22 @@ public class TraceRunner {
             builder.append(inputFile).append(' ').append(type)
                     .append(" assortivity=").append(assortivityCheckProbability)
                     .append(" latency=").append(latencyCheckProbability)
-                    .append(" validity=").append(validityCheckProbability);
+                    .append(" validity=").append(validityCheckProbability)
+                    .append(" logicalRatio=").append(logicalMigrationRatio);
 
             if(numActions != null) {
                 builder.append(" numActions=").append(numActions);
             }
 
             //type-specific args
-            if(SPAR_TYPE.equals(type) || SPARMES_TYPE.equals(type) || SPJ2_TYPE.equals(type)) {
+            if(SPAR_TYPE.equals(type) || SPARMES_TYPE.equals(type) || SPAJA_TYPE.equals(type) || RDUMMY_TYPE.equals(type)) {
                 builder.append(" minReplicas=").append(minNumReplicas);
             }
-            if(J2_TYPE.equals(type) || J2AR_TYPE.equals(type) || SPJ2_TYPE.equals(type)) {
+            if(JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type) || SPAJA_TYPE.equals(type)) {
                 builder.append(" alpha=").append(alpha).append(" initialT=").append(initialT).append(" deltaT=").append(deltaT).append(" k=").append(jaK);
             }
             if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
                 builder.append(" gamma=").append(gamma);
-            }
-            if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type) || J2_TYPE.equals(type) || J2AR_TYPE.equals(type) || SPJ2_TYPE.equals(type)) {
-                builder.append(" logicalRatio=").append(logicalMigrationRatio);
             }
             if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type)) {
                 builder.append(" k=").append(hermesK).append(" cutoff=").append(iterationCutoffRatio);
@@ -498,9 +490,7 @@ public class TraceRunner {
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        int maxIterations = 100;  //TODO: handle this
-
-        return new HermesMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), maxIterations, hManager);
+        return new HermesMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), parsedArgs.getMaxIterations(), hManager);
     }
 
     static HermarMiddleware initHermarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
@@ -511,9 +501,7 @@ public class TraceRunner {
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        int maxIterations = 100;  //TODO: handle this
-
-        return new HermarMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), maxIterations, hManager);
+        return new HermarMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), parsedArgs.getMaxIterations(), hManager);
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
@@ -558,6 +546,16 @@ public class TraceRunner {
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
         NoRepManager manager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
         return new MetisMiddleware(gpmetisLocation, gpmetisTempdir, manager);
+    }
+
+    static DummyMiddleware initDummyMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
+        NoRepManager manager = new NoRepManager(parsedArgs.getLogicalMigrationRatio(), false);
+        return new DummyMiddleware(manager);
+    }
+
+    static ReplicaDummyMiddleware initReplicaDummyMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
+        RepManager manager = new RepManager(parsedArgs.getMinNumReplicas(), parsedArgs.getLogicalMigrationRatio());
+        return new ReplicaDummyMiddleware(manager);
     }
 
     private static final String HEADER = "No       Type     Date                 Action          Ps   Nodes  Edges    Assort.  EdgeCut  Replicas  Moves     Delay";

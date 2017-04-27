@@ -16,18 +16,6 @@ public class Trace {
     public Trace() {
     }
 
-    public Trace(Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
-        this.partitions = partitions;
-        this.replicas = replicas;
-    }
-
-    public Trace(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, List<TraceAction> actions) {
-        this.friendships = friendships;
-        this.partitions = partitions;
-        this.actions = actions;
-        this.replicas = replicas;
-    }
-
     public Map<Integer, Set<Integer>> getFriendships() {
         return friendships;
     }
