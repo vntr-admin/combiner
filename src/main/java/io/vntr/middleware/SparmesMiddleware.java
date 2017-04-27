@@ -1,7 +1,6 @@
 package io.vntr.middleware;
 
 import io.vntr.RepUser;
-import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
 import io.vntr.migration.SMigrator;
@@ -24,7 +23,6 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
     private int minNumReplicas;
     private float gamma;
     private int k;
-    private RepManager manager;
 
     public SparmesMiddleware(int minNumReplicas, float gamma, int k, RepManager manager) {
         super(manager);
@@ -35,8 +33,8 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
 
     @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = manager.getUserMaster(smallerUserId);
-        RepUser largerUser = manager.getUserMaster(largerUserId);
+        RepUser smallerUser = getManager().getUserMaster(smallerUserId);
+        RepUser largerUser = getManager().getUserMaster(largerUserId);
 
         Integer smallerUserPid = smallerUser.getBasePid();
         Integer largerUserPid  = largerUser.getBasePid();
@@ -44,59 +42,59 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
         if(!colocatedMasters && !colocatedReplicas){
-            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, manager.getMinNumReplicas(), manager.getFriendships(), manager.getPartitionToUserMap(), manager.getPartitionToReplicasMap());
+            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getManager().getMinNumReplicas(), getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
             performRebalace(strategy, smallerUserId, largerUserId);
         }
 
-        manager.befriend(smallerUser, largerUser);
+        getManager().befriend(smallerUser, largerUser);
     }
 
     void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
-        RepUser smallerUser = manager.getUserMaster(smallUid);
-        RepUser largerUser = manager.getUserMaster(largeUid);
+        RepUser smallerUser = getManager().getUserMaster(smallUid);
+        RepUser largerUser = getManager().getUserMaster(largeUid);
         Integer smallerUserPid = smallerUser.getBasePid();
         Integer largerUserPid = largerUser.getBasePid();
 
         if (strategy == NO_CHANGE) {
             if (!smallerUser.getReplicaPids().contains(largerUserPid)) {
-                manager.addReplica(smallerUser, largerUserPid);
+                getManager().addReplica(smallerUser, largerUserPid);
             }
             if (!largerUser.getReplicaPids().contains(smallerUserPid)) {
-                manager.addReplica(largerUser, smallerUserPid);
+                getManager().addReplica(largerUser, smallerUserPid);
             }
         } else {
             RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
-            Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
+            Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), getManager().getUids());
 
             Set<Integer> replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, uidToPidMap, uidToReplicasMap);
-            Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, manager.getMinNumReplicas(), uidToReplicasMap, uidToPidMap, manager.getFriendships());
-            manager.moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
-            manager.increaseTally(1);
+            Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, getManager().getMinNumReplicas(), uidToReplicasMap, uidToPidMap, getManager().getFriendships());
+            getManager().moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
+            getManager().increaseTally(1);
         }
     }
 
     @Override
     public void unfriend(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = manager.getUserMaster(smallerUserId);
-        RepUser largerUser = manager.getUserMaster(largerUserId);
+        RepUser smallerUser = getManager().getUserMaster(smallerUserId);
+        RepUser largerUser = getManager().getUserMaster(largerUserId);
 
         if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
-            Map<Integer, Set<Integer>> friendships = manager.getFriendships();
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
+            Map<Integer, Set<Integer>> friendships = getManager().getFriendships();
             boolean smallerReplicaWasOnlyThereForLarger = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser, uidToPidMap, friendships).contains(smallerUserId);
             boolean largerReplicaWasOnlyThereForSmaller = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser, uidToPidMap, friendships).contains(largerUserId);
 
-            if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(smallerUser, largerUser.getBasePid());
+            if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > getManager().getMinNumReplicas()) {
+                getManager().removeReplica(smallerUser, largerUser.getBasePid());
             }
-            if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPids().size() > manager.getMinNumReplicas()) {
-                manager.removeReplica(largerUser, smallerUser.getBasePid());
+            if (largerReplicaWasOnlyThereForSmaller && largerUser.getReplicaPids().size() > getManager().getMinNumReplicas()) {
+                getManager().removeReplica(largerUser, smallerUser.getBasePid());
             }
         }
 
-        manager.unfriend(smallerUser, largerUser);
+        getManager().unfriend(smallerUser, largerUser);
     }
 
     @Override
@@ -105,38 +103,38 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
         Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, manager.getFriendships(), manager.getPartitionToUserMap(), manager.getPartitionToReplicasMap());
+        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
-            RepUser user = manager.getUserMaster(userId);
+            RepUser user = getManager().getUserMaster(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPids().contains(newPartitionId)) {
-                if(manager.getMinNumReplicas() > 0) {
+                if(getManager().getMinNumReplicas() > 0) {
                     throw new RuntimeException("This should never happen with minNumReplicas > 0!");
                 }
-                manager.addReplica(user, newPartitionId);
+                getManager().addReplica(user, newPartitionId);
             }
-            manager.promoteReplicaToMaster(userId, newPartitionId);
+            getManager().promoteReplicaToMaster(userId, newPartitionId);
         }
 
         Set<Integer> usersToReplicate = getUsersToReplicate(affectedUsers, partitionId);
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
-            RepUser user = manager.getUserMaster(userId);
-            manager.addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
+            RepUser user = getManager().getUserMaster(userId);
+            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
         }
 
         //TODO: ensure this is correct
         //Fifth, remove references to replicas formerly on this partition
 
-        for(Integer uid : manager.getReplicasOnPartition(partitionId)) {
-            RepUser user = manager.getUserMaster(uid);
+        for(Integer uid : getManager().getReplicasOnPartition(partitionId)) {
+            RepUser user = getManager().getUserMaster(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-                manager.getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
+                getManager().getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds
@@ -144,12 +142,12 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
         }
 
         //Finally, actually drop partition
-        manager.removePartition(partitionId);
+        getManager().removePartition(partitionId);
     }
 
     Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
         Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
-        int minReplicas = manager.getMinNumReplicas();
+        int minReplicas = getManager().getMinNumReplicas();
         Set<Integer> usersToReplicate = new HashSet<>();
         for(Integer uid : uids) {
             if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
@@ -163,7 +161,7 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
         Map<Integer, Integer> counts = new HashMap<>();
         for(Integer uid : uids) {
             int count = 0;
-            RepUser user = manager.getUserMaster(uid);
+            RepUser user = getManager().getUserMaster(uid);
             count += user.getBasePid().equals(pid) ? 0 : 1;
             Set<Integer> replicas = user.getReplicaPids();
             int numReplicas = replicas.size();
@@ -174,19 +172,19 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
     }
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
-        Set<Integer> possibilities = new HashSet<>(manager.getMastersOnPartition(partitionIdToBeRemoved));
-        possibilities.addAll(manager.getReplicasOnPartition(partitionIdToBeRemoved));
+        Set<Integer> possibilities = new HashSet<>(getManager().getMastersOnPartition(partitionIdToBeRemoved));
+        possibilities.addAll(getManager().getReplicasOnPartition(partitionIdToBeRemoved));
         return possibilities;
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        Set<Integer> possibilities = new HashSet<>(manager.getMastersOnPartition(partitionIdToBeRemoved));
-        possibilities.addAll(manager.getReplicasOnPartition(partitionIdToBeRemoved));
+        Set<Integer> possibilities = new HashSet<>(getManager().getMastersOnPartition(partitionIdToBeRemoved));
+        possibilities.addAll(getManager().getReplicasOnPartition(partitionIdToBeRemoved));
 
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
         for (Integer userId : possibilities) {
-            RepUser user = manager.getUserMaster(userId);
-            if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
+            RepUser user = getManager().getUserMaster(userId);
+            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
@@ -197,7 +195,7 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
 
     @Override
     public Long getMigrationTally() {
-        return manager.getMigrationTally();
+        return getManager().getMigrationTally();
     }
 
     @Override
@@ -206,23 +204,23 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
     }
 
     public void repartition() {
-        RepResults repResults = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), manager.getPartitionToReplicasMap(), getFriendships());
-        manager.increaseTallyLogical(repResults.getNumLogicalMoves());
+        RepResults repResults = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), getFriendships());
+        getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults);
     }
 
     void physicallyMigrate(RepResults repResults) {
         Map<Integer, Integer> currentUidToPidMap = getUToMasterMap(getPartitionToUserMap());
-        Map<Integer, Set<Integer>> currentUidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
+        Map<Integer, Set<Integer>> currentUidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), getManager().getUids());
 
-        for(int uid : manager.getUids()) {
+        for(int uid : getManager().getUids()) {
             int currentPid = currentUidToPidMap.get(uid);
             int newPid = repResults.getUidToPidMap().get(uid);
 
             //move master
             if(currentPid != newPid) {
-                manager.moveMasterAndInformReplicas(uid, currentPid, newPid);
-                manager.increaseTally(1);
+                getManager().moveMasterAndInformReplicas(uid, currentPid, newPid);
+                getManager().increaseTally(1);
             }
 
             //add and remove replicas as specified in the repResults
@@ -231,41 +229,41 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
             if(!currentReplicas.equals(newReplicas)) {
                 for(int newReplica : newReplicas) {
                     if(!currentReplicas.contains(newReplica)) {
-                        manager.addReplica(manager.getUserMaster(uid), newReplica);
+                        getManager().addReplica(getManager().getUserMaster(uid), newReplica);
                     }
                 }
                 for(int oldReplica : currentReplicas) {
                     if(!newReplicas.contains(oldReplica)) {
-                        manager.removeReplica(manager.getUserMaster(uid), oldReplica);
+                        getManager().removeReplica(getManager().getUserMaster(uid), oldReplica);
                     }
                 }
             }
         }
 
         //shore up friend replicas (ideally would be unnecessary)
-        for(int uid : manager.getUids()) {
+        for(int uid : getManager().getUids()) {
             shoreUpFriendReplicas(uid);
         }
 
         //ensure k replication
-        for(int uid : manager.getUids()) {
+        for(int uid : getManager().getUids()) {
             ensureKReplication(uid);
         }
     }
 
     void shoreUpFriendReplicas(int uid) {
-        RepUser user = manager.getUserMaster(uid);
+        RepUser user = getManager().getUserMaster(uid);
         int pid = user.getBasePid();
         Set<Integer> friends = new HashSet<>(user.getFriendIDs());
-        friends.removeAll(manager.getMastersOnPartition(pid));
-        friends.removeAll(manager.getReplicasOnPartition(pid));
+        friends.removeAll(getManager().getMastersOnPartition(pid));
+        friends.removeAll(getManager().getReplicasOnPartition(pid));
         for(int friendId : friends) {
-            manager.addReplica(manager.getUserMaster(friendId), pid);
+            getManager().addReplica(getManager().getUserMaster(friendId), pid);
         }
     }
 
     void ensureKReplication(int uid) {
-        RepUser user = manager.getUserMaster(uid);
+        RepUser user = getManager().getUserMaster(uid);
         Set<Integer> replicaLocations = user.getReplicaPids();
         int deficit = minNumReplicas - replicaLocations.size();
         if(deficit > 0) {
@@ -273,7 +271,7 @@ public class SparmesMiddleware extends AbstractRepMiddleware {
             newLocations.removeAll(replicaLocations);
             newLocations.remove(user.getBasePid());
             for(int rPid : ProbabilityUtils.getKDistinctValuesFromList(deficit, newLocations)) {
-                manager.addReplica(user, rPid);
+                getManager().addReplica(user, rPid);
             }
         }
     }

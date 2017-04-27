@@ -2,9 +2,11 @@ package io.vntr.middleware;
 
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
-import io.vntr.migration.DummyMigrator;
 
 import java.util.*;
+
+import static io.vntr.migration.DummyMigrator.getUserMigrationStrategy;
+import static io.vntr.utils.Utils.getUToReplicasMap;
 
 /**
  * Created by robertlindquist on 11/23/16.
@@ -20,6 +22,17 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         RepUser smallerUser = getManager().getUserMaster(smallerUserId);
         RepUser largerUser = getManager().getUserMaster(largerUserId);
         getManager().befriend(smallerUser, largerUser);
+
+        int smallerPid = smallerUser.getBasePid();
+        int largerPid = largerUser.getBasePid();
+        if(smallerPid != largerPid) {
+            if(!getManager().getReplicasOnPartition(largerPid).contains(smallerUserId)) {
+                getManager().addReplica(smallerUser, largerPid);
+            }
+            if(!getManager().getReplicasOnPartition(smallerPid).contains(largerUserId)) {
+                getManager().addReplica(largerUser, smallerPid);
+            }
+        }
     }
 
     @Override
@@ -35,7 +48,8 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
         
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = DummyMigrator.getUserMigrationStrategy(partitionId, getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicaMap(), getFriendships().keySet());
+        Map<Integer, Integer> migrationStrategy = getUserMigrationStrategy(partitionId, getManager().getPartitionToUserMap(), uidToReplicasMap);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
