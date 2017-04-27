@@ -315,9 +315,6 @@ public class SpajaRepartitioner {
     static class State {
         private final int minNumReplicas;
         private final float alpha;
-        private final float initialT;
-        private final float deltaT;
-        private final int k;
         private final Map<Integer, Set<Integer>> friendships;
 
         private Map<Integer, Integer> logicalPids;
@@ -327,9 +324,6 @@ public class SpajaRepartitioner {
         public State(int minNumReplicas, float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships) {
             this.minNumReplicas = minNumReplicas;
             this.alpha = alpha;
-            this.initialT = initialT;
-            this.deltaT = deltaT;
-            this.k = k;
             this.friendships = friendships;
         }
 

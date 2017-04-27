@@ -1,6 +1,5 @@
 package io.vntr.middleware;
 
-import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
@@ -47,7 +46,7 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
         repartition();
     }
 
-    public void repartition() {
+    void repartition() {
         Map<Integer, Integer> newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, getFriendships(), getPartitionToUserMap().keySet());
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);

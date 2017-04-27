@@ -7,14 +7,14 @@ import io.vntr.utils.ProbabilityUtils;
 import java.util.*;
 
 public class RepManager {
-    private int minNumReplicas;
+    private final int minNumReplicas;
 
     private int nextPid = 1;
     private int nextUid = 1;
 
     private long migrationTally;
     private long logicalMigrationTally;
-    private double logicalMigrationRatio;
+    private final double logicalMigrationRatio;
 
     private Map<Integer, Partition> pMap;
     private Map<Integer, Integer> uMap;
@@ -450,7 +450,7 @@ public class RepManager {
     static class Partition {
         private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
         private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();
-        private Integer id;
+        private final Integer id;
 
         Partition(Integer id) {
             this.id = id;

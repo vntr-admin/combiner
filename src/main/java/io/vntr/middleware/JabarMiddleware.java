@@ -7,8 +7,8 @@ import io.vntr.manager.NoRepManager;
  * Created by robertlindquist on 4/12/17.
  */
 public class JabarMiddleware extends JabejaMiddleware {
-    private float alpha;
-    private int k;
+    private final float alpha;
+    private final int k;
 
     public JabarMiddleware(float alpha, float initialT, float deltaT, int k, NoRepManager manager) {
         super(alpha, initialT, deltaT, k, 1, true, manager);

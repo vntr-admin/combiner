@@ -29,7 +29,7 @@ public class TraceAction {
         }
     }
 
-    private ACTION action;
+    private final ACTION action;
     private int val1 = -1;
     private int val2 = -1;
 

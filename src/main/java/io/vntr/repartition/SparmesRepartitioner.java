@@ -341,7 +341,7 @@ middle:         for(int replicaId : replicas.get(pid)) {
         private final int minNumReplicas;
         private final int id;
         private final int pid;
-        private float gamma;
+        private final float gamma;
         private final Integer totalWeight;
         private final Map<Integer, Integer> pToFriendCount;
         private final Map<Integer, Integer> pToWeight;

@@ -12,11 +12,11 @@ import java.util.*;
  * Created by robertlindquist on 4/12/17.
  */
 public class JabejaMiddleware extends AbstractNoRepMiddleware {
-    private float alpha;
-    private float initialT;
-    private float deltaT;
-    private int k;
-    private int numRestarts;
+    private final float alpha;
+    private final float initialT;
+    private final float deltaT;
+    private final int k;
+    private final int numRestarts;
     private boolean incremental = false;
 
     public JabejaMiddleware(float alpha, float initialT, float deltaT, int k, int numRestarts, NoRepManager manager) {
@@ -53,7 +53,7 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
         repartition();
     }
 
-    public void repartition() {
+    void repartition() {
         NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getPartitionToUserMap(), getFriendships(), incremental);
         getManager().increaseTallyLogical(noRepResults.getLogicalMoves());
         if(noRepResults.getUidsToPids() != null) {

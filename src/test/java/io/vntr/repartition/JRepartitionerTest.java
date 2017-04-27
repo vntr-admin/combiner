@@ -35,7 +35,7 @@ public class JRepartitionerTest {
         friendships.put(12, initSet(13));
         friendships.put(13, Collections.<Integer>emptySet());
 
-        JRepartitioner.State state = initState(1, 2, 0.5f, 5, partitions, friendships);
+        JRepartitioner.State state = initState(1, partitions, friendships);
 
         Integer partnerId = JRepartitioner.findPartner(6, initSet(1), 2f, state);
         assertTrue(partnerId == 1);
@@ -68,7 +68,7 @@ public class JRepartitionerTest {
         friendships.get(1).remove(12);
         friendships.get(12).remove(1);
 
-        JRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
+        JRepartitioner.State state = initState(1, partitions, friendships);
 
         int[] numFriendsOf1 = JRepartitioner.howManyFriendsHaveLogicalPartitions(1, new int[]{1, 2, 3}, state);
         assertArrayEquals(numFriendsOf1, new int[]{4, 4, 3});
@@ -92,7 +92,7 @@ public class JRepartitionerTest {
             }
         }
 
-        JRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
+        JRepartitioner.State state = initState(1, partitions, friendships);
 
         assertTrue(state.getLogicalPids().get(1) == 1);
         assertTrue(state.getLogicalPids().get(2) == 1);
@@ -140,7 +140,7 @@ public class JRepartitionerTest {
             }
         }
 
-        JRepartitioner.State state = initState(1, 1, 1, 1, partitions, friendships);
+        JRepartitioner.State state = initState(1, partitions, friendships);
 
         assertEquals(56, JRepartitioner.getEdgeCut(state.getLogicalPids(), state.getFriendships()));
     }
@@ -181,8 +181,8 @@ public class JRepartitionerTest {
         assertEquals(countList, expectedFrequencies);
     }
 
-    private static JRepartitioner.State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        JRepartitioner.State state = new JRepartitioner.State(alpha, initialT, deltaT, k, generateBidirectionalFriendshipSet(friendships));
+    private static JRepartitioner.State initState(float alpha, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+        JRepartitioner.State state = new JRepartitioner.State(alpha, generateBidirectionalFriendshipSet(friendships));
         state.setLogicalPids(getUToMasterMap(partitions));
         return state;
     }

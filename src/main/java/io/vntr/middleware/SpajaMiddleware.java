@@ -8,11 +8,11 @@ import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SpajaRepartitioner;
 
 public class SpajaMiddleware extends SparMiddleware {
-    private int minNumReplicas;
-    private float alpha;
-    private float initialT;
-    private float deltaT;
-    private int k;
+    private final int minNumReplicas;
+    private final float alpha;
+    private final float initialT;
+    private final float deltaT;
+    private final int k;
 
     public SpajaMiddleware(int minNumReplicas, float alpha, float initialT, float deltaT, int k, RepManager manager) {
         super(manager);

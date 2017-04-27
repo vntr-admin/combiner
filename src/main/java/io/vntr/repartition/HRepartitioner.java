@@ -139,12 +139,12 @@ public class HRepartitioner {
     }
 
     static class LogicalUser {
-        private Integer id;
-        private Integer pid;
+        private final Integer id;
+        private final Integer pid;
         private float gamma;
         private Map<Integer, Integer> pToFriendCount;
         private Map<Integer, Integer> pToWeight;
-        private Integer totalWeight;
+        private final Integer totalWeight;
 
         public LogicalUser(Integer id, Integer pid, float gamma, Map<Integer, Integer> pToFriendCount, Map<Integer, Integer> pToWeight, Integer totalWeight) {
             this.id = id;

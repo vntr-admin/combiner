@@ -15,9 +15,9 @@ import static io.vntr.utils.Utils.*;
  */
 public class SparmesMiddleware extends SparMiddleware {
 
-    private int minNumReplicas;
-    private float gamma;
-    private int k;
+    private final int minNumReplicas;
+    private final float gamma;
+    private final int k;
 
     public SparmesMiddleware(int minNumReplicas, float gamma, int k, RepManager manager) {
         super(manager);
@@ -31,7 +31,7 @@ public class SparmesMiddleware extends SparMiddleware {
         repartition();
     }
 
-    public void repartition() {
+    void repartition() {
         RepResults repResults = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), getPartitionToReplicasMap(), getFriendships());
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults);

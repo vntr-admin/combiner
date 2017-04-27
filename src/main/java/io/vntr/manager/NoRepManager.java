@@ -14,11 +14,11 @@ public class NoRepManager {
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> pMap;
 
-    private boolean placeNewUserRandomly;
+    private final boolean placeNewUserRandomly;
 
     private long migrationTally;
     private long logicalMigrationTally;
-    private double logicalMigrationRatio;
+    private final double logicalMigrationRatio;
 
     private int nextPid = 1;
     private int nextUid = 1;
@@ -78,7 +78,7 @@ public class NoRepManager {
         getUser(id2).unfriend(id1);
     }
 
-    public Integer getInitialPartitionId() {
+    Integer getInitialPartitionId() {
         if(placeNewUserRandomly) {
             return getRandomElement(pMap.keySet());
         }
@@ -169,7 +169,7 @@ public class NoRepManager {
         return migrationTally + (long) (logicalMigrationRatio * logicalMigrationTally);
     }
 
-    public void increaseTally(int amount) {
+    void increaseTally(int amount) {
         migrationTally += amount;
     }
 

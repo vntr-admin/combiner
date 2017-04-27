@@ -16,7 +16,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
         this.manager = manager;
     }
 
-    public NoRepManager getManager() {
+    protected NoRepManager getManager() {
         return manager;
     }
 

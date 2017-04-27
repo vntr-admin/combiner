@@ -17,7 +17,7 @@ public class JRepartitioner {
 
         int logicalMigrationCount = 0;
         for (int i = 0; i < numRestarts; i++) {
-            State state = initState(alpha, initialT, deltaT, k, friendships);
+            State state = initState(alpha, friendships);
             state.setLogicalPids(incremental ? new HashMap<>(uidToPidMap) : getRandomLogicalPids(friendships.keySet(), partitions.keySet()));
 
             for(float t = initialT; t >= 1; t -= deltaT) {
@@ -104,12 +104,12 @@ public class JRepartitioner {
         state.getLogicalPids().put(uid2, pid1);
     }
 
-    static State initState(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships) {
+    static State initState(float alpha, Map<Integer, Set<Integer>> friendships) {
         Map<Integer, Set<Integer>> friendshipsCopy = new HashMap<>();
         for(Integer uid : friendships.keySet()) {
             friendshipsCopy.put(uid, new HashSet<>(friendships.get(uid)));
         }
-        return new State(alpha, initialT, deltaT, k, friendshipsCopy);
+        return new State(alpha, friendshipsCopy);
     }
 
     static int getEdgeCut(Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> friendships) {
@@ -172,18 +172,12 @@ public class JRepartitioner {
 
     static class State {
         private final float alpha;
-        private final float initialT;
-        private final float deltaT;
-        private final int k;
         private final Map<Integer, Set<Integer>> friendships;
 
         private Map<Integer, Integer> logicalPids;
 
-        public State(float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships) {
+        public State(float alpha, Map<Integer, Set<Integer>> friendships) {
             this.alpha = alpha;
-            this.initialT = initialT;
-            this.deltaT = deltaT;
-            this.k = k;
             this.friendships = friendships;
         }
 

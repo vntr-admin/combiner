@@ -64,7 +64,7 @@ public class JBefriender {
         return oldCut - newCut - (u1AndU2AreFriends ? 2 : 0);
     }
 
-    public static int getNeighborsOnPartition(Set<Integer> friendIds, Integer pid, Map<Integer, Integer> uidToPidMap) {
+    static int getNeighborsOnPartition(Set<Integer> friendIds, Integer pid, Map<Integer, Integer> uidToPidMap) {
         int count = 0;
         for (Integer friendId : friendIds) {
             count += uidToPidMap.get(friendId).equals(pid) ? 1 : 0;

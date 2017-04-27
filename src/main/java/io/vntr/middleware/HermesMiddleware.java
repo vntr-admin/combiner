@@ -12,9 +12,9 @@ import java.util.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesMiddleware extends AbstractNoRepMiddleware {
-    private float gamma;
-    private int k;
-    private int maxIterations;
+    private final float gamma;
+    private final int k;
+    private final int maxIterations;
     private NoRepManager manager;
 
     public HermesMiddleware(float gamma, int k, int maxIterations, NoRepManager manager) {

@@ -16,9 +16,9 @@ import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermarMiddleware extends AbstractNoRepMiddleware {
-    private float gamma;
-    private int k;
-    private int maxIterations;
+    private final float gamma;
+    private final int k;
+    private final int maxIterations;
     private NoRepManager manager;
 
     public HermarMiddleware(float gamma, int k, int maxIterations, NoRepManager manager) {

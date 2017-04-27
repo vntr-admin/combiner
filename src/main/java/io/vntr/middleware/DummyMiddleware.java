@@ -1,6 +1,5 @@
 package io.vntr.middleware;
 
-import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
 
