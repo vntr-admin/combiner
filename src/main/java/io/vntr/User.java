@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class User {
-    private Integer id;
+    private final Integer id;
     private Integer basePid;
     private Set<Integer> friendIDs;
 
@@ -21,10 +21,6 @@ public class User {
 
     public Integer getId() {
         return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public Integer getBasePid() {

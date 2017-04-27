@@ -379,10 +379,6 @@ middle:         for(int replicaId : replicas.get(pid)) {
             return pid;
         }
 
-        public float getGamma() {
-            return gamma;
-        }
-
         public Integer getTotalWeight() {
             return totalWeight;
         }

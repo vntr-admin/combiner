@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static io.vntr.utils.Utils.safeEquals;
-
 /**
  * Created by robertlindquist on 4/21/17.
  */
@@ -25,10 +23,6 @@ public class RepUser extends User {
 
     public Set<Integer> getReplicaPids() {
         return replicaPids;
-    }
-
-    public void setReplicaPids(Set<Integer> replicaPids) {
-        this.replicaPids = replicaPids;
     }
 
     public void addReplicaPartitionId(Integer replicaPartitionId) {
@@ -61,7 +55,7 @@ public class RepUser extends User {
 
         RepUser repUser = (RepUser) o;
 
-        return safeEquals(this.replicaPids, repUser.replicaPids);
+        return replicaPids != null ? replicaPids.equals(repUser.replicaPids) : repUser.replicaPids == null;
     }
 
     @Override

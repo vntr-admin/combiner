@@ -191,18 +191,6 @@ public class JRepartitioner {
             return alpha;
         }
 
-        public float getInitialT() {
-            return initialT;
-        }
-
-        public float getDeltaT() {
-            return deltaT;
-        }
-
-        public int getK() {
-            return k;
-        }
-
         public Map<Integer, Set<Integer>> getFriendships() {
             return friendships;
         }

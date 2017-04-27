@@ -447,14 +447,6 @@ public class RepManager {
         return getPartitionById(pid).getReplicaById(uid);
     }
 
-    public int getNumMastersOnPartition(int pid) {
-        return getPartitionById(pid).getNumMasters();
-    }
-
-    public int getNumReplicasOnPartition(int pid) {
-        return getPartitionById(pid).getNumReplicas();
-    }
-
     static class Partition {
         private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
         private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();

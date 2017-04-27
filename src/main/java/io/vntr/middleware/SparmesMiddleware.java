@@ -19,7 +19,7 @@ import static java.util.Collections.singleton;
 /**
  * Created by robertlindquist on 9/28/16.
  */
-public class SparmesMiddleware implements IMiddlewareAnalyzer {
+public class SparmesMiddleware extends AbstractRepMiddleware {
 
     private int minNumReplicas;
     private float gamma;
@@ -27,25 +27,10 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     private RepManager manager;
 
     public SparmesMiddleware(int minNumReplicas, float gamma, int k, RepManager manager) {
+        super(manager);
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.k = k;
-        this.manager = manager;
-    }
-
-    @Override
-    public int addUser() {
-        return manager.addUser();
-    }
-
-    @Override
-    public void addUser(User user) {
-        manager.addUser(user);
-    }
-
-    @Override
-    public void removeUser(Integer userId) {
-        manager.removeUser(userId);
     }
 
     @Override
@@ -112,17 +97,6 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
         }
 
         manager.unfriend(smallerUser, largerUser);
-    }
-
-    @Override
-    public int addPartition() {
-        int pid = manager.addPartition();
-        return pid;
-    }
-
-    @Override
-    public void addPartition(Integer partitionId) {
-        manager.addPartition(partitionId);
     }
 
     @Override
@@ -220,50 +194,6 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
         return usersInNeedOfNewReplicas;
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getPids());
-        potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getBasePid());
-        potentialReplicaLocations.removeAll(user.getReplicaPids());
-        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
-        return list.get((int) (list.size() * Math.random()));
-    }
-
-
-    @Override
-    public Integer getNumberOfPartitions() {
-        return manager.getPids().size();
-    }
-
-    @Override
-    public Integer getNumberOfUsers() {
-        return manager.getNumUsers();
-    }
-
-    @Override
-    public Integer getNumberOfFriendships() {
-        int numFriendships=0;
-        Map<Integer, Set<Integer>> friendships = getFriendships();
-        for(Integer uid : friendships.keySet()) {
-            numFriendships += friendships.get(uid).size();
-        }
-        return numFriendships / 2;
-    }
-
-    @Override
-    public Collection<Integer> getUserIds() {
-        return manager.getUids();
-    }
-
-    @Override
-    public Collection<Integer> getPartitionIds() {
-        return manager.getPids();
-    }
-
-    @Override
-    public Integer getEdgeCut() {
-        return manager.getEdgeCut();
-    }
 
     @Override
     public Long getMigrationTally() {
@@ -271,54 +201,9 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return manager.getPartitionToUserMap();
-    }
-
-    @Override
-    public Integer getReplicationCount() {
-        return manager.getReplicationCount();
-    }
-
-    @Override
     public void broadcastDowntime() {
         repartition();
     }
-
-    @Override
-    public Map<Integer, Set<Integer>> getFriendships() {
-        return manager.getFriendships();
-    }
-
-    @Override
-    public double calculateAssortivity() {
-        return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
-    }
-
-    @Override
-    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<>();
-        for(int pid : getPartitionIds()) {
-            m.put(pid, manager.getReplicasOnPartition(pid));
-        }
-        return m;
-    }
-
-    @Override
-    public String toString() {
-        return manager.toString();
-    }
-
-    @Override
-    public double calculateExpectedQueryDelay() {
-        return 0; //Replica systems are strictly-local by design.
-    }
-
-    @Override
-    public void checkValidity() {
-        manager.checkValidity();
-    }
-
 
     public void repartition() {
         RepResults repResults = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), manager.getPartitionToReplicasMap(), getFriendships());

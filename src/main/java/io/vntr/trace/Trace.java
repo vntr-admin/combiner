@@ -24,10 +24,6 @@ public class Trace {
         this.friendships = friendships;
     }
 
-    public Set<Integer> getPids() {
-        return partitions.keySet();
-    }
-
     public List<TraceAction> getActions() {
         return actions;
     }

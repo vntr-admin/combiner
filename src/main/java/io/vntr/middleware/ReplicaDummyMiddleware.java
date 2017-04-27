@@ -1,62 +1,33 @@
 package io.vntr.middleware;
 
 import io.vntr.RepUser;
-import io.vntr.User;
 import io.vntr.manager.RepManager;
 import io.vntr.migration.DummyMigrator;
-import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
 /**
  * Created by robertlindquist on 11/23/16.
  */
-public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
-    private RepManager manager;
+public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
 
     public ReplicaDummyMiddleware(RepManager manager) {
-        this.manager = manager;
-    }
-
-    @Override
-    public int addUser() {
-        return manager.addUser();
-    }
-
-    @Override
-    public void addUser(User user) {
-        manager.addUser(user);
-    }
-
-    @Override
-    public void removeUser(Integer userId) {
-        manager.removeUser(userId);
+        super(manager);
     }
 
     @Override
     public void befriend(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = manager.getUserMaster(smallerUserId);
-        RepUser largerUser = manager.getUserMaster(largerUserId);
-        manager.befriend(smallerUser, largerUser);
+        RepUser smallerUser = getManager().getUserMaster(smallerUserId);
+        RepUser largerUser = getManager().getUserMaster(largerUserId);
+        getManager().befriend(smallerUser, largerUser);
     }
 
     @Override
     public void unfriend(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = manager.getUserMaster(smallerUserId);
-        RepUser largerUser = manager.getUserMaster(largerUserId);
-        manager.unfriend(smallerUser, largerUser);
+        RepUser smallerUser = getManager().getUserMaster(smallerUserId);
+        RepUser largerUser = getManager().getUserMaster(largerUserId);
+        getManager().unfriend(smallerUser, largerUser);
     }
-
-    @Override
-    public int addPartition() {
-        return manager.addPartition();
-    }
-
-    @Override
-    public void addPartition(Integer partitionId) {
-        manager.addPartition(partitionId);
-    }
-
 
     @Override
     public void removePartition(Integer partitionId) {
@@ -64,33 +35,33 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
         
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = DummyMigrator.getUserMigrationStrategy(partitionId, manager.getPartitionToUserMap(), manager.getPartitionToReplicasMap());
+        Map<Integer, Integer> migrationStrategy = DummyMigrator.getUserMigrationStrategy(partitionId, getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
-            RepUser user = manager.getUserMaster(userId);
+            RepUser user = getManager().getUserMaster(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPids().contains(newPartitionId)) {
-                manager.addReplica(user, newPartitionId);
+                getManager().addReplica(user, newPartitionId);
                 usersInNeedOfNewReplicas.remove(userId);
             }
-            manager.promoteReplicaToMaster(userId, migrationStrategy.get(userId));
+            getManager().promoteReplicaToMaster(userId, migrationStrategy.get(userId));
         }
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
-            RepUser user = manager.getUserMaster(userId);
+            RepUser user = getManager().getUserMaster(userId);
             int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Collections.singletonList(partitionId));
-            manager.addReplica(user, newPid);
+            getManager().addReplica(user, newPid);
         }
 
         //Fifth, remove references to replicas formerly on this partition
-        for(Integer uid : manager.getReplicasOnPartition(partitionId)) {
-            RepUser user = manager.getUserMaster(uid);
+        for(Integer uid : getManager().getReplicasOnPartition(partitionId)) {
+            RepUser user = getManager().getUserMaster(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-                manager.getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
+                getManager().getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds
@@ -98,74 +69,28 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         }
 
         //Finally, actually drop partition
-        manager.removePartition(partitionId);
+        getManager().removePartition(partitionId);
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
 
         //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : manager.getMastersOnPartition(partitionIdToBeRemoved)) {
-            RepUser user = manager.getUserMaster(userId);
-            if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
+        for (Integer userId : getManager().getMastersOnPartition(partitionIdToBeRemoved)) {
+            RepUser user = getManager().getUserMaster(userId);
+            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
-        for (Integer userId : manager.getReplicasOnPartition(partitionIdToBeRemoved)) {
-            RepUser user = manager.getUserMaster(userId);
-            if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
+        for (Integer userId : getManager().getReplicasOnPartition(partitionIdToBeRemoved)) {
+            RepUser user = getManager().getUserMaster(userId);
+            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
         return usersInNeedOfNewReplicas;
-    }
-
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getPids());
-        potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getBasePid());
-        potentialReplicaLocations.removeAll(user.getReplicaPids());
-        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
-        return list.get((int) (list.size() * Math.random()));
-    }
-
-
-
-    @Override
-    public Integer getNumberOfPartitions() {
-        return manager.getPids().size();
-    }
-
-    @Override
-    public Integer getNumberOfUsers() {
-        return manager.getNumUsers();
-    }
-
-    @Override
-    public Integer getNumberOfFriendships() {
-        int numFriendships=0;
-        Map<Integer, Set<Integer>> friendships = getFriendships();
-        for(Integer uid : friendships.keySet()) {
-            numFriendships += friendships.get(uid).size();
-        }
-        return numFriendships / 2;
-    }
-
-    @Override
-    public Collection<Integer> getUserIds() {
-        return manager.getUids();
-    }
-
-    @Override
-    public Collection<Integer> getPartitionIds() {
-        return manager.getPids();
-    }
-
-    @Override
-    public Integer getEdgeCut() {
-        return manager.getEdgeCut();
     }
 
     @Override
@@ -174,51 +99,8 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return manager.getPartitionToUserMap();
-    }
-
-    @Override
-    public Integer getReplicationCount() {
-        return manager.getReplicationCount();
-    }
-
-    @Override
     public void broadcastDowntime() {
         //ignores downtime
     }
 
-    @Override
-    public Map<Integer, Set<Integer>> getFriendships() {
-        return manager.getFriendships();
-    }
-
-    @Override
-    public double calculateAssortivity() {
-        return ProbabilityUtils.calculateAssortivityCoefficient(getFriendships());
-    }
-
-    @Override
-    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<>();
-        for(int pid : getPartitionIds()) {
-            m.put(pid, manager.getReplicasOnPartition(pid));
-        }
-        return m;
-    }
-
-    @Override
-    public String toString() {
-        return manager.toString();
-    }
-
-    @Override
-    public double calculateExpectedQueryDelay() {
-        return 0; //replica systems are strictly-local by design
-    }
-
-    @Override
-    public void checkValidity() {
-        manager.checkValidity();
-    }
 }

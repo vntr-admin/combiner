@@ -3,7 +3,6 @@ package io.vntr.trace;
 import io.vntr.middleware.*;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
-import io.vntr.migration.DummyMigrator;
 import io.vntr.utils.InitUtils;
 import io.vntr.manager.RepManager;
 
@@ -102,7 +101,6 @@ public class TraceRunner {
     }
 
     static ParsedArgs parseArgs(String[] args, Properties props) {
-
 
         String inputFolder = props.getProperty("input.folder");
         String outputFolder = props.getProperty("output.folder");
@@ -367,7 +365,7 @@ public class TraceRunner {
             }
 
             if(numActions != null) {
-                builder.append(" numActions=" + numActions);
+                builder.append(" numActions=").append(numActions);
             }
 
             return builder.toString();
@@ -549,12 +547,19 @@ public class TraceRunner {
     }
 
     static DummyMiddleware initDummyMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        NoRepManager manager = new NoRepManager(parsedArgs.getLogicalMigrationRatio(), false);
+        NoRepManager manager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
         return new DummyMiddleware(manager);
     }
 
     static ReplicaDummyMiddleware initReplicaDummyMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        RepManager manager = new RepManager(parsedArgs.getMinNumReplicas(), parsedArgs.getLogicalMigrationRatio());
+        RepManager manager = InitUtils.initRepManager(
+                parsedArgs.getMinNumReplicas(),
+                parsedArgs.getLogicalMigrationRatio(),
+                trace.getPartitions(),
+                trace.getFriendships(),
+                trace.getReplicas()
+        );
+
         return new ReplicaDummyMiddleware(manager);
     }
 
@@ -591,4 +596,5 @@ public class TraceRunner {
 
         return result;
     }
+
 }

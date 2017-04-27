@@ -86,7 +86,6 @@ public class MetisRepartitioner {
     private static Map<Integer, Set<Integer>> translateFriendshipsToZNBased(Map<Integer, Set<Integer>> originalFriendships, Map<Integer, Integer> mapping) {
         Map<Integer, Set<Integer>> translated = new HashMap<>();
         for(int i : originalFriendships.keySet()) {
-            int translatedKey = mapping.get(i);
             Set<Integer> translatedFriends = new HashSet<>();
             for(int friendId : originalFriendships.get(i)) {
                 translatedFriends.add(mapping.get(friendId));

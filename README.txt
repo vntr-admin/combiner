@@ -64,7 +64,7 @@ Arguments
         -delay p
             calculates the expected average query delay of the system with
             probability p.
-            In log lines where no check occurrs, delay is reported as -99.
+            In log lines where no check occurs, delay is reported as -99.
             0 <= p <= 1.  Default is 1 (always).
 
         -assortivity p

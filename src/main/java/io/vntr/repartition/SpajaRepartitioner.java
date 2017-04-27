@@ -1,8 +1,5 @@
 package io.vntr.repartition;
 
-/**
- * Created by robertlindquist on 4/24/17.
- */
 import java.util.*;
 
 import static io.vntr.utils.Utils.*;
@@ -342,18 +339,6 @@ public class SpajaRepartitioner {
 
         public float getAlpha() {
             return alpha;
-        }
-
-        public float getInitialT() {
-            return initialT;
-        }
-
-        public float getDeltaT() {
-            return deltaT;
-        }
-
-        public int getK() {
-            return k;
         }
 
         public Map<Integer, Set<Integer>> getFriendships() {

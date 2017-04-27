@@ -1,8 +1,5 @@
 package io.vntr.migration;
 
-/**
- * Created by robertlindquist on 4/24/17.
- */
 import io.vntr.repartition.Target;
 import io.vntr.utils.ProbabilityUtils;
 
