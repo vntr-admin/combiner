@@ -1,7 +1,8 @@
 package io.vntr.middleware;
 
 import io.vntr.User;
-import io.vntr.manager.MetisManager;
+import io.vntr.manager.JManager;
+import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -11,9 +12,14 @@ import java.util.*;
  */
 public class MetisMiddleware implements IMiddlewareAnalyzer {
 
-    private MetisManager manager;
+    private final String gpmetisLocation;
+    private final String gpmetisTempdir;
 
-    public MetisMiddleware(MetisManager manager) {
+    private JManager manager;
+
+    public MetisMiddleware(String gpmetisLocation, String gpmetisTempdir, JManager manager) {
+        this.gpmetisLocation = gpmetisLocation;
+        this.gpmetisTempdir = gpmetisTempdir;
         this.manager = manager;
     }
 
@@ -36,7 +42,7 @@ public class MetisMiddleware implements IMiddlewareAnalyzer {
     public void befriend(Integer smallerUserId, Integer largerUserId) {
         manager.befriend(smallerUserId, largerUserId);
         if(Math.random() > .9) {
-            manager.repartition();
+            repartition();
         }
     }
 
@@ -117,7 +123,7 @@ public class MetisMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void broadcastDowntime() {
-        manager.repartition();
+        repartition();
     }
 
     @Override
@@ -153,4 +159,17 @@ public class MetisMiddleware implements IMiddlewareAnalyzer {
     public void checkValidity() {
         manager.checkValidity();
     }
+
+
+    public void repartition() {
+        Map<Integer, Integer> newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, getFriendships(), getPartitionToUserMap().keySet());
+        for(int uid : newPartitioning.keySet()) {
+            int newPid = newPartitioning.get(uid);
+            if(newPid != manager.getUser(uid).getBasePid()) {
+                manager.moveUser(uid, newPid, true);
+            }
+        }
+    }
+
+
 }

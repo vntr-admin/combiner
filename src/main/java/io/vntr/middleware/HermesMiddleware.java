@@ -3,6 +3,8 @@ package io.vntr.middleware;
 import io.vntr.User;
 import io.vntr.manager.HManager;
 import io.vntr.migration.HMigrator;
+import io.vntr.repartition.HRepartitioner;
+import io.vntr.repartition.Results;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -11,9 +13,15 @@ import java.util.*;
  * Created by robertlindquist on 9/19/16.
  */
 public class HermesMiddleware implements IMiddlewareAnalyzer {
+    private float gamma;
+    private int k;
+    private int maxIterations;
     private HManager manager;
 
-    public HermesMiddleware(HManager manager, float gamma) {
+    public HermesMiddleware(float gamma, int k, int maxIterations, HManager manager) {
+        this.gamma = gamma;
+        this.k = k;
+        this.maxIterations = maxIterations;
         this.manager = manager;
     }
 
@@ -25,7 +33,7 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
     @Override
     public void addUser(User user) {
         manager.addUser(user);
-        manager.repartition();
+        repartition();
     }
 
     @Override
@@ -55,7 +63,7 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public void removePartition(Integer partitionId) {
-        Map<Integer, Integer> targets = HMigrator.migrateOffPartition(partitionId, manager.getGamma(), manager.getPartitionToUsers(), manager.getFriendships());
+        Map<Integer, Integer> targets = HMigrator.migrateOffPartition(partitionId, gamma, manager.getPartitionToUsers(), manager.getFriendships());
         for(Integer uid : targets.keySet()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
@@ -137,7 +145,7 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
     }
 
     public float getGamma() {
-        return manager.getGamma();
+        return gamma;
     }
 
     @Override
@@ -153,5 +161,24 @@ public class HermesMiddleware implements IMiddlewareAnalyzer {
     @Override
     public void checkValidity() {
         manager.checkValidity();
+    }
+
+    public void repartition() {
+        Results results = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), getFriendships());
+        int numMoves = results.getLogicalMoves();
+        if(numMoves > 0) {
+            manager.increaseTallyLogical(numMoves);
+            physicallyMigrate(results.getUidsToPids());
+        }
+    }
+
+    void physicallyMigrate(Map<Integer, Integer> uidsToPids) {
+        for(int uid : uidsToPids.keySet()) {
+            int pid = uidsToPids.get(uid);
+            User user = manager.getUser(uid);
+            if(user.getBasePid() != pid) {
+                manager.moveUser(uid, pid, false);
+            }
+        }
     }
 }

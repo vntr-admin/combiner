@@ -39,7 +39,7 @@ public class JManagerTest {
         friendships.get(uidToMove).remove(uidToUnfriend);
         friendships.get(uidToUnfriend).remove(uidToMove);
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
 
         for(Integer pid : partitions.keySet()) {
             for(Integer uid : partitions.get(pid)) {
@@ -77,7 +77,7 @@ public class JManagerTest {
             }
         }
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
 
@@ -130,7 +130,7 @@ public class JManagerTest {
         friendships.get(uidToRemove).remove(8);
         friendships.get(8).remove(uidToRemove);
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(bidirectionalFriendships, manager.getFriendships());
@@ -177,7 +177,7 @@ public class JManagerTest {
         friendships.get(notFriend1Id).remove(notFriend2Id);
         friendships.get(notFriend2Id).remove(notFriend1Id);
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
 
         for(Integer uid1 : manager.getUids()) {
             for(Integer uid2 : manager.getUids()) {
@@ -222,7 +222,7 @@ public class JManagerTest {
         Integer notFriend1Id = 7;
         Integer notFriend2Id = 8;
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
 
         for(Integer uid1 : manager.getUids()) {
             for(Integer uid2 : manager.getUids()) {
@@ -264,7 +264,7 @@ public class JManagerTest {
             }
         }
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
 
         assertEquals(manager.getPids(), partitions.keySet());
 
@@ -303,7 +303,7 @@ public class JManagerTest {
             }
         }
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
 
         assertEquals(manager.getPids(), partitions.keySet());
 
@@ -340,7 +340,7 @@ public class JManagerTest {
             }
         }
 
-        JManager manager = InitUtils.initJ2Manager(alpha, 2f, 0.25f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
 
         Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);

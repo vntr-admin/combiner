@@ -10,7 +10,6 @@ import io.vntr.manager.JManager;
 import io.vntr.middleware.JabejaMiddleware;
 import io.vntr.middleware.JabarMiddleware;
 import io.vntr.utils.InitUtils;
-import io.vntr.manager.MetisManager;
 import io.vntr.middleware.MetisMiddleware;
 import io.vntr.manager.SManager;
 import io.vntr.middleware.SparMiddleware;
@@ -466,55 +465,54 @@ public class TraceRunner {
 
     static JabejaMiddleware initJ2Middleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
         JManager jManager =
-                InitUtils.initJ2Manager(parsedArgs.getAlpha(),
-                        parsedArgs.getInitialT(),
-                        parsedArgs.getDeltaT(),
-                        parsedArgs.getJaK(),
-                        parsedArgs.getNumRestarts(),
+                InitUtils.initJ2Manager(
                         parsedArgs.getLogicalMigrationRatio(),
+                        true,
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new JabejaMiddleware(jManager);
+        return new JabejaMiddleware(parsedArgs.getAlpha(),
+                parsedArgs.getInitialT(),
+                parsedArgs.getDeltaT(),
+                parsedArgs.getJaK(),
+                parsedArgs.getNumRestarts(),
+                jManager);
     }
 
     static JabarMiddleware initJ2ArMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
 
         JManager j2ArManager =
-                InitUtils.initJ2Manager(parsedArgs.getAlpha(),
-                        parsedArgs.getInitialT(),
-                        parsedArgs.getDeltaT(),
-                        parsedArgs.getJaK(),
-                        parsedArgs.getNumRestarts(),
+                InitUtils.initJ2Manager(
                         parsedArgs.getLogicalMigrationRatio(),
+                        true,
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new JabarMiddleware(parsedArgs.getAlpha(), parsedArgs.getJaK(), j2ArManager);
+        return new JabarMiddleware(parsedArgs.getAlpha(), parsedArgs.getInitialT(), parsedArgs.getDeltaT(), parsedArgs.getJaK(), j2ArManager);
     }
 
     static HermesMiddleware initHermesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
         HManager hManager =
-                InitUtils.initHManager(parsedArgs.getGamma(),
-                        parsedArgs.getHermesK(),
-                        parsedArgs.getIterationCutoffRatio(),
+                InitUtils.initHManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new HermesMiddleware(hManager, hManager.getGamma());
+        int maxIterations = 100;  //TODO: handle this
+
+        return new HermesMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), maxIterations, hManager);
     }
 
     static HermarMiddleware initHermarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        HManager hermarManager =
-                InitUtils.initHManager(parsedArgs.getGamma(),
-                        parsedArgs.getHermesK(),
-                        parsedArgs.getIterationCutoffRatio(),
+        HManager hManager =
+                InitUtils.initHManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new HermarMiddleware(hermarManager);
+        int maxIterations = 100;  //TODO: handle this
+
+        return new HermarMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), maxIterations, hManager);
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
@@ -557,8 +555,8 @@ public class TraceRunner {
     static MetisMiddleware initMetisMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
         String gpmetisLocation = prop.getProperty("gpmetis.location");
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
-        MetisManager manager = InitUtils.initMetisManager(trace.getPartitions(), trace.getFriendships(), gpmetisLocation, gpmetisTempdir);
-        return new MetisMiddleware(manager);
+        JManager manager = InitUtils.initJ2Manager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
+        return new MetisMiddleware(gpmetisLocation, gpmetisTempdir, manager);
     }
 
     private static final String HEADER = "No       Type     Date                 Action          Ps   Nodes  Edges    Assort.  EdgeCut  Replicas  Moves     Delay";

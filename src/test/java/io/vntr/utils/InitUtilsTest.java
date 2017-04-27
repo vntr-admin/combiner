@@ -48,7 +48,7 @@ public class InitUtilsTest {
 
         int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
 
-        JManager manager = InitUtils.initJ2Manager(1, 2, 0.5f, 15, 10, 0, partitions, friendships);
+        JManager manager = InitUtils.initJ2Manager(0, true, partitions, friendships);
         assertEquals(manager.getPids(), partitions.keySet());
         assertEquals(partitions, manager.getPartitionToUsers());
         assertEquals(bidirectionalFriendships, manager.getFriendships());

@@ -2,6 +2,8 @@ package io.vntr.middleware;
 
 import io.vntr.User;
 import io.vntr.manager.JManager;
+import io.vntr.repartition.JRepartitioner;
+import io.vntr.repartition.Results;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -10,9 +12,19 @@ import java.util.*;
  * Created by robertlindquist on 4/12/17.
  */
 public class JabejaMiddleware implements IMiddlewareAnalyzer{
+    private float alpha;
+    private float initialT;
+    private float deltaT;
+    private int k;
+    private int numRestarts;
     private JManager manager;
 
-    public JabejaMiddleware(JManager manager) {
+    public JabejaMiddleware(float alpha, float initialT, float deltaT, int k, int numRestarts, JManager manager) {
+        this.alpha = alpha;
+        this.initialT = initialT;
+        this.deltaT = deltaT;
+        this.k = k;
+        this.numRestarts = numRestarts;
         this.manager = manager;
     }
 
@@ -113,7 +125,7 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer{
 
     @Override
     public void broadcastDowntime() {
-        manager.repartition();
+        repartition();
     }
 
     @Override
@@ -148,5 +160,23 @@ public class JabejaMiddleware implements IMiddlewareAnalyzer{
     @Override
     public void checkValidity() {
         manager.checkValidity();
+    }
+
+    public void repartition() {
+        Results results = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getPartitionToUserMap(), getFriendships(), false);
+        manager.increaseTallyLogical(results.getLogicalMoves());
+        if(results.getUidsToPids() != null) {
+            physicallyMigrate(results.getUidsToPids());
+        }
+    }
+
+    void physicallyMigrate(Map<Integer, Integer> logicalPids) {
+        for(Integer uid : logicalPids.keySet()) {
+            User user = manager.getUser(uid);
+            Integer newPid = logicalPids.get(uid);
+            if(!user.getBasePid().equals(newPid)) {
+                manager.moveUser(uid, newPid, false);
+            }
+        }
     }
 }

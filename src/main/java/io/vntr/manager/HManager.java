@@ -6,17 +6,17 @@ import io.vntr.repartition.Results;
 
 import java.util.*;
 
+import static io.vntr.utils.ProbabilityUtils.getRandomElement;
+
 /**
  * Created by robertlindquist on 9/19/16.
  */
 public class HManager implements INoRepManager {
-    private Map<Integer, Set<Integer>> pMap;
+
     private Map<Integer, User> uMap;
-    private float gamma;
-    private int k;
-    private boolean probabilistic;
-    private int maxIterations;
-    private float maxIterationToNumUsersRatio;
+    private Map<Integer, Set<Integer>> pMap;
+
+    private boolean placeNewUserRandomly = false;
 
     private long migrationTally;
     private long logicalMigrationTally;
@@ -25,54 +25,30 @@ public class HManager implements INoRepManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
-    public HManager(float gamma, boolean probabilistic) {
-        this.gamma = gamma;
-        this.probabilistic = probabilistic;
+    public HManager() {
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.maxIterations = 100;
-        maxIterationToNumUsersRatio = 1f;
     }
 
-    public HManager(float gamma, int maxIterations) {
-        this.gamma = gamma;
-        this.probabilistic = false;
+    public HManager(double logicalMigrationRatio) {
         this.pMap = new HashMap<>();
         this.uMap = new HashMap<>();
-        this.maxIterations = maxIterations;
-        maxIterationToNumUsersRatio = 1f;
-        this.k=3;
-    }
-
-    public HManager(float gamma, float maxIterationToNumUsersRatio) {
-        this.gamma = gamma;
-        this.probabilistic = false;
-        this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
-        this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
-        this.k=3;
-    }
-
-    public HManager(float gamma, float maxIterationToNumUsersRatio, int k) {
-        this.gamma = gamma;
-        this.probabilistic = false;
-        this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
-        this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
-        this.k = k;
-    }
-
-    public HManager(float gamma, float maxIterationToNumUsersRatio, int k, double logicalMigrationRatio) {
-        this.gamma = gamma;
-        this.probabilistic = false;
-        this.pMap = new HashMap<>();
-        this.uMap = new HashMap<>();
-        this.maxIterationToNumUsersRatio = maxIterationToNumUsersRatio;
-        this.maxIterations = (int) (Math.ceil(this.maxIterationToNumUsersRatio * getNumUsers()));
-        this.k = k;
         this.logicalMigrationRatio = logicalMigrationRatio;
+    }
+
+    @Override
+    public Set<Integer> getUids() {
+        return uMap.keySet();
+    }
+
+    @Override
+    public User getUser(Integer uid) {
+        return uMap.get(uid);
+    }
+
+    @Override
+    public Set<Integer> getPartition(Integer pid) {
+        return pMap.get(pid);
     }
 
     @Override
@@ -90,9 +66,6 @@ public class HManager implements INoRepManager {
         Integer pid = user.getBasePid();
         uMap.put(user.getId(), user);
         getPartition(pid).add(user.getId());
-        if(maxIterationToNumUsersRatio != 1f) {
-            maxIterations = (int) (Math.ceil(maxIterationToNumUsersRatio * getNumUsers()));
-        }
         if(user.getId() >= nextUid) {
             nextUid = user.getId() + 1;
         }
@@ -109,15 +82,33 @@ public class HManager implements INoRepManager {
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        getUser(smallerUserId).befriend(largerUserId);
-        getUser(largerUserId).befriend(smallerUserId);
+    public void befriend(Integer id1, Integer id2) {
+        getUser(id1).befriend(id2);
+        getUser(id2).befriend(id1);
     }
 
     @Override
-    public void unfriend(Integer smallerUserId, Integer largerUserId) {
-        getUser(smallerUserId).unfriend(largerUserId);
-        getUser(largerUserId).unfriend(smallerUserId);
+    public void unfriend(Integer id1, Integer id2) {
+        getUser(id1).unfriend(id2);
+        getUser(id2).unfriend(id1);
+    }
+
+    @Override
+    public Integer getInitialPartitionId() {
+        if(placeNewUserRandomly) {
+            return getRandomElement(pMap.keySet());
+        }
+        else {
+            int minUsers = Integer.MAX_VALUE;
+            Integer minPartition = null;
+            for(int pid : pMap.keySet()) {
+                if(pMap.get(pid).size() < minUsers) {
+                    minUsers = pMap.get(pid).size();
+                    minPartition = pid;
+                }
+            }
+            return minPartition;
+        }
     }
 
     @Override
@@ -128,69 +119,16 @@ public class HManager implements INoRepManager {
     }
 
     @Override
-    public void addPartition(Integer id) {
-        pMap.put(id, new HashSet<Integer>());
-        if(id >= nextPid) {
-            nextPid = id + 1;
+    public void addPartition(Integer pid) {
+        pMap.put(pid, new HashSet<Integer>());
+        if(pid >= nextPid) {
+            nextPid = pid + 1;
         }
     }
 
     @Override
     public void removePartition(Integer pid) {
         pMap.remove(pid);
-    }
-
-    @Override
-    public Set<Integer> getPids() {
-        return pMap.keySet();
-    }
-
-    @Override
-    public Set<Integer> getPartition(Integer pid) {
-        return pMap.get(pid);
-    }
-
-    @Override
-    public Integer getPidForUser(Integer uid) {
-        return uMap.get(uid).getBasePid();
-    }
-
-    public void repartition() {
-        Results results = HRepartitioner.repartition(k, maxIterations, gamma, getPartitionToUsers(), getFriendships());
-        int numMoves = results.getLogicalMoves();
-        if(numMoves > 0) {
-            increaseTallyLogical(numMoves);
-            physicallyMigrate(results.getUidsToPids());
-        }
-    }
-
-    void physicallyMigrate(Map<Integer, Integer> uidsToPids) {
-        for(int uid : uidsToPids.keySet()) {
-            int pid = uidsToPids.get(uid);
-            User user = getUser(uid);
-            if(user.getBasePid() != pid) {
-                moveUser(uid, pid, false);
-            }
-        }
-    }
-
-    @Override
-    public Integer getInitialPartitionId() {
-        Integer minId = null;
-        int minUsers = Integer.MAX_VALUE;
-        for(Integer pid : pMap.keySet()) {
-            int numUsers = getPartition(pid).size();
-            if(numUsers < minUsers) {
-                minUsers = numUsers;
-                minId = pid;
-            }
-        }
-        return minId;
-    }
-
-    @Override
-    public User getUser(Integer uid) {
-        return uMap.get(uid);
     }
 
     @Override
@@ -206,13 +144,9 @@ public class HManager implements INoRepManager {
     @Override
     public Integer getEdgeCut() {
         int count = 0;
-        for(int uid : uMap.keySet()) {
-            User user = getUser(uid);
-            Integer userPid = user.getBasePid();
-
+        for(User user : uMap.values()) {
             for(int friendId : user.getFriendIDs()) {
-                Integer friendPid = getUser(friendId).getBasePid();
-                if(userPid < friendPid) {
+                if(user.getBasePid() < getUser(friendId).getBasePid()) {
                     count++;
                 }
             }
@@ -221,7 +155,7 @@ public class HManager implements INoRepManager {
     }
 
     @Override
-    public Map<Integer,Set<Integer>> getPartitionToUsers() {
+    public Map<Integer, Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : getPids()) {
             map.put(pid, new HashSet<>(pMap.get(pid)));
@@ -232,7 +166,7 @@ public class HManager implements INoRepManager {
     @Override
     public void moveUser(Integer uid, Integer pid, boolean omitFromTally) {
         User user = getUser(uid);
-        getPartition(user.getBasePid()).remove(uid);
+        pMap.get(user.getBasePid()).remove(uid);
         getPartition(pid).add(uid);
         user.setBasePid(pid);
         if(!omitFromTally) {
@@ -241,21 +175,17 @@ public class HManager implements INoRepManager {
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        for(Integer uid : uMap.keySet()) {
-            friendships.put(uid, new TreeSet<>(getUser(uid).getFriendIDs()));
-        }
-        return friendships;
+    public Set<Integer> getPids() {
+        return pMap.keySet();
     }
 
     @Override
-    public Set<Integer> getUids() {
-        return uMap.keySet();
-    }
-
-    public float getGamma() {
-        return gamma;
+    public Map<Integer, Set<Integer>> getFriendships() {
+        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        for(Integer uid : uMap.keySet()) {
+            friendships.put(uid, new HashSet<>(getUser(uid).getFriendIDs()));
+        }
+        return friendships;
     }
 
     @Override
@@ -275,7 +205,7 @@ public class HManager implements INoRepManager {
 
     @Override
     public String toString() {
-        return "|gamma:" + gamma + "|probabilistic:" + probabilistic + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
+        return "#U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
     @Override
@@ -301,6 +231,11 @@ public class HManager implements INoRepManager {
                 throw new RuntimeException("Mismatch between user's PID and system's");
             }
         }
+    }
+
+    @Override
+    public Integer getPidForUser(Integer uid) {
+        return uMap.get(uid).getBasePid();
     }
 
 }

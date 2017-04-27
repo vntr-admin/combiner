@@ -2,6 +2,7 @@ package io.vntr.manager;
 
 import io.vntr.User;
 import io.vntr.manager.HManager;
+import io.vntr.middleware.HermesMiddleware;
 import io.vntr.utils.InitUtils;
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ public class HManagerTest {
     @Test
     public void testThingsInGeneral() {
         float gamma = 1.6f;
-        HManager manager = new HManager(gamma, false);
+        HManager manager = new HManager(gamma);
 
         Integer pid1 = manager.addPartition();
         Integer pid2 = manager.addPartition();
@@ -97,7 +98,8 @@ public class HManagerTest {
             }
         }
 
-        manager.repartition();
+        HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
+        middleware.repartition();
 
         System.out.println("Hermes edge cut #1: " + manager.getEdgeCut());
     }
@@ -118,10 +120,11 @@ public class HManagerTest {
             for(int uid=0; uid<numUsers; uid++) {
                 partitions.get(uid % numPartitions).add(uid);
             }
-            HManager manager = initHManager(gamma, 3, 1, 0, partitions, friendships);
+            HManager manager = initHManager(0, partitions, friendships);
+            HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
             Integer initialEdgeCut = manager.getEdgeCut();
             long start = System.nanoTime();
-            manager.repartition();
+            middleware.repartition();
             long end = System.nanoTime();
             Integer finalEdgeCut = manager.getEdgeCut();
             System.out.println("Edge cut before: " + initialEdgeCut + ", after: " + finalEdgeCut + " in " + ((end-start)/1000000) + "ms");
@@ -147,9 +150,10 @@ public class HManagerTest {
         friendships.putAll(getFirst300ines());
         friendships.putAll(getRemainingLines());
 
-        HManager manager = initHManager(gamma, 3, 1, 0, partitions, friendships);
+        HManager manager = initHManager(0, partitions, friendships);
+        HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
         Integer initialEdgeCut = manager.getEdgeCut();
-        manager.repartition();
+        middleware.repartition();
         Integer finalEdgeCut = manager.getEdgeCut();
         System.out.println("Edge cut before: " + initialEdgeCut + ", after: " + finalEdgeCut);
     }
@@ -1216,9 +1220,10 @@ public class HManagerTest {
         friendships.put(39, initSet(40));
         friendships.put(40, Collections.<Integer>emptySet());
 
-        HManager manager = initHManager(gamma, 3, 1, 0, partitions, friendships);
+        HManager manager = initHManager(0, partitions, friendships);
+        HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
         Integer initialEdgeCut = manager.getEdgeCut();
-        manager.repartition();
+        middleware.repartition();
         Integer finalEdgeCut = manager.getEdgeCut();
     }
 }

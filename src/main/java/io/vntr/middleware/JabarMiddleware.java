@@ -3,6 +3,8 @@ package io.vntr.middleware;
 import io.vntr.User;
 import io.vntr.befriend.JBefriender;
 import io.vntr.manager.JManager;
+import io.vntr.repartition.JRepartitioner;
+import io.vntr.repartition.Results;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -12,11 +14,15 @@ import java.util.*;
  */
 public class JabarMiddleware implements IMiddlewareAnalyzer{
     private float alpha;
+    private float initialT;
+    private float deltaT;
     private int k;
     private JManager manager;
 
-    public JabarMiddleware(float alpha, int k, JManager manager) {
+    public JabarMiddleware(float alpha, float initialT, float deltaT, int k, JManager manager) {
         this.alpha = alpha;
+        this.initialT = initialT;
+        this.deltaT = deltaT;
         this.k = k;
         this.manager = manager;
     }
@@ -114,12 +120,12 @@ public class JabarMiddleware implements IMiddlewareAnalyzer{
 
     @Override
     public Integer getReplicationCount() {
-        return 0; //Ja-be-Ja does not replicate
+        return 0; //Jabar does not replicate
     }
 
     @Override
     public void broadcastDowntime() {
-        manager.repartition();
+        repartition();
     }
 
     @Override
@@ -165,6 +171,24 @@ public class JabarMiddleware implements IMiddlewareAnalyzer{
             int pid2 = manager.getPidForUser(uid2);
             manager.moveUser(uid1, pid2, false);
             manager.moveUser(uid2, pid1, false);
+        }
+    }
+
+    public void repartition() {
+        Results results = JRepartitioner.repartition(alpha, initialT, deltaT, k, 1, getPartitionToUserMap(), getFriendships(), true);
+        manager.increaseTallyLogical(results.getLogicalMoves());
+        if(results.getUidsToPids() != null) {
+            physicallyMigrate(results.getUidsToPids());
+        }
+    }
+
+    void physicallyMigrate(Map<Integer, Integer> logicalPids) {
+        for(Integer uid : logicalPids.keySet()) {
+            User user = manager.getUser(uid);
+            Integer newPid = logicalPids.get(uid);
+            if(!user.getBasePid().equals(newPid)) {
+                manager.moveUser(uid, newPid, false);
+            }
         }
     }
 }

@@ -32,8 +32,8 @@ public class HermesMiddlewareTest {
         for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
-        HManager manager = initHManager(gamma, 3, 1, 0, partitions, friendships);
-        HermesMiddleware middleware = new HermesMiddleware(manager, gamma);
+        HManager manager = initHManager(0, partitions, friendships);
+        HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
         middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (numPartitions - 1)).iterator().next());
         for(Integer uid : friendships.keySet()) {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
@@ -47,7 +47,7 @@ public class HermesMiddlewareTest {
 
         assertEquals(friendships.keySet(), observedUsers);
 
-        manager.repartition(); //Just making sure this doesn't throw an NPE or anything
+        middleware.repartition(); //Just making sure this doesn't throw an NPE or anything
     }
 
 }
