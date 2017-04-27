@@ -142,7 +142,10 @@ public class NoRepManager {
 
     public void moveUser(Integer uid, Integer pid, boolean omitFromTally) {
         User user = getUser(uid);
-        pMap.get(user.getBasePid()).remove(uid);
+        int oldPid = user.getBasePid();
+        if(pMap.containsKey(oldPid)) {
+            pMap.get(user.getBasePid()).remove(uid);
+        }
         getPartition(pid).add(uid);
         user.setBasePid(pid);
         if(!omitFromTally) {
