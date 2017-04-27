@@ -17,7 +17,7 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     private float deltaT;
     private int k;
     private int numRestarts;
-    private NoRepManager manager;
+    private boolean incremental = false;
 
     public JabejaMiddleware(float alpha, float initialT, float deltaT, int k, int numRestarts, NoRepManager manager) {
         super(manager);
@@ -26,16 +26,25 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
         this.deltaT = deltaT;
         this.k = k;
         this.numRestarts = numRestarts;
-        this.manager = manager;
+    }
+
+    public JabejaMiddleware(float alpha, float initialT, float deltaT, int k, int numRestarts, boolean incremental, NoRepManager manager) {
+        super(manager);
+        this.alpha = alpha;
+        this.initialT = initialT;
+        this.deltaT = deltaT;
+        this.k = k;
+        this.numRestarts = numRestarts;
+        this.incremental = incremental;
     }
 
     @Override
     public void removePartition(Integer partitionId) {
-        Set<Integer> partition = manager.getPartition(partitionId);
-        manager.removePartition(partitionId);
+        Set<Integer> partition = getManager().getPartition(partitionId);
+        getManager().removePartition(partitionId);
         for(Integer uid : partition) {
-            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPids());
-            manager.moveUser(uid, newPid, true);
+            Integer newPid = ProbabilityUtils.getRandomElement(getPartitionIds());
+            getManager().moveUser(uid, newPid, true);
         }
     }
 
@@ -45,8 +54,8 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     }
 
     public void repartition() {
-        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getPartitionToUserMap(), getFriendships(), false);
-        manager.increaseTallyLogical(noRepResults.getLogicalMoves());
+        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getPartitionToUserMap(), getFriendships(), incremental);
+        getManager().increaseTallyLogical(noRepResults.getLogicalMoves());
         if(noRepResults.getUidsToPids() != null) {
             physicallyMigrate(noRepResults.getUidsToPids());
         }
@@ -54,10 +63,10 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
 
     void physicallyMigrate(Map<Integer, Integer> logicalPids) {
         for(Integer uid : logicalPids.keySet()) {
-            User user = manager.getUser(uid);
+            User user = getManager().getUser(uid);
             Integer newPid = logicalPids.get(uid);
             if(!user.getBasePid().equals(newPid)) {
-                manager.moveUser(uid, newPid, false);
+                getManager().moveUser(uid, newPid, false);
             }
         }
     }

@@ -86,16 +86,16 @@ public class TraceRunner {
 
     static IMiddlewareAnalyzer initMiddleware(ParsedArgs parsedArgs, Trace trace, Properties props) {
         switch (parsedArgs.getType()) {
-            case HERMES_TYPE:  return initHermesMiddleware         (trace, parsedArgs, props);
-            case HERMAR_TYPE:  return initHermarMiddleware         (trace, parsedArgs, props);
-            case SPAR_TYPE:    return initSparMiddleware           (trace, parsedArgs, props);
-            case SPARMES_TYPE: return initSparmesMiddleware        (trace, parsedArgs, props);
-            case METIS_TYPE:   return initMetisMiddleware          (trace, parsedArgs, props);
-            case JABEJA_TYPE:  return initJ2Middleware             (trace, parsedArgs, props);
-            case JABAR_TYPE:   return initJ2ArMiddleware           (trace, parsedArgs, props);
-            case SPAJA_TYPE:   return initSpJ2Middleware           (trace, parsedArgs, props);
-            case DUMMY_TYPE:   return initDummyMiddleware          (trace, parsedArgs, props);
-            case RDUMMY_TYPE:  return initReplicaDummyMiddleware   (trace, parsedArgs, props);
+            case HERMES_TYPE:  return initHermesMiddleware       (trace, parsedArgs, props);
+            case HERMAR_TYPE:  return initHermarMiddleware       (trace, parsedArgs, props);
+            case SPAR_TYPE:    return initSparMiddleware         (trace, parsedArgs, props);
+            case SPARMES_TYPE: return initSparmesMiddleware      (trace, parsedArgs, props);
+            case METIS_TYPE:   return initMetisMiddleware        (trace, parsedArgs, props);
+            case JABEJA_TYPE:  return initJabejaMiddleware       (trace, parsedArgs, props);
+            case JABAR_TYPE:   return initJabarMiddleware        (trace, parsedArgs, props);
+            case SPAJA_TYPE:   return initSpajaMiddleware        (trace, parsedArgs, props);
+            case DUMMY_TYPE:   return initDummyMiddleware        (trace, parsedArgs, props);
+            case RDUMMY_TYPE:  return initReplicaDummyMiddleware (trace, parsedArgs, props);
             default: throw new RuntimeException("args[1] must be one of " + allowedTypes);
         }
     }
@@ -452,7 +452,7 @@ public class TraceRunner {
         return str.replaceAll("\\W", "-");
     }
 
-    static JabejaMiddleware initJ2Middleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+    static JabejaMiddleware initJabejaMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
         NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
@@ -468,47 +468,47 @@ public class TraceRunner {
                 noRepManager);
     }
 
-    static JabarMiddleware initJ2ArMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+    static JabarMiddleware initJabarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
 
-        NoRepManager j2ArManager =
+        NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         true,
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new JabarMiddleware(parsedArgs.getAlpha(), parsedArgs.getInitialT(), parsedArgs.getDeltaT(), parsedArgs.getJaK(), j2ArManager);
+        return new JabarMiddleware(parsedArgs.getAlpha(), parsedArgs.getInitialT(), parsedArgs.getDeltaT(), parsedArgs.getJaK(), noRepManager);
     }
 
     static HermesMiddleware initHermesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        NoRepManager hManager =
+        NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         false,
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new HermesMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), parsedArgs.getMaxIterations(), hManager);
+        return new HermesMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), parsedArgs.getMaxIterations(), noRepManager);
     }
 
     static HermarMiddleware initHermarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        NoRepManager hManager =
+        NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         false,
                         trace.getPartitions(),
                         trace.getFriendships());
 
-        return new HermarMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), parsedArgs.getMaxIterations(), hManager);
+        return new HermarMiddleware(parsedArgs.getGamma(), parsedArgs.getHermesK(), parsedArgs.getMaxIterations(), noRepManager);
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        RepManager manager = InitUtils.initRepManager(parsedArgs.getMinNumReplicas(), 0, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
-        return new SparMiddleware(manager);
+        RepManager repManager = InitUtils.initRepManager(parsedArgs.getMinNumReplicas(), 0, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
+        return new SparMiddleware(repManager);
     }
 
     static SparmesMiddleware initSparmesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        RepManager sparmesManager = InitUtils.initRepManager(
+        RepManager repManager = InitUtils.initRepManager(
                parsedArgs.getMinNumReplicas(),
                parsedArgs.getLogicalMigrationRatio(),
                trace.getPartitions(),
@@ -519,11 +519,11 @@ public class TraceRunner {
                 parsedArgs.getMinNumReplicas(),
                 parsedArgs.getGamma(),
                 parsedArgs.getHermesK(),
-                sparmesManager);
+                repManager);
     }
 
-    static SpajaMiddleware initSpJ2Middleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        RepManager manager = InitUtils.initRepManager(
+    static SpajaMiddleware initSpajaMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
+        RepManager repManager = InitUtils.initRepManager(
                 parsedArgs.getMinNumReplicas(),
                 parsedArgs.getLogicalMigrationRatio(),
                 trace.getPartitions(),
@@ -536,23 +536,23 @@ public class TraceRunner {
                 parsedArgs.getInitialT(),
                 parsedArgs.getDeltaT(),
                 parsedArgs.getJaK(),
-                manager);
+                repManager);
     }
 
     static MetisMiddleware initMetisMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
         String gpmetisLocation = prop.getProperty("gpmetis.location");
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
-        NoRepManager manager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
-        return new MetisMiddleware(gpmetisLocation, gpmetisTempdir, manager);
+        NoRepManager noRepManager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
+        return new MetisMiddleware(gpmetisLocation, gpmetisTempdir, noRepManager);
     }
 
     static DummyMiddleware initDummyMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        NoRepManager manager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
-        return new DummyMiddleware(manager);
+        NoRepManager noRepManager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
+        return new DummyMiddleware(noRepManager);
     }
 
     static ReplicaDummyMiddleware initReplicaDummyMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        RepManager manager = InitUtils.initRepManager(
+        RepManager repManager = InitUtils.initRepManager(
                 parsedArgs.getMinNumReplicas(),
                 parsedArgs.getLogicalMigrationRatio(),
                 trace.getPartitions(),
@@ -560,7 +560,7 @@ public class TraceRunner {
                 trace.getReplicas()
         );
 
-        return new ReplicaDummyMiddleware(manager);
+        return new ReplicaDummyMiddleware(repManager);
     }
 
     private static final String HEADER = "No       Type     Date                 Action          Ps   Nodes  Edges    Assort.  EdgeCut  Replicas  Moves     Delay";

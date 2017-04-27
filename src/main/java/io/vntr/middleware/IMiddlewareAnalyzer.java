@@ -11,8 +11,8 @@ public interface IMiddlewareAnalyzer extends IMiddleware {
     Integer getNumberOfPartitions();
     Integer getNumberOfUsers();
     Integer getNumberOfFriendships();
-    Collection<Integer> getUserIds();
-    Collection<Integer> getPartitionIds();
+    Set<Integer> getUserIds();
+    Set<Integer> getPartitionIds();
     Integer getEdgeCut();
     Integer getReplicationCount();
     Long getMigrationTally();
@@ -20,6 +20,6 @@ public interface IMiddlewareAnalyzer extends IMiddleware {
     double calculateExpectedQueryDelay();
     void checkValidity();
     Map<Integer, Set<Integer>> getPartitionToUserMap();
-    Map<Integer, Set<Integer>> getPartitionToReplicaMap();
+    Map<Integer, Set<Integer>> getPartitionToReplicasMap();
     Map<Integer, Set<Integer>> getFriendships();
 }

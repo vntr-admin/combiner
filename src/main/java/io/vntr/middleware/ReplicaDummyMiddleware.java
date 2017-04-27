@@ -7,6 +7,7 @@ import java.util.*;
 
 import static io.vntr.migration.DummyMigrator.getUserMigrationStrategy;
 import static io.vntr.utils.Utils.getUToReplicasMap;
+import static java.util.Collections.singleton;
 
 /**
  * Created by robertlindquist on 11/23/16.
@@ -48,8 +49,8 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
         
         //Second, determine the migration strategy
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicaMap(), getFriendships().keySet());
-        Map<Integer, Integer> migrationStrategy = getUserMigrationStrategy(partitionId, getManager().getPartitionToUserMap(), uidToReplicasMap);
+        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getFriendships().keySet());
+        Map<Integer, Integer> migrationStrategy = getUserMigrationStrategy(partitionId, getPartitionToUserMap(), uidToReplicasMap);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
@@ -61,14 +62,13 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
                 getManager().addReplica(user, newPartitionId);
                 usersInNeedOfNewReplicas.remove(userId);
             }
-            getManager().promoteReplicaToMaster(userId, migrationStrategy.get(userId));
+            getManager().promoteReplicaToMaster(userId, newPartitionId);
         }
 
         //Fourth, add replicas as appropriate
         for (Integer userId : usersInNeedOfNewReplicas) {
             RepUser user = getManager().getUserMaster(userId);
-            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Collections.singletonList(partitionId));
-            getManager().addReplica(user, newPid);
+            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
@@ -86,35 +86,9 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         getManager().removePartition(partitionId);
     }
 
-    Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
-
-        //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : getManager().getMastersOnPartition(partitionIdToBeRemoved)) {
-            RepUser user = getManager().getUserMaster(userId);
-            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        for (Integer userId : getManager().getReplicasOnPartition(partitionIdToBeRemoved)) {
-            RepUser user = getManager().getUserMaster(userId);
-            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        return usersInNeedOfNewReplicas;
-    }
-
     @Override
     public Long getMigrationTally() {
         return 0L; //Replica Dummy doesn't migrate users
-    }
-
-    @Override
-    public void broadcastDowntime() {
-        //ignores downtime
     }
 
 }

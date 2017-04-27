@@ -10,6 +10,7 @@ import io.vntr.migration.SMigrator;
 
 import static io.vntr.utils.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
+import static java.util.Collections.singleton;
 
 public class SparMiddleware extends AbstractRepMiddleware {
 
@@ -27,8 +28,8 @@ public class SparMiddleware extends AbstractRepMiddleware {
 
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
-        if (!colocatedMasters && !colocatedReplicas) {
-            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getManager().getMinNumReplicas(), getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
+        if(!colocatedMasters && !colocatedReplicas) {
+            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getManager().getMinNumReplicas(), getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap());
             performRebalace(strategy, smallerUserId, largerUserId);
         }
 
@@ -51,11 +52,11 @@ public class SparMiddleware extends AbstractRepMiddleware {
         } else {
             RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
-            Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), getManager().getUids());
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getPartitionToUserMap());
+            Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getUserIds());
 
             Set<Integer> replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, uidToPidMap, uidToReplicasMap);
-            Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, getManager().getMinNumReplicas(), uidToReplicasMap, uidToPidMap, getManager().getFriendships());
+            Set<Integer> replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, getManager().getMinNumReplicas(), uidToReplicasMap, uidToPidMap, getFriendships());
             getManager().moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
@@ -71,8 +72,8 @@ public class SparMiddleware extends AbstractRepMiddleware {
         RepUser largerUser = getManager().getUserMaster(largerUserId);
 
         if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
-            Map<Integer, Set<Integer>> friendships = getManager().getFriendships();
+            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getPartitionToUserMap());
+            Map<Integer, Set<Integer>> friendships = getFriendships();
             boolean smallerReplicaWasOnlyThereForLarger = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser, uidToPidMap, friendships).contains(smallerUserId);
             boolean largerReplicaWasOnlyThereForSmaller = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser, uidToPidMap, friendships).contains(largerUserId);
 
@@ -93,7 +94,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
         Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
+        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {
@@ -107,7 +108,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
                 }
                 getManager().addReplica(user, newPartitionId);
             }
-            getManager().promoteReplicaToMaster(userId, migrationStrategy.get(userId));
+            getManager().promoteReplicaToMaster(userId, newPartitionId);
         }
 
         Set<Integer> usersToReplicate = getUsersToReplicate(affectedUsers, partitionId);
@@ -115,8 +116,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
             RepUser user = getManager().getUserMaster(userId);
-            int newPid = getRandomPartitionIdWhereThisUserIsNotPresent(user, Collections.singleton(partitionId));
-            getManager().addReplica(user, newPid);
+            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
@@ -132,27 +132,6 @@ public class SparMiddleware extends AbstractRepMiddleware {
 
         //Finally, actually drop partition
         getManager().removePartition(partitionId);
-    }
-
-    Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
-
-        //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : getManager().getMastersOnPartition(partitionIdToBeRemoved)) {
-            RepUser user = getManager().getUserMaster(userId);
-            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        for (Integer userId : getManager().getReplicasOnPartition(partitionIdToBeRemoved)) {
-            RepUser user = getManager().getUserMaster(userId);
-            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
-            }
-        }
-
-        return usersInNeedOfNewReplicas;
     }
 
     Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
@@ -185,16 +164,6 @@ public class SparMiddleware extends AbstractRepMiddleware {
         Set<Integer> possibilities = new HashSet<>(getManager().getMastersOnPartition(partitionIdToBeRemoved));
         possibilities.addAll(getManager().getReplicasOnPartition(partitionIdToBeRemoved));
         return possibilities;
-    }
-
-    @Override
-    public Long getMigrationTally() {
-        return getManager().getMigrationTally();
-    }
-
-    @Override
-    public void broadcastDowntime() {
-        //SPAR ignores downtime
     }
 
 }

@@ -76,12 +76,12 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Collection<Integer> getUserIds() {
+    public Set<Integer> getUserIds() {
         return manager.getUids();
     }
 
     @Override
-    public Collection<Integer> getPartitionIds() {
+    public Set<Integer> getPartitionIds() {
         return manager.getPids();
     }
 
@@ -107,7 +107,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
+    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
             m.put(pid, new HashSet<Integer>());

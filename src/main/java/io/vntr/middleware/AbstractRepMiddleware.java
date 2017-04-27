@@ -77,12 +77,12 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Collection<Integer> getUserIds() {
+    public Set<Integer> getUserIds() {
         return manager.getUids();
     }
 
     @Override
-    public Collection<Integer> getPartitionIds() {
+    public Set<Integer> getPartitionIds() {
         return manager.getPids();
     }
 
@@ -112,7 +112,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
+    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
             m.put(pid, manager.getReplicasOnPartition(pid));
@@ -133,5 +133,36 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     @Override
     public void checkValidity() {
         manager.checkValidity();
+    }
+
+    @Override
+    public Long getMigrationTally() {
+        return getManager().getMigrationTally();
+    }
+
+    @Override
+    public void broadcastDowntime() {
+        //SPAR ignores downtime
+    }
+
+    Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
+        Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
+
+        //First, determine which users will need more replicas once this partition is kaput
+        for (Integer userId : getManager().getMastersOnPartition(partitionIdToBeRemoved)) {
+            RepUser user = getManager().getUserMaster(userId);
+            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
+                usersInNeedOfNewReplicas.add(userId);
+            }
+        }
+
+        for (Integer userId : getManager().getReplicasOnPartition(partitionIdToBeRemoved)) {
+            RepUser user = getManager().getUserMaster(userId);
+            if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
+                usersInNeedOfNewReplicas.add(userId);
+            }
+        }
+
+        return usersInNeedOfNewReplicas;
     }
 }
