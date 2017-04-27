@@ -30,7 +30,7 @@ public class RepManager {
         return minNumReplicas;
     }
 
-    public Partition getPartitionById(Integer id) {
+    Partition getPartitionById(Integer id) {
         return pMap.get(id);
     }
 
@@ -435,4 +435,78 @@ public class RepManager {
         return keys;
     }
 
+    public Set<Integer> getMastersOnPartition(int pid) {
+        return getPartitionById(pid).getIdsOfMasters();
+    }
+
+    public Set<Integer> getReplicasOnPartition(int pid) {
+        return getPartitionById(pid).getIdsOfReplicas();
+    }
+
+    public RepUser getReplicaOnPartition(int uid, int pid) {
+        return getPartitionById(pid).getReplicaById(uid);
+    }
+
+    public int getNumMastersOnPartition(int pid) {
+        return getPartitionById(pid).getNumMasters();
+    }
+
+    public int getNumReplicasOnPartition(int pid) {
+        return getPartitionById(pid).getNumReplicas();
+    }
+
+    static class Partition {
+        private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
+        private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();
+        private Integer id;
+
+        Partition(Integer id) {
+            this.id = id;
+        }
+
+        void addMaster(RepUser user) {
+            idToMasterMap.put(user.getId(), user);
+        }
+
+        User removeMaster(Integer id) {
+            return idToMasterMap.remove(id);
+        }
+
+        void addReplica(RepUser user) {
+            idToReplicaMap.put(user.getId(), user);
+        }
+
+        User removeReplica(Integer id) {
+            return idToReplicaMap.remove(id);
+        }
+
+        RepUser getMasterById(Integer userId) {
+            return idToMasterMap.get(userId);
+        }
+
+        RepUser getReplicaById(Integer userId) {
+            return idToReplicaMap.get(userId);
+        }
+
+        int getNumMasters() {
+            return idToMasterMap.size();
+        }
+
+        int getNumReplicas() {
+            return idToReplicaMap.size();
+        }
+
+        Set<Integer> getIdsOfMasters() {
+            return idToMasterMap.keySet();
+        }
+
+        public Set<Integer> getIdsOfReplicas() {
+            return idToReplicaMap.keySet();
+        }
+
+        public Integer getId() {
+            return id;
+        }
+
+    }
 }

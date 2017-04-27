@@ -4,7 +4,6 @@ import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.manager.RepManager;
 import io.vntr.migration.DummyMigrator;
-import io.vntr.manager.Partition;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -88,10 +87,10 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
         }
 
         //Fifth, remove references to replicas formerly on this partition
-        for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
+        for(Integer uid : manager.getReplicasOnPartition(partitionId)) {
             RepUser user = manager.getUserMaster(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-                manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
+                manager.getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds
@@ -103,18 +102,17 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
 
         //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : partition.getIdsOfMasters()) {
+        for (Integer userId : manager.getMastersOnPartition(partitionIdToBeRemoved)) {
             RepUser user = manager.getUserMaster(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
-        for (Integer userId : partition.getIdsOfReplicas()) {
+        for (Integer userId : manager.getReplicasOnPartition(partitionIdToBeRemoved)) {
             RepUser user = manager.getUserMaster(userId);
             if (user.getReplicaPids().size() <= manager.getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
@@ -204,7 +202,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
-            m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
+            m.put(pid, manager.getReplicasOnPartition(pid));
         }
         return m;
     }

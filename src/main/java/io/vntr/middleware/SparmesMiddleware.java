@@ -8,7 +8,6 @@ import io.vntr.migration.SMigrator;
 import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SparmesRepartitioner;
 import io.vntr.manager.RepManager;
-import io.vntr.manager.Partition;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -159,10 +158,11 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
 
         //TODO: ensure this is correct
         //Fifth, remove references to replicas formerly on this partition
-        for(Integer uid : manager.getPartitionById(partitionId).getIdsOfReplicas()) {
+
+        for(Integer uid : manager.getReplicasOnPartition(partitionId)) {
             RepUser user = manager.getUserMaster(uid);
             for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-                manager.getPartitionById(currentReplicaPartitionId).getReplicaById(user.getId()).removeReplicaPartitionId(partitionId);
+                manager.getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds
@@ -200,16 +200,14 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
-        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
-        possibilities.addAll(partition.getIdsOfReplicas());
+        Set<Integer> possibilities = new HashSet<>(manager.getMastersOnPartition(partitionIdToBeRemoved));
+        possibilities.addAll(manager.getReplicasOnPartition(partitionIdToBeRemoved));
         return possibilities;
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
-        Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
-        possibilities.addAll(partition.getIdsOfReplicas());
+        Set<Integer> possibilities = new HashSet<>(manager.getMastersOnPartition(partitionIdToBeRemoved));
+        possibilities.addAll(manager.getReplicasOnPartition(partitionIdToBeRemoved));
 
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
         for (Integer userId : possibilities) {
@@ -301,7 +299,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     public Map<Integer, Set<Integer>> getPartitionToReplicaMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
-            m.put(pid, manager.getPartitionById(pid).getIdsOfReplicas());
+            m.put(pid, manager.getReplicasOnPartition(pid));
         }
         return m;
     }
@@ -373,10 +371,9 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     void shoreUpFriendReplicas(int uid) {
         RepUser user = manager.getUserMaster(uid);
         int pid = user.getBasePid();
-        Partition partition = manager.getPartitionById(pid);
         Set<Integer> friends = new HashSet<>(user.getFriendIDs());
-        friends.removeAll(partition.getIdsOfMasters());
-        friends.removeAll(partition.getIdsOfReplicas());
+        friends.removeAll(manager.getMastersOnPartition(pid));
+        friends.removeAll(manager.getReplicasOnPartition(pid));
         for(int friendId : friends) {
             manager.addReplica(manager.getUserMaster(friendId), pid);
         }
