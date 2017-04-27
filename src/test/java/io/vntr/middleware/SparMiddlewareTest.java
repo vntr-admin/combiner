@@ -1,13 +1,13 @@
 package io.vntr.middleware;
 
-import io.vntr.manager.SManager;
+import io.vntr.manager.RepManager;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
-import static io.vntr.utils.InitUtils.initSManager;
+import static io.vntr.utils.InitUtils.initRepManager;
 import static org.junit.Assert.*;
 
 public class SparMiddlewareTest {
@@ -50,7 +50,7 @@ public class SparMiddlewareTest {
         replicaPartitions.put(4, initSet( 1,  2,  3,  5,  7,  8,  9, 11, 12, 13, 14, 15));
 
         //No change test 1: no replicas added
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
         middleware.performRebalace(NO_CHANGE,  3, 19); //should not change anything, including replicas
@@ -65,7 +65,7 @@ public class SparMiddlewareTest {
 
 
         //No change test 2: one replica added
-        manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
         middleware.performRebalace(NO_CHANGE,  7, 17); //should add 17 replica to p2
@@ -86,7 +86,7 @@ public class SparMiddlewareTest {
 
 
         //No change test 3: 2 replicas added
-        manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
         middleware.performRebalace(NO_CHANGE, 10, 17); //should add 17 replica to p2 and a copy of 10 to p4
@@ -109,7 +109,7 @@ public class SparMiddlewareTest {
         assertEquals(replicaPartitions.get(3), replicasAfter.get(3));
 
         //Small to large test
-        manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
         middleware.performRebalace(SMALL_TO_LARGE, 1, 19); //should move 1 to p4; should remove a replica of 14 from p1; should remove a replica of 1 from p4; should add replicas of 4, 6, and 10 to p4
@@ -146,7 +146,7 @@ public class SparMiddlewareTest {
 
 
         //Large to small test
-        manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
         middleware.performRebalace(LARGE_TO_SMALL, 2, 11); //should move 11 to p1; should remove a replica of 10 from p3
@@ -212,7 +212,7 @@ public class SparMiddlewareTest {
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
         replicaPartitions.put(4, initSet(11, 12, 13, 14, 15,  3,  5));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
         assertEquals((Integer) 28, middleware.getEdgeCut());
@@ -272,7 +272,7 @@ public class SparMiddlewareTest {
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
         replicaPartitions.put(4, initSet(11, 12, 13, 14, 15,  3));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
         assertEquals((Integer) 28, middleware.getEdgeCut());
@@ -326,7 +326,7 @@ public class SparMiddlewareTest {
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
         replicaPartitions.put(4, initSet(11, 12, 13, 14, 15,  3));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
         assertEquals(initSet(1, 4, 5, 16, 18, 20), middleware.determineUsersWhoWillNeedAnAdditionalReplica(1));
@@ -369,7 +369,7 @@ public class SparMiddlewareTest {
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10));
         replicaPartitions.put(4, initSet(11, 12, 13, 14, 15));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
         for(int uid=1; uid<20; uid++) {

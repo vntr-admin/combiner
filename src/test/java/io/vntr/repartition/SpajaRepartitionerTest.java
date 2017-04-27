@@ -1,6 +1,6 @@
 package io.vntr.repartition;
 
-import io.vntr.manager.SManager;
+import io.vntr.manager.RepManager;
 import io.vntr.utils.InitUtils;
 import org.junit.Test;
 
@@ -8,7 +8,7 @@ import java.util.*;
 
 import static io.vntr.utils.Utils.*;
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.repartition.SpJ2Repartitioner.*;
+import static io.vntr.repartition.SpajaRepartitioner.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by robertlindquist on 4/18/17.
  */
-public class SpJ2RepartitionerTest {
+public class SpajaRepartitionerTest {
 
     @Test
     public void testGetLogicalReplicationCount() {
@@ -53,11 +53,11 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         int expectedReplication = replicas.get(1).size() + replicas.get(2).size() + replicas.get(3).size();
-        assertTrue(expectedReplication == SpJ2Repartitioner.getLogicalReplicationCount(state.getLogicalReplicaPartitions()));
+        assertTrue(expectedReplication == SpajaRepartitioner.getLogicalReplicationCount(state.getLogicalReplicaPartitions()));
     }
 
     @Test
@@ -95,14 +95,14 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         Integer uid1 = 4;
         Integer expectedPartner = 12;
         Set<Integer> candidates = initSet(6, 7, 8, 9, 11, expectedPartner, 13); //omit friends and things on same partition
 
-        Integer partnerId = SpJ2Repartitioner.findPartner(uid1, candidates, 2f, state);
+        Integer partnerId = SpajaRepartitioner.findPartner(uid1, candidates, 2f, state);
         assertEquals(partnerId, expectedPartner);
 
 
@@ -118,10 +118,10 @@ public class SpJ2RepartitionerTest {
         double pivot = (currentReplicas + expectedIncreaseInReplicas) / currentReplicas;
         double differential = 0.00001;
 
-        partnerId = SpJ2Repartitioner.findPartner(trickyId1, initSet(trickyId2), (float)(pivot - differential), state);
+        partnerId = SpajaRepartitioner.findPartner(trickyId1, initSet(trickyId2), (float)(pivot - differential), state);
         assertTrue(partnerId == null);
 
-        partnerId = SpJ2Repartitioner.findPartner(trickyId1, initSet(trickyId2), (float)(pivot + differential), state);
+        partnerId = SpajaRepartitioner.findPartner(trickyId1, initSet(trickyId2), (float)(pivot + differential), state);
         assertEquals(partnerId, trickyId2);
     }
 
@@ -160,8 +160,8 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SManager manager = InitUtils.initSManager(minNumReplicas, 0, partitions, friendships, replicas);
-        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
+        SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
 
@@ -170,7 +170,7 @@ public class SpJ2RepartitionerTest {
         Integer pid1 = 1;
         Integer uid2 = 6;
         Integer pid2 = 2;
-        SpJ2Repartitioner.SwapChanges swapChanges = SpJ2Repartitioner.getSwapChanges(uid1, uid2, state);
+        SpajaRepartitioner.SwapChanges swapChanges = SpajaRepartitioner.getSwapChanges(uid1, uid2, state);
 
         Set<Integer> expectedAddToP1 = initSet(1); //1 has friends on P1, so it needs a replica there
         Set<Integer> expectedAddToP2 = initSet(4, 6, 12); //6 has friends on P1, and 1 is friends with 4 and 12 (which aren't there yet)
@@ -186,7 +186,7 @@ public class SpJ2RepartitionerTest {
 
 
         //Swap
-        SpJ2Repartitioner.swap(uid1, uid2, state);
+        SpajaRepartitioner.swap(uid1, uid2, state);
 
         assertEquals(state.getLogicalPids().get(uid1), pid2);
         assertEquals(state.getLogicalPids().get(uid2), pid1);
@@ -251,7 +251,7 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         //For every friend of the moving user:
@@ -296,7 +296,7 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         //For every friend of the moving user, if:
@@ -353,7 +353,7 @@ public class SpJ2RepartitionerTest {
 
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        SpJ2Repartitioner.State state = new SpJ2Repartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
+        SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         //Test shouldDeleteReplicaInTargetPartition
@@ -398,7 +398,7 @@ uidLoop:    for (Integer uid : friendships.keySet()) {
     }
 
 
-    private static void fillState(SpJ2Repartitioner.State state, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
+    private static void fillState(SpajaRepartitioner.State state, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         state.setLogicalPids(getUToMasterMap(partitions));
         state.setLogicalReplicaPids(getUToReplicasMap(replicas, state.getFriendships().keySet()));
         state.setLogicalReplicaPartitions(replicas);

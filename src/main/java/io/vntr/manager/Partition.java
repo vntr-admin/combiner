@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class SPartition {
+public class Partition {
     private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
     private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();
     private Integer id;
 
-    public SPartition(Integer id) {
+    public Partition(Integer id) {
         this.id = id;
     }
 

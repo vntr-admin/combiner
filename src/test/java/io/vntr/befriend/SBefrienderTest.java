@@ -1,13 +1,13 @@
 package io.vntr.befriend;
 
 import io.vntr.RepUser;
-import io.vntr.manager.SManager;
+import io.vntr.manager.RepManager;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.InitUtils.initSManager;
+import static io.vntr.utils.InitUtils.initRepManager;
 import static io.vntr.utils.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.befriend.SBefriender.*;
@@ -68,7 +68,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
 
         int uid1 = 7;
         int pid1 = 2;
@@ -113,7 +113,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
@@ -164,7 +164,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
@@ -241,7 +241,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
@@ -321,7 +321,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
@@ -374,7 +374,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
         Boolean[] expectedResults = {null,
@@ -418,7 +418,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
 
@@ -470,7 +470,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        SManager manager = initSManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
 
         //Case 1: staying user has no replica in moving partition

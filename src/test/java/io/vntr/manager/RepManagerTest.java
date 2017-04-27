@@ -9,21 +9,21 @@ import io.vntr.befriend.SBefriender;
 import org.junit.Test;
 
 import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.InitUtils.initSManager;
+import static io.vntr.utils.InitUtils.initRepManager;
 import static io.vntr.utils.Utils.*;
 import static org.junit.Assert.*;
 
-public class SManagerTest {
+public class RepManagerTest {
     @Test
     public void testGetMinNumReplicas() {
         int expectedValue = 2;
-        SManager manager = new SManager(expectedValue, 0);
+        RepManager manager = new RepManager(expectedValue, 0);
         assertTrue(manager.getMinNumReplicas() == expectedValue);
     }
 
     @Test
     public void testGetNumUsers() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -56,21 +56,21 @@ public class SManagerTest {
 
     @Test
     public void testGetAllPartitionIds() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         Integer firstId = manager.addPartition();
-        SPartition firstPartition = manager.getPartitionById(firstId);
+        Partition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
         Integer secondId = manager.addPartition();
-        SPartition secondPartition = manager.getPartitionById(secondId);
+        Partition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
         Integer thirdId = manager.addPartition();
-        SPartition thirdPartition = manager.getPartitionById(thirdId);
+        Partition thirdPartition = manager.getPartitionById(thirdId);
         assertTrue(thirdPartition.getId().equals(thirdId));
 
         Integer fourthId = manager.addPartition();
-        SPartition fourthPartition = manager.getPartitionById(fourthId);
+        Partition fourthPartition = manager.getPartitionById(fourthId);
         assertTrue(fourthPartition.getId().equals(fourthId));
 
         assertNotEquals(firstId, secondId);
@@ -91,21 +91,21 @@ public class SManagerTest {
 
     @Test
     public void testAddUser() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         Integer firstId = manager.addPartition();
-        SPartition firstPartition = manager.getPartitionById(firstId);
+        Partition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
         Integer secondId = manager.addPartition();
-        SPartition secondPartition = manager.getPartitionById(secondId);
+        Partition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
         Integer thirdId = manager.addPartition();
-        SPartition thirdPartition = manager.getPartitionById(thirdId);
+        Partition thirdPartition = manager.getPartitionById(thirdId);
         assertTrue(thirdPartition.getId().equals(thirdId));
 
         Integer fourthId = manager.addPartition();
-        SPartition fourthPartition = manager.getPartitionById(fourthId);
+        Partition fourthPartition = manager.getPartitionById(fourthId);
         assertTrue(fourthPartition.getId().equals(fourthId));
 
         assertNotEquals(firstId, secondId);
@@ -124,7 +124,7 @@ public class SManagerTest {
 
         assertTrue(RepUser.getReplicaPids().size() == manager.getMinNumReplicas());
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = RepUser.getReplicaPids().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
             assertTrue(containsReplica == shouldContainReplica);
@@ -133,7 +133,7 @@ public class SManagerTest {
 
     @Test
     public void testRemoveUser() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -156,7 +156,7 @@ public class SManagerTest {
         userIdToUserMap.put(userId3, user3);
 
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             assertTrue(partition.getNumMasters() == 0 || partition.getNumMasters() == 1);
         }
 
@@ -167,7 +167,7 @@ public class SManagerTest {
 
             assertTrue(RepUser.getReplicaPids().size() == manager.getMinNumReplicas());
             for (Integer partitionId : manager.getPids()) {
-                SPartition partition = manager.getPartitionById(partitionId);
+                Partition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = RepUser.getReplicaPids().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
                 assertTrue(containsReplica == shouldContainReplica);
@@ -187,7 +187,7 @@ public class SManagerTest {
         assertNull(manager.getUserMaster(userId1));
 
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             assertFalse(partition.getIdsOfMasters().contains(userId1));
             assertFalse(partition.getIdsOfReplicas().contains(userId1));
         }
@@ -200,7 +200,7 @@ public class SManagerTest {
 
             assertTrue(RepUser.getReplicaPids().size() == manager.getMinNumReplicas());
             for (Integer partitionId : manager.getPids()) {
-                SPartition partition = manager.getPartitionById(partitionId);
+                Partition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = RepUser.getReplicaPids().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
                 assertTrue(containsReplica == shouldContainReplica);
@@ -210,13 +210,13 @@ public class SManagerTest {
 
     @Test
     public void testAddPartition() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         Integer firstId = manager.addPartition();
-        SPartition firstPartition = manager.getPartitionById(firstId);
+        Partition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
         Integer secondId = manager.addPartition();
-        SPartition secondPartition = manager.getPartitionById(secondId);
+        Partition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
         assertNotEquals(firstId, secondId);
@@ -224,17 +224,17 @@ public class SManagerTest {
 
     @Test
     public void testRemovePartition() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         Integer firstId = manager.addPartition();
-        SPartition firstPartition = manager.getPartitionById(firstId);
+        Partition firstPartition = manager.getPartitionById(firstId);
         assertTrue(firstPartition.getId().equals(firstId));
 
         Integer secondId = manager.addPartition();
-        SPartition secondPartition = manager.getPartitionById(secondId);
+        Partition secondPartition = manager.getPartitionById(secondId);
         assertTrue(secondPartition.getId().equals(secondId));
 
         Integer thirdId = manager.addPartition();
-        SPartition thirdPartition = manager.getPartitionById(thirdId);
+        Partition thirdPartition = manager.getPartitionById(thirdId);
         assertTrue(thirdPartition.getId().equals(thirdId));
 
         manager.removePartition(secondId);
@@ -247,7 +247,7 @@ public class SManagerTest {
 
     @Test
     public void testAddReplica() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -277,7 +277,7 @@ public class SManagerTest {
 
             assertTrue(RepUser.getReplicaPids().size() == manager.getMinNumReplicas());
             for (Integer partitionId : manager.getPids()) {
-                SPartition partition = manager.getPartitionById(partitionId);
+                Partition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = RepUser.getReplicaPids().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
                 assertTrue(containsReplica == shouldContainReplica);
@@ -293,7 +293,7 @@ public class SManagerTest {
 
         assertTrue(RepUser1.getReplicaPids().size() == manager.getMinNumReplicas() + 1);
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = RepUser1.getReplicaPids().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
             assertTrue(containsReplica == shouldContainReplica);
@@ -302,7 +302,7 @@ public class SManagerTest {
 
     @Test
     public void testRemoveReplica() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -332,7 +332,7 @@ public class SManagerTest {
 
             assertTrue(RepUser.getReplicaPids().size() == manager.getMinNumReplicas());
             for (Integer partitionId : manager.getPids()) {
-                SPartition partition = manager.getPartitionById(partitionId);
+                Partition partition = manager.getPartitionById(partitionId);
                 boolean shouldContainReplica = RepUser.getReplicaPids().contains(partitionId);
                 boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
                 assertTrue(containsReplica == shouldContainReplica);
@@ -348,7 +348,7 @@ public class SManagerTest {
 
         assertTrue(RepUser1.getReplicaPids().size() == manager.getMinNumReplicas() + 1);
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = RepUser1.getReplicaPids().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
             assertTrue(containsReplica == shouldContainReplica);
@@ -363,7 +363,7 @@ public class SManagerTest {
         assertFalse(RepUser1.getReplicaPids().contains(replicaPartitionToRemove));
         assertTrue(RepUser1.getReplicaPids().size() == manager.getMinNumReplicas());
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             boolean shouldContainReplica = RepUser1.getReplicaPids().contains(partitionId);
             boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
             assertTrue(containsReplica == shouldContainReplica);
@@ -373,7 +373,7 @@ public class SManagerTest {
     @Test
     public void testMoveUser() {
         int minNumReplicas = 2;
-        SManager manager = new SManager(minNumReplicas, 0);
+        RepManager manager = new RepManager(minNumReplicas, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -459,7 +459,7 @@ public class SManagerTest {
 
     @Test
     public void testBefriend() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -506,7 +506,7 @@ public class SManagerTest {
 
     @Test
     public void testUnfriend() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -586,7 +586,7 @@ public class SManagerTest {
 
     @Test
     public void testPromoteReplicaToMaster() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -642,7 +642,7 @@ public class SManagerTest {
 
     @Test
     public void testGetRandomPartitionIdWhereThisUserIsNotPresent() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         manager.addPartition();
@@ -667,7 +667,7 @@ public class SManagerTest {
 
         Set<Integer> partitionsWithoutThisUser = new HashSet<>();
         for (Integer partitionId : manager.getPids()) {
-            SPartition partition = manager.getPartitionById(partitionId);
+            Partition partition = manager.getPartitionById(partitionId);
             if (!partition.getIdsOfMasters().contains(userId1) && !partition.getIdsOfReplicas().contains(userId1)) {
                 partitionsWithoutThisUser.add(partitionId);
             }
@@ -680,7 +680,7 @@ public class SManagerTest {
 
     @Test
     public void testGetPartitionsToAddInitialReplicas() {
-        SManager manager = new SManager(2, 0);
+        RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
         Integer thirdPartitionId = manager.addPartition();
@@ -726,7 +726,7 @@ public class SManagerTest {
         replicaPartitions.put(2, Collections.<Integer>emptySet());
         replicaPartitions.put(3, Collections.<Integer>emptySet());
 
-        SManager manager = initSManager(minNumReplicas+1, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas+1, 0, partitions, friendships, replicaPartitions);
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
 
@@ -735,7 +735,7 @@ public class SManagerTest {
         replicaPartitions.put(3, initSet( 8,  9, 10, 11, 12, 13, 14));
 
 
-        manager = initSManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
     }

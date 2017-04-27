@@ -9,7 +9,7 @@ import static io.vntr.utils.ProbabilityUtils.getRandomElement;
 /**
  * Created by robertlindquist on 4/12/17.
  */
-public class JManager implements INoRepManager {
+public class NoRepManager {
 
     private Map<Integer, User> uMap;
     private Map<Integer, Set<Integer>> pMap;
@@ -23,36 +23,31 @@ public class JManager implements INoRepManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
-    public JManager(double logicalMigrationRatio, boolean placeNewUserRandomly) {
+    public NoRepManager(double logicalMigrationRatio, boolean placeNewUserRandomly) {
         this.placeNewUserRandomly = placeNewUserRandomly;
         this.logicalMigrationRatio = logicalMigrationRatio;
         uMap = new HashMap<>();
         pMap = new HashMap<>();
     }
 
-    @Override
     public Set<Integer> getUids() {
         return uMap.keySet();
     }
 
-    @Override
     public User getUser(Integer uid) {
         return uMap.get(uid);
     }
 
-    @Override
     public Set<Integer> getPartition(Integer pid) {
         return pMap.get(pid);
     }
 
-    @Override
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
-    @Override
     public void addUser(User user) {
         if(user.getBasePid() == null) {
             user.setBasePid(getInitialPartitionId());
@@ -64,7 +59,6 @@ public class JManager implements INoRepManager {
         }
     }
 
-    @Override
     public void removeUser(Integer uid) {
         Set<Integer> friendIds = new HashSet<>(getUser(uid).getFriendIDs());
         for(Integer friendId : friendIds) {
@@ -74,19 +68,16 @@ public class JManager implements INoRepManager {
         uMap.remove(uid);
     }
 
-    @Override
     public void befriend(Integer id1, Integer id2) {
         getUser(id1).befriend(id2);
         getUser(id2).befriend(id1);
     }
 
-    @Override
     public void unfriend(Integer id1, Integer id2) {
         getUser(id1).unfriend(id2);
         getUser(id2).unfriend(id1);
     }
 
-    @Override
     public Integer getInitialPartitionId() {
         if(placeNewUserRandomly) {
             return getRandomElement(pMap.keySet());
@@ -104,14 +95,12 @@ public class JManager implements INoRepManager {
         }
     }
 
-    @Override
     public Integer addPartition() {
         int pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
-    @Override
     public void addPartition(Integer pid) {
         pMap.put(pid, new HashSet<Integer>());
         if(pid >= nextPid) {
@@ -119,22 +108,18 @@ public class JManager implements INoRepManager {
         }
     }
 
-    @Override
     public void removePartition(Integer pid) {
         pMap.remove(pid);
     }
 
-    @Override
     public Integer getNumUsers() {
         return uMap.size();
     }
 
-    @Override
     public Integer getNumPartitions() {
         return pMap.size();
     }
 
-    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for(User user : uMap.values()) {
@@ -147,7 +132,6 @@ public class JManager implements INoRepManager {
         return count;
     }
 
-    @Override
     public Map<Integer, Set<Integer>> getPartitionToUsers() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for(Integer pid : getPids()) {
@@ -156,7 +140,6 @@ public class JManager implements INoRepManager {
         return map;
     }
 
-    @Override
     public void moveUser(Integer uid, Integer pid, boolean omitFromTally) {
         User user = getUser(uid);
         pMap.get(user.getBasePid()).remove(uid);
@@ -167,12 +150,10 @@ public class JManager implements INoRepManager {
         }
     }
 
-    @Override
     public Set<Integer> getPids() {
         return pMap.keySet();
     }
 
-    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
@@ -181,17 +162,14 @@ public class JManager implements INoRepManager {
         return friendships;
     }
 
-    @Override
     public long getMigrationTally() {
         return migrationTally + (long) (logicalMigrationRatio * logicalMigrationTally);
     }
 
-    @Override
     public void increaseTally(int amount) {
         migrationTally += amount;
     }
 
-    @Override
     public void increaseTallyLogical(int amount) {
         logicalMigrationTally += amount;
     }
@@ -201,7 +179,6 @@ public class JManager implements INoRepManager {
         return "#U:" + getNumUsers() + "|#P:" + getNumPartitions();
     }
 
-    @Override
     public void checkValidity() {
         for(Integer uid : uMap.keySet()) {
             Integer observedMasterPid = null;
@@ -226,7 +203,6 @@ public class JManager implements INoRepManager {
         }
     }
 
-    @Override
     public Integer getPidForUser(Integer uid) {
         return uMap.get(uid).getBasePid();
     }

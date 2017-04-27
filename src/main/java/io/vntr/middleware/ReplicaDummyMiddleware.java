@@ -2,9 +2,9 @@ package io.vntr.middleware;
 
 import io.vntr.RepUser;
 import io.vntr.User;
-import io.vntr.manager.ReplicaDummyManager;
+import io.vntr.manager.RepManager;
 import io.vntr.migration.DummyMigrator;
-import io.vntr.manager.SPartition;
+import io.vntr.manager.Partition;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -13,9 +13,9 @@ import java.util.*;
  * Created by robertlindquist on 11/23/16.
  */
 public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
-    private ReplicaDummyManager manager;
+    private RepManager manager;
 
-    public ReplicaDummyMiddleware(ReplicaDummyManager manager) {
+    public ReplicaDummyMiddleware(RepManager manager) {
         this.manager = manager;
     }
 
@@ -103,7 +103,7 @@ public class ReplicaDummyMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
 
         //First, determine which users will need more replicas once this partition is kaput

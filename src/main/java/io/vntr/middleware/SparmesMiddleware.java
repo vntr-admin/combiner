@@ -5,9 +5,10 @@ import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
 import io.vntr.migration.SMigrator;
+import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SparmesRepartitioner;
-import io.vntr.manager.SManager;
-import io.vntr.manager.SPartition;
+import io.vntr.manager.RepManager;
+import io.vntr.manager.Partition;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -24,9 +25,9 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     private int minNumReplicas;
     private float gamma;
     private int k;
-    private SManager manager;
+    private RepManager manager;
 
-    public SparmesMiddleware(int minNumReplicas, float gamma, int k, SManager manager) {
+    public SparmesMiddleware(int minNumReplicas, float gamma, int k, RepManager manager) {
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.k = k;
@@ -199,14 +200,14 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
         return possibilities;
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
 
@@ -322,18 +323,18 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
 
 
     public void repartition() {
-        SparmesRepartitioner.Results results = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), manager.getPartitionToReplicasMap(), getFriendships());
-        manager.increaseTallyLogical(results.getNumLogicalMoves());
-        physicallyMigrate(results);
+        RepResults repResults = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), manager.getPartitionToReplicasMap(), getFriendships());
+        manager.increaseTallyLogical(repResults.getNumLogicalMoves());
+        physicallyMigrate(repResults);
     }
 
-    void physicallyMigrate(SparmesRepartitioner.Results results) {
+    void physicallyMigrate(RepResults repResults) {
         Map<Integer, Integer> currentUidToPidMap = getUToMasterMap(getPartitionToUserMap());
         Map<Integer, Set<Integer>> currentUidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
 
         for(int uid : manager.getUids()) {
             int currentPid = currentUidToPidMap.get(uid);
-            int newPid = results.getUidsToPids().get(uid);
+            int newPid = repResults.getUidToPidMap().get(uid);
 
             //move master
             if(currentPid != newPid) {
@@ -341,8 +342,8 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
                 manager.increaseTally(1);
             }
 
-            //add and remove replicas as specified in the results
-            Set<Integer> newReplicas = results.getUidsToReplicaPids().get(uid);
+            //add and remove replicas as specified in the repResults
+            Set<Integer> newReplicas = repResults.getUidsToReplicaPids().get(uid);
             Set<Integer> currentReplicas = currentUidToReplicasMap.get(uid);
             if(!currentReplicas.equals(newReplicas)) {
                 for(int newReplica : newReplicas) {
@@ -372,7 +373,7 @@ public class SparmesMiddleware implements IMiddlewareAnalyzer {
     void shoreUpFriendReplicas(int uid) {
         RepUser user = manager.getUserMaster(uid);
         int pid = user.getBasePid();
-        SPartition partition = manager.getPartitionById(pid);
+        Partition partition = manager.getPartitionById(pid);
         Set<Integer> friends = new HashSet<>(user.getFriendIDs());
         friends.removeAll(partition.getIdsOfMasters());
         friends.removeAll(partition.getIdsOfReplicas());

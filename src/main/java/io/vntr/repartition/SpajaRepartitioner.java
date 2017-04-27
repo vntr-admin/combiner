@@ -11,9 +11,9 @@ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 /**
  * Created by robertlindquist on 4/15/17.
  */
-public class SpJ2Repartitioner {
+public class SpajaRepartitioner {
 
-    public static Results repartition(int minNumReplicas, float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
+    public static RepResults repartition(int minNumReplicas, float alpha, float initialT, float deltaT, int k, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
         int numRestarts = 1;
         int moves = 0;
 
@@ -46,8 +46,8 @@ public class SpJ2Repartitioner {
             }
         }
 
-        Results results = new Results(moves, bestLogicalPids, bestLogicalReplicaPids);
-        return results;
+        RepResults repResults = new RepResults(moves, bestLogicalPids, bestLogicalReplicaPids);
+        return repResults;
     }
 
     static Integer findPartner(Integer uid, Set<Integer> candidateIds, float t, State state) {
@@ -385,27 +385,4 @@ public class SpJ2Repartitioner {
         }
     }
 
-    public static class Results {
-        private final int moves;
-        private final Map<Integer, Integer> newPids;
-        private final Map<Integer, Set<Integer>> newReplicaPids;
-
-        public Results(int moves, Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
-            this.moves = moves;
-            this.newPids = newPids;
-            this.newReplicaPids = newReplicaPids;
-        }
-
-        public int getMoves() {
-            return moves;
-        }
-
-        public Map<Integer, Integer> getNewPids() {
-            return newPids;
-        }
-
-        public Map<Integer, Set<Integer>> getNewReplicaPids() {
-            return newReplicaPids;
-        }
-    }
 }

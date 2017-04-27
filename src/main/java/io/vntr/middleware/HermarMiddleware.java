@@ -3,10 +3,10 @@ package io.vntr.middleware;
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.HBefriender;
-import io.vntr.manager.HManager;
+import io.vntr.manager.NoRepManager;
 import io.vntr.migration.HMigrator;
 import io.vntr.repartition.HRepartitioner;
-import io.vntr.repartition.Results;
+import io.vntr.repartition.NoRepResults;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -20,9 +20,9 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
     private float gamma;
     private int k;
     private int maxIterations;
-    private HManager manager;
+    private NoRepManager manager;
 
-    public HermarMiddleware(float gamma, int k, int maxIterations, HManager manager) {
+    public HermarMiddleware(float gamma, int k, int maxIterations, NoRepManager manager) {
         this.gamma = gamma;
         this.k = k;
         this.maxIterations = maxIterations;
@@ -183,11 +183,11 @@ public class HermarMiddleware implements IMiddlewareAnalyzer {
     }
 
     void repartition() {
-        Results results = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), getFriendships());
-        int numMoves = results.getLogicalMoves();
+        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), getFriendships());
+        int numMoves = noRepResults.getLogicalMoves();
         if(numMoves > 0) {
             manager.increaseTallyLogical(numMoves);
-            physicallyMigrate(results.getUidsToPids());
+            physicallyMigrate(noRepResults.getUidsToPids());
         }
     }
 

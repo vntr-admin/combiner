@@ -12,7 +12,7 @@ import static java.util.Collections.disjoint;
  */
 public class SparmesRepartitioner {
 
-    public static Results repartition(int k, int maxIterations, float gamma, int minNumReplicas, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
+    public static RepResults repartition(int k, int maxIterations, float gamma, int minNumReplicas, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, Map<Integer, Set<Integer>> friendships) {
         int moves = 0;
         State state = State.init(minNumReplicas, gamma, partitions, replicas, friendships);
 
@@ -32,7 +32,7 @@ public class SparmesRepartitioner {
         Map<Integer, Integer> uidsToPids = getUToMasterMap(state.getLogicalPartitions());
         Map<Integer, Set<Integer>> uidsToReplicaPids = getUToReplicasMap(state.getLogicalReplicaPartitions(), friendships.keySet());
 
-        return new Results(moves, uidsToPids, uidsToReplicaPids);
+        return new RepResults(moves, uidsToPids, uidsToReplicaPids);
     }
 
     static int performStage(boolean firstStage, int k, State state) {
@@ -491,30 +491,6 @@ middle:         for(int replicaId : replicas.get(pid)) {
             int numToAdd = numFriendReplicasToAddInTargetPartition + (replicateInSourcePartition ? 1 : 0);
 
             return numToDelete - numToAdd;
-        }
-    }
-
-    public static class Results {
-        private final int numLogicalMoves;
-        private final Map<Integer, Integer> uidsToPids;
-        private final Map<Integer, Set<Integer>> uidsToReplicaPids;
-
-        public Results(int numLogicalMoves, Map<Integer, Integer> uidsToPids, Map<Integer, Set<Integer>> uidsToReplicaPids) {
-            this.numLogicalMoves = numLogicalMoves;
-            this.uidsToPids = uidsToPids;
-            this.uidsToReplicaPids = uidsToReplicaPids;
-        }
-
-        public int getNumLogicalMoves() {
-            return numLogicalMoves;
-        }
-
-        public Map<Integer, Integer> getUidsToPids() {
-            return uidsToPids;
-        }
-
-        public Map<Integer, Set<Integer>> getUidsToReplicaPids() {
-            return uidsToReplicaPids;
         }
     }
 

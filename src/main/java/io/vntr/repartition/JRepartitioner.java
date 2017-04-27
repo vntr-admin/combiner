@@ -10,7 +10,7 @@ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
  */
 public class JRepartitioner {
 
-    public static Results repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, boolean incremental) {
+    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, boolean incremental) {
         Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
         int bestEdgeCut = getEdgeCut(uidToPidMap, friendships);
         Map<Integer, Integer> bestLogicalPids = null;
@@ -45,7 +45,7 @@ public class JRepartitioner {
             }
         }
 
-        return new Results(bestLogicalPids, logicalMigrationCount);
+        return new NoRepResults(bestLogicalPids, logicalMigrationCount);
     }
 
     static Integer findPartner(Integer uid, Set<Integer> candidates, float t, State state) {

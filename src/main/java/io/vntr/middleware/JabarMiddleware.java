@@ -2,9 +2,9 @@ package io.vntr.middleware;
 
 import io.vntr.User;
 import io.vntr.befriend.JBefriender;
-import io.vntr.manager.JManager;
+import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.JRepartitioner;
-import io.vntr.repartition.Results;
+import io.vntr.repartition.NoRepResults;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -17,9 +17,9 @@ public class JabarMiddleware implements IMiddlewareAnalyzer{
     private float initialT;
     private float deltaT;
     private int k;
-    private JManager manager;
+    private NoRepManager manager;
 
-    public JabarMiddleware(float alpha, float initialT, float deltaT, int k, JManager manager) {
+    public JabarMiddleware(float alpha, float initialT, float deltaT, int k, NoRepManager manager) {
         this.alpha = alpha;
         this.initialT = initialT;
         this.deltaT = deltaT;
@@ -175,10 +175,10 @@ public class JabarMiddleware implements IMiddlewareAnalyzer{
     }
 
     public void repartition() {
-        Results results = JRepartitioner.repartition(alpha, initialT, deltaT, k, 1, getPartitionToUserMap(), getFriendships(), true);
-        manager.increaseTallyLogical(results.getLogicalMoves());
-        if(results.getUidsToPids() != null) {
-            physicallyMigrate(results.getUidsToPids());
+        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, 1, getPartitionToUserMap(), getFriendships(), true);
+        manager.increaseTallyLogical(noRepResults.getLogicalMoves());
+        if(noRepResults.getUidsToPids() != null) {
+            physicallyMigrate(noRepResults.getUidsToPids());
         }
     }
 

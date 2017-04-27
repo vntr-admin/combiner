@@ -3,15 +3,14 @@ package io.vntr.trace;
 import io.vntr.middleware.IMiddleware;
 import io.vntr.middleware.IMiddlewareAnalyzer;
 import io.vntr.User;
-import io.vntr.manager.HManager;
 import io.vntr.middleware.HermarMiddleware;
 import io.vntr.middleware.HermesMiddleware;
-import io.vntr.manager.JManager;
+import io.vntr.manager.NoRepManager;
 import io.vntr.middleware.JabejaMiddleware;
 import io.vntr.middleware.JabarMiddleware;
 import io.vntr.utils.InitUtils;
 import io.vntr.middleware.MetisMiddleware;
-import io.vntr.manager.SManager;
+import io.vntr.manager.RepManager;
 import io.vntr.middleware.SparMiddleware;
 import io.vntr.middleware.SparmesMiddleware;
 import io.vntr.middleware.SpajaMiddleware;
@@ -464,8 +463,8 @@ public class TraceRunner {
     }
 
     static JabejaMiddleware initJ2Middleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        JManager jManager =
-                InitUtils.initJ2Manager(
+        NoRepManager noRepManager =
+                InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         true,
                         trace.getPartitions(),
@@ -476,13 +475,13 @@ public class TraceRunner {
                 parsedArgs.getDeltaT(),
                 parsedArgs.getJaK(),
                 parsedArgs.getNumRestarts(),
-                jManager);
+                noRepManager);
     }
 
     static JabarMiddleware initJ2ArMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
 
-        JManager j2ArManager =
-                InitUtils.initJ2Manager(
+        NoRepManager j2ArManager =
+                InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
                         true,
                         trace.getPartitions(),
@@ -492,9 +491,10 @@ public class TraceRunner {
     }
 
     static HermesMiddleware initHermesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        HManager hManager =
-                InitUtils.initHManager(
+        NoRepManager hManager =
+                InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
+                        false,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -504,9 +504,10 @@ public class TraceRunner {
     }
 
     static HermarMiddleware initHermarMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
-        HManager hManager =
-                InitUtils.initHManager(
+        NoRepManager hManager =
+                InitUtils.initNoRepManager(
                         parsedArgs.getLogicalMigrationRatio(),
+                        false,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -516,12 +517,12 @@ public class TraceRunner {
     }
 
     static SparMiddleware initSparMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        SManager manager = InitUtils.initSManager(parsedArgs.getMinNumReplicas(), 0, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
+        RepManager manager = InitUtils.initRepManager(parsedArgs.getMinNumReplicas(), 0, trace.getPartitions(), trace.getFriendships(), trace.getReplicas());
         return new SparMiddleware(manager);
     }
 
     static SparmesMiddleware initSparmesMiddleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        SManager sparmesManager = InitUtils.initSManager(
+        RepManager sparmesManager = InitUtils.initRepManager(
                parsedArgs.getMinNumReplicas(),
                parsedArgs.getLogicalMigrationRatio(),
                trace.getPartitions(),
@@ -536,7 +537,7 @@ public class TraceRunner {
     }
 
     static SpajaMiddleware initSpJ2Middleware(Trace trace, ParsedArgs parsedArgs, Properties props) {
-        SManager manager = InitUtils.initSManager(
+        RepManager manager = InitUtils.initRepManager(
                 parsedArgs.getMinNumReplicas(),
                 parsedArgs.getLogicalMigrationRatio(),
                 trace.getPartitions(),
@@ -555,7 +556,7 @@ public class TraceRunner {
     static MetisMiddleware initMetisMiddleware(Trace trace, ParsedArgs parsedArgs, Properties prop) {
         String gpmetisLocation = prop.getProperty("gpmetis.location");
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
-        JManager manager = InitUtils.initJ2Manager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
+        NoRepManager manager = InitUtils.initNoRepManager(parsedArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
         return new MetisMiddleware(gpmetisLocation, gpmetisTempdir, manager);
     }
 

@@ -6,8 +6,8 @@ import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
-import io.vntr.manager.SManager;
-import io.vntr.manager.SPartition;
+import io.vntr.manager.RepManager;
+import io.vntr.manager.Partition;
 import io.vntr.migration.SMigrator;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -15,9 +15,9 @@ import static io.vntr.utils.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 public class SparMiddleware implements IMiddlewareAnalyzer {
-    private SManager manager;
+    private RepManager manager;
 
-    public SparMiddleware(SManager manager) {
+    public SparMiddleware(RepManager manager) {
         this.manager = manager;
     }
 
@@ -166,7 +166,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
 
         //First, determine which users will need more replicas once this partition is kaput
@@ -214,7 +214,7 @@ public class SparMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
         return possibilities;

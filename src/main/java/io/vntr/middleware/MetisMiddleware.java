@@ -1,7 +1,7 @@
 package io.vntr.middleware;
 
 import io.vntr.User;
-import io.vntr.manager.JManager;
+import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
 
@@ -15,9 +15,9 @@ public class MetisMiddleware implements IMiddlewareAnalyzer {
     private final String gpmetisLocation;
     private final String gpmetisTempdir;
 
-    private JManager manager;
+    private NoRepManager manager;
 
-    public MetisMiddleware(String gpmetisLocation, String gpmetisTempdir, JManager manager) {
+    public MetisMiddleware(String gpmetisLocation, String gpmetisTempdir, NoRepManager manager) {
         this.gpmetisLocation = gpmetisLocation;
         this.gpmetisTempdir = gpmetisTempdir;
         this.manager = manager;

@@ -1,7 +1,7 @@
 package io.vntr.middleware;
 
 import io.vntr.User;
-import io.vntr.manager.JManager;
+import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -10,9 +10,9 @@ import java.util.*;
  * Created by robertlindquist on 11/23/16.
  */
 public class DummyMiddleware implements IMiddlewareAnalyzer {
-    private JManager manager;
+    private NoRepManager manager;
 
-    public DummyMiddleware(JManager manager) {
+    public DummyMiddleware(NoRepManager manager) {
         this.manager = manager;
     }
 

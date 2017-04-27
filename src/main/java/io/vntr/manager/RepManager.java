@@ -6,7 +6,7 @@ import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-public class SManager implements IRepManager {
+public class RepManager {
     private int minNumReplicas;
 
     private int nextPid = 1;
@@ -16,29 +16,28 @@ public class SManager implements IRepManager {
     private long logicalMigrationTally;
     private double logicalMigrationRatio;
 
-    private Map<Integer, SPartition> pMap;
-    private Map<Integer, Integer> uMap = new HashMap<>();
+    private Map<Integer, Partition> pMap;
+    private Map<Integer, Integer> uMap;
 
-    public SManager(int minNumReplicas, double logicalMigrationRatio) {
+    public RepManager(int minNumReplicas, double logicalMigrationRatio) {
         this.minNumReplicas = minNumReplicas;
         this.logicalMigrationRatio = logicalMigrationRatio;
-        this.pMap = new HashMap<>();
+        pMap = new HashMap<>();
+        uMap = new HashMap<>();
     }
 
-    @Override
     public int getMinNumReplicas() {
         return minNumReplicas;
     }
 
-    public SPartition getPartitionById(Integer id) {
+    public Partition getPartitionById(Integer id) {
         return pMap.get(id);
     }
 
-    @Override
     public RepUser getUserMaster(Integer id) {
         Integer partitionId = uMap.get(id);
         if (partitionId != null) {
-            SPartition partition = getPartitionById(partitionId);
+            Partition partition = getPartitionById(partitionId);
             if (partition != null) {
                 return partition.getMasterById(id);
             }
@@ -46,29 +45,24 @@ public class SManager implements IRepManager {
         return null;
     }
 
-    @Override
     public int getNumUsers() {
         return uMap.size();
     }
 
-    @Override
     public Set<Integer> getPids() {
         return pMap.keySet();
     }
 
-    @Override
     public Set<Integer> getUids() {
         return uMap.keySet();
     }
 
-    @Override
     public int addUser() {
         int newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
-    @Override
     public void addUser(User user) {
         Integer masterPartitionId = getPidWithFewestMasters();
 
@@ -81,7 +75,6 @@ public class SManager implements IRepManager {
         }
     }
 
-    @Override
     public void addUser(RepUser user, Integer masterPartitionId) {
         int uid = user.getId();
         getPartitionById(masterPartitionId).addMaster(user);
@@ -91,52 +84,47 @@ public class SManager implements IRepManager {
         }
     }
 
-    @Override
-    public void removeUser(Integer userId) {
-        RepUser user = getUserMaster(userId);
+    public void removeUser(Integer uid) {
+        RepUser user = getUserMaster(uid);
 
         //Remove user from relevant partitions
-        getPartitionById(user.getBasePid()).removeMaster(userId);
+        getPartitionById(user.getBasePid()).removeMaster(uid);
         for (Integer replicaPartitionId : user.getReplicaPids()) {
-            getPartitionById(replicaPartitionId).removeReplica(userId);
+            getPartitionById(replicaPartitionId).removeReplica(uid);
         }
 
         //Remove user from uMap
-        uMap.remove(userId);
+        uMap.remove(uid);
 
         //Remove friendships
         for (Integer friendId : user.getFriendIDs()) {
             RepUser friendMaster = getUserMaster(friendId);
-            friendMaster.unfriend(userId);
+            friendMaster.unfriend(uid);
 
             for (Integer friendReplicaPartitionId : friendMaster.getReplicaPids()) {
-                SPartition friendReplicaPartition = getPartitionById(friendReplicaPartitionId);
-                friendReplicaPartition.getReplicaById(friendId).unfriend(userId);
+                Partition friendReplicaPartition = getPartitionById(friendReplicaPartitionId);
+                friendReplicaPartition.getReplicaById(friendId).unfriend(uid);
             }
         }
     }
 
-    @Override
     public Integer addPartition() {
         Integer newId = nextPid;
         addPartition(newId);
         return newId;
     }
 
-    @Override
     public void addPartition(Integer pid) {
-        pMap.put(pid, new SPartition(pid));
+        pMap.put(pid, new Partition(pid));
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
     }
 
-    @Override
     public void removePartition(Integer id) {
         pMap.remove(id);
     }
 
-    @Override
     public void addReplica(RepUser user, Integer destPid) {
         RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
@@ -148,30 +136,27 @@ public class SManager implements IRepManager {
         user.addReplicaPartitionId(destPid);
     }
 
-    @Override
     public RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
         RepUser replica = user.dupe();
         pMap.get(destPid).addReplica(replica);
         return replica;
     }
 
-    @Override
-    public void removeReplica(RepUser user, Integer removalPartitionId) {
+    public void removeReplica(RepUser user, Integer removalPid) {
         //Delete it from each replica's replicaPartitionIds
         for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-            SPartition p = pMap.get(currentReplicaPartitionId);
+            Partition p = pMap.get(currentReplicaPartitionId);
             RepUser r = p.getReplicaById(user.getId());
-            r.removeReplicaPartitionId(removalPartitionId);
+            r.removeReplicaPartitionId(removalPid);
         }
 
         //Delete it from the master's replicaPartitionIds
-        user.removeReplicaPartitionId(removalPartitionId);
+        user.removeReplicaPartitionId(removalPid);
 
         //Actually remove the replica from the partition itself
-        pMap.get(removalPartitionId).removeReplica(user.getId());
+        pMap.get(removalPid).removeReplica(user.getId());
     }
 
-    @Override
     public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
@@ -213,7 +198,6 @@ public class SManager implements IRepManager {
         increaseTally(1);
     }
 
-    @Override
     public void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
         RepUser user = getUserMaster(uid);
         getPartitionById(fromPid).removeMaster(uid);
@@ -228,7 +212,6 @@ public class SManager implements IRepManager {
         }
     }
 
-    @Override
     public void befriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
@@ -242,7 +225,6 @@ public class SManager implements IRepManager {
         }
     }
 
-    @Override
     public void unfriend(RepUser smallerUser, RepUser largerUser) {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
@@ -256,9 +238,8 @@ public class SManager implements IRepManager {
         }
     }
 
-    @Override
     public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
-        SPartition partition = pMap.get(partitionId);
+        Partition partition = pMap.get(partitionId);
         RepUser user = partition.getReplicaById(userId);
         user.setBasePid(partitionId);
         user.removeReplicaPartitionId(partitionId);
@@ -281,7 +262,6 @@ public class SManager implements IRepManager {
         }
     }
 
-    @Override
     public Integer getPidWithFewestMasters() {
         int minMasters = Integer.MAX_VALUE;
         Integer minId = -1;
@@ -297,7 +277,6 @@ public class SManager implements IRepManager {
         return minId;
     }
 
-    @Override
     public Integer getRandomPidWhereThisUserIsNotPresent(RepUser user) {
         Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
@@ -306,14 +285,12 @@ public class SManager implements IRepManager {
         return list.get((int) (list.size() * Math.random()));
     }
 
-    @Override
-    public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPartitionId) {
+    public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPid) {
         List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(pMap.keySet());
-        partitionIdsAtWhichReplicasCanBeAdded.remove(masterPartitionId);
+        partitionIdsAtWhichReplicasCanBeAdded.remove(masterPid);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
-    @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pMap.keySet()) {
@@ -322,7 +299,6 @@ public class SManager implements IRepManager {
         return map;
     }
 
-    @Override
     public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> map = new HashMap<>();
         for (Integer pid : pMap.keySet()) {
@@ -331,7 +307,6 @@ public class SManager implements IRepManager {
         return map;
     }
 
-    @Override
     public Integer getEdgeCut() {
         int count = 0;
         for (Integer uid : uMap.keySet()) {
@@ -346,7 +321,6 @@ public class SManager implements IRepManager {
         return count;
     }
 
-    @Override
     public Integer getReplicationCount() {
         int count = 0;
         for(Integer pid : getPids()) {
@@ -355,7 +329,6 @@ public class SManager implements IRepManager {
         return count;
     }
 
-    @Override
     public Map<Integer, Set<Integer>> getFriendships() {
         Map<Integer, Set<Integer>> friendships = new HashMap<>();
         for(Integer uid : uMap.keySet()) {
@@ -364,17 +337,14 @@ public class SManager implements IRepManager {
         return friendships;
     }
 
-    @Override
     public long getMigrationTally() {
         return migrationTally + (long) (logicalMigrationRatio * logicalMigrationTally);
     }
 
-    @Override
     public void increaseTally(int amount) {
         migrationTally += amount;
     }
 
-    @Override
     public void increaseTallyLogical(int amount) {
         logicalMigrationTally += amount;
     }
@@ -384,7 +354,6 @@ public class SManager implements IRepManager {
         return "minNumReplicas:" + minNumReplicas + "|#U:" + getNumUsers() + "|#P:" + pMap.size();
     }
 
-    @Override
     public void checkValidity() {
 
         //Check masters

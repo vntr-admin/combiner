@@ -1,6 +1,6 @@
 package io.vntr.middleware;
 
-import io.vntr.manager.HManager;
+import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
 import org.junit.Test;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
-import static io.vntr.utils.InitUtils.initHManager;
+import static io.vntr.utils.InitUtils.initNoRepManager;
 import static org.junit.Assert.*;
 
 /**
@@ -32,7 +32,7 @@ public class HermesMiddlewareTest {
         for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
-        HManager manager = initHManager(0, partitions, friendships);
+        NoRepManager manager = initNoRepManager(0, false, partitions, friendships);
         HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
         middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (numPartitions - 1)).iterator().next());
         for(Integer uid : friendships.keySet()) {

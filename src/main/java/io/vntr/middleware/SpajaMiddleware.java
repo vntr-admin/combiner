@@ -5,9 +5,10 @@ import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
 import io.vntr.migration.SMigrator;
-import io.vntr.repartition.SpJ2Repartitioner;
-import io.vntr.manager.SManager;
-import io.vntr.manager.SPartition;
+import io.vntr.repartition.RepResults;
+import io.vntr.repartition.SpajaRepartitioner;
+import io.vntr.manager.RepManager;
+import io.vntr.manager.Partition;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
@@ -21,9 +22,9 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     private float initialT;
     private float deltaT;
     private int k;
-    private SManager manager;
+    private RepManager manager;
 
-    public SpajaMiddleware(int minNumReplicas, float alpha, float initialT, float deltaT, int k, SManager manager) {
+    public SpajaMiddleware(int minNumReplicas, float alpha, float initialT, float deltaT, int k, RepManager manager) {
         this.minNumReplicas = minNumReplicas;
         this.alpha = alpha;
         this.initialT = initialT;
@@ -178,7 +179,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
 
         //First, determine which users will need more replicas once this partition is kaput
@@ -226,7 +227,7 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     }
 
     Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
-        SPartition partition = manager.getPartitionById(partitionIdToBeRemoved);
+        Partition partition = manager.getPartitionById(partitionIdToBeRemoved);
         Set<Integer> possibilities = new HashSet<>(partition.getIdsOfMasters());
         possibilities.addAll(partition.getIdsOfReplicas());
         return possibilities;
@@ -331,9 +332,9 @@ public class SpajaMiddleware implements IMiddlewareAnalyzer {
     }
 
     void repartition() {
-        SpJ2Repartitioner.Results results = SpJ2Repartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, getFriendships(), getPartitionToUserMap(), manager.getPartitionToReplicasMap());
-        manager.increaseTallyLogical(results.getMoves());
-        physicallyMigrate(results.getNewPids(), results.getNewReplicaPids());
+        RepResults repResults = SpajaRepartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, getFriendships(), getPartitionToUserMap(), manager.getPartitionToReplicasMap());
+        manager.increaseTallyLogical(repResults.getNumLogicalMoves());
+        physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
     }
 
     void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {

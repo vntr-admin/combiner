@@ -8,7 +8,7 @@ import static io.vntr.utils.Utils.getUToMasterMap;
  * Created by robertlindquist on 4/21/17.
  */
 public class HRepartitioner {
-    public static Results repartition(int k, int maxIterations, float gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+    public static NoRepResults repartition(int k, int maxIterations, float gamma, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         int moves = 0;
         State state = initState(partitions, friendships, gamma);
         for(int i=0; i<maxIterations; i++) {
@@ -25,7 +25,7 @@ public class HRepartitioner {
             }
         }
 
-        return new Results(getUToMasterMap(state.getLogicalPartitions()), moves);
+        return new NoRepResults(getUToMasterMap(state.getLogicalPartitions()), moves);
     }
 
     static int performStage(boolean firstStage, int k, State state) {
