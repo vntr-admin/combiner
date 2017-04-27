@@ -191,7 +191,6 @@ public class UtilsTest {
         expectedResults.get(20).put(3, 1);
 
         for(int uid : expectedResults.keySet()) {
-            System.out.println(uid);
             assertEquals(expectedResults.get(uid), Utils.getPToFriendCount(uid, bidirectionalFriendships, uidToPidMap, partitions.keySet()));
         }
     }
