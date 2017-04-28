@@ -49,7 +49,8 @@ Arguments
         If not an absolute path, it will in the input.folder directory as
         specified in config.properties.  Otherwise, loads the absolute path.
 
-    type: one of JABEJA, HERMES, SPAR, SPAJA, SPARMES or METIS
+    type: one of JABEJA, JABAR, HERMES, HERMAR, SPAR, SPAJA, SPARMES, METIS,
+                 DUMMY, RDUMMY
 
     common args:
         -n numActions
@@ -112,16 +113,12 @@ Ja-be-Ja:
             where 2 <= x <= 40.
             Note: smaller values improve quality but take longer.
             E.g. 0.1 takes ~2x as long as 0.2.
-        -initTfriend t
-            same as initialT, but for the befriending step.
-            Default is 1.1.  Sane values are 1.1-2.
-        -deltaTfriend dT
-            same as deltaT, but for the befriending step.
-            Default is 0.025.  Sane values are (befriendInitialT-1)/x,
-            where 2 <= x <= 8.
         -nbhd k
             size of neighborhood to search for a better partitioning.
             (Integer) k >= 1.  Default is 15.  Sane values are 3-21.
+        -restarts
+            number of restarts allowed for the repartitioning algorithm.
+            Default is 10.  Sane values are 1-15.
 
 Hermes:
     Description: Migrates vertices independently and allows imbalanced
@@ -132,11 +129,10 @@ Hermes:
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
             1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
-        -cutoff r
-            Ratio used for stopping Hermes iterations before convergence.
-            Max iterations = r * numUsers, where numUsers is current number
-            (changes throughout run).
-            r > 0.0.  Default is 0.0025.  Sane values are 0.001-0.25.
+        -maxIter r
+            Maximum number of iterations allowed in the repartitioning
+            algorithm.  (integer) r > 0.  Default is 100.  Sane values are
+            1-250.
             Smaller values speed up process but might negatively affect
             partition quality.
         -maxMove m
@@ -206,6 +202,12 @@ Sparmes:
             How many users can move off one partition in one iteration.
             (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
             Smaller values take longer but might avoid oscillation.
+        -maxIter r
+            Maximum number of iterations allowed in the repartitioning
+            algorithm.  (integer) r > 0.  Default is 100.  Sane values are
+            1-250.
+            Smaller values speed up process but might negatively affect
+            partition quality.
 
 
 Metis:
@@ -219,3 +221,66 @@ Metis:
     Arguments:
         [none]
 
+Jabar:
+    Description: Ja-be-Ja normally + SPAR upon befriending, but only one
+    repartitioning restart, and no randomization of initial partitions
+    (allowing it to repartition incrementally).  No replication.
+    Type name: JABAR
+    Arguments:
+        -alpha a
+            raises the comparison function to a.
+            (E.g. 1 is like Manhattan distance, 2 like Euclidean, etc.)
+            a >= 1.0.  Default is 3.  Sane values are 1-4.
+        -initT t
+            The initial Temperature.  The distance function is multiplied by
+            t (which decreases over time) to allow for temporary deviations
+            from hill-climbing.
+            t > 0.0.  Default is 2.  Sane values are 1.5-2.5.
+        -deltaT dT
+            How much the temperature decreases each iteration.
+            dT > 0.0.  Default is 0.025.  Sane values are (initialT-1)/x,
+            where 2 <= x <= 40.
+            Note: smaller values improve quality but take longer.
+            E.g. 0.1 takes ~2x as long as 0.2.
+        -nbhd k
+            size of neighborhood to search for a better partitioning.
+            (Integer) k >= 1.  Default is 15.  Sane values are 3-21.
+
+Hermar:
+    Description: Hermes normally + SPAR upon befriending, but only
+    repartitions upon downtime, not user addition.  No replication.
+    Type Name: HERMAR
+    Arguments:
+        -gamma g
+            the allowed imbalance ratio.  If average partition size is 100
+            users, and gamma=1.25, partitions will contain 75-125 users.
+            1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
+        -maxIter r
+            Maximum number of iterations allowed in the repartitioning
+            algorithm.  (integer) r > 0.  Default is 100.  Sane values are
+            1-250.
+            Smaller values speed up process but might negatively affect
+            partition quality.
+        -maxMove m
+            How many users can move off one partition in one iteration.
+            (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
+            Smaller values take longer but might avoid oscillation.
+
+Dummy Repartitioner:
+    Description: Kind of like METIS or Jabeja but without repartitioning, or
+    any tactical moves of users to reduce edge cut.  Provides a baseline
+    against which to compare partitioning quality.  No replication.
+    Type Name: DUMMY
+    Arguments:
+        [none]
+
+Replica Dummy Repartitioner:
+    Description: Kind of like SPAR, but without moving users upon
+    befriending, or in fact at any time other than partition removal.
+    Type Name: RDUMMY
+    Arguments:
+        -minReps n
+            the minimum number of replicas to maintain of each user.
+            (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
+            Note: you need to use a trace that has at least as many replicas
+            as you specify or it could crash.
