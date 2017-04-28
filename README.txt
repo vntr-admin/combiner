@@ -119,6 +119,11 @@ Ja-be-Ja:
         -restarts
             number of restarts allowed for the repartitioning algorithm.
             Default is 10.  Sane values are 1-15.
+        -logMig l
+            weighting to give logical migrations in oscillation calculation.
+            E.g., with l=0.2, 100 logical moves and 30 physical ones, the
+            reported oscillation would be (100 * 0.2) + 30 = 50.
+            0.0 <= l <= 1.0.  Default is 0.
 
 Hermes:
     Description: Migrates vertices independently and allows imbalanced
@@ -139,6 +144,11 @@ Hermes:
             How many users can move off one partition in one iteration.
             (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
             Smaller values take longer but might avoid oscillation.
+        -logMig l
+            weighting to give logical migrations in oscillation calculation.
+            E.g., with l=0.2, 100 logical moves and 30 physical ones, the
+            reported oscillation would be (100 * 0.2) + 30 = 50.  
+            0.0 <= l <= 1.0.  Default is 0.
 
 Spar:
     Description: Ensures full replication, and minimizes replicas upon
@@ -181,6 +191,11 @@ Spaja:
         -nbhd k
             size of neighborhood to search for a better partitioning.
             (Integer) k >= 1.  Default is 15.  Sane values are 3-21.
+        -logMig l
+            weighting to give logical migrations in oscillation calculation.
+            E.g., with l=0.2, 100 logical moves and 30 physical ones, the
+            reported oscillation would be (100 * 0.2) + 30 = 50.  
+            0.0 <= l <= 1.0.  Default is 0.
 
 Sparmes:
     Description: Spar normally + Hermes upon downtime.
@@ -208,6 +223,11 @@ Sparmes:
             1-250.
             Smaller values speed up process but might negatively affect
             partition quality.
+        -logMig l
+            weighting to give logical migrations in oscillation calculation.
+            E.g., with l=0.2, 100 logical moves and 30 physical ones, the
+            reported oscillation would be (100 * 0.2) + 30 = 50.  
+            0.0 <= l <= 1.0.  Default is 0.
 
 
 Metis:
@@ -245,6 +265,11 @@ Jabar:
         -nbhd k
             size of neighborhood to search for a better partitioning.
             (Integer) k >= 1.  Default is 15.  Sane values are 3-21.
+        -logMig l
+            weighting to give logical migrations in oscillation calculation.
+            E.g., with l=0.2, 100 logical moves and 30 physical ones, the
+            reported oscillation would be (100 * 0.2) + 30 = 50.  
+            0.0 <= l <= 1.0.  Default is 0.
 
 Hermar:
     Description: Hermes normally + SPAR upon befriending, but only
@@ -265,6 +290,11 @@ Hermar:
             How many users can move off one partition in one iteration.
             (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
             Smaller values take longer but might avoid oscillation.
+        -logMig l
+            weighting to give logical migrations in oscillation calculation.
+            E.g., with l=0.2, 100 logical moves and 30 physical ones, the
+            reported oscillation would be (100 * 0.2) + 30 = 50.  
+            0.0 <= l <= 1.0.  Default is 0.
 
 Dummy Repartitioner:
     Description: Kind of like METIS or Jabeja but without repartitioning, or
