@@ -143,7 +143,6 @@ public class TraceRunner {
         private Float deltaT;
         private Integer jaK = 15;
         private Float gamma;
-        private Float iterationCutoffRatio = 0.0025f;
         private Integer hermesK = 3;
         private Integer minNumReplicas = 0;
         private Integer numRestarts = 10;
@@ -361,7 +360,7 @@ public class TraceRunner {
                 builder.append(" gamma=").append(gamma);
             }
             if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type)) {
-                builder.append(" k=").append(hermesK).append(" cutoff=").append(iterationCutoffRatio);
+                builder.append(" k=").append(hermesK);
             }
 
             if(numActions != null) {
@@ -519,6 +518,7 @@ public class TraceRunner {
                 parsedArgs.getMinNumReplicas(),
                 parsedArgs.getGamma(),
                 parsedArgs.getHermesK(),
+                parsedArgs.getMaxIterations(),
                 repManager);
     }
 

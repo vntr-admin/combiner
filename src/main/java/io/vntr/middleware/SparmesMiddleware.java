@@ -16,14 +16,16 @@ import static io.vntr.utils.Utils.*;
 public class SparmesMiddleware extends SparMiddleware {
 
     private final int minNumReplicas;
+    private final int maxIterations;
     private final float gamma;
     private final int k;
 
-    public SparmesMiddleware(int minNumReplicas, float gamma, int k, RepManager manager) {
+    public SparmesMiddleware(int minNumReplicas, float gamma, int k, int maxIterations, RepManager manager) {
         super(manager);
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
         this.k = k;
+        this.maxIterations = maxIterations;
     }
 
     @Override
@@ -32,7 +34,7 @@ public class SparmesMiddleware extends SparMiddleware {
     }
 
     void repartition() {
-        RepResults repResults = SparmesRepartitioner.repartition(k, 100, gamma, minNumReplicas, getPartitionToUserMap(), getPartitionToReplicasMap(), getFriendships());
+        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, getPartitionToUserMap(), getPartitionToReplicasMap(), getFriendships());
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults);
     }
