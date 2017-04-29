@@ -3,6 +3,7 @@ package io.vntr.repartition;
 import java.util.*;
 
 import static io.vntr.utils.Utils.getUToMasterMap;
+import static io.vntr.utils.Utils.getUserCounts;
 
 /**
  * Created by robertlindquist on 4/21/17.
@@ -14,11 +15,13 @@ public class HRepartitioner {
         for(int i=0; i<maxIterations; i++) {
             int movesBeforeIteration = moves;
 
-            moves += performStage(true, k, state);
-            state.updateLogicalUsers(friendships, gamma);
+            Set<Target> firstStageTargets = performStage(true, k, state);
+            moves += firstStageTargets.size();
+            state.updateLogicalUsers(firstStageTargets, friendships);
 
-            moves += performStage(false, k, state);
-            state.updateLogicalUsers(friendships, gamma);
+            Set<Target> secondStageTargets = performStage(false, k, state);
+            moves += secondStageTargets.size();
+            state.updateLogicalUsers(secondStageTargets, friendships);
 
             if(moves == movesBeforeIteration) {
                 break;
@@ -28,7 +31,7 @@ public class HRepartitioner {
         return new NoRepResults(getUToMasterMap(state.getLogicalPartitions()), moves);
     }
 
-    static int performStage(boolean firstStage, int k, State state) {
+    static Set<Target> performStage(boolean firstStage, int k, State state) {
         Set<Target> targets = new HashSet<>();
         for(int pid : state.getLogicalPartitions().keySet()) {
             targets.addAll(getCandidates(pid, firstStage, k, state));
@@ -36,7 +39,7 @@ public class HRepartitioner {
 
         logicallyMigrate(targets, state);
 
-        return targets.size();
+        return targets;
     }
 
     static Set<Target> getCandidates(int pid, boolean firstIteration, int k, State state) {
@@ -102,6 +105,21 @@ public class HRepartitioner {
             setLogicalUsers(initLogicalUsers(logicalPartitions, friendships, gamma));
         }
 
+        public void updateLogicalUsers(Set<Target> targets, Map<Integer, Set<Integer>> friendships) {
+            Map<Integer, Integer> pToWeight = getUserCounts(logicalPartitions);
+            for(LogicalUser user : logicalUsers.values()) {
+                user.pToWeight = new HashMap<>(pToWeight);
+            }
+            for(Target target : targets) {
+                getLogicalUsers().get(target.uid).pid = target.pid;
+                for(int friendId : friendships.get(target.uid)) {
+                    Map<Integer, Integer> pToFriendCount = logicalUsers.get(friendId).pToFriendCount;
+                    pToFriendCount.put(target.oldPid, pToFriendCount.get(target.oldPid) - 1);
+                    pToFriendCount.put(target.pid, pToFriendCount.get(target.pid) + 1);
+                }
+            }
+        }
+
         public void setLogicalUsers(Map<Integer, LogicalUser> logicalUsers) {
             this.logicalUsers = logicalUsers;
         }
@@ -140,7 +158,7 @@ public class HRepartitioner {
 
     static class LogicalUser {
         private final Integer id;
-        private final Integer pid;
+        private Integer pid;
         private float gamma;
         private Map<Integer, Integer> pToFriendCount;
         private Map<Integer, Integer> pToWeight;

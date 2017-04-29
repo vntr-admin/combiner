@@ -362,6 +362,9 @@ public class TraceRunner {
             if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type)) {
                 builder.append(" k=").append(hermesK);
             }
+            if(JABEJA_TYPE.equals(type)) {
+                builder.append(" restarts=").append(numRestarts);
+            }
 
             if(numActions != null) {
                 builder.append(" numActions=").append(numActions);
