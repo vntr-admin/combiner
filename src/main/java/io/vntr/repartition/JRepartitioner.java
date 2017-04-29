@@ -1,5 +1,7 @@
 package io.vntr.repartition;
 
+import com.google.common.collect.Sets;
+
 import java.util.*;
 
 import static io.vntr.utils.Utils.getUToMasterMap;
@@ -18,7 +20,9 @@ public class JRepartitioner {
         int logicalMigrationCount = 0;
         for (int i = 0; i < numRestarts; i++) {
             State state = initState(alpha, friendships);
-            state.setLogicalPids(incremental ? new HashMap<>(uidToPidMap) : getRandomLogicalPids(friendships.keySet(), partitions.keySet()));
+            Map<Integer, Set<Integer>> logicalPartitions = incremental ? partitions : getRandomLogicalPartitions(friendships.keySet(), partitions.keySet());
+            state.setLogicalPids(getUToMasterMap(logicalPartitions));
+            state.initUidToPidToFriendCount(logicalPartitions);
 
             for(float t = initialT; t >= 1; t -= deltaT) {
                 List<Integer> randomUserList = new LinkedList<>(friendships.keySet());
@@ -60,12 +64,12 @@ public class JRepartitioner {
                 continue;
             }
 
-            int[] myCounts = howManyFriendsHaveLogicalPartitions(uid, new int[]{logicalPid, theirLogicalPid}, state);
-            int[] theirCounts = howManyFriendsHaveLogicalPartitions(partnerId, new int[]{logicalPid, theirLogicalPid}, state);
-            int myNeighborsOnMine      = myCounts[0];
-            int myNeighborsOnTheirs    = myCounts[1];
-            int theirNeighborsOnMine   = theirCounts[0];
-            int theirNeighborsOnTheirs = theirCounts[1];
+//            int[] myCounts = howManyFriendsHaveLogicalPartitions(uid, new int[]{logicalPid, theirLogicalPid}, state);
+//            int[] theirCounts = howManyFriendsHaveLogicalPartitions(partnerId, new int[]{logicalPid, theirLogicalPid}, state);
+            int myNeighborsOnMine      = state.getUidToPidToFriendCounts().get(uid).get(logicalPid);
+            int myNeighborsOnTheirs    = state.getUidToPidToFriendCounts().get(uid).get(theirLogicalPid);
+            int theirNeighborsOnMine   = state.getUidToPidToFriendCounts().get(partnerId).get(logicalPid);
+            int theirNeighborsOnTheirs = state.getUidToPidToFriendCounts().get(partnerId).get(theirLogicalPid);
 
             float oldScore = (float) (Math.pow(myNeighborsOnMine, state.getAlpha()) + Math.pow(theirNeighborsOnTheirs, state.getAlpha()));
             float newScore = (float) (Math.pow(myNeighborsOnTheirs, state.getAlpha()) + Math.pow(theirNeighborsOnMine, state.getAlpha()));
@@ -102,6 +106,18 @@ public class JRepartitioner {
 
         state.getLogicalPids().put(uid1, pid2);
         state.getLogicalPids().put(uid2, pid1);
+
+        for(int friendId : state.getFriendships().get(uid1)) {
+            Map<Integer, Integer> counts = state.getUidToPidToFriendCounts().get(friendId);
+            counts.put(pid1, counts.get(pid1) - 1);
+            counts.put(pid2, counts.get(pid2) + 1);
+        }
+        for(int friendId : state.getFriendships().get(uid2)) {
+            Map<Integer, Integer> counts = state.getUidToPidToFriendCounts().get(friendId);
+            counts.put(pid2, counts.get(pid2) - 1);
+            counts.put(pid1, counts.get(pid1) + 1);
+        }
+
     }
 
     static State initState(float alpha, Map<Integer, Set<Integer>> friendships) {
@@ -125,6 +141,24 @@ public class JRepartitioner {
             }
         }
         return count;
+    }
+
+    static Map<Integer, Set<Integer>> getRandomLogicalPartitions(Set<Integer> uids, Set<Integer> pids) {
+        List<Integer> pidList = Arrays.asList(getPidsToAssign(uids.size(), pids));
+        Collections.shuffle(pidList);
+
+        Map<Integer, Set<Integer>> logicalPartitions = new HashMap<>();
+        for(int pid : pids) {
+            logicalPartitions.put(pid, new HashSet<Integer>());
+        }
+
+        int index = 0;
+        for(Integer uid: uids) {
+            logicalPartitions.get(pidList.get(index)).add(uid);
+            index++;
+        }
+
+        return logicalPartitions;
     }
 
     static Map<Integer, Integer> getRandomLogicalPids(Set<Integer> uids, Set<Integer> pids) {
@@ -173,6 +207,7 @@ public class JRepartitioner {
     static class State {
         private final float alpha;
         private final Map<Integer, Set<Integer>> friendships;
+        private Map<Integer, Map<Integer, Integer>> uidToPidToFriendCounts;
 
         private Map<Integer, Integer> logicalPids;
 
@@ -195,6 +230,21 @@ public class JRepartitioner {
 
         public void setLogicalPids(Map<Integer, Integer> logicalPids) {
             this.logicalPids = logicalPids;
+        }
+
+        public Map<Integer, Map<Integer, Integer>> getUidToPidToFriendCounts() {
+            return uidToPidToFriendCounts;
+        }
+
+        public void initUidToPidToFriendCount(Map<Integer, Set<Integer>> partitions) {
+            uidToPidToFriendCounts = new HashMap<>();
+            for(int uid : friendships.keySet()) {
+                Map<Integer, Integer> counts = new HashMap<>();
+                for(int pid : partitions.keySet()) {
+                    counts.put(pid, Sets.intersection(partitions.get(pid), friendships.get(uid)).size());
+                }
+                uidToPidToFriendCounts.put(uid, counts);
+            }
         }
     }
 

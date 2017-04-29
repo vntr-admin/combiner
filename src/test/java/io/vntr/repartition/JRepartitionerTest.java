@@ -184,6 +184,7 @@ public class JRepartitionerTest {
     private static JRepartitioner.State initState(float alpha, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         JRepartitioner.State state = new JRepartitioner.State(alpha, generateBidirectionalFriendshipSet(friendships));
         state.setLogicalPids(getUToMasterMap(partitions));
+        state.initUidToPidToFriendCount(partitions);
         return state;
     }
 }
