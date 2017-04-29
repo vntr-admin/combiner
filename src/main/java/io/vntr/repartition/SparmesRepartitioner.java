@@ -212,13 +212,6 @@ public class SparmesRepartitioner {
                 Set<Integer> friendIds = new HashSet<>(friendships.get(uid));
                 Map<Integer, Integer> pToFriendCount = getPToFriendCount(friendIds, uidToPidMap, partitions.keySet(), maxPid);
 
-                Set<Integer> replicaLocations = new HashSet<>();
-                for(int pid : replicas.keySet()) {
-                    if(replicas.get(pid).contains(uid)) {
-                        replicaLocations.add(pid);
-                    }
-                }
-
                 int numFriendReplicasToDeleteInSourcePartition = numDeletionCandidates[uid];
                 boolean replicateInSourcePartition = !disjoint(friendIds, partitions.get(uidToPidMap.get(uid)));
 
@@ -229,7 +222,7 @@ public class SparmesRepartitioner {
                         friendIds,
                         pToFriendCount,
                         new HashMap<>(pToWeight),
-                        replicaLocations,
+                        new HashSet<>(uidToReplicaMap.get(uid)),
                         uidToNumFriendsToAddInEachPartition.get(uid),
                         numFriendReplicasToDeleteInSourcePartition,
                         replicateInSourcePartition,
