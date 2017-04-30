@@ -39,6 +39,13 @@ public class TraceRunner {
 
     public static void main(String[] args) throws Exception {
 
+        Map<TraceAction.ACTION, Integer> deltaEdgeCuts = new HashMap<>();
+        Map<TraceAction.ACTION, Integer> deltaReps     = new HashMap<>();
+        for(TraceAction.ACTION action : TraceAction.ACTION.values()) {
+            deltaEdgeCuts.put(action, 0);
+            deltaReps.put(action, 0);
+        }
+
         Thread.sleep(5000);
 
         Properties props = new Properties();
@@ -60,6 +67,8 @@ public class TraceRunner {
 
             long startTime = System.nanoTime();
 
+            int preRep = middleware.getReplicationCount();
+            int preCut = middleware.getEdgeCut();
             for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
                 log(middleware, pw, next, parsedArgs.getType(), i, parsedArgs, true, (i % 50) == 0);
@@ -67,10 +76,18 @@ public class TraceRunner {
                 if(parsedArgs.getValidityCheckProbability() != 0 && Math.random() < parsedArgs.getValidityCheckProbability()) {
                     middleware.checkValidity();
                 }
+                int postCut = middleware.getEdgeCut();
+                int postRep = middleware.getReplicationCount();
+                deltaEdgeCuts.put(next.getAction(), deltaEdgeCuts.get(next.getAction()) + postCut - preCut);
+                deltaReps.put(next.getAction(), deltaReps.get(next.getAction()) + postRep - preRep);
+                preCut = postCut;
+                preRep = postRep;
             }
 
             long timeElapsedNanos = System.nanoTime() - startTime;
             System.out.println("Time elapsed: " + (timeElapsedNanos / BILLION) + "." + ((timeElapsedNanos % BILLION) / MILLION) + " seconds");
+            System.out.println(deltaEdgeCuts);
+            System.out.println(deltaReps);
 
             log(middleware, pw, null, parsedArgs.getType(), -1, parsedArgs, true, true);
 
@@ -340,34 +357,34 @@ public class TraceRunner {
 
             //General args
             builder.append(inputFile).append(' ').append(type)
-                    .append(" assortivity=").append(assortivityCheckProbability)
-                    .append(" latency=").append(latencyCheckProbability)
-                    .append(" validity=").append(validityCheckProbability)
-                    .append(" logicalRatio=").append(logicalMigrationRatio);
+                    .append(" -assortivity ").append(assortivityCheckProbability)
+                    .append(" -delay ").append(latencyCheckProbability)
+                    .append(" -validity ").append(validityCheckProbability);
 
             if(numActions != null) {
-                builder.append(" numActions=").append(numActions);
+                builder.append(" -n ").append(numActions);
             }
 
             //type-specific args
-            if(SPAR_TYPE.equals(type) || SPARMES_TYPE.equals(type) || SPAJA_TYPE.equals(type) || RDUMMY_TYPE.equals(type)) {
-                builder.append(" minReplicas=").append(minNumReplicas);
-            }
-            if(JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type) || SPAJA_TYPE.equals(type)) {
-                builder.append(" alpha=").append(alpha).append(" initialT=").append(initialT).append(" deltaT=").append(deltaT).append(" k=").append(jaK);
-            }
-            if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
-                builder.append(" gamma=").append(gamma);
-            }
-            if(HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type)) {
-                builder.append(" k=").append(hermesK);
-            }
-            if(JABEJA_TYPE.equals(type)) {
-                builder.append(" restarts=").append(numRestarts);
+            if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type)  || SPAJA_TYPE.equals(type)
+               || HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
+                builder.append(" -logMig ").append(logicalMigrationRatio);
             }
 
-            if(numActions != null) {
-                builder.append(" numActions=").append(numActions);
+            if(   SPAR_TYPE.equals(type)   || SPARMES_TYPE.equals(type) || SPAJA_TYPE.equals(type)
+               || RDUMMY_TYPE.equals(type)) {
+                builder.append(" -minReps ").append(minNumReplicas);
+            }
+            if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type)   || SPAJA_TYPE.equals(type)) {
+                builder.append(" -alpha ").append(alpha).append(" -initT ").append(initialT)
+                       .append(" -deltaT ").append(deltaT).append(" -nbhd ").append(jaK);
+            }
+            if(   HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type)  || SPARMES_TYPE.equals(type)) {
+                builder.append(" -gamma ").append(gamma).append(" -maxIter ").append(maxIterations)
+                       .append(" -maxMove ").append(hermesK);
+            }
+            if(   JABEJA_TYPE.equals(type)) {
+                builder.append(" -restarts ").append(numRestarts);
             }
 
             return builder.toString();

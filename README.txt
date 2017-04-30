@@ -92,7 +92,7 @@ Arguments
 ****************************************************************************
 
 
-There are six types of partition managers you can simulate:
+There are ten types of partition managers you can simulate:
 
 Ja-be-Ja:
     Description: Swaps vertices, uses simulated annealing.  No replication.
@@ -213,16 +213,16 @@ Sparmes:
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
             1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
-        -maxMove m
-            How many users can move off one partition in one iteration.
-            (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
-            Smaller values take longer but might avoid oscillation.
         -maxIter r
             Maximum number of iterations allowed in the repartitioning
             algorithm.  (integer) r > 0.  Default is 100.  Sane values are
             1-250.
             Smaller values speed up process but might negatively affect
             partition quality.
+        -maxMove m
+            How many users can move off one partition in one iteration.
+            (Integer) m >= 1.  Default is 3.  Sane values are 1-3.
+            Smaller values take longer but might avoid oscillation.
         -logMig l
             weighting to give logical migrations in oscillation calculation.
             E.g., with l=0.2, 100 logical moves and 30 physical ones, the
