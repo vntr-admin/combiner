@@ -51,7 +51,7 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);
             if(newPid != manager.getUser(uid).getBasePid()) {
-                manager.moveUser(uid, newPid, true);
+                manager.moveUser(uid, newPid, false);
             }
         }
     }

@@ -1,5 +1,7 @@
 package io.vntr.befriend;
 
+import com.google.common.collect.Sets;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,13 +66,13 @@ public class HBefriender {
     }
 
     static int calcEdgeCutStay(int uid1, int uid2, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Integer> uidToPidMap) {
-        return getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(uidToPidMap.get(uid1), uidToPidMap.get(uid2), friendships, partitions, uidToPidMap);
+        return getCutBetweenPartitions(uidToPidMap.get(uid1), uidToPidMap.get(uid2), friendships, partitions, uidToPidMap);
     }
 
     static int calcEdgeCutMove(int movingUserId, int stayingUserId, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Integer> uidToPidMap) {
         int movingPid = uidToPidMap.get(movingUserId);
         int stayingPid = uidToPidMap.get(stayingUserId);
-        int currentEdgeCut = getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(movingPid, stayingPid, friendships, partitions, uidToPidMap);
+        int currentEdgeCut = getCutBetweenPartitions(movingPid, stayingPid, friendships, partitions, uidToPidMap);
 
 
         Map<Integer, Integer> pToFriendCount = getPToFriendCount(movingUserId, friendships, uidToPidMap, partitions.keySet());
@@ -80,25 +82,11 @@ public class HBefriender {
         return currentEdgeCut + friendsOnMovingPartition - friendsOnStayingPartition;
     }
 
-    static Integer getNumberOfEdgesCutThatHaveAtLeastOneUserInOneOfTheseTwoPartitions(int pid1, int pid2, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Integer> uidToPidMap) {
+    static int getCutBetweenPartitions(int pid1, int pid2, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Integer> uidToPidMap) {
         int count = 0;
-        Set<Integer> idsThatMatter = new HashSet<>(partitions.get(pid1));
-        idsThatMatter.addAll(partitions.get(pid2));
-
-        for(Integer uid : idsThatMatter) {
-            Map<Integer, Integer> pToFriendCount = getPToFriendCount(uid, friendships, uidToPidMap, partitions.keySet());
-            pToFriendCount.remove(uidToPidMap.get(uid));
-            for(Integer pid : pToFriendCount.keySet()) {
-
-                //We skip pid1 to avoid double-counting edges between pid1 and pid2
-                //That way we only count edges from pid1 to pid2 and not vice versa
-                if(pid != pid1) {
-                    count += pToFriendCount.get(pid);
-                }
-
-            }
+        for(int uid : partitions.get(pid1)) {
+            count += Sets.intersection(friendships.get(uid), partitions.get(pid2)).size();
         }
         return count;
     }
-
 }
