@@ -12,6 +12,8 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static io.vntr.trace.TraceAction.ACTION.*;
+
 /**
  * Created by robertlindquist on 4/1/17.
  */
@@ -86,10 +88,9 @@ public class TraceRunner {
 
             long timeElapsedNanos = System.nanoTime() - startTime;
             System.out.println("Time elapsed: " + (timeElapsedNanos / BILLION) + "." + ((timeElapsedNanos % BILLION) / MILLION) + " seconds");
-            System.out.println(deltaEdgeCuts);
-            System.out.println(deltaReps);
 
             log(middleware, pw, null, parsedArgs.getType(), -1, parsedArgs, true, true);
+            log(deltaEdgeCuts, deltaReps, pw);
 
         } catch(Exception e) {
             throw e;
@@ -401,6 +402,26 @@ public class TraceRunner {
             case REMOVE_PARTITION: middleware.removePartition(action.getVal1());            break;
             case DOWNTIME:         middleware.broadcastDowntime();                          break;
         }
+    }
+
+    private static final String actionFormatStr = "| %2s | %9d | %9d |";
+    private static void log(Map<TraceAction.ACTION, Integer> actionToCutMap, Map<TraceAction.ACTION, Integer> actionToRepsMap, PrintWriter pw) {
+        String title  = "\nIMPACT OF ACTIONS ON CUTS/REPS\n";
+        String stars  = "+----+-----------+-----------+";
+        String header = "| AC | EDGE CUT  | REPLICAS  |";
+        log(pw, title, true, true);
+        log(pw, stars, true, true);
+        log(pw, header, true, true);
+        log(pw, stars, true, true);
+        log(pw, String.format(actionFormatStr, ADD_USER.getAbbreviation(),         actionToCutMap.get(ADD_USER),         actionToRepsMap.get(ADD_USER)),        true, true);
+        log(pw, String.format(actionFormatStr, REMOVE_USER.getAbbreviation(),      actionToCutMap.get(REMOVE_USER),      actionToRepsMap.get(REMOVE_USER)),     true, true);
+        log(pw, String.format(actionFormatStr, BEFRIEND.getAbbreviation(),         actionToCutMap.get(BEFRIEND),         actionToRepsMap.get(BEFRIEND)),        true, true);
+        log(pw, String.format(actionFormatStr, UNFRIEND.getAbbreviation(),         actionToCutMap.get(UNFRIEND),         actionToRepsMap.get(UNFRIEND)),        true, true);
+        log(pw, String.format(actionFormatStr, ADD_PARTITION.getAbbreviation(),    actionToCutMap.get(ADD_PARTITION),    actionToRepsMap.get(ADD_PARTITION)),   true, true);
+        log(pw, String.format(actionFormatStr, REMOVE_PARTITION.getAbbreviation(), actionToCutMap.get(REMOVE_PARTITION), actionToRepsMap.get(REMOVE_PARTITION)),true, true);
+        log(pw, String.format(actionFormatStr, DOWNTIME.getAbbreviation(),         actionToCutMap.get(DOWNTIME),         actionToRepsMap.get(DOWNTIME)),        true, true);
+        log(pw, stars, true, true);
+
     }
 
     private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, int i, ParsedArgs parsedArgs, boolean flush, boolean echo) {
