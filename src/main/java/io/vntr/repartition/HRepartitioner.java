@@ -156,7 +156,7 @@ public class HRepartitioner {
         }
     }
 
-    static class LogicalUser {
+    public static class LogicalUser {
         private final Integer id;
         private Integer pid;
         private float gamma;
@@ -195,7 +195,7 @@ public class HRepartitioner {
 
         public Target getTargetPart(boolean firstStage) {
             boolean underweight = getImbalanceFactor(pid, -1) < (2-gamma);
-            boolean overweight = getImbalanceFactor(pid, 0) > gamma;
+            boolean overweight  = getImbalanceFactor(pid, 0)  > gamma;
 
             if(underweight) {
                 return new Target(id, null, null, 0f);
@@ -236,7 +236,7 @@ public class HRepartitioner {
             return new Target(id, targetPid, pid, (float) maxGain);
         }
 
-        private float getImbalanceFactor(Integer pId, Integer offset) {
+        public float getImbalanceFactor(Integer pId, Integer offset) {
             float partitionWeight = pToWeight.get(pId) + offset;
             float averageWeight = ((float) totalWeight) / pToWeight.keySet().size();
             return partitionWeight / averageWeight;
