@@ -41,13 +41,6 @@ public class TraceRunner {
 
     public static void main(String[] args) throws Exception {
 
-        Map<TraceAction.ACTION, Integer> deltaEdgeCuts = new HashMap<>();
-        Map<TraceAction.ACTION, Integer> deltaReps     = new HashMap<>();
-        for(TraceAction.ACTION action : TraceAction.ACTION.values()) {
-            deltaEdgeCuts.put(action, 0);
-            deltaReps.put(action, 0);
-        }
-
         Thread.sleep(5000);
 
         Properties props = new Properties();
@@ -57,6 +50,7 @@ public class TraceRunner {
 
         Trace trace = TraceUtils.getFullTraceFromFile(parsedArgs.getInputFile());
         int traceLengthLimit = parsedArgs.getNumActions() != null ? parsedArgs.getNumActions() : trace.getActions().size();
+        Recorder recorder = new Recorder(traceLengthLimit);
 
         IMiddlewareAnalyzer middleware = initMiddleware(parsedArgs, trace, props);
 
@@ -73,15 +67,15 @@ public class TraceRunner {
             int preCut = middleware.getEdgeCut();
             for (int i = 0; i < traceLengthLimit; i++) {
                 TraceAction next = trace.getActions().get(i);
-                log(middleware, pw, next, parsedArgs.getType(), i, parsedArgs, true, (i % 50) == 0);
+                log(middleware, pw, next, parsedArgs.getType(), i, parsedArgs, true, (i % 50) == 0, recorder);
                 runAction(middleware, next);
                 if(parsedArgs.getValidityCheckProbability() != 0 && Math.random() < parsedArgs.getValidityCheckProbability()) {
                     middleware.checkValidity();
                 }
                 int postCut = middleware.getEdgeCut();
                 int postRep = middleware.getReplicationCount();
-                deltaEdgeCuts.put(next.getAction(), deltaEdgeCuts.get(next.getAction()) + postCut - preCut);
-                deltaReps.put(next.getAction(), deltaReps.get(next.getAction()) + postRep - preRep);
+                recorder.getDeltaEdgeCuts().put(next.getAction(), recorder.getDeltaEdgeCuts().get(next.getAction()) + postCut - preCut);
+                recorder.getDeltaReps().put(next.getAction(), recorder.getDeltaReps().get(next.getAction()) + postRep - preRep);
                 preCut = postCut;
                 preRep = postRep;
             }
@@ -89,8 +83,9 @@ public class TraceRunner {
             long timeElapsedNanos = System.nanoTime() - startTime;
             System.out.println("Time elapsed: " + (timeElapsedNanos / BILLION) + "." + ((timeElapsedNanos % BILLION) / MILLION) + " seconds");
 
-            log(middleware, pw, null, parsedArgs.getType(), -1, parsedArgs, true, true);
-            log(deltaEdgeCuts, deltaReps, pw);
+            log(middleware, pw, null, parsedArgs.getType(), traceLengthLimit, parsedArgs, true, true, recorder);
+
+            log(recorder, pw, parsedArgs.isExportStruct());
 
         } catch(Exception e) {
             throw e;
@@ -169,6 +164,7 @@ public class TraceRunner {
         private double latencyCheckProbability = 1;
         private double validityCheckProbability = 0;
         private double logicalMigrationRatio = 0;
+        private boolean exportStruct = true;
 
 
         public ParsedArgs(String type) {
@@ -315,6 +311,14 @@ public class TraceRunner {
             this.logicalMigrationRatio = logicalMigrationRatio;
         }
 
+        public boolean isExportStruct() {
+            return exportStruct;
+        }
+
+        public void setExportStruct(boolean exportStruct) {
+            this.exportStruct = exportStruct;
+        }
+
         public static final String NUM_ACTIONS_FLAG = "-n";
         public static final String REPLICAS_FLAG = "-minReps";
         public static final String GAMMA_FLAG = "-gamma";
@@ -329,25 +333,27 @@ public class TraceRunner {
         public static final String LATENCY_FLAG = "-delay";
         public static final String VALIDITY_FLAG = "-validity";
         public static final String LOGICAL_FLAG = "-logMig";
+        public static final String EXPORT_STRUCT_FLAG = "-exportStruct";
 
 
         public void setFlag(String flag, String rawValue) {
             double parsed = Double.parseDouble(rawValue);
             switch(flag) {
-                case NUM_ACTIONS_FLAG:         setNumActions((int) parsed);             break;
-                case REPLICAS_FLAG:            setMinNumReplicas((int) parsed);         break;
-                case GAMMA_FLAG:               setGamma((float) parsed);                break;
-                case ALPHA_FLAG:               setAlpha((float) parsed);                break;
-                case INITIAL_T_FLAG:           setInitialT((float) parsed);             break;
-                case DELTA_T_FLAG:             setDeltaT((float) parsed);               break;
-                case NEIGHBORHOOD_FLAG:        setJaK((int) parsed);                    break;
-                case MAX_MOVES_FLAG:           setHermesK((int) parsed);                break;
-                case NUM_RESTARTS_FLAG:        setNumRestarts((int) parsed);            break;
-                case ASSORTIVITY_FLAG:         setAssortivityCheckProbability(parsed);  break;
-                case LATENCY_FLAG:             setLatencyCheckProbability(parsed);      break;
-                case VALIDITY_FLAG:            setValidityCheckProbability(parsed);     break;
-                case LOGICAL_FLAG:             setLogicalMigrationRatio(parsed);        break;
-                case ITERATIONS_FLAG:          setMaxIterations((int) parsed);          break;
+                case NUM_ACTIONS_FLAG:   setNumActions((int) parsed);             break;
+                case REPLICAS_FLAG:      setMinNumReplicas((int) parsed);         break;
+                case GAMMA_FLAG:         setGamma((float) parsed);                break;
+                case ALPHA_FLAG:         setAlpha((float) parsed);                break;
+                case INITIAL_T_FLAG:     setInitialT((float) parsed);             break;
+                case DELTA_T_FLAG:       setDeltaT((float) parsed);               break;
+                case NEIGHBORHOOD_FLAG:  setJaK((int) parsed);                    break;
+                case MAX_MOVES_FLAG:     setHermesK((int) parsed);                break;
+                case NUM_RESTARTS_FLAG:  setNumRestarts((int) parsed);            break;
+                case ASSORTIVITY_FLAG:   setAssortivityCheckProbability(parsed);  break;
+                case LATENCY_FLAG:       setLatencyCheckProbability(parsed);      break;
+                case VALIDITY_FLAG:      setValidityCheckProbability(parsed);     break;
+                case LOGICAL_FLAG:       setLogicalMigrationRatio(parsed);        break;
+                case ITERATIONS_FLAG:    setMaxIterations((int) parsed);          break;
+                case EXPORT_STRUCT_FLAG: setExportStruct(parsed != 0);            break;
                 default: throw new RuntimeException(flag + " is not a valid flag");
             }
         }
@@ -392,6 +398,83 @@ public class TraceRunner {
         }
     }
 
+    static class Recorder {
+        private List<Integer> indexList;
+        private List<Integer> numPartitionsList;
+        private List<Integer> numUsersList;
+        private List<Integer> numFriendshipsList;
+        private List<Double>  assortivityList;
+        private List<Integer> edgeCutList;
+        private List<Integer> numReplicasList;
+        private List<Long> numMovesList;
+        private List<Double>  delayList;
+        private Map<TraceAction.ACTION, Integer> deltaEdgeCuts;
+        private Map<TraceAction.ACTION, Integer> deltaReps;
+
+        public Recorder(int traceLength) {
+            indexList         = new ArrayList<>(traceLength+1);
+            numPartitionsList = new ArrayList<>(traceLength+1);
+            numUsersList      = new ArrayList<>(traceLength+1);
+            numFriendshipsList = new ArrayList<>(traceLength+1);
+            assortivityList   = new ArrayList<>(traceLength+1);
+            edgeCutList       = new ArrayList<>(traceLength+1);
+            numReplicasList   = new ArrayList<>(traceLength+1);
+            numMovesList      = new ArrayList<>(traceLength+1);
+            delayList         = new ArrayList<>(traceLength+1);
+
+            deltaEdgeCuts = new HashMap<>();
+            deltaReps     = new HashMap<>();
+            for(TraceAction.ACTION action : TraceAction.ACTION.values()) {
+                deltaEdgeCuts.put(action, 0);
+                deltaReps.put(action, 0);
+            }
+        }
+
+        public List<Integer> getIndexList() {
+            return indexList;
+        }
+
+        public List<Integer> getNumPartitionsList() {
+            return numPartitionsList;
+        }
+
+        public List<Integer> getNumUsersList() {
+            return numUsersList;
+        }
+
+        public List<Integer> getNumFriendshipsList() {
+            return numFriendshipsList;
+        }
+
+        public List<Double> getAssortivityList() {
+            return assortivityList;
+        }
+
+        public List<Integer> getEdgeCutList() {
+            return edgeCutList;
+        }
+
+        public List<Integer> getNumReplicasList() {
+            return numReplicasList;
+        }
+
+        public List<Long> getNumMovesList() {
+            return numMovesList;
+        }
+
+        public List<Double> getDelayList() {
+            return delayList;
+        }
+
+        public Map<TraceAction.ACTION, Integer> getDeltaEdgeCuts() {
+            return deltaEdgeCuts;
+        }
+
+        public Map<TraceAction.ACTION, Integer> getDeltaReps() {
+            return deltaReps;
+        }
+    }
+
     static void runAction(IMiddleware middleware, TraceAction action) {
         switch (action.getAction()) {
             case ADD_USER:         middleware.addUser(new User(action.getVal1()));          break;
@@ -405,26 +488,48 @@ public class TraceRunner {
     }
 
     private static final String actionFormatStr = "| %2s | %9d | %9d |";
-    private static void log(Map<TraceAction.ACTION, Integer> actionToCutMap, Map<TraceAction.ACTION, Integer> actionToRepsMap, PrintWriter pw) {
+    private static void log(Recorder recorder, PrintWriter pw, boolean exportStruct) {
         String title  = "\nIMPACT OF ACTIONS ON CUTS/REPS\n";
         String stars  = "+----+-----------+-----------+";
         String header = "| AC | EDGE CUT  | REPLICAS  |";
-        log(pw, title, true, true);
-        log(pw, stars, true, true);
-        log(pw, header, true, true);
-        log(pw, stars, true, true);
-        log(pw, String.format(actionFormatStr, ADD_USER.getAbbreviation(),         actionToCutMap.get(ADD_USER),         actionToRepsMap.get(ADD_USER)),        true, true);
-        log(pw, String.format(actionFormatStr, REMOVE_USER.getAbbreviation(),      actionToCutMap.get(REMOVE_USER),      actionToRepsMap.get(REMOVE_USER)),     true, true);
-        log(pw, String.format(actionFormatStr, BEFRIEND.getAbbreviation(),         actionToCutMap.get(BEFRIEND),         actionToRepsMap.get(BEFRIEND)),        true, true);
-        log(pw, String.format(actionFormatStr, UNFRIEND.getAbbreviation(),         actionToCutMap.get(UNFRIEND),         actionToRepsMap.get(UNFRIEND)),        true, true);
-        log(pw, String.format(actionFormatStr, ADD_PARTITION.getAbbreviation(),    actionToCutMap.get(ADD_PARTITION),    actionToRepsMap.get(ADD_PARTITION)),   true, true);
-        log(pw, String.format(actionFormatStr, REMOVE_PARTITION.getAbbreviation(), actionToCutMap.get(REMOVE_PARTITION), actionToRepsMap.get(REMOVE_PARTITION)),true, true);
-        log(pw, String.format(actionFormatStr, DOWNTIME.getAbbreviation(),         actionToCutMap.get(DOWNTIME),         actionToRepsMap.get(DOWNTIME)),        true, true);
+        log(pw, title, false, true);
+        log(pw, stars, false, true);
+        log(pw, header,false, true);
+        log(pw, stars, false, true);
+        log(pw, formatActionLine(recorder, ADD_USER),        false, true);
+        log(pw, formatActionLine(recorder, REMOVE_USER),     false, true);
+        log(pw, formatActionLine(recorder, BEFRIEND),        false, true);
+        log(pw, formatActionLine(recorder, UNFRIEND),        false, true);
+        log(pw, formatActionLine(recorder, ADD_PARTITION),   false, true);
+        log(pw, formatActionLine(recorder, REMOVE_PARTITION),false, true);
+        log(pw, formatActionLine(recorder, DOWNTIME),        false, true);
         log(pw, stars, true, true);
 
+        if(exportStruct) {
+            log(pw, "", false, true);
+            log(pw, "Matlab Struct", false, true);
+            log(pw, "", false, true);
+            StringBuilder builder = new StringBuilder();
+            builder .append("struct(")
+                    .append("'indices', ")              .append(recorder.getIndexList().toString())
+                    .append(", 'numPartitionsArray', ") .append(recorder.getNumPartitionsList().toString())
+                    .append(", 'numUsersArray', ")      .append(recorder.getNumUsersList().toString())
+                    .append(", 'numFriendshipsArray', ").append(recorder.getNumFriendshipsList().toString())
+                    .append(", 'edgeCutArray', ")       .append(recorder.getEdgeCutList().toString())
+                    .append(", 'numReplicasArray', ")   .append(recorder.getNumReplicasList().toString())
+                    .append(", 'numMovesArray', ")      .append(recorder.getNumMovesList().toString())
+                    .append(", 'assortivityArray', ")   .append(recorder.getAssortivityList().toString())
+                    .append(", 'delayArray', ")         .append(recorder.getDelayList().toString())
+                    .append(')');
+            log(pw, builder.toString(), true, true);
+        }
     }
 
-    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, int i, ParsedArgs parsedArgs, boolean flush, boolean echo) {
+    private static String formatActionLine(Recorder recorder, TraceAction.ACTION action) {
+        return String.format(actionFormatStr, action.getAbbreviation(), recorder.getDeltaEdgeCuts().get(action), recorder.getDeltaReps().get(action));
+    }
+
+    private static void log(IMiddlewareAnalyzer middleware, PrintWriter pw, TraceAction next, String type, int i, ParsedArgs parsedArgs, boolean flush, boolean echo, Recorder recorder) {
         int numU = middleware.getNumberOfUsers();
         int numF = middleware.getNumberOfFriendships();
         int numP = middleware.getNumberOfPartitions();
@@ -452,6 +557,16 @@ public class TraceRunner {
         } else {
             delay = Math.random() < delayProb ? middleware.calculateExpectedQueryDelay() : -99D;
         }
+
+        recorder.getAssortivityList().add(asrt);
+        recorder.getDelayList().add(delay);
+        recorder.getEdgeCutList().add(cut);
+        recorder.getIndexList().add(i);
+        recorder.getNumMovesList().add(tally);
+        recorder.getNumPartitionsList().add(numP);
+        recorder.getNumReplicasList().add(reps);
+        recorder.getNumUsersList().add(numU);
+        recorder.getNumFriendshipsList().add(numF);
 
         String nextAction = next != null ? next.toAbbreviatedString() : "END";
 
