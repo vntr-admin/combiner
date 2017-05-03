@@ -82,6 +82,35 @@ public class HRepartitioner {
         return state;
     }
 
+    public static Map<Integer, LogicalUser> initLogicalUsers(Map<Integer, Set<Integer>> logicalPids, Map<Integer, Set<Integer>> friendships, Set<Integer> uidsToInclude, float gamma) {
+        Map<Integer, Integer> uidToPidMap = getUToMasterMap(logicalPids);
+
+        Map<Integer, Integer> pToWeight = new HashMap<>();
+        int totalWeight = 0;
+        for(int pid : logicalPids.keySet()) {
+            int numUsersOnPartition = logicalPids.get(pid).size();
+            pToWeight.put(pid, numUsersOnPartition);
+            totalWeight += numUsersOnPartition;
+        }
+
+        Map<Integer, LogicalUser> logicalUsers = new HashMap<>();
+        for(int uid : uidsToInclude) {
+            Map<Integer, Integer> pToFriendCount = new HashMap<>();
+            for(int pid : logicalPids.keySet()) {
+                pToFriendCount.put(pid, 0);
+            }
+            for(Integer friendId : friendships.get(uid)) {
+                int pid = uidToPidMap.get(friendId);
+                pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
+            }
+
+            int pid = uidToPidMap.get(uid);
+            logicalUsers.put(uid, new LogicalUser(uid, pid, gamma, pToFriendCount, new HashMap<>(pToWeight), totalWeight));
+        }
+
+        return logicalUsers;
+    }
+
     static class State {
 
         private Map<Integer, Set<Integer>> logicalPartitions;
@@ -102,7 +131,7 @@ public class HRepartitioner {
         }
 
         public void updateLogicalUsers(Map<Integer, Set<Integer>> friendships, float gamma) {
-            setLogicalUsers(initLogicalUsers(logicalPartitions, friendships, gamma));
+            setLogicalUsers(initLogicalUsers(logicalPartitions, friendships, friendships.keySet(), gamma));
         }
 
         public void updateLogicalUsers(Set<Target> targets, Map<Integer, Set<Integer>> friendships) {
@@ -124,36 +153,6 @@ public class HRepartitioner {
             this.logicalUsers = logicalUsers;
         }
 
-        static Map<Integer, LogicalUser> initLogicalUsers(Map<Integer, Set<Integer>> logicalPids, Map<Integer, Set<Integer>> friendships, float gamma) {
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(logicalPids);
-
-            Map<Integer, Integer> pToWeight = new HashMap<>();
-            int totalWeight = 0;
-            for(int pid : logicalPids.keySet()) {
-                int numUsersOnPartition = logicalPids.get(pid).size();
-                pToWeight.put(pid, numUsersOnPartition);
-                totalWeight += numUsersOnPartition;
-            }
-
-            Map<Integer, LogicalUser> logicalUsers = new HashMap<>();
-            for(Set<Integer> partition : logicalPids.values()) {
-                for(int uid : partition) {
-                    Map<Integer, Integer> pToFriendCount = new HashMap<>();
-                    for(int pid : logicalPids.keySet()) {
-                        pToFriendCount.put(pid, 0);
-                    }
-                    for(Integer friendId : friendships.get(uid)) {
-                        int pid = uidToPidMap.get(friendId);
-                        pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
-                    }
-
-                    int pid = uidToPidMap.get(uid);
-                    logicalUsers.put(uid, new LogicalUser(uid, pid, gamma, pToFriendCount, new HashMap<>(pToWeight), totalWeight));
-                }
-            }
-
-            return logicalUsers;
-        }
     }
 
     public static class LogicalUser {
