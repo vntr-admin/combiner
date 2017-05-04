@@ -2,17 +2,14 @@ package io.vntr.befriend;
 
 import io.vntr.repartition.HRepartitioner;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.utils.Utils.getUToMasterMap;
-
 /**
  * Created by robertlindquist on 4/30/17.
  */
-public class HBefriender2 {
+public class HBefriender {
     public static BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(int smallUid, int largeUid, float gamma, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
         Set<Integer> uids = new HashSet<>();
         uids.add(smallUid);

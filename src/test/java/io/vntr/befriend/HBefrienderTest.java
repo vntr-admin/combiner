@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by robertlindquist on 5/3/17.
  */
-public class HBefriender2Test {
+public class HBefrienderTest {
 
     @Test
     public void testCalculateGain() {
@@ -88,18 +88,18 @@ public class HBefriender2Test {
             int usersPid = uidToPidMap.get(uid);
             for(int pid : partitions.keySet()) {
                 if(pid != usersPid) {
-                    int result = HBefriender2.calculateGain(lusers.get(uid), pid, gammaBarelyAllowingSixOnPartition);
+                    int result = HBefriender.calculateGain(lusers.get(uid), pid, gammaBarelyAllowingSixOnPartition);
                     int expectedResult = expectedResults.get(uid).get(pid);
                     assertTrue(result == expectedResult);
                 }
             }
         }
 
-        assertTrue( 2 == HBefriender2.calculateGain(lusers.get(12), 1, gammaBarelyAllowingSixOnPartition));
-        assertTrue(-1 == HBefriender2.calculateGain(lusers.get(12), 1, gammaNearlyAllowingSixOnPartition));
+        assertTrue( 2 == HBefriender.calculateGain(lusers.get(12), 1, gammaBarelyAllowingSixOnPartition));
+        assertTrue(-1 == HBefriender.calculateGain(lusers.get(12), 1, gammaNearlyAllowingSixOnPartition));
 
-        assertTrue( 0 == HBefriender2.calculateGain(lusers.get(1), 3, gammaBarelyAllowingFiveOnPartition));
-        assertTrue(-1 == HBefriender2.calculateGain(lusers.get(1), 3, gammaNearlyAllowingFiveOnPartition));
+        assertTrue( 0 == HBefriender.calculateGain(lusers.get(1), 3, gammaBarelyAllowingFiveOnPartition));
+        assertTrue(-1 == HBefriender.calculateGain(lusers.get(1), 3, gammaNearlyAllowingFiveOnPartition));
     }
 
     @Test
@@ -133,16 +133,16 @@ public class HBefriender2Test {
         float gammaBarelyAllowingFiveOnPartition = (5f / averageWeight) + differential;
         float gammaNearlyAllowingFiveOnPartition = (5f / averageWeight) - differential;
 
-        BEFRIEND_REBALANCE_STRATEGY result = HBefriender2.determineBestBefriendingRebalanceStrategy(1, 6, gammaBarelyAllowingSixOnPartition, bidirectionalFriendships, partitions);
+        BEFRIEND_REBALANCE_STRATEGY result = HBefriender.determineBestBefriendingRebalanceStrategy(1, 6, gammaBarelyAllowingSixOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL);
 
-        result = HBefriender2.determineBestBefriendingRebalanceStrategy(1, 6, gammaNearlyAllowingSixOnPartition, bidirectionalFriendships, partitions);
+        result = HBefriender.determineBestBefriendingRebalanceStrategy(1, 6, gammaNearlyAllowingSixOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
 
-        result = HBefriender2.determineBestBefriendingRebalanceStrategy(10, 6, gammaBarelyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
+        result = HBefriender.determineBestBefriendingRebalanceStrategy(10, 6, gammaBarelyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE);
 
-        result = HBefriender2.determineBestBefriendingRebalanceStrategy(10, 6, gammaNearlyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
+        result = HBefriender.determineBestBefriendingRebalanceStrategy(10, 6, gammaNearlyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
     }
 

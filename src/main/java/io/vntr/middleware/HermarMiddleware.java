@@ -2,7 +2,7 @@ package io.vntr.middleware;
 
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
-import io.vntr.befriend.HBefriender2;
+import io.vntr.befriend.HBefriender;
 import io.vntr.manager.NoRepManager;
 import io.vntr.migration.HMigrator;
 import io.vntr.repartition.HRepartitioner;
@@ -39,7 +39,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
-        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender2.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), getFriendships(), getPartitionToUserMap());
+        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), getFriendships(), getPartitionToUserMap());
 
         if(strategy == SMALL_TO_LARGE) {
             manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
