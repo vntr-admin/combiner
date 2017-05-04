@@ -133,8 +133,6 @@ public class HBefriender2Test {
         float gammaBarelyAllowingFiveOnPartition = (5f / averageWeight) + differential;
         float gammaNearlyAllowingFiveOnPartition = (5f / averageWeight) - differential;
 
-        Map<Integer, HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, bidirectionalFriendships, friendships.keySet(), gammaBarelyAllowingSixOnPartition);
-
         BEFRIEND_REBALANCE_STRATEGY result = HBefriender2.determineBestBefriendingRebalanceStrategy(1, 6, gammaBarelyAllowingSixOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL);
 
@@ -146,8 +144,6 @@ public class HBefriender2Test {
 
         result = HBefriender2.determineBestBefriendingRebalanceStrategy(10, 6, gammaNearlyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
-
-        //TODO: do this
     }
 
 }
