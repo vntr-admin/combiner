@@ -5,7 +5,7 @@ import io.vntr.manager.RepManager;
 
 import java.util.*;
 
-import static io.vntr.migration.DummyMigrator.getUserMigrationStrategy;
+import static io.vntr.migration.SMigrator.getUserMigrationStrategy;
 import static io.vntr.utils.Utils.getUToReplicasMap;
 import static java.util.Collections.singleton;
 
@@ -50,7 +50,7 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         
         //Second, determine the migration strategy
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getFriendships().keySet());
-        Map<Integer, Integer> migrationStrategy = getUserMigrationStrategy(partitionId, getPartitionToUserMap(), uidToReplicasMap);
+        Map<Integer, Integer> migrationStrategy = getUserMigrationStrategy(partitionId, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap(), false);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {

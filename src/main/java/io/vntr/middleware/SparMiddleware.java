@@ -94,7 +94,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
         Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
-        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap());
+        Map<Integer, Integer> migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap(), true);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keySet()) {

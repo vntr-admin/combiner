@@ -13,7 +13,7 @@ import static java.util.Collections.singleton;
 
 public class SMigrator {
 
-    public static Map<Integer, Integer> getUserMigrationStrategy(Integer partitionId, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
+    public static Map<Integer, Integer> getUserMigrationStrategy(Integer partitionId, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas, boolean scoreTargets) {
         //Reallocate the N/M master nodes hosted in that server to the remaining M-1 servers equally.
         //Decide the server in which a slave replica is promoted to master, based on the ratio of its neighbors that already exist on that server.
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
@@ -24,26 +24,27 @@ public class SMigrator {
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         Set<Integer> masterIds = partitions.get(partitionId);
-
-        NavigableSet<Target> targets = new TreeSet<>();
-        for (Integer userId : masterIds) {
-            for (Integer replicaPartitionId : uidToReplicasMap.get(userId)) {
-                float score = scoreReplicaPromotion(friendships.get(userId), replicaPartitionId, uidToPidMap);
-                Target target = new Target(userId, replicaPartitionId, partitionId, score);
-                targets.add(target);
-            }
-        }
-
         Map<Integer, Integer> remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(partitionId), uidToPidMap.size(), pidToMasterCounts);
-
         Map<Integer, Integer> strategy = new HashMap<>();
 
-        for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
-            Target target = iter.next();
-            int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
-            if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
-                strategy.put(target.uid, target.pid);
-                remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
+        if(scoreTargets) {
+            NavigableSet<Target> targets = new TreeSet<>();
+            for (Integer userId : masterIds) {
+                for (Integer replicaPartitionId : uidToReplicasMap.get(userId)) {
+                    float score = scoreReplicaPromotion(friendships.get(userId), replicaPartitionId, uidToPidMap);
+                    Target target = new Target(userId, replicaPartitionId, partitionId, score);
+                    targets.add(target);
+                }
+            }
+
+
+            for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
+                Target target = iter.next();
+                int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
+                if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
+                    strategy.put(target.uid, target.pid);
+                    remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
+                }
             }
         }
 
@@ -101,6 +102,9 @@ public class SMigrator {
         int minMasters = Integer.MAX_VALUE;
         Integer minPid = null;
         for(Integer pid : replicaPids) {
+            if(!pToMasterCounts.containsKey(pid)) {
+                System.out.println("What?");
+            }
             int numMasters = pToMasterCounts.get(pid) + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;

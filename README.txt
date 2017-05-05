@@ -76,8 +76,8 @@ Arguments
             Note that assortivity is not a function of the type, and should
             be the same for all runs at the same point.
 
-        -exportStruct x
-            whether to export the run as a matlab-formatted struct.
+        -exportCSV x
+            whether to export the run in csv in addition to tabular format.
             default value is 1 (true), allowed values are 0 (false) and 1.
 
     type-specific args: specific to your choice of type (see next section).
