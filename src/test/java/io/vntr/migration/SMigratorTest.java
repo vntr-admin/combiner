@@ -167,7 +167,7 @@ public class SMigratorTest {
         for(int uid : expectedResults.keySet()) {
             for (int pid : expectedResults.get(uid).keySet()) {
                 float expectedResult = expectedResults.get(uid).get(pid);
-                float result = SMigrator.scoreReplicaPromotion(bidirectionalFriendships.get(uid), pid, uidToPidMap);
+                float result = SMigrator.scoreReplicaPromotion(bidirectionalFriendships.get(uid), partitions.get(pid));
                 assertTrue(expectedResult == result);
             }
         }

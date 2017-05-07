@@ -1,5 +1,6 @@
 package io.vntr.migration;
 
+import com.google.common.collect.Sets;
 import io.vntr.repartition.Target;
 
 import java.util.*;
@@ -31,7 +32,7 @@ public class SMigrator {
             NavigableSet<Target> targets = new TreeSet<>();
             for (Integer userId : masterIds) {
                 for (Integer replicaPartitionId : uidToReplicasMap.get(userId)) {
-                    float score = scoreReplicaPromotion(friendships.get(userId), replicaPartitionId, uidToPidMap);
+                    float score = scoreReplicaPromotion(friendships.get(userId), partitions.get(replicaPartitionId));
                     Target target = new Target(userId, replicaPartitionId, partitionId, score);
                     targets.add(target);
                 }
@@ -102,9 +103,6 @@ public class SMigrator {
         int minMasters = Integer.MAX_VALUE;
         Integer minPid = null;
         for(Integer pid : replicaPids) {
-            if(!pToMasterCounts.containsKey(pid)) {
-                System.out.println("What?");
-            }
             int numMasters = pToMasterCounts.get(pid) + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;
@@ -114,19 +112,12 @@ public class SMigrator {
         return minPid;
     }
 
-    static float scoreReplicaPromotion(Set<Integer> friendIds, Integer replicaPartitionId, Map<Integer, Integer> uidToPidMap) {
+    static float scoreReplicaPromotion(Set<Integer> friendIds, Set<Integer> usersOnPartition) {
         //based on what they've said, it seems like a decent scoring mechanism is numFriendsOnPartition^2 / numFriendsTotal
-        int numFriendsOnPartition = 0;
-        for (Integer friendId : friendIds) {
-            int friendPid = uidToPidMap.get(friendId);
-            if (friendPid == replicaPartitionId) {
-                numFriendsOnPartition++;
-            }
-        }
+        int numFriendsOnPartition = Sets.intersection(friendIds, usersOnPartition).size();
+        float numFriendsTotal = friendIds.size();
 
-        int numFriendsTotal = friendIds.size();
-
-        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / (numFriendsTotal);
+        return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / numFriendsTotal;
     }
 
     static Map<Integer, Integer> getRemainingSpotsInPartitions(Set<Integer> partitionIdsToSkip, int numUsers, Map<Integer, Integer> pToMasterCounts) {
