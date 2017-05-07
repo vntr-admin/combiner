@@ -36,8 +36,11 @@ public class JRepartitioner {
                         partnerId = findPartner(uid, sample(k, friendships.keySet()), t, state);
                     }
                     if(partnerId != null) {
+                        boolean localSwap = uidToPidMap.get(uid).equals(uidToPidMap.get(partnerId));
                         logicalSwap(uid, partnerId, state);
-                        logicalMigrationCount += 2;
+                        if(!localSwap) {
+                            logicalMigrationCount += 2;
+                        }
                     }
                 }
             }
