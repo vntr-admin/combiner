@@ -288,8 +288,9 @@ public class TraceArgs {
             traceArgs.setInputFile(inputFolder + File.separator + args[0]);
         }
 
-        traceArgs.setOutputFile(outputFolder + File.separator + generateFilename(args) + ".txt");
-        traceArgs.setCsvFile(outputFolder + File.separator + generateFilename(args) + ".csv");
+        String filenameStub = generateFilename(args);
+        traceArgs.setOutputFile(outputFolder + File.separator + filenameStub + ".txt");
+        traceArgs.setCsvFile(outputFolder + File.separator + filenameStub + ".csv");
 
         if(!allowedTypes.contains(traceArgs.getType())) {
             throw new IllegalArgumentException("arg[1] must be one of " + allowedTypes);
