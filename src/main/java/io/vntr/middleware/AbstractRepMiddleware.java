@@ -6,6 +6,8 @@ import io.vntr.manager.RepManager;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -48,11 +50,8 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getPids());
-        potentialReplicaLocations.removeAll(pidsToExclude);
-        potentialReplicaLocations.remove(user.getBasePid());
-        potentialReplicaLocations.removeAll(user.getReplicaPids());
-        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
+        Predicate<Integer> predicate = x -> !user.getBasePid().equals(x) && !user.getReplicaPids().contains(x) && !pidsToExclude.contains(x);
+        List<Integer> list = manager.getPids().stream().filter(predicate).collect(Collectors.toList());
         return list.get((int) (list.size() * Math.random()));
     }
 
@@ -69,9 +68,8 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     @Override
     public Integer getNumberOfFriendships() {
         int numFriendships=0;
-        Map<Integer, Set<Integer>> friendships = getFriendships();
-        for(Integer uid : friendships.keySet()) {
-            numFriendships += friendships.get(uid).size();
+        for(Set<Integer> friends : getFriendships().values()) {
+            numFriendships += friends.size();
         }
         return numFriendships / 2;
     }
