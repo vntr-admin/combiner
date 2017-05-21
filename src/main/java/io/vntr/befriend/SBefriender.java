@@ -40,7 +40,7 @@ public class SBefriender {
                 return LARGE_TO_SMALL;
             }
 
-            float imbalanceRatio = smallerMasters / largerMasters;
+            float imbalanceRatio = ((float) smallerMasters) / largerMasters;
             float ratioOfSecondBestToBest = ((float) Math.min(stay, toLarger)) / toSmaller;
             if (ratioOfSecondBestToBest > imbalanceRatio) {
                 return LARGE_TO_SMALL;
@@ -52,7 +52,7 @@ public class SBefriender {
                 return SMALL_TO_LARGE;
             }
 
-            float imbalanceRatio = largerMasters / smallerMasters;
+            float imbalanceRatio = ((float) largerMasters) / smallerMasters;
             float ratioOfSecondBestToBest = ((float) Math.min(stay, toSmaller)) / toLarger;
             if (ratioOfSecondBestToBest > imbalanceRatio) {
                 return SMALL_TO_LARGE;

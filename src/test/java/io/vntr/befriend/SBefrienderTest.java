@@ -28,15 +28,15 @@ public class SBefrienderTest {
         }
 
         assertEquals(determineStrategy(5, 4, 5, 2, 3), LARGE_TO_SMALL);
-        assertEquals(determineStrategy(5, 4, 5, 5, 5), LARGE_TO_SMALL);
-        assertEquals(determineStrategy(5, 4, 5, 3, 3), NO_CHANGE);
+        assertEquals(determineStrategy(5, 4, 5, 6, 5), LARGE_TO_SMALL);
+        assertEquals(determineStrategy(5, 4, 5, 4, 3), NO_CHANGE);
 
         assertEquals(determineStrategy(5, 4, 4, 2, 3), LARGE_TO_SMALL);
         assertEquals(determineStrategy(5, 4, 4, 3, 3), NO_CHANGE);
 
         assertEquals(determineStrategy(5, 5, 4, 3, 2), SMALL_TO_LARGE);
-        assertEquals(determineStrategy(5, 5, 4, 5, 5), SMALL_TO_LARGE);
-        assertEquals(determineStrategy(5, 5, 4, 3, 3), NO_CHANGE);
+        assertEquals(determineStrategy(5, 5, 4, 5, 6), SMALL_TO_LARGE);
+        assertEquals(determineStrategy(5, 5, 4, 3, 4), NO_CHANGE);
     }
 
     @Test
