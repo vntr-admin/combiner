@@ -1,9 +1,6 @@
 package io.vntr.utils;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by robertlindquist on 4/17/17.
@@ -66,4 +63,5 @@ public class Utils {
         }
         return bidirectionalFriendshipSet;
     }
+
 }

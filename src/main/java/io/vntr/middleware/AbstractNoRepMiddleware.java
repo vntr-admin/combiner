@@ -68,9 +68,8 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     @Override
     public Integer getNumberOfFriendships() {
         int numFriendships=0;
-        Map<Integer, Set<Integer>> friendships = getFriendships();
-        for(Integer uid : friendships.keySet()) {
-            numFriendships += friendships.get(uid).size();
+        for(Set<Integer> friends : getFriendships().values()) {
+            numFriendships += friends.size();
         }
         return numFriendships / 2;
     }
@@ -110,7 +109,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
-            m.put(pid, new HashSet<Integer>());
+            m.put(pid, Collections.emptySet());
         }
         return m;
     }

@@ -63,12 +63,12 @@ public class TestUtils {
     public static Map<Integer, Set<Integer>> getInitialReplicasObeyingKReplication(int minNumReplicas, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         Map<Integer, Set<Integer>> replicas = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
-            replicas.put(pid, new HashSet<Integer>());
+            replicas.put(pid, new HashSet<>());
         }
 
         Map<Integer, Set<Integer>> replicaLocations = new HashMap<>();
         for(Integer uid : friendships.keySet()) {
-            replicaLocations.put(uid, new HashSet<Integer>());
+            replicaLocations.put(uid, new HashSet<>());
         }
 
         Map<Integer, Integer> uMap = getUToMasterMap(partitions);
@@ -76,13 +76,15 @@ public class TestUtils {
         //Step 1: add replicas for friends in different partitions
         for(Integer uid1 : friendships.keySet()) {
             for(Integer uid2 : friendships.get(uid1)) {
-                Integer pid1 = uMap.get(uid1);
-                Integer pid2 = uMap.get(uid2);
-                if(!pid1.equals(pid2)) {
-                    replicas.get(pid1).add(uid2);
-                    replicas.get(pid2).add(uid1);
-                    replicaLocations.get(uid1).add(pid2);
-                    replicaLocations.get(uid2).add(pid1);
+                if(uid1 < uid2) {
+                    Integer pid1 = uMap.get(uid1);
+                    Integer pid2 = uMap.get(uid2);
+                    if(!pid1.equals(pid2)) {
+                        replicas.get(pid1).add(uid2);
+                        replicas.get(pid2).add(uid1);
+                        replicaLocations.get(uid1).add(pid2);
+                        replicaLocations.get(uid2).add(pid1);
+                    }
                 }
             }
         }

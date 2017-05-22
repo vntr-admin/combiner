@@ -6,8 +6,6 @@ import io.vntr.manager.RepManager;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -50,8 +48,11 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
-        Predicate<Integer> predicate = x -> !user.getBasePid().equals(x) && !user.getReplicaPids().contains(x) && !pidsToExclude.contains(x);
-        List<Integer> list = manager.getPids().stream().filter(predicate).collect(Collectors.toList());
+        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getPids());
+        potentialReplicaLocations.removeAll(pidsToExclude);
+        potentialReplicaLocations.remove(user.getBasePid());
+        potentialReplicaLocations.removeAll(user.getReplicaPids());
+        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
         return list.get((int) (list.size() * Math.random()));
     }
 
