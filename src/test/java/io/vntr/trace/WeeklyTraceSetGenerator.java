@@ -186,7 +186,7 @@ public class WeeklyTraceSetGenerator {
 
     static FullTraceAction addU() {
         int newUid = ++maxUid;
-        bidirectionalFriendships.put(newUid, new HashSet<>());
+        bidirectionalFriendships.put(newUid, new HashSet<Integer>());
         return new FullTraceAction(ADD_USER, newUid);
     }
 

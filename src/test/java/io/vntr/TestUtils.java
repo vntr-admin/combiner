@@ -63,12 +63,12 @@ public class TestUtils {
     public static Map<Integer, Set<Integer>> getInitialReplicasObeyingKReplication(int minNumReplicas, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
         Map<Integer, Set<Integer>> replicas = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
-            replicas.put(pid, new HashSet<>());
+            replicas.put(pid, new HashSet<Integer>());
         }
 
         Map<Integer, Set<Integer>> replicaLocations = new HashMap<>();
         for(Integer uid : friendships.keySet()) {
-            replicaLocations.put(uid, new HashSet<>());
+            replicaLocations.put(uid, new HashSet<Integer>());
         }
 
         Map<Integer, Integer> uMap = getUToMasterMap(partitions);

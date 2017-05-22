@@ -109,7 +109,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
-            m.put(pid, Collections.emptySet());
+            m.put(pid, Collections.<Integer>emptySet());
         }
         return m;
     }
