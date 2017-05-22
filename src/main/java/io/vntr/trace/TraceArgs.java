@@ -35,10 +35,10 @@ public class TraceArgs {
         switch(type) {
             case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; numRestarts = 10; break;
             case JABAR_TYPE:   alpha = 3f;    deltaT = 0.025f; numRestarts = 1;  break;
-            case HERMES_TYPE:  gamma = 1.15f;                                    break;
-            case HERMAR_TYPE:  gamma = 1.15f;                                    break;
+            case HERMES_TYPE:  gamma = 1.1f;                                     break;
+            case HERMAR_TYPE:  gamma = 1.1f;                                     break;
             case SPAJA_TYPE:   alpha = 1f;    deltaT = 0.5f;                     break;
-            case SPARMES_TYPE: gamma = 1.01f;                                    break;
+            case SPARMES_TYPE: gamma = 1.05f;                                    break;
         }
     }
 
