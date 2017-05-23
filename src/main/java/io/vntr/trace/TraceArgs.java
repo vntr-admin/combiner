@@ -33,7 +33,7 @@ public class TraceArgs {
     public TraceArgs(String type) {
         this.type = type;
         switch(type) {
-            case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; numRestarts = 10; break;
+            case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; numRestarts = 3;  break;
             case JABAR_TYPE:   alpha = 3f;    deltaT = 0.025f; numRestarts = 1;  break;
             case HERMES_TYPE:  gamma = 1.1f;                                     break;
             case HERMAR_TYPE:  gamma = 1.1f;                                     break;
