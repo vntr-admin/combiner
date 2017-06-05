@@ -60,52 +60,6 @@ public class TestUtils {
         return userIdToFriendIds;
     }
 
-    public static Map<Integer, Set<Integer>> getInitialReplicasObeyingKReplication(int minNumReplicas, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
-        for(Integer pid : partitions.keySet()) {
-            replicas.put(pid, new HashSet<Integer>());
-        }
-
-        Map<Integer, Set<Integer>> replicaLocations = new HashMap<>();
-        for(Integer uid : friendships.keySet()) {
-            replicaLocations.put(uid, new HashSet<Integer>());
-        }
-
-        Map<Integer, Integer> uMap = getUToMasterMap(partitions);
-
-        //Step 1: add replicas for friends in different partitions
-        for(Integer uid1 : friendships.keySet()) {
-            for(Integer uid2 : friendships.get(uid1)) {
-                if(uid1 < uid2) {
-                    Integer pid1 = uMap.get(uid1);
-                    Integer pid2 = uMap.get(uid2);
-                    if(!pid1.equals(pid2)) {
-                        replicas.get(pid1).add(uid2);
-                        replicas.get(pid2).add(uid1);
-                        replicaLocations.get(uid1).add(pid2);
-                        replicaLocations.get(uid2).add(pid1);
-                    }
-                }
-            }
-        }
-
-        //Step 2: add replicas as necessary for k-replication
-        for(Integer uid : replicaLocations.keySet()) {
-            int numShort = minNumReplicas - replicaLocations.get(uid).size();
-            if(numShort > 0) {
-                Set<Integer> possibilities = new HashSet<>(partitions.keySet());
-                possibilities.removeAll(replicaLocations.get(uid));
-                possibilities.remove(uMap.get(uid));
-                Set<Integer> newReplicas = getKDistinctValuesFromList(numShort, possibilities);
-                for(Integer pid : newReplicas) {
-                    replicas.get(pid).add(uid);
-                }
-            }
-        }
-
-        return replicas;
-    }
-
     public static Map<Integer, Set<Integer>> getRandomPartitioning(Set<Integer> pids, Set<Integer> uids) {
         Map<Integer, Set<Integer>> partitions = new HashMap<>();
         Set<Integer> pidCopies = new HashSet<>(pids);

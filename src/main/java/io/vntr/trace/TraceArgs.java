@@ -250,7 +250,7 @@ public class TraceArgs {
         }
 
         if(   SPAR_TYPE.equals(type)   || SPARMES_TYPE.equals(type) || SPAJA_TYPE.equals(type)
-                || RDUMMY_TYPE.equals(type)) {
+                || RDUMMY_TYPE.equals(type) || RMETIS_TYPE.equals(type)) {
             builder.append(" -minReps ").append(minNumReplicas);
         }
         if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type)   || SPAJA_TYPE.equals(type)) {

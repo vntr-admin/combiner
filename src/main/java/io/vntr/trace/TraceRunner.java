@@ -27,13 +27,14 @@ public class TraceRunner {
     public static final String SPAJA_TYPE = "SPAJA";
     public static final String DUMMY_TYPE = "DUMMY";
     public static final String RDUMMY_TYPE = "RDUMMY";
+    public static final String RMETIS_TYPE = "RMETIS";
 
     public static final long MILLION = 1000000;
     public static final long BILLION = 1000000000;
 
     private static final String CONFIG_FILE = "config.properties";
 
-    static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPARMES_TYPE, METIS_TYPE, JABEJA_TYPE, JABAR_TYPE, SPAJA_TYPE, DUMMY_TYPE, RDUMMY_TYPE));
+    static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPARMES_TYPE, METIS_TYPE, JABEJA_TYPE, JABAR_TYPE, SPAJA_TYPE, DUMMY_TYPE, RDUMMY_TYPE, RMETIS_TYPE));
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private static final SimpleDateFormat filenameSdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -126,6 +127,7 @@ public class TraceRunner {
             case SPAJA_TYPE:   return initSpajaMiddleware        (trace, traceArgs, props);
             case DUMMY_TYPE:   return initDummyMiddleware        (trace, traceArgs, props);
             case RDUMMY_TYPE:  return initReplicaDummyMiddleware (trace, traceArgs, props);
+            case RMETIS_TYPE:  return initReplicaMetisMiddleware (trace, traceArgs, props);
             default: throw new RuntimeException("args[1] must be one of " + allowedTypes);
         }
     }
@@ -443,6 +445,21 @@ public class TraceRunner {
         );
 
         return new ReplicaDummyMiddleware(repManager);
+    }
+
+    static ReplicaMetisMiddleware initReplicaMetisMiddleware(Trace trace, TraceArgs traceArgs, Properties prop) {
+        RepManager repManager = InitUtils.initRepManager(
+                traceArgs.getMinNumReplicas(),
+                traceArgs.getLogicalMigrationRatio(),
+                trace.getPartitions(),
+                trace.getFriendships(),
+                trace.getReplicas()
+        );
+
+        String gpmetisLocation = prop.getProperty("gpmetis.location");
+        String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
+
+        return new ReplicaMetisMiddleware(repManager, gpmetisLocation, gpmetisTempdir, traceArgs.getMinNumReplicas());
     }
 
     private static final String CSV_HEADER = "index,numP,numU,numF,asrt,cut,reps,moves,delay";

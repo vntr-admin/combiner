@@ -3,6 +3,7 @@ package io.vntr.trace;
 import io.vntr.TestUtils;
 import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.Utils;
 
 import java.io.FileInputStream;
 import java.util.*;
@@ -55,10 +56,10 @@ public class WeeklyTraceSetGenerator {
 
     private static final Map<TRACE_ACTION, Double> actionsProbability = new HashMap<>();
     static {
-        actionsProbability.put(BEFRIEND, 0.732D);     //Befriend/Unfriend ratio should be ~3, according to sigmod-linkbench paper
-        actionsProbability.put(UNFRIEND, 0.244D);
-        actionsProbability.put(ADD_USER, 0.018D);
-        actionsProbability.put(REMOVE_USER, 0.006D);
+        actionsProbability.put(BEFRIEND, 0.738D);     //Befriend/Unfriend ratio should be ~3, according to sigmod-linkbench paper
+        actionsProbability.put(UNFRIEND, 0.246D);
+        actionsProbability.put(ADD_USER, 0.012D);
+        actionsProbability.put(REMOVE_USER, 0.004D);
         actionsProbability.put(ADD_PARTITION, 0D);    //this should be triggered by adding users or removing partitions...
         actionsProbability.put(REMOVE_PARTITION, 0D); //this is specified manually
         actionsProbability.put(DOWNTIME, 0D);         //this is also specified manually
@@ -108,8 +109,8 @@ public class WeeklyTraceSetGenerator {
         Map<Integer, Map<Integer, Set<Integer>>> hardStartReplicasMap = new HashMap<>();
         Map<Integer, Map<Integer, Set<Integer>>> softStartReplicasMap = new HashMap<>();
         for(int minNumReplicas : MIN_NUM_REPLICAS_OPTIONS) {
-            hardStartReplicasMap.put(minNumReplicas, TestUtils.getInitialReplicasObeyingKReplication(minNumReplicas, hardStartPartitions, bidirectionalFriendships));
-            softStartReplicasMap.put(minNumReplicas, TestUtils.getInitialReplicasObeyingKReplication(minNumReplicas, softStartPartitions, bidirectionalFriendships));
+            hardStartReplicasMap.put(minNumReplicas, Utils.getInitialReplicasObeyingKReplication(minNumReplicas, hardStartPartitions, bidirectionalFriendships));
+            softStartReplicasMap.put(minNumReplicas, Utils.getInitialReplicasObeyingKReplication(minNumReplicas, softStartPartitions, bidirectionalFriendships));
         }
 
         List<FullTraceAction> actions = generateActions(new HashSet<>(originalPids));

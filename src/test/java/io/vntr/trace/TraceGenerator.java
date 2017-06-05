@@ -2,6 +2,7 @@ package io.vntr.trace;
 
 import io.vntr.TestUtils;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.Utils;
 
 import java.util.*;
 
@@ -68,7 +69,7 @@ public class TraceGenerator {
         }
 
         Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, mutableFriendships.keySet());
-        Map<Integer, Set<Integer>> replicas = TestUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, mutableFriendships);
+        Map<Integer, Set<Integer>> replicas = Utils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, mutableFriendships);
 
         TRACE_ACTION[] script = new TRACE_ACTION[numActions];
         for (int j = 0; j < numActions - 1; j++) {
