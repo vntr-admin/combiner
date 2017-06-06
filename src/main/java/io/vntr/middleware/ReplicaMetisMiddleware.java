@@ -4,6 +4,7 @@ import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.ReplicaMetisRepartitioner;
 import io.vntr.repartition.RepResults;
+import io.vntr.utils.Utils;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -38,9 +39,19 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
     }
 
     void repartition() {
+        clearReplicas();
         RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, getFriendships(), getPartitionIds(), minNumReplicas);
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
+    }
+
+    void clearReplicas() {
+        Map<Integer, Set<Integer>> replicaLocations = Utils.copyMapSet(Utils.getUToReplicasMap(getPartitionToReplicasMap(), getUserIds()));
+        for(Integer uid : replicaLocations.keySet()) {
+            for(Integer replicaPid : replicaLocations.get(uid)) {
+                getManager().removeReplica(getManager().getUserMaster(uid), replicaPid);
+            }
+        }
     }
 
     void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
@@ -50,25 +61,14 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
 
             RepUser user = getManager().getUserMaster(uid);
             Integer oldPid = user.getBasePid();
-            Set<Integer> oldReplicas = user.getReplicaPids();
 
             if(!oldPid.equals(newPid)) {
                 getManager().moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
                 getManager().increaseTally(1);
             }
 
-            if(!oldReplicas.equals(newReplicas)) {
-                Set<Integer> replicasToAdd = new HashSet<>(newReplicas);
-                replicasToAdd.removeAll(oldReplicas);
-                for(Integer replicaPid : replicasToAdd) {
-                    getManager().addReplica(user, replicaPid);
-                }
-
-                Set<Integer> replicasToRemove = new HashSet<>(oldReplicas);
-                replicasToRemove.removeAll(newReplicas);
-                for(Integer replicaPid : replicasToRemove) {
-                    getManager().removeReplica(user, replicaPid);
-                }
+            for(Integer replicaPid : newReplicas) {
+                getManager().addReplica(user, replicaPid);
             }
         }
     }

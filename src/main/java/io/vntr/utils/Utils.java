@@ -111,4 +111,13 @@ public class Utils {
 
         return replicas;
     }
+
+    public static Map<Integer, Set<Integer>> copyMapSet(Map<Integer, Set<Integer>> m) {
+        Map<Integer, Set<Integer>> copy = new HashMap<>();
+        for(Integer key : m.keySet()) {
+            copy.put(key, new HashSet<>(m.get(key)));
+        }
+        return copy;
+    }
+
 }

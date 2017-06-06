@@ -130,14 +130,6 @@ public class TestUtils {
         return idSet;
     }
 
-    public static Map<Integer, Set<Integer>> copyMapSet(Map<Integer, Set<Integer>> m) {
-        Map<Integer, Set<Integer>> copy = new HashMap<>();
-        for(Integer key : m.keySet()) {
-            copy.put(key, new HashSet<>(m.get(key)));
-        }
-        return copy;
-    }
-
     public static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
         Set<Integer> keys = new HashSet<>();
         for(int key : m.keySet()) {

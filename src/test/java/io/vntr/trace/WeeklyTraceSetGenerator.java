@@ -8,12 +8,12 @@ import io.vntr.utils.Utils;
 import java.io.FileInputStream;
 import java.util.*;
 
-import static io.vntr.TestUtils.copyMapSet;
 import static io.vntr.TestUtils.findKeysForUser;
 import static io.vntr.trace.TRACE_ACTION.*;
 import static io.vntr.utils.ProbabilityUtils.chooseKeyFromMapSetInProportionToSetSize;
 import static io.vntr.utils.ProbabilityUtils.chooseKeyValuePairFromMapSetUniformly;
 import static io.vntr.utils.ProbabilityUtils.getRandomElement;
+import static io.vntr.utils.Utils.copyMapSet;
 import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
 import static java.util.Collections.nCopies;
 

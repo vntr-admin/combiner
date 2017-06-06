@@ -7,6 +7,7 @@ import io.vntr.utils.Utils;
 import java.util.*;
 
 import static io.vntr.TestUtils.*;
+import static io.vntr.utils.Utils.copyMapSet;
 import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
 import static io.vntr.trace.TRACE_ACTION.*;
 import static io.vntr.utils.ProbabilityUtils.*;
