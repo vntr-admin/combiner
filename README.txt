@@ -50,7 +50,7 @@ Arguments
         specified in config.properties.  Otherwise, loads the absolute path.
 
     type: one of JABEJA, JABAR, HERMES, HERMAR, SPAR, SPAJA, SPARMES, METIS,
-                 DUMMY, RDUMMY
+                 DUMMY, RDUMMY, RMETIS
 
     common args:
         -n numActions
@@ -122,7 +122,7 @@ Ja-be-Ja:
             (Integer) k >= 1.  Default is 15.  Sane values are 3-21.
         -restarts
             number of restarts allowed for the repartitioning algorithm.
-            Default is 10.  Sane values are 1-15.
+            Default is 3.  Sane values are 1-10.
         -logMig l
             weighting to give logical migrations in oscillation calculation.
             E.g., with l=0.2, 100 logical moves and 30 physical ones, the
@@ -137,7 +137,7 @@ Hermes:
         -gamma g
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
-            1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
+            1 < g < 2.  Default value is 1.1.  Sane values are 1.01-1.25.
         -maxIter r
             Maximum number of iterations allowed in the repartitioning
             algorithm.  (integer) r > 0.  Default is 100.  Sane values are
@@ -185,7 +185,7 @@ Spaja:
             The initial temperature.  The distance function is multiplied by
             t (which decreases over time) to allow for temporary deviations
             from hill-climbing.
-            t > 0.0.  Default is 2.  Sane values are 1.5-2.5.
+            t > 1.0.  Default is 2.  Sane values are 1.5-2.5.
         -deltaT dT
             How much the temperature decreases each iteration.
             dT > 0.0.  Default is 0.5.  Sane values are (initialT-1)/x,
@@ -216,7 +216,7 @@ Sparmes:
         -gamma g
             the allowed imbalance ratio.  If average partition size is 100
             users, and gamma=1.25, partitions will contain 75-125 users.
-            1 < g < 2.  Default value is 1.15.  Sane values are 1.01-1.25.
+            1 < g < 2.  Default value is 1.05.  Sane values are 1.01-1.25.
         -maxIter r
             Maximum number of iterations allowed in the repartitioning
             algorithm.  (integer) r > 0.  Default is 100.  Sane values are
@@ -312,6 +312,18 @@ Replica Dummy Repartitioner:
     Description: Kind of like SPAR, but without moving users upon
     befriending, or in fact at any time other than partition removal.
     Type Name: RDUMMY
+    Arguments:
+        -minReps n
+            the minimum number of replicas to maintain of each user.
+            (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
+            Note: you need to use a trace that has at least as many replicas
+            as you specify or it could crash.
+
+Replica METIS Repartitioner
+    Description: Kind of like SPAR, but repartitions with METIS after downtime
+    and some befriend operations (at random), and then generates partitions
+    that meet the k-replication and replica-colocation constraints.
+    Type Name: RMETIS
     Arguments:
         -minReps n
             the minimum number of replicas to maintain of each user.

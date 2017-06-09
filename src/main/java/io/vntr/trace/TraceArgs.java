@@ -14,7 +14,7 @@ public class TraceArgs {
     private String outputFile;
     private String csvFile;
     private Integer numActions;
-    private Float alpha;
+    private Float alpha = 3f;
     private Float initialT = 2f;
     private Float deltaT;
     private Integer jaK = 15;
@@ -33,12 +33,12 @@ public class TraceArgs {
     public TraceArgs(String type) {
         this.type = type;
         switch(type) {
-            case JABEJA_TYPE:  alpha = 3f;    deltaT = 0.025f; numRestarts = 3;  break;
-            case JABAR_TYPE:   alpha = 3f;    deltaT = 0.025f; numRestarts = 1;  break;
-            case HERMES_TYPE:  gamma = 1.1f;                                     break;
-            case HERMAR_TYPE:  gamma = 1.1f;                                     break;
-            case SPAJA_TYPE:   alpha = 3f;    deltaT = 0.5f;                     break;
-            case SPARMES_TYPE: gamma = 1.05f;                                    break;
+            case JABEJA_TYPE:  deltaT = 0.025f; numRestarts = 3;  break;
+            case JABAR_TYPE:   deltaT = 0.025f; numRestarts = 1;  break;
+            case HERMES_TYPE:  gamma = 1.1f;                      break;
+            case HERMAR_TYPE:  gamma = 1.1f;                      break;
+            case SPAJA_TYPE:   deltaT = 0.5f;                     break;
+            case SPARMES_TYPE: gamma = 1.05f;                     break;
         }
     }
 
