@@ -46,11 +46,7 @@ public class JBefriender {
         } else {
             candidates = getKDistinctValuesFromList(k, partition);
         }
-        try {
-            return findPartner(uid, candidates, alpha, friendships, uidToPidMap);
-        } catch(Throwable e) {
-            return findPartner(uid, candidates, alpha, friendships, uidToPidMap);
-        }
+        return findPartner(uid, candidates, alpha, friendships, uidToPidMap);
     }
 
     static int calculateGain(int uid1, int uid2, Map<Integer, Set<Integer>> friendships, Map<Integer, Integer> uidToPidMap) {
