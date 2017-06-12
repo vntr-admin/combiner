@@ -16,6 +16,10 @@ Configuration:
         input.folder: set it to where you have your datasets
             Note: if you only use absolute paths in your run targets,
             you can skip this.
+            Note: we include one set of datasets by default, in the
+            [checkout_location]/data directory.  It is a derivative of the
+            friendship graph from J. McAuley and J. Leskovec. Learning to
+            Discover Social Circles in Ego Networks. NIPS, 2012.
         output.folder: set it to where you want the output stored
 
 
@@ -30,6 +34,8 @@ Downloading and building METIS:
     http://glaros.dtc.umn.edu/gkhome/metis/metis/download
     Note: You'll need a C99-compatible compiler and cmake.
     Note: We do not provide any support for this process.
+    Note: if you are using a Debian-based GNU Linux distribution, then the
+    command "apt-get install metis" should install it to /usr/bin/gpmetis .
 
 Configuration:
     [checkout_location]/config.properties
@@ -71,7 +77,7 @@ Arguments
         -assortivity p
             calculates the assortivity of the friendship graph with
             probability p.
-            In log lines where no check occurrs, it is reported as -99.
+            In log lines where no check occurs, it is reported as -99.
             0 <= p <= 1.  Default is 1 (always).
             Note that assortivity is not a function of the type, and should
             be the same for all runs at the same point.
@@ -301,8 +307,8 @@ Hermar:
             0.0 <= l <= 1.0.  Default is 0.
 
 Dummy Repartitioner:
-    Description: Kind of like METIS or Jabeja but without repartitioning, or
-    any tactical moves of users to reduce edge cut.  Provides a baseline
+    Description: Kind of like METIS or Ja-be-ja but without repartitioning,
+    or any tactical moves of users to reduce edge cut.  Provides a baseline
     against which to compare partitioning quality.  No replication.
     Type Name: DUMMY
     Arguments:
@@ -330,3 +336,173 @@ Replica METIS Repartitioner
             (Integer) n >= 0.  Default is 0.  Sane values are 0-3.
             Note: you need to use a trace that has at least as many replicas
             as you specify or it could crash.
+
+****************************************************************************
+**************************** INPUT FILE FORMAT *****************************
+****************************************************************************
+
+Input File Format:
+
+A typical input trace looks like this (perhaps named facebook_0_hard.txt):
+
+F: {0=[1, 2, 3], 1=[2, 4, 6], ..., 4038=[]}
+PIDS: [0, 1, ..., 32]
+P: {0=[2561, 2306, ...], 1=[2560, 2563, ...], ..., 32=[1, 8, ...]}
+R: {0=[1, 8, ...], 1=[2561, 2306, ...], ..., 32=[2560, 2563, ...]}
+A0    : UNFRIEND 3302 3321
+A1    : BEFRIEND 467 2951
+A2    : ADD_USER 4040 -1
+A3    : REMOVE_USER 2782 -1
+A4    : DOWNTIME -1 -1
+A5    : REMOVE_PARTITION 21 -1
+A6    : ADD_PARTITION 34 -1
+...
+A1000 : BEFRIEND 226 2419
+
+
+We typically name the file as follows:
+    [dataset]_[maximum -minRep supported]_[any_suffix_that_makes_sense].txt
+
+The content of the file is broken into two sections:
+    (1) The starting conditions, which includes:
+        (a) The initial friendship graph (F)
+        (b) The partition IDs (PIDS)
+        (c) The initial partitioning (P)
+        (d) The initial replicas (R), which are ignored by all replica-free
+            systems (those that don't support the -minReps argument)
+
+    (2) A sequence of actions to be performed on the graph.
+
+Starting Conditions:
+
+F, P and R are all maps from a key to a set of values.
+The format of these maps is Java 5+'s default Map::toString() method.
+PIDS is a set, and similarly uses Java 5+'s default Set::toString() method. 
+
+These maps reference two types of IDs: partitions IDs (called pids in the
+code), and user IDs (called uids).  The system expects the set of uids to go
+from 0 to (number of users)-1, inclusive, and the set of pids to go from 0 
+to (number of partitions)-1, inclusive.
+
+Within each map, the keys and values can be in any order, though it has not
+been tested with keys that are not sorted in increasing order.
+
+F, which stands for Friendships, should contain each uid as a key, and the
+value for that key should be a set containing all of the IDs of that user's
+friends who have a higher uid than that user.  E.g., as above, user 0 has
+user 1's ID in its set, but not vice-versa.  Make sure that all users have a
+key-value pair in F, even if they have no friends, or at least no friends
+with larger IDs.
+
+PIDS is a set of the values of the partition IDs.  It shouldn't require the
+pids to be sorted, but it hasn't been tested with them in unsorted order.
+
+P, which stands for partition (masters), should contain each pid as a key,
+and the value for that key should be the set of all users initially on that
+partition.  Ensure that all pids appear as a key in this map, even if they
+have no users.  Also note that, as a partitioning, each uid should be in
+precisely one partition.
+
+R, which stands for replicas, should contain each pid as a key and the value
+for that key should be the set of all users who have a replica on that
+partition.  Ensure that all pids appear as a key in this map, even if they
+have no replicas.  Also note that, if you intend to use this dataset with
+minReps > 0, the initial replica partitions should meet that criterion, or
+the behavior is undefined.
+
+Actions:
+
+After these initial lines are a set of operations to be performed on the
+dataset.  These are all of the following format:
+
+A[number] : [ACTION] [ID_1] [ID_2]
+
+The action number should start at zero and continue in contiguous, sorted
+order to (number of Actions) - 1.
+The ACTION should be one of: {ADD_USER, REMOVE_USER, BEFRIEND, UNFRIEND,
+ADD_PARTITION, REMOVE_PARTITION, DOWNTIME}.
+The interpretation of ID_1 and ID_2 depends on the action.  In general,
+actions that use both IDs don't care about the order, actions using one ID
+look at ID_1, and actions that don't use IDs ignore both.  It is customary
+to set unnecessary ID values to -1.
+
+The IDs are interpreted as follows:
+ADD_USER [uid] [N/A]
+REMOVE_USER [uid] [N/A]
+BEFRIEND [uid_1] [uid_2]
+UNFRIEND [uid_1] [uid_2]
+ADD_PARTITION [pid] [N/A]
+REMOVE_PARTITION [pid] [N/A]
+DOWNTIME [N/A] [N/A]
+
+When generating actions, ensure that you don't refer to uids or pids that do
+not exist or no longer exist.  Also ensure that you don't remove all pids.
+On a side note, the system can behave strangely with a very small number of
+partitions (e.g. fewer than five).  For this reason we suggest having at
+least ten to start and not going below seven or so.
+
+
+****************************************************************************
+**************************** OUTPUT FILE FORMAT ****************************
+****************************************************************************
+
+The system outputs in two formats: TXT and CSV, the latter of which can be
+disabled with the argument -exportCSV 0
+The TXT is intended to be human-readable, while the CSV is meant to be
+imported, whether into Excel, Matlab, Mathematica or other programs.
+
+TXT:
+The first line contains all of the arguments used to run the trace,
+including the default values if appropriate.
+The bulk of the file consists of a fixed-width 120 character table with a
+header row, one row per action, printed BEFORE performing the action, and a
+final row that shows the state of the system after the last action (which
+contains the special END action).
+
+Column   Meaning                       Width  When Could it Overflow?
+No       Action number                 8      > 99,999,999 Actions
+Type     Which algorithm (e.g. METIS)  8      Never
+Date     Actual Time on PC             20     100,000 AD
+Action   Action to be performed*       15     e.g. len(ID_1)+len(ID_2) > 10
+Ps       Number of Partitions          4      > 9,999 Partitions
+Nodes    Number of Users               6      > 999,999 Users
+Edges    Number of Friendships         8      > 99,999,999 Friendships
+Assort.  Assortivity                   8      Never
+EdgeCut  Edge Cut                      8      > 99,999,999 Edges Cut
+Replicas Number of Replicas            9      > 999,999,999 Replicas
+Moves    Cumulative Migration Count**  8      > 99,999,999 Migrations
+Delay    Expected Query Delay          6      Never
+
+* This is in an abbreviated format, which can be interpreted as follows:
+** Note that the migration count does not include migrations that occur as
+part of a partition removal, as those cannot be avoided.
+
+Val  Action
++U   ADD_USER
+-U   REMOVE_USER
++F   BEFRIEND
+-F   UNFRIEND
++P   ADD_PARTITION
+-P   REMOVE_PARTITION
+DT   DOWNTIME
+ 
+The final section of the TXT file is a table that shows the cumulative
+impact of each action type on the resulting edge cut and number of replicas.
+
+
+CSV:
+A typical CSV file with a header row and (number of actions)+1 content rows.
+The column meanings are as follows:
+
+Column  Meaning                     Equivalent Column in TXT
+index   Action number               No
+numP    Number of Partitions        Ps
+numU    Number of Users             Nodes
+numF    Number of Friendships       Edges
+asrt    Assortivity                 Assort.
+cut     Edge Cut                    EdgeCut
+reps    Number of Replicas          Replicas
+moves   Cumulative Migration Count  Moves
+delay   Expected Query Delay        Delay
+
+Note that Type, Date, and Action are omitted from the CSV.
