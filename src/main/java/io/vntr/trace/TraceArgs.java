@@ -34,6 +34,7 @@ public class TraceArgs {
         this.type = type;
         switch(type) {
             case JABEJA_TYPE:  deltaT = 0.025f; numRestarts = 3;  break;
+            case J2_TYPE:
             case JABAR_TYPE:   deltaT = 0.025f; numRestarts = 1;  break;
             case HERMES_TYPE:  gamma = 1.1f;                      break;
             case HERMAR_TYPE:  gamma = 1.1f;                      break;
@@ -244,7 +245,7 @@ public class TraceArgs {
         }
 
         //type-specific args
-        if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type)  || SPAJA_TYPE.equals(type)
+        if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type) || J2_TYPE.equals(type) || SPAJA_TYPE.equals(type)
                 || HERMES_TYPE.equals(type) || HERMAR_TYPE.equals(type) || SPARMES_TYPE.equals(type)) {
             builder.append(" -logMig ").append(logicalMigrationRatio);
         }
@@ -253,7 +254,7 @@ public class TraceArgs {
                 || RDUMMY_TYPE.equals(type) || RMETIS_TYPE.equals(type)) {
             builder.append(" -minReps ").append(minNumReplicas);
         }
-        if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type)   || SPAJA_TYPE.equals(type)) {
+        if(   JABEJA_TYPE.equals(type) || JABAR_TYPE.equals(type) ||  J2_TYPE.equals(type) || SPAJA_TYPE.equals(type)) {
             builder.append(" -alpha ").append(alpha).append(" -initT ").append(initialT)
                     .append(" -deltaT ").append(deltaT).append(" -nbhd ").append(jaK);
         }

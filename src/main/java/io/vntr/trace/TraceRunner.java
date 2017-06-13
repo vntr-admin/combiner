@@ -24,6 +24,7 @@ public class TraceRunner {
     public static final String METIS_TYPE = "METIS";
     public static final String JABEJA_TYPE = "JABEJA";
     public static final String JABAR_TYPE = "JABAR";
+    public static final String J2_TYPE = "J2";
     public static final String SPAJA_TYPE = "SPAJA";
     public static final String DUMMY_TYPE = "DUMMY";
     public static final String RDUMMY_TYPE = "RDUMMY";
@@ -34,7 +35,7 @@ public class TraceRunner {
 
     private static final String CONFIG_FILE = "config.properties";
 
-    static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPARMES_TYPE, METIS_TYPE, JABEJA_TYPE, JABAR_TYPE, SPAJA_TYPE, DUMMY_TYPE, RDUMMY_TYPE, RMETIS_TYPE));
+    static final Set<String> allowedTypes = new HashSet<>(Arrays.asList(HERMES_TYPE, HERMAR_TYPE, SPAR_TYPE, SPARMES_TYPE, METIS_TYPE, JABEJA_TYPE, JABAR_TYPE, J2_TYPE, SPAJA_TYPE, DUMMY_TYPE, RDUMMY_TYPE, RMETIS_TYPE));
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private static final SimpleDateFormat filenameSdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -124,6 +125,7 @@ public class TraceRunner {
             case METIS_TYPE:   return initMetisMiddleware        (trace, traceArgs, props);
             case JABEJA_TYPE:  return initJabejaMiddleware       (trace, traceArgs, props);
             case JABAR_TYPE:   return initJabarMiddleware        (trace, traceArgs, props);
+            case J2_TYPE:      return initJ2Middleware           (trace, traceArgs, props);
             case SPAJA_TYPE:   return initSpajaMiddleware        (trace, traceArgs, props);
             case DUMMY_TYPE:   return initDummyMiddleware        (trace, traceArgs, props);
             case RDUMMY_TYPE:  return initReplicaDummyMiddleware (trace, traceArgs, props);
@@ -361,6 +363,18 @@ public class TraceRunner {
                         trace.getFriendships());
 
         return new JabarMiddleware(traceArgs.getAlpha(), traceArgs.getInitialT(), traceArgs.getDeltaT(), traceArgs.getJaK(), noRepManager);
+    }
+
+    static J2Middleware initJ2Middleware(Trace trace, TraceArgs traceArgs, Properties props) {
+
+        NoRepManager noRepManager =
+                InitUtils.initNoRepManager(
+                        traceArgs.getLogicalMigrationRatio(),
+                        true,
+                        trace.getPartitions(),
+                        trace.getFriendships());
+
+        return new J2Middleware(traceArgs.getAlpha(), traceArgs.getInitialT(), traceArgs.getDeltaT(), traceArgs.getJaK(), noRepManager);
     }
 
     static HermesMiddleware initHermesMiddleware(Trace trace, TraceArgs traceArgs, Properties prop) {
