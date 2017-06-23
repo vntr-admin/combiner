@@ -1,8 +1,10 @@
 package io.vntr.trace;
 
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.TestUtils;
 import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 import io.vntr.utils.Utils;
 
 import java.io.FileInputStream;
@@ -315,7 +317,7 @@ public class WeeklyTraceSetGenerator {
     }
 
     private static Map<Integer, Set<Integer>> getSoftStartPartitions(Set<Integer> pids, String metisCommand, String metisTempDir) {
-        Map<Integer, Integer> softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, bidirectionalFriendships, pids);
+        Map<Integer, Integer> softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, TroveUtils.convertMapSetToTIntObjectMapTIntSet(bidirectionalFriendships), new TIntHashSet(pids));
         Map<Integer, Set<Integer>> softStartPartitions = new HashMap<>();
         for(int pid : pids) {
             softStartPartitions.put(pid, new HashSet<Integer>());

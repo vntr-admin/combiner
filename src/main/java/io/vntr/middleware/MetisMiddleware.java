@@ -1,8 +1,10 @@
 package io.vntr.middleware;
 
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
@@ -47,7 +49,7 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        Map<Integer, Integer> newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, getFriendships(), getPartitionToUserMap().keySet());
+        Map<Integer, Integer> newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, TroveUtils.convertMapSetToTIntObjectMapTIntSet(getFriendships()), new TIntHashSet(getPartitionToUserMap().keySet()));
         for(int uid : newPartitioning.keySet()) {
             int newPid = newPartitioning.get(uid);
             if(newPid != manager.getUser(uid).getBasePid()) {

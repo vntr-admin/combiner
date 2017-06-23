@@ -11,6 +11,7 @@ import io.vntr.repartition.NoRepResults;
 import java.util.*;
 
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
+import static io.vntr.utils.TroveUtils.convertMapSetToTIntObjectMapTIntSet;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -69,7 +70,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), getFriendships());
+        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, convertMapSetToTIntObjectMapTIntSet(manager.getPartitionToUsers()), convertMapSetToTIntObjectMapTIntSet(getFriendships()));
         int numMoves = noRepResults.getLogicalMoves();
         if(numMoves > 0) {
             manager.increaseTallyLogical(numMoves);

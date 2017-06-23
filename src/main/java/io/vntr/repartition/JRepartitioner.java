@@ -1,33 +1,40 @@
 package io.vntr.repartition;
 
 import com.google.common.collect.Sets;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
+import io.vntr.utils.Utils;
 
 import java.util.*;
 
-import static io.vntr.utils.Utils.getUToMasterMap;
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
+import static io.vntr.utils.TroveUtils.*;
 
 /**
  * Created by robertlindquist on 4/21/17.
  */
 public class JRepartitioner {
 
-    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships, boolean incremental) {
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, boolean incremental) {
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         int bestEdgeCut = getEdgeCut(uidToPidMap, friendships);
-        Map<Integer, Integer> bestLogicalPids = null;
+        TIntIntMap bestLogicalPids = null;
 
         int logicalMigrationCount = 0;
         for (int i = 0; i < numRestarts; i++) {
             State state = initState(alpha, friendships);
-            Map<Integer, Set<Integer>> logicalPartitions = incremental ? partitions : getRandomLogicalPartitions(friendships.keySet(), partitions.keySet());
+            TIntObjectMap<TIntSet> logicalPartitions = incremental ? partitions : getRandomLogicalPartitions(friendships.keySet(), partitions.keySet());
             state.setLogicalPids(getUToMasterMap(logicalPartitions));
             state.initUidToPidToFriendCount(logicalPartitions);
 
             for(float t = initialT; t >= 1; t -= deltaT) {
-                List<Integer> randomUserList = new LinkedList<>(friendships.keySet());
-                Collections.shuffle(randomUserList);
-                for(Integer uid : randomUserList) {
+                int[] randomUserArray = friendships.keys();
+                Utils.shuffle(randomUserArray);
+                for(Integer uid : randomUserArray) {
                     Integer partnerId = null;
                     if(!incremental) {
                         partnerId = findPartner(uid, sample(k, partitions.get(uidToPidMap.get(uid))), t, state);
@@ -36,7 +43,7 @@ public class JRepartitioner {
                         partnerId = findPartner(uid, sample(k, friendships.keySet()), t, state);
                     }
                     if(partnerId != null) {
-                        boolean localSwap = uidToPidMap.get(uid).equals(uidToPidMap.get(partnerId));
+                        boolean localSwap = uidToPidMap.get(uid) == uidToPidMap.get(partnerId);
                         logicalSwap(uid, partnerId, state);
                         if(!localSwap) {
                             logicalMigrationCount += 2;
@@ -48,20 +55,21 @@ public class JRepartitioner {
             int edgeCut = getEdgeCut(state.getLogicalPids(), state.getFriendships());
             if(edgeCut < bestEdgeCut) {
                 bestEdgeCut = edgeCut;
-                bestLogicalPids = new HashMap<>(state.getLogicalPids());
+                bestLogicalPids = new TIntIntHashMap(state.getLogicalPids());
             }
         }
 
-        return new NoRepResults(bestLogicalPids, logicalMigrationCount);
+        return new NoRepResults(convertTIntIntMapToMap(bestLogicalPids), logicalMigrationCount);
     }
 
-    static Integer findPartner(Integer uid, Set<Integer> candidates, float t, State state) {
+    static Integer findPartner(Integer uid, TIntSet candidates, float t, State state) {
         Integer bestPartner = null;
         float bestScore = 0f;
 
         Integer logicalPid = state.getLogicalPids().get(uid);
 
-        for(Integer partnerId : candidates) {
+        for(TIntIterator iter = candidates.iterator(); iter.hasNext(); ) {
+            int partnerId = iter.next();
             Integer theirLogicalPid = state.getLogicalPids().get(partnerId);
             if(theirLogicalPid.equals(logicalPid)) {
                 continue;
@@ -88,7 +96,8 @@ public class JRepartitioner {
 
     static int[] howManyFriendsHaveLogicalPartitions(int uid, int[] pids, State state) {
         int[] counts = new int[pids.length];
-        for(Integer friendId : state.getFriendships().get(uid)) {
+        for(TIntIterator iter = state.getFriendships().get(uid).iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
             int friendPid = state.getLogicalPids().get(friendId);
             for(int i=0; i<pids.length; i++) {
                 if(pids[i] == friendPid) {
@@ -99,8 +108,8 @@ public class JRepartitioner {
         return counts;
     }
 
-    static Set<Integer> sample(int n, Set<Integer> uids) {
-        return uids.size() > n ? getKDistinctValuesFromList(n, uids) : new HashSet<>(uids);
+    static TIntSet sample(int n, TIntSet uids) {
+        return uids.size() > n ? getKDistinctValuesFromArray(n, uids.toArray()) : new TIntHashSet(uids);
     }
 
     static void logicalSwap(Integer uid1, Integer uid2, State state) {
@@ -110,33 +119,37 @@ public class JRepartitioner {
         state.getLogicalPids().put(uid1, pid2);
         state.getLogicalPids().put(uid2, pid1);
 
-        for(int friendId : state.getFriendships().get(uid1)) {
-            Map<Integer, Integer> counts = state.getUidToPidToFriendCounts().get(friendId);
+        for(TIntIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
+            TIntIntMap counts = state.getUidToPidToFriendCounts().get(friendId);
             counts.put(pid1, counts.get(pid1) - 1);
             counts.put(pid2, counts.get(pid2) + 1);
         }
-        for(int friendId : state.getFriendships().get(uid2)) {
-            Map<Integer, Integer> counts = state.getUidToPidToFriendCounts().get(friendId);
+
+        for(TIntIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
+            TIntIntMap counts = state.getUidToPidToFriendCounts().get(friendId);
             counts.put(pid2, counts.get(pid2) - 1);
             counts.put(pid1, counts.get(pid1) + 1);
         }
 
     }
 
-    static State initState(float alpha, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> friendshipsCopy = new HashMap<>();
-        for(Integer uid : friendships.keySet()) {
-            friendshipsCopy.put(uid, new HashSet<>(friendships.get(uid)));
+    static State initState(float alpha, TIntObjectMap<TIntSet> friendships) {
+        TIntObjectMap<TIntSet> friendshipsCopy = new TIntObjectHashMap<>(friendships.size()+1);
+        for(Integer uid : friendships.keys()) {
+            friendshipsCopy.put(uid, new TIntHashSet(friendships.get(uid)));
         }
         return new State(alpha, friendshipsCopy);
     }
 
-    static int getEdgeCut(Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> friendships) {
+    static int getEdgeCut(TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> friendships) {
         int count = 0;
-        for(Integer uid : uidToPidMap.keySet()) {
+        for(Integer uid : uidToPidMap.keys()) {
             Integer pid = uidToPidMap.get(uid);
 
-            for(int friendId : friendships.get(uid)) {
+            for(TIntIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
+                int friendId = iter.next();
                 Integer friendPid = uidToPidMap.get(friendId);
                 if(pid < friendPid) {
                     count++;
@@ -146,17 +159,19 @@ public class JRepartitioner {
         return count;
     }
 
-    static Map<Integer, Set<Integer>> getRandomLogicalPartitions(Set<Integer> uids, Set<Integer> pids) {
+    static TIntObjectMap<TIntSet> getRandomLogicalPartitions(TIntSet uids, TIntSet pids) {
         List<Integer> pidList = Arrays.asList(getPidsToAssign(uids.size(), pids));
         Collections.shuffle(pidList);
 
-        Map<Integer, Set<Integer>> logicalPartitions = new HashMap<>();
-        for(int pid : pids) {
-            logicalPartitions.put(pid, new HashSet<Integer>());
+        TIntObjectMap<TIntSet> logicalPartitions = new TIntObjectHashMap<>(pids.size()+1);
+        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
+            int pid = iter.next();
+            logicalPartitions.put(pid, new TIntHashSet());
         }
 
         int index = 0;
-        for(Integer uid: uids) {
+        for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             logicalPartitions.get(pidList.get(index)).add(uid);
             index++;
         }
@@ -164,13 +179,14 @@ public class JRepartitioner {
         return logicalPartitions;
     }
 
-    static Map<Integer, Integer> getRandomLogicalPids(Set<Integer> uids, Set<Integer> pids) {
+    static TIntIntMap getRandomLogicalPids(TIntSet uids, TIntSet pids) {
         List<Integer> pidList = Arrays.asList(getPidsToAssign(uids.size(), pids));
         Collections.shuffle(pidList);
 
-        Map<Integer, Integer> logicalPids = new HashMap<>();
+        TIntIntMap logicalPids = new TIntIntHashMap(pids.size()+1);
         int index = 0;
-        for(Integer uid: uids) {
+        for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             logicalPids.put(uid, pidList.get(index));
             index++;
         }
@@ -178,7 +194,7 @@ public class JRepartitioner {
         return logicalPids;
     }
 
-    static Integer[] getPidsToAssign(int numUsers, Set<Integer> pids) {
+    static Integer[] getPidsToAssign(int numUsers, TIntSet pids) {
         //Fill array with pids such that:
         //(1) array.length = numUsers
         //(2) no pid occurs more than ceiling(numUsers/numPartitions) times
@@ -190,17 +206,18 @@ public class JRepartitioner {
         int floorUsersPerPartition = numUsers / pids.size();
 
         int index = 0;
-        for(int i : pids) {
+        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
+            int i = iter.next();
             Arrays.fill(replicatedPids, index, index + floorUsersPerPartition, i);
             index += floorUsersPerPartition;
         }
 
         //Step 2: fill the remainder (if any) with randomly-selected pids (no more than once each)
-        List<Integer> remainingPids = new ArrayList<>(pids);
-        Collections.shuffle(remainingPids);
-        Iterator<Integer> pidIter = remainingPids.iterator();
+        int[] remainingPidArray = pids.toArray();
+        Utils.shuffle(remainingPidArray);
+        int nextPidIndex = 0;
         while(index < replicatedPids.length) {
-            replicatedPids[index] = pidIter.next();
+            replicatedPids[index] = remainingPidArray[nextPidIndex++];
             index++;
         }
 
@@ -209,12 +226,12 @@ public class JRepartitioner {
 
     static class State {
         private final float alpha;
-        private final Map<Integer, Set<Integer>> friendships;
-        private Map<Integer, Map<Integer, Integer>> uidToPidToFriendCounts;
+        private final TIntObjectMap<TIntSet> friendships;
+        private Map<Integer, TIntIntMap> uidToPidToFriendCounts;
 
-        private Map<Integer, Integer> logicalPids;
+        private TIntIntMap logicalPids;
 
-        public State(float alpha, Map<Integer, Set<Integer>> friendships) {
+        public State(float alpha, TIntObjectMap<TIntSet> friendships) {
             this.alpha = alpha;
             this.friendships = friendships;
         }
@@ -223,28 +240,29 @@ public class JRepartitioner {
             return alpha;
         }
 
-        public Map<Integer, Set<Integer>> getFriendships() {
+        public TIntObjectMap<TIntSet> getFriendships() {
             return friendships;
         }
 
-        public Map<Integer, Integer> getLogicalPids() {
+        public TIntIntMap getLogicalPids() {
             return logicalPids;
         }
 
-        public void setLogicalPids(Map<Integer, Integer> logicalPids) {
+        public void setLogicalPids(TIntIntMap logicalPids) {
             this.logicalPids = logicalPids;
         }
 
-        public Map<Integer, Map<Integer, Integer>> getUidToPidToFriendCounts() {
+        public Map<Integer, TIntIntMap> getUidToPidToFriendCounts() {
             return uidToPidToFriendCounts;
         }
 
-        public void initUidToPidToFriendCount(Map<Integer, Set<Integer>> partitions) {
+        public void initUidToPidToFriendCount(TIntObjectMap<TIntSet> partitions) {
             uidToPidToFriendCounts = new HashMap<>();
-            for(int uid : friendships.keySet()) {
-                Map<Integer, Integer> counts = new HashMap<>();
-                for(int pid : partitions.keySet()) {
-                    counts.put(pid, Sets.intersection(partitions.get(pid), friendships.get(uid)).size());
+            for(int uid : friendships.keys()) {
+                TIntIntMap counts = new TIntIntHashMap(partitions.size()+1);
+                for(int pid : partitions.keys()) {
+
+                    counts.put(pid, intersection(partitions.get(pid), friendships.get(uid)).size());
                 }
                 uidToPidToFriendCounts.put(uid, counts);
             }

@@ -1,12 +1,17 @@
 package io.vntr.repartition;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
+import io.vntr.TestUtils;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.Utils.*;
-import static java.util.Collections.disjoint;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -20,12 +25,12 @@ public class SparmesRepartitionerTest {
         int minNumReplicas = 1;
         float gamma = 1.5f;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -38,22 +43,22 @@ public class SparmesRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
         Set<Target> targets = SparmesRepartitioner.getPartitionCandidates(2, true, 3, state);
-        assertEquals(targets, initSet(new Target(9, 3, 2, 1f)));
+        assertEquals(targets, TestUtils.initSet(new Target(9, 3, 2, 1f)));
 
         targets = SparmesRepartitioner.getPartitionCandidates(2, false, 3, state);
-        assertEquals(targets, initSet(new Target(6, 1, 2, 1f), new Target(8, 1, 2, 1f), new Target(9, 1, 2, 1f)));
+        assertEquals(targets, TestUtils.initSet(new Target(6, 1, 2, 1f), new Target(8, 1, 2, 1f), new Target(9, 1, 2, 1f)));
     }
 
     @Test
@@ -61,12 +66,12 @@ public class SparmesRepartitionerTest {
         int minNumReplicas = 1;
         float gamma = 1.5f;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -79,20 +84,20 @@ public class SparmesRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
         Set<Target> targets = SparmesRepartitioner.getPartitionCandidates(2, false, 3, state);
-        assertEquals(targets, initSet(new Target(9, 1, 2, 1f)));
+        assertEquals(targets, TestUtils.initSet(new Target(9, 1, 2, 1f)));
     }
 
     @Test
@@ -100,12 +105,12 @@ public class SparmesRepartitionerTest {
         int minNumReplicas = 1;
         float gamma = 1.5f;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -118,15 +123,15 @@ public class SparmesRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
@@ -143,7 +148,7 @@ public class SparmesRepartitionerTest {
         assertEquals(state.getLogicalReplicaPartitions().get(pid1), replicas.get(pid1));
         assertEquals(state.getLogicalReplicaPartitions().get(pid2), replicas.get(pid2));
 
-        Set<Target> targets = initSet(new Target(1, 3, 1, 2f), new Target(13, 1, 3, 2f));
+        Set<Target> targets = TestUtils.initSet(new Target(1, 3, 1, 2f), new Target(13, 1, 3, 2f));
         for(Target target : targets) {
             SparmesRepartitioner.migrateLogically(target, state, uidToReplicasMap);
         }
@@ -162,12 +167,12 @@ public class SparmesRepartitionerTest {
         int minNumReplicas = 1;
         float gamma = 1.5f;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -180,16 +185,16 @@ public class SparmesRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         SparmesRepartitioner.State state = SparmesRepartitioner.State.init(minNumReplicas, gamma, partitions, replicas, bidirectionalFriendships);
 
@@ -197,7 +202,8 @@ public class SparmesRepartitionerTest {
         assertEquals(state.getLogicalReplicaPartitions(), replicas);
         assertEquals(state.getLogicalUsers().keySet(), friendships.keySet());
 
-        for(int uid : friendships.keySet()) {
+        for(TIntIterator iter = friendships.keySet().iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             SparmesRepartitioner.LogicalUser user = state.getLogicalUsers().get(uid);
             assertTrue(user.getId() == uid);
             assertTrue(user.getPid() == uidToPidMap.get(uid));
@@ -209,34 +215,38 @@ public class SparmesRepartitionerTest {
             boolean shouldReplicateInSourcePartition = !disjoint(bidirectionalFriendships.get(uid), partitions.get(uidToPidMap.get(uid)));
             assertTrue(shouldReplicateInSourcePartition == user.isReplicateInSourcePartition());
 
-            Map<Integer, Integer> pToWeight = user.getpToWeight();
-            for(int pid : partitions.keySet()) {
-                assertEquals(pToWeight.get(pid), (Integer) partitions.get(pid).size());
+            TIntIntMap pToWeight = user.getpToWeight();
+            for(TIntIterator iter2 = partitions.keySet().iterator(); iter2.hasNext(); ) {
+                int pid = iter2.next();
+                assertEquals(pToWeight.get(pid), partitions.get(pid).size());
             }
 
-            Map<Integer, Integer> pToFriendCount = user.getpToFriendCount();
-            for(int pid : partitions.keySet()) {
-                Set<Integer> friends = new HashSet<>(bidirectionalFriendships.get(uid));
+            TIntIntMap pToFriendCount = user.getpToFriendCount();
+            for(TIntIterator iter2 = partitions.keySet().iterator(); iter2.hasNext(); ) {
+                int pid = iter2.next();
+                TIntSet friends = new TIntHashSet(bidirectionalFriendships.get(uid));
                 friends.retainAll(partitions.get(pid));
                 assertTrue(pToFriendCount.get(pid) == friends.size());
             }
 
-            Map<Integer, Integer> numFriendsToAddInEachPartition = user.getNumFriendsToAddInEachPartition();
-            for(int pid : partitions.keySet()) {
+            TIntIntMap numFriendsToAddInEachPartition = user.getNumFriendsToAddInEachPartition();
+            for(TIntIterator iter2 = partitions.keySet().iterator(); iter2.hasNext(); ) {
+                int pid = iter2.next();
                 if(pid != user.getPid()) {
-                    Set<Integer> friends = new HashSet<>(bidirectionalFriendships.get(uid));
+                    TIntSet friends = new TIntHashSet(bidirectionalFriendships.get(uid));
                     friends.removeAll(partitions.get(pid));
                     friends.removeAll(replicas.get(pid));
                     assertTrue(numFriendsToAddInEachPartition.get(pid) == friends.size());
                 }
             }
 
-            Set<Integer> mastersOnPartition = partitions.get(uidToPidMap.get(uid));
-            Set<Integer> sufficientlyReplicatedFriends = getFriendsExceedingKReplication(uid, minNumReplicas, bidirectionalFriendships, uidToReplicasMap);
+            TIntSet mastersOnPartition = partitions.get(uidToPidMap.get(uid));
+            TIntSet sufficientlyReplicatedFriends = getFriendsExceedingKReplication(uid, minNumReplicas, bidirectionalFriendships, uidToReplicasMap);
             sufficientlyReplicatedFriends.removeAll(mastersOnPartition);
             int count = 0;
-            for(Integer friendId : sufficientlyReplicatedFriends) {
-                Set<Integer> friendsOfFriend = new HashSet<>(bidirectionalFriendships.get(friendId));
+            for(TIntIterator iter2 = sufficientlyReplicatedFriends.iterator(); iter2.hasNext(); ) {
+                int friendId = iter2.next();
+                TIntSet friendsOfFriend = new TIntHashSet(bidirectionalFriendships.get(friendId));
                 friendsOfFriend.remove(uid);
                 if(disjoint(friendsOfFriend, mastersOnPartition)) {
                     count++;
@@ -247,9 +257,9 @@ public class SparmesRepartitionerTest {
         }
     }
 
-    private static Set<Integer> getFriendsExceedingKReplication(int uid, int minNumReplicas, Map<Integer, Set<Integer>> bidirectionalFriendships, Map<Integer, Set<Integer>> uidToReplicasMap) {
-        Set<Integer> friends = new HashSet<>(bidirectionalFriendships.get(uid));
-        for(Iterator<Integer> iter = friends.iterator(); iter.hasNext(); ) {
+    private static TIntSet getFriendsExceedingKReplication(int uid, int minNumReplicas, TIntObjectMap<TIntSet> bidirectionalFriendships, TIntObjectMap<TIntSet> uidToReplicasMap) {
+        TIntSet friends = new TIntHashSet(bidirectionalFriendships.get(uid));
+        for(TIntIterator iter = friends.iterator(); iter.hasNext(); ) {
             if(uidToReplicasMap.get(iter.next()).size() <= minNumReplicas) {
                 iter.remove();
             }

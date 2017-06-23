@@ -8,7 +8,6 @@ import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
  * Created by robertlindquist on 4/17/17.
  */
 public class Utils {
-
     public static Map<Integer, Integer> getUToMasterMap(Map<Integer, Set<Integer>> partitions) {
         Map<Integer, Integer> map = new HashMap<>();
         for(Integer pid : partitions.keySet()) {
@@ -118,6 +117,24 @@ public class Utils {
             copy.put(key, new HashSet<>(m.get(key)));
         }
         return copy;
+    }
+
+
+    //Taken from Java 8's java.util.Collections
+    private static Random r;
+
+    public static void shuffle(int arr[]) {
+        Random rnd = r;
+        if (rnd == null) {
+            r = rnd = new Random();
+        }
+
+        for (int i=arr.length; i>1; i--) {
+            int nextInt = rnd.nextInt(i);
+            int tmp = arr[i-1];
+            arr[i-1] = arr[nextInt];
+            arr[nextInt] = tmp;
+        }
     }
 
 }

@@ -1,9 +1,11 @@
 package io.vntr.middleware;
 
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.ReplicaMetisRepartitioner;
 import io.vntr.repartition.RepResults;
+import io.vntr.utils.TroveUtils;
 import io.vntr.utils.Utils;
 
 import java.util.HashSet;
@@ -40,7 +42,7 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
 
     void repartition() {
         clearReplicas();
-        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, getFriendships(), getPartitionIds(), minNumReplicas);
+        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, TroveUtils.convertMapSetToTIntObjectMapTIntSet(getFriendships()), new TIntHashSet(getPartitionIds()), minNumReplicas);
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
     }

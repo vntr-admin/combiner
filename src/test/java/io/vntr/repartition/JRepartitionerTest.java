@@ -1,11 +1,17 @@
 package io.vntr.repartition;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.*;
 
 /**
@@ -15,12 +21,12 @@ public class JRepartitionerTest {
 
     @Test
     public void testFindPartner() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -33,7 +39,7 @@ public class JRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
         JRepartitioner.State state = initState(1, partitions, friendships);
 
@@ -52,14 +58,14 @@ public class JRepartitionerTest {
 
     @Test
     public void testHowManyFriendsHaveLogicalPartitions() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -79,14 +85,14 @@ public class JRepartitionerTest {
 
     @Test
     public void testLogicalSwap() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -127,14 +133,14 @@ public class JRepartitionerTest {
 
     @Test
     public void testGetEdgeCut() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -147,28 +153,28 @@ public class JRepartitionerTest {
 
     @Test
     public void testGetPidsToAssign() {
-        Set<Integer> pids = initSet(1, 2, 4, 5);
+        TIntSet pids = initSet(1, 2, 4, 5);
 
         int numUsers = 29;
         Integer[] results = JRepartitioner.getPidsToAssign(numUsers, pids);
-        assertResultsAreCorrect(results, numUsers, pids, Arrays.asList(7, 7, 7, 8));
+        assertResultsAreCorrect(results, numUsers, pids, new int[]{7, 7, 7, 8});
 
         numUsers = 144;
         results = JRepartitioner.getPidsToAssign(numUsers, pids);
-        assertResultsAreCorrect(results, numUsers, pids, Arrays.asList(36, 36, 36, 36));
+        assertResultsAreCorrect(results, numUsers, pids, new int[]{36, 36, 36, 36});
 
         pids = initSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80);
         numUsers = 100000;
         results = JRepartitioner.getPidsToAssign(numUsers, pids);
-        assertResultsAreCorrect(results, numUsers, pids, Arrays.asList(1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250));
+        assertResultsAreCorrect(results, numUsers, pids, new int[]{1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250});
     }
 
-    private static void assertResultsAreCorrect(Integer[] results, int numUsers, Set<Integer> pids, List<Integer> expectedFrequencies) {
+    private static void assertResultsAreCorrect(Integer[] results, int numUsers, TIntSet pids, int[] expectedFrequencies) {
         assertTrue(results.length == numUsers);
 
-        Map<Integer, Integer> counts = new HashMap<>();
-        for(int pid : pids) {
-            counts.put(pid, 0);
+        TIntIntMap counts = new TIntIntHashMap();
+        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
+            counts.put(iter.next(), 0);
         }
         for(int resultPid : results) {
             counts.put(resultPid, counts.get(resultPid)+1);
@@ -176,12 +182,12 @@ public class JRepartitionerTest {
 
         assertEquals(counts.keySet(), pids);
 
-        List<Integer> countList = new LinkedList<>(counts.values());
-        Collections.sort(countList);
-        assertEquals(countList, expectedFrequencies);
+        int[] countArray = counts.values();
+        Arrays.sort(countArray);
+        assertArrayEquals(countArray, expectedFrequencies);
     }
 
-    private static JRepartitioner.State initState(float alpha, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> friendships) {
+    private static JRepartitioner.State initState(float alpha, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships) {
         JRepartitioner.State state = new JRepartitioner.State(alpha, generateBidirectionalFriendshipSet(friendships));
         state.setLogicalPids(getUToMasterMap(partitions));
         state.initUidToPidToFriendCount(partitions);

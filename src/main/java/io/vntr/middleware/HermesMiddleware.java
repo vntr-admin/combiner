@@ -5,8 +5,11 @@ import io.vntr.manager.NoRepManager;
 import io.vntr.migration.HMigrator;
 import io.vntr.repartition.HRepartitioner;
 import io.vntr.repartition.NoRepResults;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
+
+import static io.vntr.utils.TroveUtils.convertMapSetToTIntObjectMapTIntSet;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -46,7 +49,7 @@ public class HermesMiddleware extends AbstractNoRepMiddleware {
     }
 
     public void repartition() {
-        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), getFriendships());
+        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, convertMapSetToTIntObjectMapTIntSet(manager.getPartitionToUsers()), convertMapSetToTIntObjectMapTIntSet(getFriendships()));
         int numMoves = noRepResults.getLogicalMoves();
         if(numMoves > 0) {
             manager.increaseTallyLogical(numMoves);

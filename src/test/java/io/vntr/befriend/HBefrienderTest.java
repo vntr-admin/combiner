@@ -1,6 +1,9 @@
 package io.vntr.befriend;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.HRepartitioner;
+import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -50,7 +53,7 @@ public class HBefrienderTest {
         float gammaBarelyAllowingFiveOnPartition = (5f / averageWeight) + differential;
         float gammaNearlyAllowingFiveOnPartition = (5f / averageWeight) - differential;
 
-        Map<Integer, HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, bidirectionalFriendships, friendships.keySet(), gammaBarelyAllowingSixOnPartition);
+        TIntObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(TroveUtils.convertMapSetToTIntObjectMapTIntSet(partitions), TroveUtils.convertMapSetToTIntObjectMapTIntSet(bidirectionalFriendships), new TIntHashSet(friendships.keySet()), gammaBarelyAllowingSixOnPartition);
 
         Map<Integer, Map<Integer, Integer>> expectedResults = new HashMap<>();
         for(int uid : friendships.keySet()) {

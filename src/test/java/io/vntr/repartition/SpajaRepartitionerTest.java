@@ -1,13 +1,17 @@
 package io.vntr.repartition;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.manager.RepManager;
 import io.vntr.utils.InitUtils;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.utils.Utils.*;
-import static io.vntr.TestUtils.initSet;
+import static io.vntr.utils.TroveUtils.*;
 import static io.vntr.repartition.SpajaRepartitioner.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,12 +30,12 @@ public class SpajaRepartitionerTest {
         float deltaT = 0.5f;
         int k = 7;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -44,14 +48,14 @@ public class SpajaRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
@@ -68,12 +72,12 @@ public class SpajaRepartitionerTest {
         float deltaT = 0.5f;
         int k = 7;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -84,23 +88,23 @@ public class SpajaRepartitionerTest {
         friendships.put(8,  initSet(9));
         friendships.put(9,  initSet(10));
         friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
+        friendships.put(11, initSet(12, 13));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         Integer uid1 = 4;
         Integer expectedPartner = 12;
-        Set<Integer> candidates = initSet(6, 7, 8, 9, 11, expectedPartner, 13); //omit friends and things on same partition
+        TIntSet candidates = initSet(6, 7, 8, 9, 11, 12, 13); //omit friends and things on same partition
 
         Integer partnerId = SpajaRepartitioner.findPartner(uid1, candidates, 2f, state);
         assertEquals(partnerId, expectedPartner);
@@ -133,12 +137,12 @@ public class SpajaRepartitionerTest {
         float deltaT = 0.5f;
         int k = 7;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -151,16 +155,16 @@ public class SpajaRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
+        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, convertTIntObjectMapTIntSetToMapSet(partitions), convertTIntObjectMapTIntSetToMapSet(friendships), convertTIntObjectMapTIntSetToMapSet(replicas));
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
@@ -172,10 +176,10 @@ public class SpajaRepartitionerTest {
         Integer pid2 = 2;
         SpajaRepartitioner.SwapChanges swapChanges = SpajaRepartitioner.getSwapChanges(uid1, uid2, state);
 
-        Set<Integer> expectedAddToP1 = initSet(1); //1 has friends on P1, so it needs a replica there
-        Set<Integer> expectedAddToP2 = initSet(4, 6, 12); //6 has friends on P1, and 1 is friends with 4 and 12 (which aren't there yet)
-        Set<Integer> expectedRemoveFromP1 = initSet(6); //we're moving 6 there, so no need for a replica
-        Set<Integer> expectedRemoveFromP2 = initSet(1, 5); //1 will be a master, so no replica, and 5 was only there for 6
+        TIntSet expectedAddToP1 = initSet(1); //1 has friends on P1, so it needs a replica there
+        TIntSet expectedAddToP2 = initSet(4, 6, 12); //6 has friends on P1, and 1 is friends with 4 and 12 (which aren't there yet)
+        TIntSet expectedRemoveFromP1 = initSet(6); //we're moving 6 there, so no need for a replica
+        TIntSet expectedRemoveFromP2 = initSet(1, 5); //1 will be a master, so no replica, and 5 was only there for 6
 
         assertEquals(swapChanges.getPid1(), pid1);
         assertEquals(swapChanges.getPid2(), pid2);
@@ -188,31 +192,30 @@ public class SpajaRepartitionerTest {
         //Swap
         SpajaRepartitioner.swap(uid1, uid2, state);
 
-        assertEquals(state.getLogicalPids().get(uid1), pid2);
-        assertEquals(state.getLogicalPids().get(uid2), pid1);
+        assertTrue(state.getLogicalPids().get(uid1) == pid2);
+        assertTrue(state.getLogicalPids().get(uid2) == pid1);
 
-        for(Integer addedToPid1 : swapChanges.getAddToP1()) {
-            assertTrue(state.getLogicalReplicaPids().get(addedToPid1).contains(pid1));
+        for(TIntIterator iter = swapChanges.getAddToP1().iterator(); iter.hasNext(); ) {
+            assertTrue(state.getLogicalReplicaPids().get(iter.next()).contains(pid1));
         }
-        for(Integer addedToPid2 : swapChanges.getAddToP2()) {
-            assertTrue(state.getLogicalReplicaPids().get(addedToPid2).contains(pid2));
+        for(TIntIterator iter = swapChanges.getAddToP2().iterator(); iter.hasNext(); ) {
+            assertTrue(state.getLogicalReplicaPids().get(iter.next()).contains(pid2));
         }
-
-        for(Integer removedFromPid1 : swapChanges.getRemoveFromP1()) {
-            assertFalse(state.getLogicalReplicaPids().get(removedFromPid1).contains(pid1));
+        for(TIntIterator iter = swapChanges.getRemoveFromP1().iterator(); iter.hasNext(); ) {
+            assertFalse(state.getLogicalReplicaPids().get(iter.next()).contains(pid1));
         }
-        for(Integer removedFromPid2 : swapChanges.getRemoveFromP2()) {
-            assertFalse(state.getLogicalReplicaPids().get(removedFromPid2).contains(pid2));
+        for(TIntIterator iter = swapChanges.getRemoveFromP2().iterator(); iter.hasNext(); ) {
+            assertFalse(state.getLogicalReplicaPids().get(iter.next()).contains(pid2));
         }
 
         assertTrue(state.getLogicalReplicaPartitions().get(pid1).containsAll(swapChanges.getAddToP1()));
         assertTrue(state.getLogicalReplicaPartitions().get(pid2).containsAll(swapChanges.getAddToP2()));
 
-        for(Integer removedFromPid1 : swapChanges.getRemoveFromP1()) {
-            assertFalse(state.getLogicalReplicaPartitions().get(pid1).contains(removedFromPid1));
+        for(TIntIterator iter = swapChanges.getRemoveFromP1().iterator(); iter.hasNext(); ) {
+            assertFalse(state.getLogicalReplicaPartitions().get(pid1).contains(iter.next()));
         }
-        for(Integer removedFromPid2 : swapChanges.getRemoveFromP2()) {
-            assertFalse(state.getLogicalReplicaPartitions().get(pid2).contains(removedFromPid2));
+        for(TIntIterator iter = swapChanges.getRemoveFromP2().iterator(); iter.hasNext(); ) {
+            assertFalse(state.getLogicalReplicaPartitions().get(pid2).contains(iter.next()));
         }
     }
 
@@ -224,12 +227,12 @@ public class SpajaRepartitionerTest {
         float deltaT = 0.5f;
         int k = 7;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -242,14 +245,14 @@ public class SpajaRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
@@ -258,7 +261,7 @@ public class SpajaRepartitionerTest {
         //    We should add a replica in the target partition if there isn't already a replica or master in that partition
         assertEquals(findReplicasToAddToTargetPartition(1, 2, state), initSet(4, 12));
         assertEquals(findReplicasToAddToTargetPartition(1, 3, state), initSet(6, 8));
-        assertEquals(findReplicasToAddToTargetPartition(13, 1, state), Collections.<Integer>emptySet());
+        assertEquals(findReplicasToAddToTargetPartition(13, 1, state), new TIntHashSet());
     }
 
     @Test
@@ -269,12 +272,12 @@ public class SpajaRepartitionerTest {
         float deltaT = 0.5f;
         int k = 7;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -287,14 +290,14 @@ public class SpajaRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(9, 12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
@@ -306,16 +309,16 @@ public class SpajaRepartitionerTest {
         //then delete it
 
         //All of its friends either have masters in P1, or have replicas in P1
-        Set<Integer> toDeleteIn1For1 = findReplicasInMovingPartitionToDelete(1, 1, findReplicasToAddToTargetPartition(1, 2, state), state);
-        assertEquals(toDeleteIn1For1, Collections.<Integer>emptySet());
+        TIntSet toDeleteIn1For1 = findReplicasInMovingPartitionToDelete(1, 1, findReplicasToAddToTargetPartition(1, 2, state), state);
+        assertEquals(toDeleteIn1For1, new TIntHashSet());
 
         //10 was only in P2 for 9's sake
-        Set<Integer> toDeleteIn2For9 = findReplicasInMovingPartitionToDelete(9, 2, findReplicasToAddToTargetPartition(9, 3, state), state);
+        TIntSet toDeleteIn2For9 = findReplicasInMovingPartitionToDelete(9, 2, findReplicasToAddToTargetPartition(9, 3, state), state);
         assertEquals(toDeleteIn2For9, initSet(10));
 
         //10's friends are 1, 4, 9, and 11.  1 and 9 have other friends on P3.  11 is on P3.  4's only there for 10, but would violate minNumReplicas
-        Set<Integer> toDeleteIn3For10 = findReplicasInMovingPartitionToDelete(10, 3, findReplicasToAddToTargetPartition(10, 1, state), state);
-        assertEquals(toDeleteIn3For10, Collections.<Integer>emptySet());
+        TIntSet toDeleteIn3For10 = findReplicasInMovingPartitionToDelete(10, 3, findReplicasToAddToTargetPartition(10, 1, state), state);
+        assertEquals(toDeleteIn3For10, new TIntHashSet());
     }
 
     @Test
@@ -326,12 +329,12 @@ public class SpajaRepartitionerTest {
         float deltaT = 0.5f;
         int k = 7;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -344,22 +347,22 @@ public class SpajaRepartitionerTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
         //Test shouldDeleteReplicaInTargetPartition
         //If there's a replica of moving user in targetPartition, then delete it
-        for(Integer pid : replicas.keySet()) {
-            for(Integer uid : friendships.keySet()) {
+        for(Integer pid : replicas.keys()) {
+            for(Integer uid : friendships.keys()) {
                 if(partitions.get(pid).contains(uid)) {
                     continue;
                 }
@@ -376,8 +379,8 @@ public class SpajaRepartitionerTest {
         //We should add a replica if moving user has friends in moving partition
         //Additionally, we should add one if moving user has minNumReplica replicas, including one in targetPartition
         shouldWeAddAReplicaOfMovingUserInMovingPartition(1, 1, state);
-        for(Integer pid : replicas.keySet()) {
-uidLoop:    for (Integer uid : friendships.keySet()) {
+        for(Integer pid : replicas.keys()) {
+uidLoop:    for (Integer uid : friendships.keys()) {
                 Integer logicalPid = state.getLogicalPids().get(uid);
                 if(partitions.get(pid).contains(uid)) {
                     continue;
@@ -386,8 +389,9 @@ uidLoop:    for (Integer uid : friendships.keySet()) {
                     assertTrue(shouldWeAddAReplicaOfMovingUserInMovingPartition(uid, pid, state));
                     continue;
                 }
-                for(Integer friendId : state.getFriendships().get(uid)) {
-                    if(state.getLogicalPids().get(friendId).equals(logicalPid)) {
+                for(TIntIterator iter = state.getFriendships().get(uid).iterator(); iter.hasNext(); ) {
+                    int friendId = iter.next();
+                    if(state.getLogicalPids().get(friendId) == logicalPid) {
                         assertTrue(shouldWeAddAReplicaOfMovingUserInMovingPartition(uid, pid, state));
                         continue uidLoop;
                     }
@@ -398,7 +402,7 @@ uidLoop:    for (Integer uid : friendships.keySet()) {
     }
 
 
-    private static void fillState(SpajaRepartitioner.State state, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
+    private static void fillState(SpajaRepartitioner.State state, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas) {
         state.setLogicalPids(getUToMasterMap(partitions));
         state.setLogicalReplicaPids(getUToReplicasMap(replicas, state.getFriendships().keySet()));
         state.setLogicalReplicaPartitions(replicas);

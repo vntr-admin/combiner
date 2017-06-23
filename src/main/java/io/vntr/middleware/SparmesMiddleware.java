@@ -5,6 +5,7 @@ import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SparmesRepartitioner;
 import io.vntr.manager.RepManager;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
@@ -34,7 +35,7 @@ public class SparmesMiddleware extends SparMiddleware {
     }
 
     void repartition() {
-        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, getPartitionToUserMap(), getPartitionToReplicasMap(), getFriendships());
+        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, TroveUtils.convertMapSetToTIntObjectMapTIntSet(getPartitionToUserMap()), TroveUtils.convertMapSetToTIntObjectMapTIntSet(getPartitionToReplicasMap()), TroveUtils.convertMapSetToTIntObjectMapTIntSet(getFriendships()));
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults);
     }

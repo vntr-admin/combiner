@@ -1,10 +1,14 @@
 package io.vntr.befriend;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.HRepartitioner;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static io.vntr.utils.TroveUtils.convertMapSetToTIntObjectMapTIntSet;
 
 /**
  * Created by robertlindquist on 4/30/17.
@@ -14,7 +18,7 @@ public class HBefriender {
         Set<Integer> uids = new HashSet<>();
         uids.add(smallUid);
         uids.add(largeUid);
-        Map<Integer, HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, friendships, uids, gamma);
+        TIntObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(convertMapSetToTIntObjectMapTIntSet(partitions), convertMapSetToTIntObjectMapTIntSet(friendships), new TIntHashSet(uids), gamma);
         HRepartitioner.LogicalUser smallUser = lusers.get(smallUid);
         HRepartitioner.LogicalUser largeUser = lusers.get(largeUid);
 
