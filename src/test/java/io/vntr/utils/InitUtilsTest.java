@@ -1,5 +1,11 @@
 package io.vntr.utils;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
@@ -11,6 +17,7 @@ import java.util.*;
 import static io.vntr.TestUtils.initSet;
 import static io.vntr.utils.InitUtils.initNoRepManager;
 import static io.vntr.utils.InitUtils.initRepManager;
+import static io.vntr.utils.TroveUtils.convert;
 import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
 import static io.vntr.utils.Utils.getUToMasterMap;
 import static io.vntr.utils.Utils.getUToReplicasMap;
@@ -25,86 +32,86 @@ public class InitUtilsTest {
     @Test
     public void testInitRepManager() {
         int minNumReplicas = 0;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4,  5,  6,  7));
-        partitions.put(2, initSet( 8,  9, 10, 11, 12, 13, 14));
-        partitions.put(3, initSet(15, 16, 17, 18,  19, 20));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4,  5,  6,  7));
+        partitions.put(2, TroveUtils.initSet( 8,  9, 10, 11, 12, 13, 14));
+        partitions.put(3, TroveUtils.initSet(15, 16, 17, 18,  19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
-        friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
-        friendships.put( 3, initSet( 4,  8, 12, 16, 20));
-        friendships.put( 4, initSet( 5, 10, 15));
-        friendships.put( 5, initSet( 6, 12, 18));
-        friendships.put( 6, initSet( 7, 14));
-        friendships.put( 7, initSet( 8, 16));
-        friendships.put( 8, initSet( 9, 18));
-        friendships.put( 9, initSet(10, 20));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, initSet(14));
-        friendships.put(14, initSet(15));
-        friendships.put(15, initSet(16));
-        friendships.put(16, initSet(17));
-        friendships.put(17, initSet(18));
-        friendships.put(18, initSet(19));
-        friendships.put(19, initSet(20));
-        friendships.put(20, Collections.<Integer>emptySet());
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
+        friendships.put( 1, TroveUtils.initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
+        friendships.put( 2, TroveUtils.initSet( 3,  6,  9, 12, 15, 18));
+        friendships.put( 3, TroveUtils.initSet( 4,  8, 12, 16, 20));
+        friendships.put( 4, TroveUtils.initSet( 5, 10, 15));
+        friendships.put( 5, TroveUtils.initSet( 6, 12, 18));
+        friendships.put( 6, TroveUtils.initSet( 7, 14));
+        friendships.put( 7, TroveUtils.initSet( 8, 16));
+        friendships.put( 8, TroveUtils.initSet( 9, 18));
+        friendships.put( 9, TroveUtils.initSet(10, 20));
+        friendships.put(10, TroveUtils.initSet(11));
+        friendships.put(11, TroveUtils.initSet(12));
+        friendships.put(12, TroveUtils.initSet(13));
+        friendships.put(13, TroveUtils.initSet(14));
+        friendships.put(14, TroveUtils.initSet(15));
+        friendships.put(15, TroveUtils.initSet(16));
+        friendships.put(16, TroveUtils.initSet(17));
+        friendships.put(17, TroveUtils.initSet(18));
+        friendships.put(18, TroveUtils.initSet(19));
+        friendships.put(19, TroveUtils.initSet(20));
+        friendships.put(20, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
-        replicaPartitions.put(1, Collections.<Integer>emptySet());
-        replicaPartitions.put(2, Collections.<Integer>emptySet());
-        replicaPartitions.put(3, Collections.<Integer>emptySet());
+        TIntObjectMap<TIntSet> replicaPartitions = new TIntObjectHashMap<>();
+        replicaPartitions.put(1, new TIntHashSet());
+        replicaPartitions.put(2, new TIntHashSet());
+        replicaPartitions.put(3, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
-        RepManager manager = initRepManager(minNumReplicas+1, 0, partitions, friendships, replicaPartitions);
+        RepManager manager = initRepManager(minNumReplicas+1, 0, convert(partitions), convert(friendships), convert(replicaPartitions));
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
 
-        replicaPartitions.put(1, initSet(15, 16, 17, 18,  19, 20));
-        replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5,  6,  7));
-        replicaPartitions.put(3, initSet( 8,  9, 10, 11, 12, 13, 14));
+        replicaPartitions.put(1, TroveUtils.initSet(15, 16, 17, 18,  19, 20));
+        replicaPartitions.put(2, TroveUtils.initSet( 1,  2,  3,  4,  5,  6,  7));
+        replicaPartitions.put(3, TroveUtils.initSet( 8,  9, 10, 11, 12, 13, 14));
 
 
-        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
+        manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicaPartitions));
 
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
         assertEquals(manager.getFriendships(), bidirectionalFriendships);
-        assertEquals(manager.getPartitionToUserMap(), partitions);
-        assertEquals(manager.getPartitionToReplicasMap(), replicaPartitions);
+        assertEquals(convert(manager.getPartitionToUserMap()), partitions);
+        assertEquals(convert(manager.getPartitionToReplicasMap()), replicaPartitions);
         assertTrue(manager.getNumUsers() == friendships.size());
-        assertEquals(manager.getPids(), partitions.keySet());
-        assertEquals(manager.getUids(), friendships.keySet());
+        assertEquals(new TIntHashSet(manager.getPids()), partitions.keySet());
+        assertEquals(new TIntHashSet(manager.getUids()), friendships.keySet());
 
 
         int replicationCount = 0;
-        for(Set<Integer> replicas : replicaPartitions.values()) {
-            replicationCount += replicas.size();
+        for(int replicaPid : replicaPartitions.keys()) {
+            replicationCount += replicaPartitions.get(replicaPid).size();
         }
         assertTrue(manager.getReplicationCount() == replicationCount);
 
-        for(int pid : partitions.keySet()) {
-            assertEquals(partitions.get(pid), manager.getMastersOnPartition(pid));
+        for(int pid : partitions.keys()) {
+            assertEquals(partitions.get(pid), new TIntHashSet(manager.getMastersOnPartition(pid)));
         }
 
-        for(int pid : replicaPartitions.keySet()) {
-            assertEquals(replicaPartitions.get(pid), manager.getReplicasOnPartition(pid));
+        for(int pid : replicaPartitions.keys()) {
+            assertEquals(replicaPartitions.get(pid), new TIntHashSet(manager.getReplicasOnPartition(pid)));
         }
 
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicaPartitions, friendships.keySet());
+        TIntIntMap uidToPidMap = TroveUtils.getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> uidToReplicasMap = TroveUtils.getUToReplicasMap(replicaPartitions, friendships.keySet());
 
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             RepUser user = manager.getUserMaster(uid);
             assertTrue(user.getId() == uid);
-            assertEquals(user.getBasePid(), uidToPidMap.get(uid));
+            assertTrue(user.getBasePid() == uidToPidMap.get(uid));
             assertEquals(user.getReplicaPids(), uidToReplicasMap.get(uid));
             assertEquals(user.getFriendIDs(), bidirectionalFriendships.get(uid));
-            for(int pid : user.getReplicaPids()) {
-                RepUser replica = manager.getReplicaOnPartition(uid, pid);
+            for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+                RepUser replica = manager.getReplicaOnPartition(uid, iter.next());
                 assertEquals(replica, user);
             }
         }
@@ -112,36 +119,37 @@ public class InitUtilsTest {
 
     @Test
     public void testInitNoRepManager() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
+        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
         int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
 
-        NoRepManager manager = initNoRepManager(0, true, partitions, friendships);
-        assertEquals(manager.getPids(), partitions.keySet());
-        assertEquals(partitions, manager.getPartitionToUsers());
+        NoRepManager manager = initNoRepManager(0, true, convert(partitions), convert(friendships));
+        assertEquals(new TIntHashSet(manager.getPids()), partitions.keySet());
+        assertEquals(partitions, convert(manager.getPartitionToUsers()));
         assertEquals(bidirectionalFriendships, manager.getFriendships());
         assertTrue(manager.getMigrationTally() == 0);
 
-        for(Integer pid : partitions.keySet()) {
-            assertEquals(partitions.get(pid), manager.getPartition(pid));
-            for(Integer uid : partitions.get(pid)) {
+        for(Integer pid : partitions.keys()) {
+            assertEquals(partitions.get(pid), new TIntHashSet(manager.getPartition(pid)));
+            for(TIntIterator iter = partitions.get(pid).iterator(); iter.hasNext(); ) {
+                int uid = iter.next();
                 User user = manager.getUser(uid);
                 assertEquals(user.getBasePid(), pid);
                 assertEquals(user.getFriendIDs(), bidirectionalFriendships.get(uid));
-                assertEquals(uid, user.getId());
+                assertTrue(uid == user.getId());
             }
         }
 

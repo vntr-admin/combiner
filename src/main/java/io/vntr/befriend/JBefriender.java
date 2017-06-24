@@ -1,19 +1,21 @@
 package io.vntr.befriend;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 
-import static io.vntr.utils.Utils.getUToMasterMap;
-import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
+import static io.vntr.utils.TroveUtils.getUToMasterMap;
+import static io.vntr.utils.TroveUtils.getKDistinctValuesFromArray;
 
 /**
  * Created by robertlindquist on 4/25/17.
  */
 public class JBefriender {
 
-    public static Result rebalance(Integer smallerUserId, Integer largerUserId, int k, float alpha, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+    public static Result rebalance(Integer smallerUserId, Integer largerUserId, int k, float alpha, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions) {
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         int smallerPid = uidToPidMap.get(smallerUserId);
         int largerPid = uidToPidMap.get(largerUserId);
@@ -39,20 +41,20 @@ public class JBefriender {
         return new Result(null, null);
     }
 
-    static Integer findPartnerOnPartition(int uid, Set<Integer> partition, int k, float alpha, Map<Integer, Set<Integer>> friendships, Map<Integer, Integer> uidToPidMap) {
-        Set<Integer> candidates;
+    static Integer findPartnerOnPartition(int uid, TIntSet partition, int k, float alpha, TIntObjectMap<TIntSet> friendships, TIntIntMap uidToPidMap) {
+        TIntSet candidates;
         if (partition.size() <= k) {
-            candidates = new HashSet<>(partition);
+            candidates = new TIntHashSet(partition);
         } else {
-            candidates = getKDistinctValuesFromList(k, partition);
+            candidates = getKDistinctValuesFromArray(k, partition.toArray());
         }
         return findPartner(uid, candidates, alpha, friendships, uidToPidMap);
     }
 
-    static int calculateGain(int uid1, int uid2, Map<Integer, Set<Integer>> friendships, Map<Integer, Integer> uidToPidMap) {
+    static int calculateGain(int uid1, int uid2, TIntObjectMap<TIntSet> friendships, TIntIntMap uidToPidMap) {
         boolean u1AndU2AreFriends = friendships.get(uid1).contains(uid2);
-        Set<Integer> u1Friends = friendships.get(uid1);
-        Set<Integer> u2Friends = friendships.get(uid2);
+        TIntSet u1Friends = friendships.get(uid1);
+        TIntSet u2Friends = friendships.get(uid2);
         int pid1 = uidToPidMap.get(uid1);
         int pid2 = uidToPidMap.get(uid2);
         int oldCut = getNeighborsOnPartition(u1Friends, pid2, uidToPidMap) + getNeighborsOnPartition(u2Friends, pid1, uidToPidMap);
@@ -60,22 +62,24 @@ public class JBefriender {
         return oldCut - newCut - (u1AndU2AreFriends ? 2 : 0);
     }
 
-    static int getNeighborsOnPartition(Set<Integer> friendIds, Integer pid, Map<Integer, Integer> uidToPidMap) {
+    static int getNeighborsOnPartition(TIntSet friendIds, Integer pid, TIntIntMap uidToPidMap) {
         int count = 0;
-        for (Integer friendId : friendIds) {
-            count += uidToPidMap.get(friendId).equals(pid) ? 1 : 0;
+        for(TIntIterator iter = friendIds.iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
+            count += uidToPidMap.get(friendId) == pid ? 1 : 0;
         }
 
         return count;
     }
 
-    static Integer findPartner(int uid, Set<Integer> candidates, float alpha, Map<Integer, Set<Integer>> friendships, Map<Integer, Integer> uidToPidMap) {
+    static Integer findPartner(int uid, TIntSet candidates, float alpha, TIntObjectMap<TIntSet> friendships, TIntIntMap uidToPidMap) {
         Integer bestPartnerId = null;
         float bestScore = 0f;
 
         Integer myPid = uidToPidMap.get(uid);
 
-        for (int partnerId : candidates) {
+        for(TIntIterator iter = candidates.iterator(); iter.hasNext(); ) {
+            int partnerId = iter.next();
             Integer theirPid = uidToPidMap.get(partnerId);
             if (theirPid.equals(myPid)) {
                 continue;
@@ -100,10 +104,11 @@ public class JBefriender {
         return bestPartnerId;
     }
 
-    static int howManyFriendsHavePartition(Set<Integer> friendIds, Integer pid, Map<Integer, Integer> uidToPidMap) {
+    static int howManyFriendsHavePartition(TIntSet friendIds, Integer pid, TIntIntMap uidToPidMap) {
         int count = 0;
-        for (Integer friendId : friendIds) {
-            count += uidToPidMap.get(friendId).equals(pid) ? 1 : 0;
+        for(TIntIterator iter = friendIds.iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
+            count += uidToPidMap.get(friendId) == pid ? 1 : 0;
         }
         return count;
     }

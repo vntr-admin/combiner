@@ -35,7 +35,7 @@ public class HRepartitioner {
             }
         }
 
-        return new NoRepResults(convertTIntIntMapToMap(getUToMasterMap(state.getLogicalPartitions())), moves);
+        return new NoRepResults(getUToMasterMap(state.getLogicalPartitions()), moves);
     }
 
     static Set<Target> performStage(boolean firstStage, int k, State state) {

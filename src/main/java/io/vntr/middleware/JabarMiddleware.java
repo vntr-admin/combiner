@@ -3,6 +3,8 @@ package io.vntr.middleware;
 import io.vntr.befriend.JBefriender;
 import io.vntr.manager.NoRepManager;
 
+import static io.vntr.utils.TroveUtils.convert;
+
 /**
  * Created by robertlindquist on 4/12/17.
  */
@@ -23,7 +25,7 @@ public class JabarMiddleware extends JabejaMiddleware {
     }
 
     void rebalance(Integer smallerUserId, Integer largerUserId) {
-        JBefriender.Result result = JBefriender.rebalance(smallerUserId, largerUserId, k, alpha, getFriendships(), getPartitionToUserMap());
+        JBefriender.Result result = JBefriender.rebalance(smallerUserId, largerUserId, k, alpha, convert(getFriendships()), convert(getPartitionToUserMap()));
         Integer uid1 = result.getUid1();
         Integer uid2 = result.getUid2();
         if(uid1 != null && uid2 != null) {

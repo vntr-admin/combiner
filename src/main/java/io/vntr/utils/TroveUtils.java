@@ -28,7 +28,7 @@ public class TroveUtils {
         return true;
     }
 
-    public static Set<Integer> convertTIntSetToSet(TIntSet trove) {
+    public static Set<Integer> convert(TIntSet trove) {
         if(trove == null) {
             return null;
         }
@@ -39,7 +39,7 @@ public class TroveUtils {
         return set;
     }
 
-    public static TIntIntMap convertMapToTIntIntMap(Map<Integer, Integer> map) {
+    public static TIntIntMap convert1(Map<Integer, Integer> map) {
         if(map == null) {
             return null;
         }
@@ -50,7 +50,7 @@ public class TroveUtils {
         return tIntIntMap;
     }
 
-    public static Map<Integer, Integer> convertTIntIntMapToMap(TIntIntMap trove) {
+    public static Map<Integer, Integer> convert(TIntIntMap trove) {
         if(trove == null) {
             return null;
         }
@@ -61,7 +61,7 @@ public class TroveUtils {
         return map;
     }
 
-    public static TIntObjectMap<TIntSet> convertMapSetToTIntObjectMapTIntSet(Map<Integer, Set<Integer>> mapSet) {
+    public static TIntObjectMap<TIntSet> convert(Map<Integer, Set<Integer>> mapSet) {
         if(mapSet== null) {
             return null;
         }
@@ -72,13 +72,13 @@ public class TroveUtils {
         return trove;
     }
 
-    public static Map<Integer, Set<Integer>> convertTIntObjectMapTIntSetToMapSet(TIntObjectMap<TIntSet> trove) {
+    public static Map<Integer, Set<Integer>> convert(TIntObjectMap<TIntSet> trove) {
         if(trove == null) {
             return null;
         }
         Map<Integer, Set<Integer>> mapSet = new HashMap<>();
         for(int pid : trove.keys()) {
-            mapSet.put(pid, new HashSet<Integer>(convertTIntSetToSet(trove.get(pid))));
+            mapSet.put(pid, new HashSet<Integer>(convert(trove.get(pid))));
         }
         return mapSet;
     }
@@ -251,6 +251,12 @@ public class TroveUtils {
         }
 
         return replicas;
+    }
+
+    public static TIntSet singleton(int val) {
+        TIntSet set = new TIntHashSet();
+        set.add(val);
+        return set;
     }
 }
 

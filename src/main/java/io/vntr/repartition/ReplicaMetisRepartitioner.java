@@ -1,6 +1,7 @@
 package io.vntr.repartition;
 
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
@@ -19,13 +20,13 @@ import java.util.Set;
 public class ReplicaMetisRepartitioner {
     public static RepResults repartition(String commandLiteral, String tempDir, TIntObjectMap<TIntSet> friendships, TIntSet pids, int minNumReplicas) {
 
-        Map<Integer, Integer> uidToPidMap = MetisRepartitioner.partition(commandLiteral, tempDir, friendships, pids);
+        TIntIntMap uidToPidMap = MetisRepartitioner.partition(commandLiteral, tempDir, friendships, pids);
 
         TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
             partitions.put(iter.next(), new TIntHashSet());
         }
-        for(Integer uid : uidToPidMap.keySet()) {
+        for(Integer uid : uidToPidMap.keys()) {
             int pid = uidToPidMap.get(uid);
             partitions.get(pid).add(uid);
         }
@@ -34,7 +35,7 @@ public class ReplicaMetisRepartitioner {
 
         TIntObjectMap<TIntSet> uidToReplicasMap = TroveUtils.getUToReplicasMap(replicas, friendships.keySet());
 
-        RepResults repResults = new RepResults(0, uidToPidMap, TroveUtils.convertTIntObjectMapTIntSetToMapSet(uidToReplicasMap));
+        RepResults repResults = new RepResults(0, uidToPidMap, uidToReplicasMap);
         return repResults;
     }
 }

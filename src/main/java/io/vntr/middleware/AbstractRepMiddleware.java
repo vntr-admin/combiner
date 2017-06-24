@@ -1,9 +1,12 @@
 package io.vntr.middleware;
 
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.manager.RepManager;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
@@ -48,12 +51,12 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(manager.getPids());
+        TIntSet potentialReplicaLocations = new TIntHashSet(manager.getPids());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
-        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
-        return list.get((int) (list.size() * Math.random()));
+        int[] array = potentialReplicaLocations.toArray();
+        return array[(int) (array.length * Math.random())];
     }
 
     @Override
@@ -102,7 +105,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getFriendships() {
-        return manager.getFriendships();
+        return TroveUtils.convert(manager.getFriendships());
     }
 
     @Override

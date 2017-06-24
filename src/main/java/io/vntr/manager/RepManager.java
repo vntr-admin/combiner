@@ -1,5 +1,10 @@
 package io.vntr.manager;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
@@ -89,19 +94,21 @@ public class RepManager {
 
         //Remove user from relevant partitions
         getPartitionById(user.getBasePid()).removeMaster(uid);
-        for (Integer replicaPartitionId : user.getReplicaPids()) {
-            getPartitionById(replicaPartitionId).removeReplica(uid);
+        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+            getPartitionById(iter.next()).removeReplica(uid);
         }
 
         //Remove user from uMap
         uMap.remove(uid);
 
         //Remove friendships
-        for (Integer friendId : user.getFriendIDs()) {
+        for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
             RepUser friendMaster = getUserMaster(friendId);
             friendMaster.unfriend(uid);
 
-            for (Integer friendReplicaPartitionId : friendMaster.getReplicaPids()) {
+            for(TIntIterator iter2 = friendMaster.getReplicaPids().iterator(); iter2.hasNext(); ) {
+                int friendReplicaPartitionId = iter2.next();
                 Partition friendReplicaPartition = getPartitionById(friendReplicaPartitionId);
                 friendReplicaPartition.getReplicaById(friendId).unfriend(uid);
             }
@@ -130,8 +137,8 @@ public class RepManager {
 
         //Update the replicaPartitionIds to reflect this addition
         replicaOfUser.addReplicaPartitionId(destPid);
-        for (Integer pid : user.getReplicaPids()) {
-            pMap.get(pid).getReplicaById(user.getId()).addReplicaPartitionId(destPid);
+        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+            pMap.get(iter.next()).getReplicaById(user.getId()).addReplicaPartitionId(destPid);
         }
         user.addReplicaPartitionId(destPid);
     }
@@ -144,8 +151,8 @@ public class RepManager {
 
     public void removeReplica(RepUser user, Integer removalPid) {
         //Delete it from each replica's replicaPartitionIds
-        for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-            Partition p = pMap.get(currentReplicaPartitionId);
+        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+            Partition p = pMap.get(iter.next());
             RepUser r = p.getReplicaById(user.getId());
             r.removeReplicaPartitionId(removalPid);
         }
@@ -165,8 +172,8 @@ public class RepManager {
         moveMasterAndInformReplicas(uid, fromPid, toPid);
 
         //Step 2: add the necessary replicas
-        for (Integer friendId : user.getFriendIDs()) {
-            if (uMap.get(friendId).equals(fromPid)) {
+        for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            if (uMap.get(iter.next()).equals(fromPid)) {
                 addReplica(user, fromPid);
                 break;
             }
@@ -207,8 +214,8 @@ public class RepManager {
 
         user.setBasePid(toPid);
 
-        for (Integer rPid : user.getReplicaPids()) {
-            pMap.get(rPid).getReplicaById(uid).setBasePid(toPid);
+        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+            pMap.get(iter.next()).getReplicaById(uid).setBasePid(toPid);
         }
     }
 
@@ -216,12 +223,11 @@ public class RepManager {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
 
-        for (Integer replicaPartitionId : smallerUser.getReplicaPids()) {
-            pMap.get(replicaPartitionId).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
+        for(TIntIterator iter = smallerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+            pMap.get(iter.next()).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
         }
-
-        for (Integer replicaPartitionId : largerUser.getReplicaPids()) {
-            pMap.get(replicaPartitionId).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
+        for(TIntIterator iter = largerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+            pMap.get(iter.next()).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
         }
     }
 
@@ -229,12 +235,11 @@ public class RepManager {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
 
-        for (Integer partitionId : smallerUser.getReplicaPids()) {
-            pMap.get(partitionId).getReplicaById(smallerUser.getId()).unfriend(largerUser.getId());
+        for(TIntIterator iter = smallerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+            pMap.get(iter.next()).getReplicaById(smallerUser.getId()).unfriend(largerUser.getId());
         }
-
-        for (Integer partitionId : largerUser.getReplicaPids()) {
-            pMap.get(partitionId).getReplicaById(largerUser.getId()).unfriend(smallerUser.getId());
+        for(TIntIterator iter = largerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+            pMap.get(iter.next()).getReplicaById(largerUser.getId()).unfriend(smallerUser.getId());
         }
     }
 
@@ -248,14 +253,15 @@ public class RepManager {
 
         uMap.put(userId, partitionId);
 
-        for (Integer replicaPartitionId : user.getReplicaPids()) {
-            RepUser replica = pMap.get(replicaPartitionId).getReplicaById(userId);
+        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+            RepUser replica = pMap.get(iter.next()).getReplicaById(userId);
             replica.setBasePid(partitionId);
             replica.removeReplicaPartitionId(partitionId);
         }
 
-        //Add replicas of friends in pid if they don't already exist
-        for(int friendId : user.getFriendIDs()) {
+        //Add replicas of friends in pid if they don't already exists
+        for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
             if(!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
                 addReplica(getUserMaster(friendId), partitionId);
             }
@@ -278,11 +284,11 @@ public class RepManager {
     }
 
     public Integer getRandomPidWhereThisUserIsNotPresent(RepUser user) {
-        Set<Integer> potentialReplicaLocations = new HashSet<>(pMap.keySet());
+        TIntSet potentialReplicaLocations = new TIntHashSet(pMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
-        List<Integer> list = new LinkedList<>(potentialReplicaLocations);
-        return list.get((int) (list.size() * Math.random()));
+        int[] array = potentialReplicaLocations.toArray();
+        return array[(int)(array.length * Math.random())];
     }
 
     public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPid) {
@@ -312,8 +318,8 @@ public class RepManager {
         for (Integer uid : uMap.keySet()) {
             RepUser user = getUserMaster(uid);
             Integer pid = user.getBasePid();
-            for (Integer friendId : user.getFriendIDs()) {
-                if (pid < uMap.get(friendId)) {
+            for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+                if (pid < uMap.get(iter.next())) {
                     count++;
                 }
             }
@@ -329,8 +335,8 @@ public class RepManager {
         return count;
     }
 
-    public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+    public TIntObjectMap<TIntSet> getFriendships() {
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>(uMap.size()+1);
         for(Integer uid : uMap.keySet()) {
             friendships.put(uid, getUserMaster(uid).getFriendIDs());
         }
@@ -406,11 +412,12 @@ public class RepManager {
 
     private boolean checkLocalSemantics() {
         boolean valid = true;
-        Map<Integer, Set<Integer>> friendships = getFriendships();
+        TIntObjectMap<TIntSet> friendships = getFriendships();
         Map<Integer, Set<Integer>> partitions  = getPartitionToUserMap();
         Map<Integer, Set<Integer>> replicas    = getPartitionToReplicasMap();
-        for(int uid1 : friendships.keySet()) {
-            for(int uid2 : friendships.get(uid1)) {
+        for(int uid1 : friendships.keys()) {
+            for(TIntIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
+                int uid2 = iter.next();
                 Set<Integer> uid1Replicas = findKeysForUser(replicas, uid1);
                 Set<Integer> uid2Replicas = findKeysForUser(replicas, uid2);
                 int pid1 = findKeysForUser(partitions, uid1).iterator().next();

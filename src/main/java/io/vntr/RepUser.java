@@ -1,27 +1,29 @@
 package io.vntr;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by robertlindquist on 4/21/17.
  */
 public class RepUser extends User {
 
-    private Set<Integer> replicaPids;
+    private TIntSet replicaPids;
 
     public RepUser(Integer id) {
         super(id);
-        this.replicaPids = new HashSet<>();
+        this.replicaPids = new TIntHashSet();
     }
 
     public RepUser(Integer id, Integer basePid) {
         super(id, basePid);
-        this.replicaPids = new HashSet<>();
+        this.replicaPids = new TIntHashSet();
     }
 
-    public Set<Integer> getReplicaPids() {
+    public TIntSet getReplicaPids() {
         return replicaPids;
     }
 
@@ -33,15 +35,15 @@ public class RepUser extends User {
         this.replicaPids.remove(replicaPartitionId);
     }
 
-    public void addReplicaPartitionIds(Collection<Integer> replicaPartitionIds) {
+    public void addReplicaPartitionIds(TIntSet replicaPartitionIds) {
         this.replicaPids.addAll(replicaPartitionIds);
     }
 
     public RepUser dupe() {
         RepUser user = new RepUser(getId(), getBasePid());
         user.addReplicaPartitionIds(replicaPids);
-        for (Integer friendId : getFriendIDs()) {
-            user.befriend(friendId);
+        for(TIntIterator iter = getFriendIDs().iterator(); iter.hasNext(); ) {
+            user.befriend(iter.next());
         }
 
         return user;

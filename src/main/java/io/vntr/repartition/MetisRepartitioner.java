@@ -18,7 +18,7 @@ import java.util.*;
  * Created by robertlindquist on 4/24/17.
  */
 public class MetisRepartitioner {
-    public static Map<Integer, Integer> partition(String commandLiteral, String tempDir, TIntObjectMap<TIntSet> friendships, TIntSet pids) {
+    public static TIntIntMap partition(String commandLiteral, String tempDir, TIntObjectMap<TIntSet> friendships, TIntSet pids) {
         int numPartitions = pids.size();
         try {
             String inputFile = tempDir + File.separator + "e_pluribus_unum__" + System.nanoTime() + ".txt";
@@ -34,7 +34,7 @@ public class MetisRepartitioner {
             TIntIntMap reversePidMap = getReversePidMap(pids);
             TIntIntMap translatedResults = translatePartitioningFromZNBased(results, reverseUidMap, reversePidMap);
 
-            return TroveUtils.convertTIntIntMapToMap(translatedResults);
+            return translatedResults;
         } catch(Exception e) {
             return null;
         }

@@ -1,5 +1,6 @@
 package io.vntr.middleware;
 
+import gnu.trove.map.TIntIntMap;
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.HBefriender;
@@ -11,7 +12,7 @@ import io.vntr.repartition.NoRepResults;
 import java.util.*;
 
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
-import static io.vntr.utils.TroveUtils.convertMapSetToTIntObjectMapTIntSet;
+import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -40,7 +41,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
-        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), getFriendships(), getPartitionToUserMap());
+        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), convert(getFriendships()), convert(getPartitionToUserMap()));
 
         if(strategy == SMALL_TO_LARGE) {
             manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
@@ -52,8 +53,8 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
 
     @Override
     public void removePartition(Integer partitionId) {
-        Map<Integer, Integer> targets = HMigrator.migrateOffPartition(partitionId, gamma, manager.getPartitionToUsers(), manager.getFriendships());
-        for(Integer uid : targets.keySet()) {
+        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, gamma, convert(manager.getPartitionToUsers()), manager.getFriendships());
+        for(Integer uid : targets.keys()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
         manager.removePartition(partitionId);
@@ -70,7 +71,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, convertMapSetToTIntObjectMapTIntSet(manager.getPartitionToUsers()), convertMapSetToTIntObjectMapTIntSet(getFriendships()));
+        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, convert(manager.getPartitionToUsers()), convert(getFriendships()));
         int numMoves = noRepResults.getLogicalMoves();
         if(numMoves > 0) {
             manager.increaseTallyLogical(numMoves);
@@ -78,8 +79,8 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         }
     }
 
-    void physicallyMigrate(Map<Integer, Integer> uidsToPids) {
-        for(int uid : uidsToPids.keySet()) {
+    void physicallyMigrate(TIntIntMap uidsToPids) {
+        for(int uid : uidsToPids.keys()) {
             int pid = uidsToPids.get(uid);
             User user = manager.getUser(uid);
             if(user.getBasePid() != pid) {

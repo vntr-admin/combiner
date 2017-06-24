@@ -8,7 +8,6 @@ import io.vntr.repartition.RepResults;
 import io.vntr.utils.TroveUtils;
 import io.vntr.utils.Utils;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,9 +41,9 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
 
     void repartition() {
         clearReplicas();
-        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, TroveUtils.convertMapSetToTIntObjectMapTIntSet(getFriendships()), new TIntHashSet(getPartitionIds()), minNumReplicas);
+        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, TroveUtils.convert(getFriendships()), new TIntHashSet(getPartitionIds()), minNumReplicas);
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
-        physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
+        physicallyMigrate(TroveUtils.convert(repResults.getUidToPidMap()), TroveUtils.convert(repResults.getUidsToReplicaPids()));
     }
 
     void clearReplicas() {

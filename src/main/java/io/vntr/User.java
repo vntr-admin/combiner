@@ -1,22 +1,22 @@
 package io.vntr;
 
-import java.util.HashSet;
-import java.util.Set;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 
 public class User {
     private final Integer id;
     private Integer basePid;
-    private Set<Integer> friendIDs;
+    private TIntSet friendIDs;
 
     public User(Integer id) {
         this.id = id;
-        this.friendIDs = new HashSet<>();
+        this.friendIDs = new TIntHashSet();
     }
 
     public User(Integer id, Integer basePid) {
         this.id = id;
         this.basePid = basePid;
-        this.friendIDs = new HashSet<>();
+        this.friendIDs = new TIntHashSet();
     }
 
     public Integer getId() {
@@ -39,7 +39,7 @@ public class User {
         friendIDs.remove(friendId);
     }
 
-    public Set<Integer> getFriendIDs() {
+    public TIntSet getFriendIDs() {
         return friendIDs;
     }
 

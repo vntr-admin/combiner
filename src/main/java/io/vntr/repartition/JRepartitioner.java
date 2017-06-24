@@ -59,7 +59,7 @@ public class JRepartitioner {
             }
         }
 
-        return new NoRepResults(convertTIntIntMapToMap(bestLogicalPids), logicalMigrationCount);
+        return new NoRepResults(bestLogicalPids, logicalMigrationCount);
     }
 
     static Integer findPartner(Integer uid, TIntSet candidates, float t, State state) {

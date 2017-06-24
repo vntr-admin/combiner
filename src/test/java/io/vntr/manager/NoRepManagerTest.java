@@ -1,12 +1,18 @@
 package io.vntr.manager;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.utils.InitUtils;
 import io.vntr.User;
+import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.initSet;
+import static io.vntr.utils.TroveUtils.convert;
 import static io.vntr.utils.Utils.*;
 import static org.junit.Assert.*;
 
@@ -64,33 +70,33 @@ public class NoRepManagerTest {
     @Test
     public void testAddUser() {
         float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
+        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
 
         //Automatic assignment of user id
         Integer newUid = manager.addUser();
-        Set<Integer> expectedUids = new HashSet<>(friendships.keySet());
+        TIntSet expectedUids = new TIntHashSet(friendships.keySet());
         expectedUids.add(newUid);
-        assertEquals(manager.getUids(), expectedUids);
+        assertEquals(new TIntHashSet(manager.getUids()), expectedUids);
         assertTrue(manager.getUser(newUid).getFriendIDs().isEmpty());
 
         assertTrue(manager.getPartition(manager.getUser(newUid).getBasePid()).contains(newUid));
 
-        for(Integer originalUid : friendships.keySet()) {
+        for(Integer originalUid : friendships.keys()) {
             assertEquals(manager.getUser(originalUid).getFriendIDs(), bidirectionalFriendships.get(originalUid));
         }
 
@@ -99,12 +105,12 @@ public class NoRepManagerTest {
         Integer uidToAddManually = new TreeSet<>(manager.getUids()).last()+1;
         manager.addUser(new User(uidToAddManually));
         expectedUids.add(uidToAddManually);
-        assertEquals(manager.getUids(), expectedUids);
+        assertEquals(new TIntHashSet(manager.getUids()), expectedUids);
         assertTrue(manager.getUser(uidToAddManually).getFriendIDs().isEmpty());
 
         assertTrue(manager.getPartition(manager.getUser(uidToAddManually).getBasePid()).contains(uidToAddManually));
 
-        for(Integer originalUid : friendships.keySet()) {
+        for(Integer originalUid : friendships.keys()) {
             assertEquals(manager.getUser(originalUid).getFriendIDs(), bidirectionalFriendships.get(originalUid));
         }
     }
@@ -112,14 +118,14 @@ public class NoRepManagerTest {
     @Test
     public void testRemoveUser() {
         float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
+        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -130,22 +136,22 @@ public class NoRepManagerTest {
         friendships.get(uidToRemove).remove(8);
         friendships.get(8).remove(uidToRemove);
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(bidirectionalFriendships, manager.getFriendships());
 
         Integer pidForUserToRemove = manager.getUser(uidToRemove).getBasePid();
         manager.removeUser(uidToRemove);
 
-        for(Integer pid : partitions.keySet()) {
+        for(Integer pid : partitions.keys()) {
             if(pid.equals(pidForUserToRemove)) {
-                Set<Integer> expectedUsers = new HashSet<>(partitions.get(pidForUserToRemove));
+                TIntSet expectedUsers = new TIntHashSet(partitions.get(pidForUserToRemove));
                 expectedUsers.remove(uidToRemove);
-                assertEquals(manager.getPartition(pidForUserToRemove), expectedUsers);
+                assertEquals(new TIntHashSet(manager.getPartition(pidForUserToRemove)), expectedUsers);
             }
             else {
-                assertEquals(manager.getPartition(pid), partitions.get(pid));
+                assertEquals(new TIntHashSet(manager.getPartition(pid)), partitions.get(pid));
             }
         }
 

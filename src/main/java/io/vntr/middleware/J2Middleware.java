@@ -1,10 +1,13 @@
 package io.vntr.middleware;
 
+import gnu.trove.map.TIntIntMap;
 import io.vntr.befriend.JBefriender;
 import io.vntr.manager.NoRepManager;
 import io.vntr.migration.HMigrator;
 
 import java.util.Map;
+
+import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 4/12/17.
@@ -26,7 +29,7 @@ public class J2Middleware extends JabejaMiddleware {
     }
 
     void rebalance(Integer smallerUserId, Integer largerUserId) {
-        JBefriender.Result result = JBefriender.rebalance(smallerUserId, largerUserId, k, alpha, getFriendships(), getPartitionToUserMap());
+        JBefriender.Result result = JBefriender.rebalance(smallerUserId, largerUserId, k, alpha, convert(getFriendships()), convert(getPartitionToUserMap()));
         Integer uid1 = result.getUid1();
         Integer uid2 = result.getUid2();
         if(uid1 != null && uid2 != null) {
@@ -39,8 +42,8 @@ public class J2Middleware extends JabejaMiddleware {
 
     @Override
     public void removePartition(Integer partitionId) {
-        Map<Integer, Integer> targets = HMigrator.migrateOffPartition(partitionId, 1f, getPartitionToUserMap(), getFriendships());
-        for(Integer uid : targets.keySet()) {
+        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, 1f, convert(getPartitionToUserMap()), convert(getFriendships()));
+        for(Integer uid : targets.keys()) {
             getManager().moveUser(uid, targets.get(uid), true);
         }
         getManager().removePartition(partitionId);

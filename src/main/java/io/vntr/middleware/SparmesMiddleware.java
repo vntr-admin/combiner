@@ -1,5 +1,8 @@
 package io.vntr.middleware;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SparmesRepartitioner;
@@ -35,7 +38,7 @@ public class SparmesMiddleware extends SparMiddleware {
     }
 
     void repartition() {
-        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, TroveUtils.convertMapSetToTIntObjectMapTIntSet(getPartitionToUserMap()), TroveUtils.convertMapSetToTIntObjectMapTIntSet(getPartitionToReplicasMap()), TroveUtils.convertMapSetToTIntObjectMapTIntSet(getFriendships()));
+        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, TroveUtils.convert(getPartitionToUserMap()), TroveUtils.convert(getPartitionToReplicasMap()), TroveUtils.convert(getFriendships()));
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults);
     }
@@ -55,10 +58,11 @@ public class SparmesMiddleware extends SparMiddleware {
             }
 
             //add and remove replicas as specified in the repResults
-            Set<Integer> newReplicas = repResults.getUidsToReplicaPids().get(uid);
+            TIntSet newReplicas = repResults.getUidsToReplicaPids().get(uid);
             Set<Integer> currentReplicas = currentUidToReplicasMap.get(uid);
             if(!currentReplicas.equals(newReplicas)) {
-                for(int newReplica : newReplicas) {
+                for(TIntIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
+                    int newReplica = iter.next();
                     if(!currentReplicas.contains(newReplica)) {
                         getManager().addReplica(getManager().getUserMaster(uid), newReplica);
                     }
@@ -85,24 +89,25 @@ public class SparmesMiddleware extends SparMiddleware {
     void shoreUpFriendReplicas(int uid) {
         RepUser user = getManager().getUserMaster(uid);
         int pid = user.getBasePid();
-        Set<Integer> friends = new HashSet<>(user.getFriendIDs());
+        TIntSet friends = new TIntHashSet(user.getFriendIDs());
         friends.removeAll(getManager().getMastersOnPartition(pid));
         friends.removeAll(getManager().getReplicasOnPartition(pid));
-        for(int friendId : friends) {
-            getManager().addReplica(getManager().getUserMaster(friendId), pid);
+        for(TIntIterator iter = friends.iterator(); iter.hasNext(); ) {
+            getManager().addReplica(getManager().getUserMaster(iter.next()), pid);
         }
     }
 
     void ensureKReplication(int uid) {
         RepUser user = getManager().getUserMaster(uid);
-        Set<Integer> replicaLocations = user.getReplicaPids();
+        TIntSet replicaLocations = user.getReplicaPids();
         int deficit = minNumReplicas - replicaLocations.size();
         if(deficit > 0) {
-            Set<Integer> newLocations = new HashSet<>(getPartitionIds());
+            TIntSet newLocations = new TIntHashSet(getPartitionIds());
             newLocations.removeAll(replicaLocations);
             newLocations.remove(user.getBasePid());
-            for(int rPid : ProbabilityUtils.getKDistinctValuesFromList(deficit, newLocations)) {
-                getManager().addReplica(user, rPid);
+            TIntSet newReplicaPids = TroveUtils.getKDistinctValuesFromArray(deficit, newLocations.toArray());
+            for(TIntIterator iter = newReplicaPids.iterator(); iter.hasNext(); ) {
+                getManager().addReplica(user, iter.next());
             }
         }
     }

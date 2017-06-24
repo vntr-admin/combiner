@@ -3,6 +3,7 @@ package io.vntr.middleware;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
@@ -97,7 +98,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getFriendships() {
-        return manager.getFriendships();
+        return TroveUtils.convert(manager.getFriendships());
     }
 
     @Override

@@ -1,15 +1,19 @@
 package io.vntr.migration;
 
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.Target;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -19,7 +23,7 @@ public class HMigratorTest {
 
     @Test
     public void testIsOverloaded() {
-        Map<Integer, Integer> userCounts = new HashMap<>();
+        TIntIntMap userCounts = new TIntIntHashMap();
         userCounts.put(1, 10);
         userCounts.put(2, 5);
         userCounts.put(3, 6);
@@ -90,12 +94,12 @@ public class HMigratorTest {
     public void testGetPreferredTargets() {
         float gamma = 1.05f;
 
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12, 13));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -108,10 +112,10 @@ public class HMigratorTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         Set<Target> p1Targets = HMigrator.getPreferredTargets(1, uidToPidMap, partitions, bidirectionalFriendships);
         assertTrue(p1Targets.contains(new Target(1, 3, 1, 3f)));
@@ -135,7 +139,7 @@ public class HMigratorTest {
 
     @Test
     public void testGetPartitionWithFewestUsers() {
-        Map<Integer, Integer> userCounts = new HashMap<>();
+        TIntIntMap userCounts = new TIntIntHashMap();
         userCounts.put(1, 10);
         userCounts.put(2, 5);
         userCounts.put(3, 6);

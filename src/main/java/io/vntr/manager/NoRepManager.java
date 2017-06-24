@@ -1,5 +1,10 @@
 package io.vntr.manager;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.User;
 
 import java.util.*;
@@ -60,9 +65,9 @@ public class NoRepManager {
     }
 
     public void removeUser(Integer uid) {
-        Set<Integer> friendIds = new HashSet<>(getUser(uid).getFriendIDs());
-        for(Integer friendId : friendIds) {
-            unfriend(uid, friendId);
+        TIntSet friendIds = new TIntHashSet(getUser(uid).getFriendIDs());
+        for(TIntIterator iter = friendIds.iterator(); iter.hasNext(); ) {
+            unfriend(uid, iter.next());
         }
         getPartition(getPidForUser(uid)).remove(uid);
         uMap.remove(uid);
@@ -123,8 +128,8 @@ public class NoRepManager {
     public Integer getEdgeCut() {
         int count = 0;
         for(User user : uMap.values()) {
-            for(int friendId : user.getFriendIDs()) {
-                if(user.getBasePid() < getUser(friendId).getBasePid()) {
+            for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+                if(user.getBasePid() < getUser(iter.next()).getBasePid()) {
                     count++;
                 }
             }
@@ -157,10 +162,10 @@ public class NoRepManager {
         return pMap.keySet();
     }
 
-    public Map<Integer, Set<Integer>> getFriendships() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+    public TIntObjectMap<TIntSet> getFriendships() {
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>(getNumPartitions() + 1);
         for(Integer uid : uMap.keySet()) {
-            friendships.put(uid, new HashSet<>(getUser(uid).getFriendIDs()));
+            friendships.put(uid, new TIntHashSet(getUser(uid).getFriendIDs()));
         }
         return friendships;
     }

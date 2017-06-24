@@ -54,7 +54,7 @@ public class SpajaRepartitioner {
             }
         }
 
-        RepResults repResults = new RepResults(moves, convertTIntIntMapToMap(bestLogicalPids), convertTIntObjectMapTIntSetToMapSet(bestLogicalReplicaPids));
+        RepResults repResults = new RepResults(moves, bestLogicalPids, bestLogicalReplicaPids);
         return repResults;
     }
 

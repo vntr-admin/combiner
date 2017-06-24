@@ -9,8 +9,6 @@ import io.vntr.manager.RepManager;
 import io.vntr.utils.InitUtils;
 import org.junit.Test;
 
-import java.util.*;
-
 import static io.vntr.utils.TroveUtils.*;
 import static io.vntr.repartition.SpajaRepartitioner.*;
 import static org.junit.Assert.assertEquals;
@@ -164,7 +162,7 @@ public class SpajaRepartitionerTest {
 
         TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, convertTIntObjectMapTIntSetToMapSet(partitions), convertTIntObjectMapTIntSetToMapSet(friendships), convertTIntObjectMapTIntSetToMapSet(replicas));
+        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 

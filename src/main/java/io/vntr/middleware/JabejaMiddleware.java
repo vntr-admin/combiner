@@ -1,15 +1,15 @@
 package io.vntr.middleware;
 
+import gnu.trove.map.TIntIntMap;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.JRepartitioner;
 import io.vntr.repartition.NoRepResults;
 import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
-import static io.vntr.utils.TroveUtils.convertMapSetToTIntObjectMapTIntSet;
+import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 4/12/17.
@@ -57,15 +57,15 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, convertMapSetToTIntObjectMapTIntSet(getPartitionToUserMap()), convertMapSetToTIntObjectMapTIntSet(getFriendships()), incremental);
+        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, convert(getPartitionToUserMap()), convert(getFriendships()), incremental);
         getManager().increaseTallyLogical(noRepResults.getLogicalMoves());
         if(noRepResults.getUidsToPids() != null) {
             physicallyMigrate(noRepResults.getUidsToPids());
         }
     }
 
-    void physicallyMigrate(Map<Integer, Integer> logicalPids) {
-        for(Integer uid : logicalPids.keySet()) {
+    void physicallyMigrate(TIntIntMap logicalPids) {
+        for(Integer uid : logicalPids.keys()) {
             User user = getManager().getUser(uid);
             Integer newPid = logicalPids.get(uid);
             if(!user.getBasePid().equals(newPid)) {

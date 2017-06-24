@@ -1,5 +1,9 @@
 package io.vntr.repartition;
 
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -8,10 +12,10 @@ import java.util.Set;
  */
 public class RepResults {
     private final int numLogicalMoves;
-    private final Map<Integer, Integer> uidToPidMap;
-    private final Map<Integer, Set<Integer>> uidsToReplicaPids;
+    private final TIntIntMap uidToPidMap;
+    private final TIntObjectMap<TIntSet> uidsToReplicaPids;
 
-    public RepResults(int numLogicalMoves, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> uidsToReplicaPids) {
+    public RepResults(int numLogicalMoves, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidsToReplicaPids) {
         this.numLogicalMoves = numLogicalMoves;
         this.uidToPidMap = uidToPidMap;
         this.uidsToReplicaPids = uidsToReplicaPids;
@@ -21,11 +25,11 @@ public class RepResults {
         return numLogicalMoves;
     }
 
-    public Map<Integer, Integer> getUidToPidMap() {
+    public TIntIntMap getUidToPidMap() {
         return uidToPidMap;
     }
 
-    public Map<Integer, Set<Integer>> getUidsToReplicaPids() {
+    public TIntObjectMap<TIntSet> getUidsToReplicaPids() {
         return uidsToReplicaPids;
     }
 }

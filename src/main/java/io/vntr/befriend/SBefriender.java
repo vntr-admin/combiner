@@ -1,23 +1,24 @@
 package io.vntr.befriend;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 public class SBefriender {
-    public static BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser smallerUser, RepUser largerUser, int minNumReplicas, Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions, Map<Integer, Set<Integer>> replicas) {
+    public static BEFRIEND_REBALANCE_STRATEGY determineBestBefriendingRebalanceStrategy(RepUser smallerUser, RepUser largerUser, int minNumReplicas, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas) {
         //calculate the number of replicas that would be generated for each of the three possible configurations:
         //  1) no movements of masters, which maintains the status-quo
         //	2) the master of smallerUserId goes to the partition containing the master of largerUserId
         //  3) the opposite of (3)
 
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         int stay      = calcNumReplicasStay(smallerUser, largerUser, replicas);
         int toLarger  = calcNumReplicasMove(smallerUser, largerUser, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, friendships);
@@ -62,7 +63,7 @@ public class SBefriender {
         return NO_CHANGE;
     }
 
-    static int calcNumReplicasStay(RepUser smallerUser, RepUser largerUser, Map<Integer, Set<Integer>> replicas) {
+    static int calcNumReplicasStay(RepUser smallerUser, RepUser largerUser, TIntObjectMap<TIntSet> replicas) {
         Integer smallerPartitionId = smallerUser.getBasePid();
         Integer largerPartitionId = largerUser.getBasePid();
         boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPids().contains(smallerPartitionId);
@@ -72,17 +73,17 @@ public class SBefriender {
         return curReplicas + deltaReplicas;
     }
 
-    static int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser, Map<Integer, Set<Integer>> replicas, int minNumReplicas, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> uidToReplicasMap, Map<Integer, Set<Integer>> friendships) {
+    static int calcNumReplicasMove(RepUser movingUser, RepUser stayingUser, TIntObjectMap<TIntSet> replicas, int minNumReplicas, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidToReplicasMap, TIntObjectMap<TIntSet> friendships) {
         int curReplicas = replicas.get(movingUser.getBasePid()).size() + replicas.get(stayingUser.getBasePid()).size();
 
         //Find replicas that need to be added
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser, uidToPidMap);
-        Set<Integer> replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getBasePid(), uidToPidMap, uidToReplicasMap);
+        TIntSet replicasToAddInStayingPartition = findReplicasToAddToTargetPartition(movingUser, stayingUser.getBasePid(), uidToPidMap, uidToReplicasMap);
 
         //Find replicas that should be deleted
         boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition = shouldWeDeleteReplicaOfMovingUserInStayingPartition(movingUser, stayingUser, minNumReplicas, uidToPidMap);
         boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition = shouldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, minNumReplicas, uidToPidMap);
-        Set<Integer> replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition, minNumReplicas, uidToReplicasMap, uidToPidMap, friendships);
+        TIntSet replicasInMovingPartitionToDelete = findReplicasInMovingPartitionToDelete(movingUser, replicasToAddInStayingPartition, minNumReplicas, uidToReplicasMap, uidToPidMap, friendships);
 
         //Calculate net change
         int numReplicasToAdd = replicasToAddInStayingPartition.size() + (shouldWeAddAReplicaOfMovingUserInMovingPartition ? 1 : 0);
@@ -93,11 +94,12 @@ public class SBefriender {
         return curReplicas + deltaReplicas;
     }
 
-    public static Set<Integer> findReplicasToAddToTargetPartition(RepUser movingUser, Integer targetPartitionId, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> uidToReplicasMap) {
-        Set<Integer> replicasToAddInStayingPartition = new HashSet<>();
-        for (Integer friendId : movingUser.getFriendIDs()) {
+    public static TIntSet findReplicasToAddToTargetPartition(RepUser movingUser, Integer targetPartitionId, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidToReplicasMap) {
+        TIntSet replicasToAddInStayingPartition = new TIntHashSet();
+        for(TIntIterator iter = movingUser.getFriendIDs().iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
             int pid = uidToPidMap.get(friendId);
-            Set<Integer> replicaPids = uidToReplicasMap.get(friendId);
+            TIntSet replicaPids = uidToReplicasMap.get(friendId);
             if (targetPartitionId != pid && !replicaPids.contains(targetPartitionId)) {
                 replicasToAddInStayingPartition.add(friendId);
             }
@@ -106,9 +108,11 @@ public class SBefriender {
         return replicasToAddInStayingPartition;
     }
 
-    public static Set<Integer> findReplicasInMovingPartitionToDelete(RepUser movingUser, Set<Integer> replicasToBeAdded, int minNumReplicas, Map<Integer, Set<Integer>> uidToReplicasMap, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> replicasInMovingPartitionToDelete = new HashSet<>();
-        for (Integer replicaId : findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser, uidToPidMap, friendships)) {
+    public static TIntSet findReplicasInMovingPartitionToDelete(RepUser movingUser, TIntSet replicasToBeAdded, int minNumReplicas, TIntObjectMap<TIntSet> uidToReplicasMap, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> friendships) {
+        TIntSet replicasInMovingPartitionToDelete = new TIntHashSet();
+
+        for(TIntIterator iter = findReplicasInPartitionThatWereOnlyThereForThisUsersSake(movingUser, uidToPidMap, friendships).iterator(); iter.hasNext(); ) {
+            int replicaId = iter.next();
             int numExistingReplicas = uidToReplicasMap.get(replicaId).size();
             if (numExistingReplicas + (replicasToBeAdded.contains(replicaId) ? 1 : 0) > minNumReplicas) {
                 replicasInMovingPartitionToDelete.add(replicaId);
@@ -118,17 +122,18 @@ public class SBefriender {
         return replicasInMovingPartitionToDelete;
     }
 
-    public static Set<Integer> findReplicasInPartitionThatWereOnlyThereForThisUsersSake(RepUser user, Map<Integer, Integer> uidToPidMap, Map<Integer, Set<Integer>> friendships) {
-        Set<Integer> replicasThatWereJustThereForThisUsersSake = new HashSet<>();
-        outer:
-        for (Integer friendId : user.getFriendIDs()) {
-            if (!uidToPidMap.get(friendId).equals(user.getBasePid())) {
-                for (Integer friendOfFriendId : friendships.get(friendId)) {
-                    if (friendOfFriendId.equals(user.getId())) {
+    public static TIntSet findReplicasInPartitionThatWereOnlyThereForThisUsersSake(RepUser user, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> friendships) {
+        TIntSet replicasThatWereJustThereForThisUsersSake = new TIntHashSet();
+        outer: for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
+            if (uidToPidMap.get(friendId) != user.getBasePid()) {
+                for(TIntIterator iter2 = friendships.get(friendId).iterator(); iter2.hasNext(); ) {
+                    int friendOfFriendId = iter2.next();
+                    if (friendOfFriendId == user.getId()) {
                         continue;
                     }
 
-                    if (uidToPidMap.get(friendOfFriendId).equals(user.getBasePid())) {
+                    if (uidToPidMap.get(friendOfFriendId) == user.getBasePid()) {
                         continue outer;
                     }
                 }
@@ -140,9 +145,9 @@ public class SBefriender {
         return replicasThatWereJustThereForThisUsersSake;
     }
 
-    static boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(RepUser movingUser, Map<Integer, Integer> uidToPidMap) {
-        for (Integer friendId : movingUser.getFriendIDs()) {
-            if (movingUser.getBasePid().equals(uidToPidMap.get(friendId))) {
+    static boolean shouldWeAddAReplicaOfMovingUserInMovingPartition(RepUser movingUser, TIntIntMap uidToPidMap) {
+        for(TIntIterator iter = movingUser.getFriendIDs().iterator(); iter.hasNext(); ) {
+            if (movingUser.getBasePid().equals(uidToPidMap.get(iter.next()))) {
                 return true;
             }
         }
@@ -150,7 +155,7 @@ public class SBefriender {
         return false;
     }
 
-    static boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(RepUser movingUser, RepUser stayingUser, int minNumReplicas, Map<Integer, Integer> uidToPidMap) {
+    static boolean shouldWeDeleteReplicaOfMovingUserInStayingPartition(RepUser movingUser, RepUser stayingUser, int minNumReplicas, TIntIntMap uidToPidMap) {
         boolean couldWeDeleteReplicaOfMovingUserInStayingPartition = movingUser.getReplicaPids().contains(stayingUser.getBasePid());
         int numReplicas = movingUser.getReplicaPids().size();
         boolean shouldWeAddAReplicaOfMovingUserInMovingPartition = shouldWeAddAReplicaOfMovingUserInMovingPartition(movingUser, uidToPidMap);
@@ -158,18 +163,19 @@ public class SBefriender {
         return couldWeDeleteReplicaOfMovingUserInStayingPartition && redundancyOfMovingUser > minNumReplicas;
     }
 
-    static boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser, int minNumReplicas, Map<Integer, Integer> uidToPidMap) {
+    static boolean shouldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser, int minNumReplicas, TIntIntMap uidToPidMap) {
         boolean couldWeDeleteReplicaOfStayingUserInMovingPartition = couldWeDeleteReplicaOfStayingUserInMovingPartition(movingUser, stayingUser, uidToPidMap);
         int redundancyOfStayingUser = stayingUser.getReplicaPids().size();
         return couldWeDeleteReplicaOfStayingUserInMovingPartition && redundancyOfStayingUser > minNumReplicas;
     }
 
-    static boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser, Map<Integer, Integer> uidToPidMap) {
+    static boolean couldWeDeleteReplicaOfStayingUserInMovingPartition(RepUser movingUser, RepUser stayingUser, TIntIntMap uidToPidMap) {
         boolean movingPartitionHasStayingUserReplica = stayingUser.getReplicaPids().contains(movingUser.getBasePid());
         boolean stayingUserHasNoOtherFriendMastersInMovingPartition = true; //deleting staying user replica is a possibility, if it exists, subject to balance constraints
-        for (int friendId : stayingUser.getFriendIDs()) {
+        for(TIntIterator iter = stayingUser.getFriendIDs().iterator(); iter.hasNext(); ) {
+            int friendId = iter.next();
             boolean friendIsNotMovingUser = friendId != movingUser.getId();
-            boolean friendsMasterIsOnPartition = uidToPidMap.get(friendId).equals(movingUser.getBasePid());
+            boolean friendsMasterIsOnPartition = uidToPidMap.get(friendId) == movingUser.getBasePid();
             if (friendIsNotMovingUser && friendsMasterIsOnPartition) {
                 stayingUserHasNoOtherFriendMastersInMovingPartition = false;
             }

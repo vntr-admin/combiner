@@ -1,6 +1,9 @@
 package io.vntr.befriend;
 
+import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.HRepartitioner;
 import io.vntr.utils.TroveUtils;
@@ -11,9 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
-import static io.vntr.utils.Utils.getUToMasterMap;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -23,12 +24,12 @@ public class HBefrienderTest {
 
     @Test
     public void testCalculateGain() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -41,10 +42,10 @@ public class HBefrienderTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         float differential = 0.0001f;
         float averageWeight = ((float) friendships.size()) / ((float) partitions.size());
@@ -53,10 +54,10 @@ public class HBefrienderTest {
         float gammaBarelyAllowingFiveOnPartition = (5f / averageWeight) + differential;
         float gammaNearlyAllowingFiveOnPartition = (5f / averageWeight) - differential;
 
-        TIntObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(TroveUtils.convertMapSetToTIntObjectMapTIntSet(partitions), TroveUtils.convertMapSetToTIntObjectMapTIntSet(bidirectionalFriendships), new TIntHashSet(friendships.keySet()), gammaBarelyAllowingSixOnPartition);
+        TIntObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, bidirectionalFriendships, new TIntHashSet(friendships.keys()), gammaBarelyAllowingSixOnPartition);
 
         Map<Integer, Map<Integer, Integer>> expectedResults = new HashMap<>();
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             expectedResults.put(uid, new HashMap<Integer, Integer>());
         }
 
@@ -87,9 +88,9 @@ public class HBefrienderTest {
         expectedResults.get(13).put(1, -1);
         expectedResults.get(13).put(2, -1);
 
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             int usersPid = uidToPidMap.get(uid);
-            for(int pid : partitions.keySet()) {
+            for(int pid : partitions.keys()) {
                 if(pid != usersPid) {
                     int result = HBefriender.calculateGain(lusers.get(uid), pid, gammaBarelyAllowingSixOnPartition);
                     int expectedResult = expectedResults.get(uid).get(pid);
@@ -107,12 +108,12 @@ public class HBefrienderTest {
 
     @Test
     public void testDetermineBestBefriendingRebalanceStrategy() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -125,9 +126,9 @@ public class HBefrienderTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         float differential = 0.0001f;
         float averageWeight = ((float) friendships.size()) / ((float) partitions.size());

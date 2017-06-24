@@ -1,11 +1,16 @@
 package io.vntr.migration;
 
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -16,14 +21,14 @@ public class SMigratorTest {
 
     @Test
     public void testGetLeastOverloadedPartition() {
-        Map<Integer, Integer> pToMasterCounts = new HashMap<>();
+        TIntIntMap pToMasterCounts = new TIntIntHashMap();
         pToMasterCounts.put(1, 10);
         pToMasterCounts.put(2,  7);
         pToMasterCounts.put(3,  9);
         pToMasterCounts.put(4, 11);
         pToMasterCounts.put(5, 13);
 
-        Map<Integer, Integer> strategy = new HashMap<>();
+        TIntIntMap strategy = new TIntIntHashMap();
         strategy.put(1,  2);
         strategy.put(2,  2);
         strategy.put(3,  2);
@@ -58,14 +63,14 @@ public class SMigratorTest {
 
     @Test
     public void testGetLeastOverloadedPartitionWhereThisUserHasAReplica() {
-        Map<Integer, Integer> pToMasterCounts = new HashMap<>();
+        TIntIntMap pToMasterCounts = new TIntIntHashMap();
         pToMasterCounts.put(1, 10);
         pToMasterCounts.put(2,  7);
         pToMasterCounts.put(3,  9);
         pToMasterCounts.put(4, 11);
         pToMasterCounts.put(5, 13);
 
-        Map<Integer, Integer> strategy = new HashMap<>();
+        TIntIntMap strategy = new TIntIntHashMap();
         strategy.put(1,  2);
         strategy.put(2,  2);
         strategy.put(3,  2);
@@ -100,12 +105,12 @@ public class SMigratorTest {
 
     @Test
     public void testScoreReplicaPromotion() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -118,18 +123,18 @@ public class SMigratorTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicas = new HashMap<>();
+        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>();
         replicas.put(1, initSet( 6, 8, 9, 10, 12,  7, 13));
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  9));
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         Map<Integer, Map<Integer, Float>> expectedResults = new HashMap<>();
-        for(int i : friendships.keySet()) {
+        for(int i : friendships.keys()) {
             expectedResults.put(i, new HashMap<Integer, Float>());
         }
 
@@ -157,7 +162,7 @@ public class SMigratorTest {
         for(int uid : expectedResults.keySet()) {
             float numFriends = bidirectionalFriendships.get(uid).size();
             for(int pid : expectedResults.get(uid).keySet()) {
-                Set<Integer> friendIds = new HashSet<>(bidirectionalFriendships.get(uid));
+                TIntSet friendIds = new TIntHashSet(bidirectionalFriendships.get(uid));
                 friendIds.retainAll(partitions.get(pid));
                 float friendsOnPartition = friendIds.size();
                 expectedResults.get( uid).put(pid, friendsOnPartition * friendsOnPartition / numFriends);
@@ -175,40 +180,40 @@ public class SMigratorTest {
 
     @Test
     public void testGetRemainingSpotsInPartitions() {
-        Map<Integer, Integer> pToMasterCounts = new HashMap<>();
+        TIntIntMap pToMasterCounts = new TIntIntHashMap();
         pToMasterCounts.put(1, 10);
         pToMasterCounts.put(2,  7);
         pToMasterCounts.put(3,  9);
         pToMasterCounts.put(4, 11);
         pToMasterCounts.put(5, 13);
 
-        Map<Integer, Integer> expectedWithNothingGone = new HashMap<>();
+        TIntIntMap expectedWithNothingGone = new TIntIntHashMap();
         expectedWithNothingGone.put(1,  0);
         expectedWithNothingGone.put(2,  3);
         expectedWithNothingGone.put(3,  1);
         expectedWithNothingGone.put(4, -1);
         expectedWithNothingGone.put(5, -3);
-        assertEquals(expectedWithNothingGone, SMigrator.getRemainingSpotsInPartitions(Collections.<Integer>emptySet(), 50, pToMasterCounts));
+        assertEquals(expectedWithNothingGone, SMigrator.getRemainingSpotsInPartitions(new TIntHashSet(), 50, pToMasterCounts));
 
-        Map<Integer, Integer> expectedWithP1Gone = new HashMap<>();
+        TIntIntMap expectedWithP1Gone = new TIntIntHashMap();
         expectedWithP1Gone.put(2, 6);
         expectedWithP1Gone.put(3, 4);
         expectedWithP1Gone.put(4, 2);
         expectedWithP1Gone.put(5, 0);
         assertEquals(expectedWithP1Gone, SMigrator.getRemainingSpotsInPartitions(initSet(1), 50, pToMasterCounts));
 
-        Map<Integer, Integer> expectedWithP1And2Gone = new HashMap<>();
+        TIntIntMap expectedWithP1And2Gone = new TIntIntHashMap();
         expectedWithP1And2Gone.put(3, 8);
         expectedWithP1And2Gone.put(4, 6);
         expectedWithP1And2Gone.put(5, 4);
         assertEquals(expectedWithP1And2Gone, SMigrator.getRemainingSpotsInPartitions(initSet(1, 2), 50, pToMasterCounts));
 
-        Map<Integer, Integer> expectedWithP1And2And3Gone = new HashMap<>();
+        TIntIntMap expectedWithP1And2And3Gone = new TIntIntHashMap();
         expectedWithP1And2And3Gone.put(4, 14);
         expectedWithP1And2And3Gone.put(5, 12);
         assertEquals(expectedWithP1And2And3Gone, SMigrator.getRemainingSpotsInPartitions(initSet(1, 2, 3), 50, pToMasterCounts));
 
-        Map<Integer, Integer> expectedWithOnly5Remaining = new HashMap<>();
+        TIntIntMap expectedWithOnly5Remaining = new TIntIntHashMap();
         expectedWithOnly5Remaining.put(5, 37);
         assertEquals(expectedWithOnly5Remaining, SMigrator.getRemainingSpotsInPartitions(initSet(1, 2, 3, 4), 50, pToMasterCounts));
     }

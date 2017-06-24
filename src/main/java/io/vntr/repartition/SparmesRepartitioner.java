@@ -39,8 +39,7 @@ public class SparmesRepartitioner {
         TIntIntMap uidsToPids = getUToMasterMap(state.getLogicalPartitions());
         TIntObjectMap<TIntSet> uidsToReplicaPids = getUToReplicasMap(state.getLogicalReplicaPartitions(), friendships.keySet());
 
-
-        return new RepResults(moves, convertTIntIntMapToMap(uidsToPids), convertTIntObjectMapTIntSetToMapSet(uidsToReplicaPids));
+        return new RepResults(moves, uidsToPids, uidsToReplicaPids);
     }
 
     static int performStage(boolean firstStage, int k, State state) {

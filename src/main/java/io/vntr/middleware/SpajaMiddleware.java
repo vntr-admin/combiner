@@ -2,6 +2,9 @@ package io.vntr.middleware;
 
 import java.util.*;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.RepResults;
@@ -30,9 +33,9 @@ public class SpajaMiddleware extends SparMiddleware {
     }
 
     void repartition() {
-        RepResults repResults = SpajaRepartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, TroveUtils.convertMapSetToTIntObjectMapTIntSet(getFriendships()), TroveUtils.convertMapSetToTIntObjectMapTIntSet(getPartitionToUserMap()), TroveUtils.convertMapSetToTIntObjectMapTIntSet(getPartitionToReplicasMap()));
+        RepResults repResults = SpajaRepartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, TroveUtils.convert(getFriendships()), TroveUtils.convert(getPartitionToUserMap()), TroveUtils.convert(getPartitionToReplicasMap()));
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
-        physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
+        physicallyMigrate(TroveUtils.convert(repResults.getUidToPidMap()), TroveUtils.convert(repResults.getUidsToReplicaPids()));
     }
 
     void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
@@ -42,7 +45,7 @@ public class SpajaMiddleware extends SparMiddleware {
 
             RepUser user = getManager().getUserMaster(uid);
             Integer oldPid = user.getBasePid();
-            Set<Integer> oldReplicas = user.getReplicaPids();
+            TIntSet oldReplicas = user.getReplicaPids();
 
             if(!oldPid.equals(newPid)) {
                 getManager().moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
@@ -50,16 +53,17 @@ public class SpajaMiddleware extends SparMiddleware {
             }
 
             if(!oldReplicas.equals(newReplicas)) {
-                Set<Integer> replicasToAdd = new HashSet<>(newReplicas);
+                TIntSet replicasToAdd = new TIntHashSet(newReplicas);
                 replicasToAdd.removeAll(oldReplicas);
-                for(Integer replicaPid : replicasToAdd) {
+                for(TIntIterator iter = replicasToAdd.iterator(); iter.hasNext(); ) {
+                    int replicaPid = iter.next();
                     getManager().addReplica(user, replicaPid);
                 }
 
-                Set<Integer> replicasToRemove = new HashSet<>(oldReplicas);
+                TIntSet replicasToRemove = new TIntHashSet(oldReplicas);
                 replicasToRemove.removeAll(newReplicas);
-                for(Integer replicaPid : replicasToRemove) {
-                    getManager().removeReplica(user, replicaPid);
+                for(TIntIterator iter = replicasToRemove.iterator(); iter.hasNext(); ) {
+                    getManager().removeReplica(user, iter.next());
                 }
             }
         }

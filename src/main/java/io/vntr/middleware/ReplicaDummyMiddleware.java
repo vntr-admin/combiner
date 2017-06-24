@@ -1,11 +1,15 @@
 package io.vntr.middleware;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
 import static io.vntr.migration.SMigrator.getUserMigrationStrategy;
+import static io.vntr.utils.TroveUtils.convert;
 import static io.vntr.utils.Utils.getUToReplicasMap;
 import static java.util.Collections.singleton;
 
@@ -50,10 +54,10 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         
         //Second, determine the migration strategy
         Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getFriendships().keySet());
-        Map<Integer, Integer> migrationStrategy = getUserMigrationStrategy(partitionId, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap(), false);
+        TIntIntMap migrationStrategy = getUserMigrationStrategy(partitionId, convert(getFriendships()), convert(getPartitionToUserMap()), convert(getPartitionToReplicasMap()), false);
 
         //Third, promote replicas to masters as specified in the migration strategy
-        for (Integer userId : migrationStrategy.keySet()) {
+        for (Integer userId : migrationStrategy.keys()) {
             RepUser user = getManager().getUserMaster(userId);
             Integer newPartitionId = migrationStrategy.get(userId);
 
@@ -74,8 +78,8 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         //Fifth, remove references to replicas formerly on this partition
         for(Integer uid : getManager().getReplicasOnPartition(partitionId)) {
             RepUser user = getManager().getUserMaster(uid);
-            for (Integer currentReplicaPartitionId : user.getReplicaPids()) {
-                getManager().getReplicaOnPartition(user.getId(), currentReplicaPartitionId).removeReplicaPartitionId(partitionId);
+            for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+                getManager().getReplicaOnPartition(user.getId(), iter.next()).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds

@@ -1,7 +1,12 @@
 package io.vntr.middleware;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -11,6 +16,7 @@ import java.util.Set;
 
 import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
 import static io.vntr.utils.InitUtils.initNoRepManager;
+import static io.vntr.utils.TroveUtils.convert;
 import static org.junit.Assert.*;
 
 /**
@@ -24,24 +30,24 @@ public class HermesMiddlewareTest {
         int numPartitions = 10;
 
         float gamma = 1.5f;
-        Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1f, 0.1f);
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = convert(getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1f, 0.1f));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         for(int pid=0; pid<numPartitions; pid++) {
-            partitions.put(pid, new HashSet<Integer>());
+            partitions.put(pid, new TIntHashSet());
         }
         for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
-        NoRepManager manager = initNoRepManager(0, false, partitions, friendships);
+        NoRepManager manager = initNoRepManager(0, false, convert(partitions), convert(friendships));
         HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
         middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (numPartitions - 1)).iterator().next());
-        for(Integer uid : friendships.keySet()) {
+        for(Integer uid : friendships.keys()) {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
         }
 
-        Map<Integer, Set<Integer>> finalTopology = manager.getPartitionToUsers();
-        Set<Integer> observedUsers = new HashSet<>();
-        for(Integer pid : finalTopology.keySet()) {
+        TIntObjectMap<TIntSet> finalTopology = convert(manager.getPartitionToUsers());
+        TIntSet observedUsers = new TIntHashSet();
+        for(Integer pid : finalTopology.keys()) {
             observedUsers.addAll(finalTopology.get(pid));
         }
 

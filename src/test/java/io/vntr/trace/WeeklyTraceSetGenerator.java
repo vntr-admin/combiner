@@ -1,5 +1,6 @@
 package io.vntr.trace;
 
+import gnu.trove.map.TIntIntMap;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.TestUtils;
 import io.vntr.repartition.MetisRepartitioner;
@@ -10,7 +11,6 @@ import io.vntr.utils.Utils;
 import java.io.FileInputStream;
 import java.util.*;
 
-import static io.vntr.TestUtils.findKeysForUser;
 import static io.vntr.trace.TRACE_ACTION.*;
 import static io.vntr.utils.ProbabilityUtils.chooseKeyFromMapSetInProportionToSetSize;
 import static io.vntr.utils.ProbabilityUtils.chooseKeyValuePairFromMapSetUniformly;
@@ -317,12 +317,12 @@ public class WeeklyTraceSetGenerator {
     }
 
     private static Map<Integer, Set<Integer>> getSoftStartPartitions(Set<Integer> pids, String metisCommand, String metisTempDir) {
-        Map<Integer, Integer> softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, TroveUtils.convertMapSetToTIntObjectMapTIntSet(bidirectionalFriendships), new TIntHashSet(pids));
+        TIntIntMap softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, TroveUtils.convert(bidirectionalFriendships), new TIntHashSet(pids));
         Map<Integer, Set<Integer>> softStartPartitions = new HashMap<>();
         for(int pid : pids) {
             softStartPartitions.put(pid, new HashSet<Integer>());
         }
-        for(int uid : softStartUidToPidMap.keySet()) {
+        for(int uid : softStartUidToPidMap.keys()) {
             int pid = softStartUidToPidMap.get(uid);
             softStartPartitions.get(pid).add(uid);
         }

@@ -1,13 +1,16 @@
 package io.vntr.befriend;
 
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 
 import java.util.*;
 
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
-import static io.vntr.utils.Utils.getPToFriendCount;
-import static io.vntr.utils.Utils.getUToMasterMap;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.*;
 
 /**
@@ -17,12 +20,12 @@ public class JBefrienderTest {
 
     @Test
     public void testCalculateGain() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -35,24 +38,24 @@ public class JBefrienderTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
-        Map<Integer, Map<Integer, Integer>> uToPToFriendCount = new HashMap<>();
+        TIntObjectMap<TIntIntMap> uToPToFriendCount = new TIntObjectHashMap<>();
 
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             uToPToFriendCount.put(uid, getPToFriendCount(uid, bidirectionalFriendships, uidToPidMap, partitions.keySet()));
         }
 
-        Map<Integer, Map<Integer, Integer>> expectedResults = new HashMap<>();
-        for(int uid : friendships.keySet()) {
-            expectedResults.put(uid, new HashMap<Integer, Integer>());
+        TIntObjectMap<TIntIntMap> expectedResults = new TIntObjectHashMap<>();
+        for(int uid : friendships.keys()) {
+            expectedResults.put(uid, new TIntIntHashMap());
         }
 
-        for(int uid1 : friendships.keySet()) {
-            for(int uid2 : friendships.keySet()) {
+        for(int uid1 : friendships.keys()) {
+            for(int uid2 : friendships.keys()) {
                 if(uid1 < uid2) {
                     int pid1 = uidToPidMap.get(uid1);
                     int pid2 = uidToPidMap.get(uid2);
@@ -69,8 +72,8 @@ public class JBefrienderTest {
             }
         }
 
-        for(int uid1 : expectedResults.keySet()) {
-            for(int uid2 : expectedResults.get(uid1).keySet()) {
+        for(int uid1 : expectedResults.keys()) {
+            for(int uid2 : expectedResults.get(uid1).keys()) {
                 int expectedResult = expectedResults.get(uid1).get(uid2);
                 int result = JBefriender.calculateGain(uid1, uid2, bidirectionalFriendships, uidToPidMap);
                 assertTrue(expectedResult == result);
@@ -81,12 +84,12 @@ public class JBefrienderTest {
     @Test
     public void findPartner() {
         float alpha = 1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12)); //P1:2, P2:2, P3:2
         friendships.put(2,  initSet(3, 6, 9, 12));        //P1:2, P2:2, P3:1
         friendships.put(3,  initSet(4, 8, 12));           //P1:2, P2:1, P3:1
@@ -99,10 +102,10 @@ public class JBefrienderTest {
         friendships.put(10, initSet(11));                 //P1:2, P2:1, P3:1
         friendships.put(11, initSet(12));                 //P1:0, P2:0, P3:2
         friendships.put(12, initSet(13));                 //P1:4, P2:0, P3:2
-        friendships.put(13, Collections.<Integer>emptySet());          //P1:0, P2:0, P3:1
+        friendships.put(13, new TIntHashSet());          //P1:0, P2:0, P3:1
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         Map<Integer, Integer> expectedResults = new HashMap<>();
         expectedResults.put(1, null);
@@ -119,8 +122,8 @@ public class JBefrienderTest {
         expectedResults.put(12, null);
         expectedResults.put(13, null);
 
-        for(int uid : friendships.keySet()) {
-            Set<Integer> candidates = new HashSet<>(friendships.keySet());
+        for(int uid : friendships.keys()) {
+            TIntSet candidates = new TIntHashSet(friendships.keys());
             candidates.removeAll(partitions.get(uidToPidMap.get(uid)));
             Integer result = JBefriender.findPartner(uid, candidates, alpha, bidirectionalFriendships, uidToPidMap);
             Integer expectedResult = expectedResults.get(uid);
@@ -130,12 +133,12 @@ public class JBefrienderTest {
 
     @Test
     public void testHowManyFriendsHavePartition() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
         friendships.put(2,  initSet(3, 6, 9, 12));
         friendships.put(3,  initSet(4, 8, 12));
@@ -148,19 +151,19 @@ public class JBefrienderTest {
         friendships.put(10, initSet(11));
         friendships.put(11, initSet(12));
         friendships.put(12, initSet(13));
-        friendships.put(13, Collections.<Integer>emptySet());
+        friendships.put(13, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
-        Map<Integer, Map<Integer, Integer>> uToPToFriendCount = new HashMap<>();
+        TIntObjectMap<TIntIntMap> uToPToFriendCount = new TIntObjectHashMap<>(friendships.size()+1);
 
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             uToPToFriendCount.put(uid, getPToFriendCount(uid, bidirectionalFriendships, uidToPidMap, partitions.keySet()));
         }
 
-        for(int uid : friendships.keySet()) {
-            for(int pid : partitions.keySet()) {
+        for(int uid : friendships.keys()) {
+            for(int pid : partitions.keys()) {
                 int expectedResult = uToPToFriendCount.get(uid).get(pid);
                 int result = JBefriender.howManyFriendsHavePartition(bidirectionalFriendships.get(uid), pid, uidToPidMap);
                 assertTrue(expectedResult == result);
