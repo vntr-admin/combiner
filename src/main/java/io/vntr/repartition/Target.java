@@ -4,12 +4,12 @@ package io.vntr.repartition;
  * Created by robertlindquist on 4/21/17.
  */
 public class Target implements Comparable<Target> {
-    public final Integer uid;
+    public final int uid;
     public final Integer pid;
     public final Integer oldPid;
     public final Float gain;
 
-    public Target(Integer uid, Integer pid, Integer oldPid, Float gain) {
+    public Target(int uid, Integer pid, Integer oldPid, Float gain) {
         this.uid = uid;
         this.pid = pid;
         this.oldPid = oldPid;
@@ -30,7 +30,7 @@ public class Target implements Comparable<Target> {
         if(oldPartCompare != 0) {
             return oldPartCompare;
         }
-        return uid.compareTo(o.uid);
+        return uid - o.uid;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class Target implements Comparable<Target> {
 
         Target target = (Target) o;
 
-        if (!uid.equals(target.uid)) return false;
+        if (uid != (target.uid)) return false;
         if (!pid.equals(target.pid)) return false;
         if (!oldPid.equals(target.oldPid)) return false;
         return gain.equals(target.gain);
@@ -49,7 +49,7 @@ public class Target implements Comparable<Target> {
 
     @Override
     public int hashCode() {
-        int result = uid.hashCode();
+        int result = uid;
         result = 31 * result + pid.hashCode();
         result = 31 * result + oldPid.hashCode();
         result = 31 * result + gain.hashCode();

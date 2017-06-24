@@ -9,12 +9,8 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
-import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.TroveUtils;
 
-import java.util.*;
-
-import static io.vntr.utils.TroveUtils.convert;
+import static io.vntr.utils.TroveUtils.*;
 
 public class RepManager {
     private final int minNumReplicas;
@@ -59,12 +55,12 @@ public class RepManager {
         return uMap.size();
     }
 
-    public Set<Integer> getPids() {
-        return convert(pMap.keySet());
+    public TIntSet getPids() {
+        return pMap.keySet();
     }
 
-    public Set<Integer> getUids() {
-        return convert(uMap.keySet());
+    public TIntSet getUids() {
+        return uMap.keySet();
     }
 
     public int addUser() {
@@ -80,8 +76,8 @@ public class RepManager {
 
         addUser(RepUser, masterPartitionId);
 
-        for (Integer id : getPartitionsToAddInitialReplicas(masterPartitionId)) {
-            addReplica(RepUser, id);
+        for(TIntIterator iter = getPartitionsToAddInitialReplicas(masterPartitionId).iterator(); iter.hasNext(); ) {
+            addReplica(RepUser, iter.next());
         }
     }
 
@@ -169,7 +165,7 @@ public class RepManager {
         pMap.get(removalPid).removeReplica(user.getId());
     }
 
-    public void moveUser(RepUser user, Integer toPid, Set<Integer> replicateInDestinationPartition, Set<Integer> replicasToDeleteInSourcePartition) {
+    public void moveUser(RepUser user, Integer toPid, TIntSet replicateInDestinationPartition, TIntSet replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
         Integer uid = user.getId();
         Integer fromPid = user.getBasePid();
@@ -184,8 +180,8 @@ public class RepManager {
             }
         }
 
-        for (Integer friendToReplicateId : replicateInDestinationPartition) {
-            addReplica(getUserMaster(friendToReplicateId), toPid);
+        for(TIntIterator iter = replicateInDestinationPartition.iterator(); iter.hasNext(); ) {
+            addReplica(getUserMaster(iter.next()), toPid);
         }
 
         //Step 3: remove unnecessary replicas
@@ -193,6 +189,7 @@ public class RepManager {
         // (1) replica of user in destinationPartition
         // (2) replicas of user's friends in oldPartition with no other purpose
         // (3) [the replica of the new friend that prompted this move should already be accounted for in (2)]
+
 
         if (user.getReplicaPids().contains(toPid)) {
             if (user.getReplicaPids().size() <= minNumReplicas) {
@@ -203,8 +200,8 @@ public class RepManager {
         }
 
         //delete the replica of the appropriate friends in oldPartition
-        for (Integer replicaIdToDelete : replicasToDeleteInSourcePartition) {
-            removeReplica(getUserMaster(replicaIdToDelete), fromPid);
+        for(TIntIterator iter = replicasToDeleteInSourcePartition.iterator(); iter.hasNext(); ) {
+            removeReplica(getUserMaster(iter.next()), fromPid);
         }
 
         increaseTally(1);
@@ -296,10 +293,9 @@ public class RepManager {
         return array[(int)(array.length * Math.random())];
     }
 
-    public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPid) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(convert(pMap.keySet()));
-        partitionIdsAtWhichReplicasCanBeAdded.remove(masterPid);
-        return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
+    public TIntSet getPartitionsToAddInitialReplicas(Integer masterPid) {
+        int[] pidsMinusMasterPid = removeUniqueElementFromNonEmptyArray(pMap.keySet().toArray(), masterPid);
+        return getKDistinctValuesFromArray(getMinNumReplicas(), pidsMinusMasterPid);
     }
 
     public TIntObjectMap<TIntSet> getPartitionToUserMap() {
@@ -334,8 +330,8 @@ public class RepManager {
 
     public Integer getReplicationCount() {
         int count = 0;
-        for(Integer pid : getPids()) {
-            count += getPartitionById(pid).getNumReplicas();
+        for(TIntIterator iter = getPids().iterator(); iter.hasNext(); ) {
+            count += getPartitionById(iter.next()).getNumReplicas();
         }
         return count;
     }
@@ -395,7 +391,7 @@ public class RepManager {
         //check replicas
         for(Integer uid : uMap.keys()) {
             RepUser user = getUserMaster(uid);
-            Set<Integer> observedReplicaPids = new HashSet<>();
+            TIntSet observedReplicaPids = new TIntHashSet();
             for(Integer pid : pMap.keys()) {
                 if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {
                     observedReplicaPids.add(pid);

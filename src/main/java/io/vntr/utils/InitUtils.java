@@ -39,10 +39,8 @@ public class InitUtils {
         Map<Integer, Set<Integer>> uToReplicasMap = getUToReplicasMap(replicaPartitions, uToMasterMap.keySet());
 
         for(Integer uid : friendships.keySet()) {
-            RepUser user = new RepUser(uid);
             Integer pid = uToMasterMap.get(uid);
-            user.setBasePid(pid);
-
+            RepUser user = new RepUser(uid, pid);
             manager.addUser(user, pid);
         }
 

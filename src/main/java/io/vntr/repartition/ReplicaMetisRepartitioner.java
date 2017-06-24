@@ -6,13 +6,8 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import io.vntr.utils.TroveUtils;
-import io.vntr.utils.Utils;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import static io.vntr.utils.TroveUtils.*;
 
 /**
  * Created by robertlindquist on 6/4/17.
@@ -31,9 +26,9 @@ public class ReplicaMetisRepartitioner {
             partitions.get(pid).add(uid);
         }
 
-        TIntObjectMap<TIntSet> replicas = TroveUtils.getInitialReplicasObeyingKReplication(minNumReplicas, partitions, friendships);
+        TIntObjectMap<TIntSet> replicas = getInitialReplicasObeyingKReplication(minNumReplicas, partitions, friendships);
 
-        TIntObjectMap<TIntSet> uidToReplicasMap = TroveUtils.getUToReplicasMap(replicas, friendships.keySet());
+        TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         RepResults repResults = new RepResults(0, uidToPidMap, uidToReplicasMap);
         return repResults;

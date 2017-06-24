@@ -45,7 +45,8 @@ public class SparmesMiddleware extends SparMiddleware {
         TIntIntMap currentUidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
         TIntObjectMap<TIntSet> currentUidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TIntHashSet(getManager().getUids()));
 
-        for(int uid : getManager().getUids()) {
+        for(TIntIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             int currentPid = currentUidToPidMap.get(uid);
             int newPid = repResults.getUidToPidMap().get(uid);
 
@@ -59,14 +60,14 @@ public class SparmesMiddleware extends SparMiddleware {
             TIntSet newReplicas = repResults.getUidsToReplicaPids().get(uid);
             TIntSet currentReplicas = currentUidToReplicasMap.get(uid);
             if(!currentReplicas.equals(newReplicas)) {
-                for(TIntIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
-                    int newReplica = iter.next();
+                for(TIntIterator iter2 = newReplicas.iterator(); iter2.hasNext(); ) {
+                    int newReplica = iter2.next();
                     if(!currentReplicas.contains(newReplica)) {
                         getManager().addReplica(getManager().getUserMaster(uid), newReplica);
                     }
                 }
-                for(TIntIterator iter = currentReplicas.iterator(); iter.hasNext(); ) {
-                    int oldReplica = iter.next();
+                for(TIntIterator iter2 = currentReplicas.iterator(); iter2.hasNext(); ) {
+                    int oldReplica = iter2.next();
                     if(!newReplicas.contains(oldReplica)) {
                         getManager().removeReplica(getManager().getUserMaster(uid), oldReplica);
                     }
@@ -75,13 +76,13 @@ public class SparmesMiddleware extends SparMiddleware {
         }
 
         //shore up friend replicas (ideally would be unnecessary)
-        for(int uid : getManager().getUids()) {
-            shoreUpFriendReplicas(uid);
+        for(TIntIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
+            shoreUpFriendReplicas(iter.next());
         }
 
         //ensure k replication
-        for(int uid : getManager().getUids()) {
-            ensureKReplication(uid);
+        for(TIntIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
+            ensureKReplication(iter.next());
         }
     }
 

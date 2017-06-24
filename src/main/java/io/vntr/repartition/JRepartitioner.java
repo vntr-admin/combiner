@@ -1,6 +1,5 @@
 package io.vntr.repartition;
 
-import com.google.common.collect.Sets;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
@@ -10,7 +9,7 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.utils.Utils;
 
-import java.util.*;
+import java.util.Arrays;
 
 import static io.vntr.utils.TroveUtils.*;
 
@@ -75,8 +74,6 @@ public class JRepartitioner {
                 continue;
             }
 
-//            int[] myCounts = howManyFriendsHaveLogicalPartitions(uid, new int[]{logicalPid, theirLogicalPid}, state);
-//            int[] theirCounts = howManyFriendsHaveLogicalPartitions(partnerId, new int[]{logicalPid, theirLogicalPid}, state);
             int myNeighborsOnMine      = state.getUidToPidToFriendCounts().get(uid).get(logicalPid);
             int myNeighborsOnTheirs    = state.getUidToPidToFriendCounts().get(uid).get(theirLogicalPid);
             int theirNeighborsOnMine   = state.getUidToPidToFriendCounts().get(partnerId).get(logicalPid);
@@ -160,8 +157,8 @@ public class JRepartitioner {
     }
 
     static TIntObjectMap<TIntSet> getRandomLogicalPartitions(TIntSet uids, TIntSet pids) {
-        List<Integer> pidList = Arrays.asList(getPidsToAssign(uids.size(), pids));
-        Collections.shuffle(pidList);
+        int[] pidArray = getPidsToAssign(uids.size(), pids);
+        Utils.shuffle(pidArray);
 
         TIntObjectMap<TIntSet> logicalPartitions = new TIntObjectHashMap<>(pids.size()+1);
         for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
@@ -172,34 +169,19 @@ public class JRepartitioner {
         int index = 0;
         for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
-            logicalPartitions.get(pidList.get(index)).add(uid);
+            logicalPartitions.get(pidArray[index]).add(uid);
             index++;
         }
 
         return logicalPartitions;
     }
 
-    static TIntIntMap getRandomLogicalPids(TIntSet uids, TIntSet pids) {
-        List<Integer> pidList = Arrays.asList(getPidsToAssign(uids.size(), pids));
-        Collections.shuffle(pidList);
-
-        TIntIntMap logicalPids = new TIntIntHashMap(pids.size()+1);
-        int index = 0;
-        for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            logicalPids.put(uid, pidList.get(index));
-            index++;
-        }
-
-        return logicalPids;
-    }
-
-    static Integer[] getPidsToAssign(int numUsers, TIntSet pids) {
+    static int[] getPidsToAssign(int numUsers, TIntSet pids) {
         //Fill array with pids such that:
         //(1) array.length = numUsers
         //(2) no pid occurs more than ceiling(numUsers/numPartitions) times
         //Note: The order is unimportant, since we'll shuffle it later
-        Integer[] replicatedPids = new Integer[numUsers];
+        int[] replicatedPids = new int[numUsers];
 
         //Step 1: fill the first numPartitions * floor(numUsers/numPartitions) elements
         //This is easy, because we can just put floor(numUsers/numPartitions) copies of each pid
@@ -227,7 +209,7 @@ public class JRepartitioner {
     static class State {
         private final float alpha;
         private final TIntObjectMap<TIntSet> friendships;
-        private Map<Integer, TIntIntMap> uidToPidToFriendCounts;
+        private TIntObjectMap<TIntIntMap> uidToPidToFriendCounts;
 
         private TIntIntMap logicalPids;
 
@@ -252,12 +234,12 @@ public class JRepartitioner {
             this.logicalPids = logicalPids;
         }
 
-        public Map<Integer, TIntIntMap> getUidToPidToFriendCounts() {
+        public TIntObjectMap<TIntIntMap> getUidToPidToFriendCounts() {
             return uidToPidToFriendCounts;
         }
 
         public void initUidToPidToFriendCount(TIntObjectMap<TIntSet> partitions) {
-            uidToPidToFriendCounts = new HashMap<>();
+            uidToPidToFriendCounts = new TIntObjectHashMap<>();
             for(int uid : friendships.keys()) {
                 TIntIntMap counts = new TIntIntHashMap(partitions.size()+1);
                 for(int pid : partitions.keys()) {

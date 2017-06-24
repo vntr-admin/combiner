@@ -6,7 +6,6 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.TIntSet;
 import io.vntr.repartition.Target;
-import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
@@ -48,8 +47,7 @@ public class HMigrator {
     }
 
     static NavigableSet<Target> getPreferredTargets(Integer pid, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships) {
-        List<Integer> options = new LinkedList<>(convert(partitions.keySet()));
-        options.remove(pid);
+        int[] options = removeUniqueElementFromNonEmptyArray(partitions.keys(), pid);
         NavigableSet<Target> preferredTargets = new TreeSet<>();
         for(TIntIterator iter = partitions.get(pid).iterator(); iter.hasNext(); ) {
             int uid = iter.next();
@@ -65,7 +63,7 @@ public class HMigrator {
             }
 
             if(maxPid == null) {
-                maxPid = ProbabilityUtils.getRandomElement(options);
+                maxPid = getKDistinctValuesFromArray(1, options).iterator().next();
             }
 
             Target target = new Target(uid, maxPid, pid, (float) maxFriends);

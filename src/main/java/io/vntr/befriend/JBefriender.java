@@ -6,8 +6,7 @@ import gnu.trove.map.TIntObjectMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
-import static io.vntr.utils.TroveUtils.getUToMasterMap;
-import static io.vntr.utils.TroveUtils.getKDistinctValuesFromArray;
+import static io.vntr.utils.TroveUtils.*;
 
 /**
  * Created by robertlindquist on 4/25/17.

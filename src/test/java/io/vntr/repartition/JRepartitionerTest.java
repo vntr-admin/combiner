@@ -156,7 +156,7 @@ public class JRepartitionerTest {
         TIntSet pids = initSet(1, 2, 4, 5);
 
         int numUsers = 29;
-        Integer[] results = JRepartitioner.getPidsToAssign(numUsers, pids);
+        int[] results = JRepartitioner.getPidsToAssign(numUsers, pids);
         assertResultsAreCorrect(results, numUsers, pids, new int[]{7, 7, 7, 8});
 
         numUsers = 144;
@@ -169,7 +169,7 @@ public class JRepartitionerTest {
         assertResultsAreCorrect(results, numUsers, pids, new int[]{1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250, 1250});
     }
 
-    private static void assertResultsAreCorrect(Integer[] results, int numUsers, TIntSet pids, int[] expectedFrequencies) {
+    private static void assertResultsAreCorrect(int[] results, int numUsers, TIntSet pids, int[] expectedFrequencies) {
         assertTrue(results.length == numUsers);
 
         TIntIntMap counts = new TIntIntHashMap();

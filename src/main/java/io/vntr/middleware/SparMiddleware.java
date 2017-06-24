@@ -64,7 +64,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
 
             TIntSet replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, convert1(uidToPidMap), convert(uidToReplicasMap));
             TIntSet replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, getManager().getMinNumReplicas(), convert(uidToReplicasMap), convert1(uidToPidMap), convert(getFriendships()));
-            getManager().moveUser(moving, targetPid, TroveUtils.convert(replicasToAddInDestinationPartition), TroveUtils.convert(replicasToDeleteInSourcePartition));
+            getManager().moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
 

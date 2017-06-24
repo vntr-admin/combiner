@@ -4,7 +4,7 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class User {
-    private final Integer id;
+    private final int id;
     private Integer basePid;
     private TIntSet friendIDs;
 
@@ -13,13 +13,13 @@ public class User {
         this.friendIDs = new TIntHashSet();
     }
 
-    public User(Integer id, Integer basePid) {
+    public User(int id, Integer basePid) {
         this.id = id;
         this.basePid = basePid;
         this.friendIDs = new TIntHashSet();
     }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
@@ -55,14 +55,14 @@ public class User {
 
         User user = (User) o;
 
-        if (id != null ? !id.equals(user.id) : user.id != null) return false;
+        if (id != user.id) return false;
         if (basePid != null ? !basePid.equals(user.basePid) : user.basePid != null) return false;
         return friendIDs != null ? friendIDs.equals(user.friendIDs) : user.friendIDs == null;
     }
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
+        int result = id;
         result = 31 * result + (basePid != null ? basePid.hashCode() : 0);
         result = 31 * result + (friendIDs != null ? friendIDs.hashCode() : 0);
         return result;

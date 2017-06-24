@@ -10,11 +10,7 @@ import io.vntr.User;
 import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
-import java.util.*;
-
-import static io.vntr.TestUtils.initSet;
-import static io.vntr.utils.TroveUtils.convert;
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.*;
 
 /**
@@ -24,15 +20,14 @@ public class NoRepManagerTest {
 
     @Test
     public void testMoveUser() {
-        float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -46,23 +41,25 @@ public class NoRepManagerTest {
         friendships.get(uidToMove).remove(uidToUnfriend);
         friendships.get(uidToUnfriend).remove(uidToMove);
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
 
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                assertEquals(pid, manager.getUser(uid).getBasePid());
+        for(Integer pid : partitions.keys()) {
+            for(TIntIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
+                assertEquals(pid, manager.getUser(iter.next()).getBasePid());
             }
         }
 
         manager.moveUser(uidToMove, destinationPid, false);
 
-        for(Integer pid : partitions.keySet()) {
-            for(Integer uid : partitions.get(pid)) {
-                if(uid.equals(uidToMove)) {
-                    assertEquals(destinationPid, manager.getUser(uid).getBasePid());
+        for(Integer pid : partitions.keys()) {
+            for(TIntIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
+                int uid = iter.next();
+                int basePid = manager.getUser(uid).getBasePid();
+                if(uid == uidToMove) {
+                    assertTrue(destinationPid == basePid);
                 }
                 else {
-                    assertEquals(pid, manager.getUser(uid).getBasePid());
+                    assertTrue(pid == basePid);
                 }
             }
         }
@@ -214,14 +211,14 @@ public class NoRepManagerTest {
 
     @Test
     public void testUnfriend() {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -230,7 +227,7 @@ public class NoRepManagerTest {
         Integer notFriend1Id = 7;
         Integer notFriend2Id = 8;
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
 
         for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
             int uid1 = iter.next();
@@ -340,20 +337,20 @@ public class NoRepManagerTest {
     @Test
     public void testGetEdgeCut() {
         float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
         partitions.put(3, initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
 
         Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);

@@ -6,11 +6,8 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.User;
-import io.vntr.utils.TroveUtils;
 
-import java.util.*;
-
-import static io.vntr.utils.ProbabilityUtils.getRandomElement;
+import static io.vntr.utils.TroveUtils.getRandomElement;
 
 /**
  * Created by robertlindquist on 4/12/17.
@@ -86,7 +83,7 @@ public class NoRepManager {
 
     Integer getInitialPartitionId() {
         if(placeNewUserRandomly) {
-            return TroveUtils.getRandomElement(pMap.keySet());
+            return getRandomElement(pMap.keySet());
         }
         else {
             int minUsers = Integer.MAX_VALUE;

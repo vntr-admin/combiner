@@ -4,8 +4,6 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
-import java.util.Collection;
-
 /**
  * Created by robertlindquist on 4/21/17.
  */
@@ -13,12 +11,7 @@ public class RepUser extends User {
 
     private TIntSet replicaPids;
 
-    public RepUser(Integer id) {
-        super(id);
-        this.replicaPids = new TIntHashSet();
-    }
-
-    public RepUser(Integer id, Integer basePid) {
+    public RepUser(int id, int basePid) {
         super(id, basePid);
         this.replicaPids = new TIntHashSet();
     }

@@ -7,11 +7,9 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
 
-//import static io.vntr.utils.Utils.*;
 import static io.vntr.utils.TroveUtils.*;
 
 /**

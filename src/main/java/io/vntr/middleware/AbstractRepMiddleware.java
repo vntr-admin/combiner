@@ -83,12 +83,12 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Set<Integer> getUserIds() {
-        return manager.getUids();
+        return convert(manager.getUids());
     }
 
     @Override
     public Set<Integer> getPartitionIds() {
-        return manager.getPids();
+        return convert(manager.getPids());
     }
 
     @Override

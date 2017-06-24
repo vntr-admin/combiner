@@ -290,4 +290,9 @@ public class TroveUtilsTest {
     public void testCopyTIntObjectMapIntSet() {
         //TODO: do this
     }
+
+    @Test
+    public void testRemoveUniqueElementFromNonEmptyArray() {
+        //TODO: do this
+    }
 }

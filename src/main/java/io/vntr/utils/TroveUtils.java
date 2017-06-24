@@ -185,6 +185,10 @@ public class TroveUtils {
 
     public static TIntSet getKDistinctValuesFromArray(int k, int[] array)
     {
+        if(k >= array.length) {
+            return new TIntHashSet(array);
+        }
+
         long[] indices = new long[k];
         RandomSampler.sample(k, array.length, k, 0, indices, 0, randomEngine);
 
@@ -265,6 +269,24 @@ public class TroveUtils {
             retMap.put(key, new TIntHashSet(map.get(key)));
         }
         return retMap;
+    }
+
+    public static int[] removeUniqueElementFromNonEmptyArray(int[] array, int uniqueElement) {
+        int[] newArray = new int[array.length-1];
+        boolean foundMasterPid = false;
+        for(int i=0; i<array.length; i++) {
+            int pid = array[i];
+            if(pid == uniqueElement) {
+                foundMasterPid = true;
+            }
+            else if(foundMasterPid) {
+                newArray[i-1] = pid;
+            }
+            else {
+                newArray[i] = pid;
+            }
+        }
+        return newArray;
     }
 }
 
