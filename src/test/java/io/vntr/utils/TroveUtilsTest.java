@@ -280,4 +280,14 @@ public class TroveUtilsTest {
     public void testGetInitialReplicasObeyingKReplication() {
         //TODO: do this
     }
+
+    @Test
+    public void testSingleton() {
+        //TODO: do this
+    }
+
+    @Test
+    public void testCopyTIntObjectMapIntSet() {
+        //TODO: do this
+    }
 }

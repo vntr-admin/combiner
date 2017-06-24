@@ -1,15 +1,20 @@
 package io.vntr.manager;
 
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
+
+import static io.vntr.utils.TroveUtils.convert;
 
 public class RepManager {
     private final int minNumReplicas;
@@ -21,14 +26,14 @@ public class RepManager {
     private long logicalMigrationTally;
     private final double logicalMigrationRatio;
 
-    private Map<Integer, Partition> pMap;
-    private Map<Integer, Integer> uMap;
+    private TIntObjectMap<Partition> pMap;
+    private TIntIntMap uMap;
 
     public RepManager(int minNumReplicas, double logicalMigrationRatio) {
         this.minNumReplicas = minNumReplicas;
         this.logicalMigrationRatio = logicalMigrationRatio;
-        pMap = new HashMap<>();
-        uMap = new HashMap<>();
+        pMap = new TIntObjectHashMap<>();
+        uMap = new TIntIntHashMap();
     }
 
     public int getMinNumReplicas() {
@@ -55,11 +60,11 @@ public class RepManager {
     }
 
     public Set<Integer> getPids() {
-        return pMap.keySet();
+        return convert(pMap.keySet());
     }
 
     public Set<Integer> getUids() {
-        return uMap.keySet();
+        return convert(uMap.keySet());
     }
 
     public int addUser() {
@@ -173,7 +178,7 @@ public class RepManager {
 
         //Step 2: add the necessary replicas
         for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
-            if (uMap.get(iter.next()).equals(fromPid)) {
+            if (uMap.get(iter.next()) == fromPid) {
                 addReplica(user, fromPid);
                 break;
             }
@@ -272,7 +277,7 @@ public class RepManager {
         int minMasters = Integer.MAX_VALUE;
         Integer minId = -1;
 
-        for (Integer id : pMap.keySet()) {
+        for (Integer id : pMap.keys()) {
             int numMasters = getPartitionById(id).getNumMasters();
             if (numMasters < minMasters) {
                 minMasters = numMasters;
@@ -292,22 +297,22 @@ public class RepManager {
     }
 
     public Set<Integer> getPartitionsToAddInitialReplicas(Integer masterPid) {
-        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(pMap.keySet());
+        List<Integer> partitionIdsAtWhichReplicasCanBeAdded = new LinkedList<>(convert(pMap.keySet()));
         partitionIdsAtWhichReplicasCanBeAdded.remove(masterPid);
         return ProbabilityUtils.getKDistinctValuesFromList(getMinNumReplicas(), partitionIdsAtWhichReplicasCanBeAdded);
     }
 
-    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<>();
-        for (Integer pid : pMap.keySet()) {
+    public TIntObjectMap<TIntSet> getPartitionToUserMap() {
+        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(pMap.size() + 1);
+        for (Integer pid : pMap.keys()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
         return map;
     }
 
-    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
-        Map<Integer, Set<Integer>> map = new HashMap<>();
-        for (Integer pid : pMap.keySet()) {
+    public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
+        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(pMap.size() + 1);
+        for (Integer pid : pMap.keys()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
         return map;
@@ -315,7 +320,7 @@ public class RepManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for (Integer uid : uMap.keySet()) {
+        for (Integer uid : uMap.keys()) {
             RepUser user = getUserMaster(uid);
             Integer pid = user.getBasePid();
             for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
@@ -337,7 +342,7 @@ public class RepManager {
 
     public TIntObjectMap<TIntSet> getFriendships() {
         TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>(uMap.size()+1);
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uMap.keys()) {
             friendships.put(uid, getUserMaster(uid).getFriendIDs());
         }
         return friendships;
@@ -363,9 +368,9 @@ public class RepManager {
     public void checkValidity() {
 
         //Check masters
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uMap.keys()) {
             Integer observedMasterPid = null;
-            for(Integer pid : pMap.keySet()) {
+            for(Integer pid : pMap.keys()) {
                 if(pMap.get(pid).getIdsOfMasters().contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");
@@ -388,10 +393,10 @@ public class RepManager {
         }
 
         //check replicas
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uMap.keys()) {
             RepUser user = getUserMaster(uid);
             Set<Integer> observedReplicaPids = new HashSet<>();
-            for(Integer pid : pMap.keySet()) {
+            for(Integer pid : pMap.keys()) {
                 if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {
                     observedReplicaPids.add(pid);
                 }
@@ -413,13 +418,13 @@ public class RepManager {
     private boolean checkLocalSemantics() {
         boolean valid = true;
         TIntObjectMap<TIntSet> friendships = getFriendships();
-        Map<Integer, Set<Integer>> partitions  = getPartitionToUserMap();
-        Map<Integer, Set<Integer>> replicas    = getPartitionToReplicasMap();
+        TIntObjectMap<TIntSet> partitions  = getPartitionToUserMap();
+        TIntObjectMap<TIntSet> replicas    = getPartitionToReplicasMap();
         for(int uid1 : friendships.keys()) {
             for(TIntIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
                 int uid2 = iter.next();
-                Set<Integer> uid1Replicas = findKeysForUser(replicas, uid1);
-                Set<Integer> uid2Replicas = findKeysForUser(replicas, uid2);
+                TIntSet uid1Replicas = findKeysForUser(replicas, uid1);
+                TIntSet uid2Replicas = findKeysForUser(replicas, uid2);
                 int pid1 = findKeysForUser(partitions, uid1).iterator().next();
                 int pid2 = findKeysForUser(partitions, uid2).iterator().next();
                 if(pid1 != pid2) {
@@ -432,9 +437,9 @@ public class RepManager {
         return valid;
     }
 
-    private static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
-        Set<Integer> keys = new HashSet<>();
-        for(int key : m.keySet()) {
+    private static TIntSet findKeysForUser(TIntObjectMap<TIntSet> m, int uid) {
+        TIntSet keys = new TIntHashSet();
+        for(int key : m.keys()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
             }
@@ -442,11 +447,11 @@ public class RepManager {
         return keys;
     }
 
-    public Set<Integer> getMastersOnPartition(int pid) {
+    public TIntSet getMastersOnPartition(int pid) {
         return getPartitionById(pid).getIdsOfMasters();
     }
 
-    public Set<Integer> getReplicasOnPartition(int pid) {
+    public TIntSet getReplicasOnPartition(int pid) {
         return getPartitionById(pid).getIdsOfReplicas();
     }
 
@@ -455,8 +460,8 @@ public class RepManager {
     }
 
     static class Partition {
-        private Map<Integer, RepUser> idToMasterMap = new HashMap<>();
-        private Map<Integer, RepUser> idToReplicaMap = new HashMap<>();
+        private TIntObjectMap<RepUser> idToMasterMap = new TIntObjectHashMap<>();
+        private TIntObjectMap<RepUser> idToReplicaMap = new TIntObjectHashMap<>();
         private final Integer id;
 
         Partition(Integer id) {
@@ -495,11 +500,11 @@ public class RepManager {
             return idToReplicaMap.size();
         }
 
-        Set<Integer> getIdsOfMasters() {
+        TIntSet getIdsOfMasters() {
             return idToMasterMap.keySet();
         }
 
-        public Set<Integer> getIdsOfReplicas() {
+        public TIntSet getIdsOfReplicas() {
             return idToReplicaMap.keySet();
         }
 

@@ -2,16 +2,12 @@ package io.vntr.middleware;
 
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntIntMap;
+import gnu.trove.set.TIntSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
-import io.vntr.utils.TroveUtils;
-
-import java.util.*;
 
 import static io.vntr.migration.SMigrator.getUserMigrationStrategy;
-import static io.vntr.utils.TroveUtils.convert;
-import static io.vntr.utils.Utils.getUToReplicasMap;
-import static java.util.Collections.singleton;
+import static io.vntr.utils.TroveUtils.singleton;
 
 /**
  * Created by robertlindquist on 11/23/16.
@@ -50,11 +46,10 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
     @Override
     public void removePartition(Integer partitionId) {
         //First, determine which users will need more replicas once this partition is kaput
-        Set<Integer> usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
+        TIntSet usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
         
         //Second, determine the migration strategy
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getFriendships().keySet());
-        TIntIntMap migrationStrategy = getUserMigrationStrategy(partitionId, convert(getFriendships()), convert(getPartitionToUserMap()), convert(getPartitionToReplicasMap()), false);
+        TIntIntMap migrationStrategy = getUserMigrationStrategy(partitionId, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), false);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keys()) {
@@ -70,16 +65,17 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         }
 
         //Fourth, add replicas as appropriate
-        for (Integer userId : usersInNeedOfNewReplicas) {
-            RepUser user = getManager().getUserMaster(userId);
+        for(TIntIterator iter = usersInNeedOfNewReplicas.iterator(); iter.hasNext(); ) {
+            RepUser user = getManager().getUserMaster(iter.next());
             getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
-        for(Integer uid : getManager().getReplicasOnPartition(partitionId)) {
+        for(TIntIterator iter = getManager().getReplicasOnPartition(partitionId).iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             RepUser user = getManager().getUserMaster(uid);
-            for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
-                getManager().getReplicaOnPartition(user.getId(), iter.next()).removeReplicaPartitionId(partitionId);
+            for(TIntIterator iter2 = user.getReplicaPids().iterator(); iter2.hasNext(); ) {
+                getManager().getReplicaOnPartition(user.getId(), iter2.next()).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds

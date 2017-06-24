@@ -80,8 +80,8 @@ public class InitUtilsTest {
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
         assertEquals(manager.getFriendships(), bidirectionalFriendships);
-        assertEquals(convert(manager.getPartitionToUserMap()), partitions);
-        assertEquals(convert(manager.getPartitionToReplicasMap()), replicaPartitions);
+        assertEquals(manager.getPartitionToUserMap(), partitions);
+        assertEquals(manager.getPartitionToReplicasMap(), replicaPartitions);
         assertTrue(manager.getNumUsers() == friendships.size());
         assertEquals(new TIntHashSet(manager.getPids()), partitions.keySet());
         assertEquals(new TIntHashSet(manager.getUids()), friendships.keySet());
@@ -138,7 +138,7 @@ public class InitUtilsTest {
 
         NoRepManager manager = initNoRepManager(0, true, convert(partitions), convert(friendships));
         assertEquals(new TIntHashSet(manager.getPids()), partitions.keySet());
-        assertEquals(partitions, convert(manager.getPartitionToUsers()));
+        assertEquals(partitions, manager.getPartitionToUsers());
         assertEquals(bidirectionalFriendships, manager.getFriendships());
         assertTrue(manager.getMigrationTally() == 0);
 

@@ -1,5 +1,6 @@
 package io.vntr.middleware;
 
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
@@ -9,6 +10,8 @@ import io.vntr.utils.ProbabilityUtils;
 import io.vntr.utils.TroveUtils;
 
 import java.util.*;
+
+import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -50,7 +53,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
         manager.addPartition(partitionId);
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, Collection<Integer> pidsToExclude) {
+    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, TIntSet pidsToExclude) {
         TIntSet potentialReplicaLocations = new TIntHashSet(manager.getPids());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getBasePid());
@@ -72,7 +75,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     @Override
     public Integer getNumberOfFriendships() {
         int numFriendships=0;
-        for(Set<Integer> friends : getFriendships().values()) {
+        for(TIntSet friends : manager.getFriendships().valueCollection()) {
             numFriendships += friends.size();
         }
         return numFriendships / 2;
@@ -95,7 +98,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return manager.getPartitionToUserMap();
+        return convert(manager.getPartitionToUserMap());
     }
 
     @Override
@@ -105,7 +108,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getFriendships() {
-        return TroveUtils.convert(manager.getFriendships());
+        return convert(manager.getFriendships());
     }
 
     @Override
@@ -117,7 +120,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
         Map<Integer, Set<Integer>> m = new HashMap<>();
         for(int pid : getPartitionIds()) {
-            m.put(pid, manager.getReplicasOnPartition(pid));
+            m.put(pid, convert(manager.getReplicasOnPartition(pid)));
         }
         return m;
     }
@@ -147,18 +150,20 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
         //SPAR ignores downtime
     }
 
-    Set<Integer> determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
-        Set<Integer> usersInNeedOfNewReplicas = new HashSet<>();
+    TIntSet determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
+        TIntSet usersInNeedOfNewReplicas = new TIntHashSet();
 
         //First, determine which users will need more replicas once this partition is kaput
-        for (Integer userId : getManager().getMastersOnPartition(partitionIdToBeRemoved)) {
+        for(TIntIterator iter = getManager().getMastersOnPartition(partitionIdToBeRemoved).iterator(); iter.hasNext(); ) {
+            int userId = iter.next();
             RepUser user = getManager().getUserMaster(userId);
             if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);
             }
         }
 
-        for (Integer userId : getManager().getReplicasOnPartition(partitionIdToBeRemoved)) {
+        for(TIntIterator iter = getManager().getReplicasOnPartition(partitionIdToBeRemoved).iterator(); iter.hasNext(); ) {
+            int userId = iter.next();
             RepUser user = getManager().getUserMaster(userId);
             if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(userId);

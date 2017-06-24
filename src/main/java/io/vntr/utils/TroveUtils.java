@@ -258,5 +258,13 @@ public class TroveUtils {
         set.add(val);
         return set;
     }
+
+    public static TIntObjectMap<TIntSet> copyTIntObjectMapIntSet(TIntObjectMap<TIntSet> map) {
+        TIntObjectMap<TIntSet> retMap = new TIntObjectHashMap<>(map.size()+1);
+        for(int key : map.keys()) {
+            retMap.put(key, new TIntHashSet(map.get(key)));
+        }
+        return retMap;
+    }
 }
 

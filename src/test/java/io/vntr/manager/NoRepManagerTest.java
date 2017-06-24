@@ -1,5 +1,6 @@
 package io.vntr.manager;
 
+import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
@@ -69,7 +70,6 @@ public class NoRepManagerTest {
 
     @Test
     public void testAddUser() {
-        float alpha = 1.1f;
         TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
         partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
@@ -102,7 +102,7 @@ public class NoRepManagerTest {
 
 
         //Manual specification of user id
-        Integer uidToAddManually = new TreeSet<>(manager.getUids()).last()+1;
+        Integer uidToAddManually = TroveUtils.max(manager.getUids())+1;
         manager.addUser(new User(uidToAddManually));
         expectedUids.add(uidToAddManually);
         assertEquals(new TIntHashSet(manager.getUids()), expectedUids);
@@ -117,7 +117,6 @@ public class NoRepManagerTest {
 
     @Test
     public void testRemoveUser() {
-        float alpha = 1.1f;
         TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
         partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
@@ -155,22 +154,21 @@ public class NoRepManagerTest {
             }
         }
 
-        for(Integer uid : manager.getUids()) {
-            assertFalse(manager.getUser(uid).getFriendIDs().contains(uidToRemove));
+        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            assertFalse(manager.getUser(iter.next()).getFriendIDs().contains(uidToRemove));
         }
     }
 
     @Test
     public void testBefriend() {
-        float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
+        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
@@ -183,35 +181,39 @@ public class NoRepManagerTest {
         friendships.get(notFriend1Id).remove(notFriend2Id);
         friendships.get(notFriend2Id).remove(notFriend1Id);
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
 
-        for(Integer uid1 : manager.getUids()) {
-            for(Integer uid2 : manager.getUids()) {
-                if(!uid1.equals(uid2)) {
-                    if((uid1.equals(notFriend1Id) && uid2.equals(notFriend2Id)) || (uid1.equals(notFriend2Id) && uid2.equals(notFriend1Id))) {
-                        assertFalse(manager.getUser(uid1).getFriendIDs().contains(uid2));
-                    }
-                    else {
-                        assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
-                    }
+        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            int uid1 = iter.next();
+            for(TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                int uid2 = iter2.next();
+                if(uid1 == uid2) {
+                    continue;
+                }
+                if((uid1 == notFriend1Id && uid2 == notFriend2Id) || (uid1 == notFriend2Id && uid2 == notFriend1Id)) {
+                    assertFalse(manager.getUser(uid1).getFriendIDs().contains(uid2));
+                }
+                else {
+                    assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
                 }
             }
         }
-
         manager.befriend(notFriend1Id, notFriend2Id);
 
-        for(Integer uid1 : manager.getUids()) {
-            for(Integer uid2 : manager.getUids()) {
-                if(!uid1.equals(uid2)) {
-                    assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
+        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            int uid1 = iter.next();
+            for (TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                int uid2 = iter2.next();
+                if(uid1 == uid2) {
+                    continue;
                 }
+                assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
             }
         }
     }
 
     @Test
     public void testUnfriend() {
-        float alpha = 1.1f;
         Map<Integer, Set<Integer>> partitions = new HashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));
         partitions.put(2, initSet( 6,  7,  8,  9));
@@ -230,25 +232,31 @@ public class NoRepManagerTest {
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
-        for(Integer uid1 : manager.getUids()) {
-            for(Integer uid2 : manager.getUids()) {
-                if(!uid1.equals(uid2)) {
-                    assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
+        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            int uid1 = iter.next();
+            for (TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                int uid2 = iter2.next();
+                if(uid1 == uid2) {
+                    continue;
                 }
+                assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
             }
         }
 
         manager.unfriend(notFriend1Id, notFriend2Id);
 
-        for(Integer uid1 : manager.getUids()) {
-            for(Integer uid2 : manager.getUids()) {
-                if(!uid1.equals(uid2)) {
-                    if((uid1.equals(notFriend1Id) && uid2.equals(notFriend2Id)) || (uid1.equals(notFriend2Id) && uid2.equals(notFriend1Id))) {
-                        assertFalse(manager.getUser(uid1).getFriendIDs().contains(uid2));
-                    }
-                    else {
-                        assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
-                    }
+        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            int uid1 = iter.next();
+            for (TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                int uid2 = iter2.next();
+                if(uid1 == uid2) {
+                    continue;
+                }
+                if((uid1 == notFriend1Id && uid2 == notFriend2Id) || (uid1 == notFriend2Id && uid2 == notFriend1Id)) {
+                    assertFalse(manager.getUser(uid1).getFriendIDs().contains(uid2));
+                }
+                else {
+                    assertTrue(manager.getUser(uid1).getFriendIDs().contains(uid2));
                 }
             }
         }
@@ -256,27 +264,26 @@ public class NoRepManagerTest {
 
     @Test
     public void testAddPartition() {
-        float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
+        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
 
         assertEquals(manager.getPids(), partitions.keySet());
 
         Integer newPid = manager.addPartition();
 
-        Set<Integer> expectedPids = new HashSet<>(partitions.keySet());
+        TIntSet expectedPids = new TIntHashSet(partitions.keySet());
         expectedPids.add(newPid);
 
         assertEquals(manager.getPids(), expectedPids);
@@ -295,21 +302,20 @@ public class NoRepManagerTest {
 
     @Test
     public void testRemovePartition() {
-        float alpha = 1.1f;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
+        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new HashSet<Integer>());
+            friendships.put(uid1, new TIntHashSet());
             for(Integer uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
 
         assertEquals(manager.getPids(), partitions.keySet());
 
@@ -317,13 +323,14 @@ public class NoRepManagerTest {
 
         manager.removePartition(pidToRemove);
 
-        assertEquals(initSet(1, 3), manager.getPids());
+        assertEquals(TroveUtils.initSet(1, 3), manager.getPids());
         assertEquals(manager.getUids(), friendships.keySet());
         assertEquals(manager.getPartition(1), partitions.get(1));
         assertEquals(manager.getPartition(3), partitions.get(3));
 
         //Note that manager.removePartition does not migrate!  It is the middleware that does this.
-        for(Integer uid : partitions.get(pidToRemove)) {
+        for(TIntIterator iter = partitions.get(pidToRemove).iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             Integer userSuppliedPid = manager.getUser(uid).getBasePid();
             assertEquals(userSuppliedPid, pidToRemove);
             assertFalse(manager.getPartition(1).contains(uid) || manager.getPartition(3).contains(uid));

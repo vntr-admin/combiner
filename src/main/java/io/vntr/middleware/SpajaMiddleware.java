@@ -1,15 +1,14 @@
 package io.vntr.middleware;
 
-import java.util.*;
-
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SpajaRepartitioner;
-import io.vntr.utils.TroveUtils;
 
 public class SpajaMiddleware extends SparMiddleware {
     private final int minNumReplicas;
@@ -33,15 +32,15 @@ public class SpajaMiddleware extends SparMiddleware {
     }
 
     void repartition() {
-        RepResults repResults = SpajaRepartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, TroveUtils.convert(getFriendships()), TroveUtils.convert(getPartitionToUserMap()), TroveUtils.convert(getPartitionToReplicasMap()));
+        RepResults repResults = SpajaRepartitioner.repartition(minNumReplicas, alpha, initialT, deltaT, k, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
-        physicallyMigrate(TroveUtils.convert(repResults.getUidToPidMap()), TroveUtils.convert(repResults.getUidsToReplicaPids()));
+        physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
     }
 
-    void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
-        for(Integer uid : newPids.keySet()) {
+    void physicallyMigrate(TIntIntMap newPids, TIntObjectMap<TIntSet> newReplicaPids) {
+        for(Integer uid : newPids.keys()) {
             Integer newPid = newPids.get(uid);
-            Set<Integer> newReplicas = newReplicaPids.get(uid);
+            TIntSet newReplicas = newReplicaPids.get(uid);
 
             RepUser user = getManager().getUserMaster(uid);
             Integer oldPid = user.getBasePid();

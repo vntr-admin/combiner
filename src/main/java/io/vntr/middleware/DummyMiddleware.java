@@ -1,9 +1,13 @@
 package io.vntr.middleware;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.set.TIntSet;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
 
 import java.util.*;
+
+import static io.vntr.utils.TroveUtils.getRandomElement;
 
 /**
  * Created by robertlindquist on 11/23/16.
@@ -18,10 +22,11 @@ public class DummyMiddleware extends AbstractNoRepMiddleware {
 
     @Override
     public void removePartition(Integer partitionId) {
-        Set<Integer> partition = manager.getPartition(partitionId);
+        TIntSet partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
-        for(Integer uid : partition) {
-            Integer newPid = ProbabilityUtils.getRandomElement(manager.getPids());
+        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
+            Integer newPid = getRandomElement(manager.getPids());
             manager.moveUser(uid, newPid, true);
         }
     }

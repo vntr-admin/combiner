@@ -6,6 +6,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.User;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
@@ -16,8 +17,8 @@ import static io.vntr.utils.ProbabilityUtils.getRandomElement;
  */
 public class NoRepManager {
 
-    private Map<Integer, User> uMap;
-    private Map<Integer, Set<Integer>> pMap;
+    private TIntObjectMap<User> uMap;
+    private TIntObjectMap<TIntSet> pMap;
 
     private final boolean placeNewUserRandomly;
 
@@ -31,11 +32,11 @@ public class NoRepManager {
     public NoRepManager(double logicalMigrationRatio, boolean placeNewUserRandomly) {
         this.placeNewUserRandomly = placeNewUserRandomly;
         this.logicalMigrationRatio = logicalMigrationRatio;
-        uMap = new HashMap<>();
-        pMap = new HashMap<>();
+        uMap = new TIntObjectHashMap<>();
+        pMap = new TIntObjectHashMap<>();
     }
 
-    public Set<Integer> getUids() {
+    public TIntSet getUids() {
         return uMap.keySet();
     }
 
@@ -43,7 +44,7 @@ public class NoRepManager {
         return uMap.get(uid);
     }
 
-    public Set<Integer> getPartition(Integer pid) {
+    public TIntSet getPartition(Integer pid) {
         return pMap.get(pid);
     }
 
@@ -85,12 +86,12 @@ public class NoRepManager {
 
     Integer getInitialPartitionId() {
         if(placeNewUserRandomly) {
-            return getRandomElement(pMap.keySet());
+            return TroveUtils.getRandomElement(pMap.keySet());
         }
         else {
             int minUsers = Integer.MAX_VALUE;
             Integer minPartition = null;
-            for(int pid : pMap.keySet()) {
+            for(int pid : pMap.keys()) {
                 if(pMap.get(pid).size() < minUsers) {
                     minUsers = pMap.get(pid).size();
                     minPartition = pid;
@@ -107,7 +108,7 @@ public class NoRepManager {
     }
 
     public void addPartition(Integer pid) {
-        pMap.put(pid, new HashSet<Integer>());
+        pMap.put(pid, new TIntHashSet());
         if(pid >= nextPid) {
             nextPid = pid + 1;
         }
@@ -127,7 +128,7 @@ public class NoRepManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for(User user : uMap.values()) {
+        for(User user : uMap.valueCollection()) {
             for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
                 if(user.getBasePid() < getUser(iter.next()).getBasePid()) {
                     count++;
@@ -137,10 +138,11 @@ public class NoRepManager {
         return count;
     }
 
-    public Map<Integer, Set<Integer>> getPartitionToUsers() {
-        Map<Integer, Set<Integer>> map = new HashMap<>();
-        for(Integer pid : getPids()) {
-            map.put(pid, new HashSet<>(pMap.get(pid)));
+    public TIntObjectMap<TIntSet> getPartitionToUsers() {
+        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(pMap.size()+1);
+        for(TIntIterator iter = getPids().iterator(); iter.hasNext(); ) {
+            int pid = iter.next();
+            map.put(pid, new TIntHashSet(pMap.get(pid)));
         }
         return map;
     }
@@ -158,13 +160,13 @@ public class NoRepManager {
         }
     }
 
-    public Set<Integer> getPids() {
+    public TIntSet getPids() {
         return pMap.keySet();
     }
 
     public TIntObjectMap<TIntSet> getFriendships() {
         TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>(getNumPartitions() + 1);
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uMap.keys()) {
             friendships.put(uid, new TIntHashSet(getUser(uid).getFriendIDs()));
         }
         return friendships;
@@ -188,9 +190,9 @@ public class NoRepManager {
     }
 
     public void checkValidity() {
-        for(Integer uid : uMap.keySet()) {
+        for(Integer uid : uMap.keys()) {
             Integer observedMasterPid = null;
-            for(Integer pid : pMap.keySet()) {
+            for(Integer pid : pMap.keys()) {
                 if(pMap.get(pid).contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");

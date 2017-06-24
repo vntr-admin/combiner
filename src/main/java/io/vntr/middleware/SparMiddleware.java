@@ -5,6 +5,7 @@ import java.util.*;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
@@ -97,7 +98,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
     @Override
     public void removePartition(Integer partitionId) {
         //First, determine which users will be impacted by this action
-        Set<Integer> affectedUsers = determineAffectedUsers(partitionId);
+        TIntSet affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
         TIntIntMap migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, convert(getFriendships()), convert(getPartitionToUserMap()), convert(getPartitionToReplicasMap()), true);
@@ -122,14 +123,15 @@ public class SparMiddleware extends AbstractRepMiddleware {
         //Fourth, add replicas as appropriate
         for (Integer userId : usersToReplicate) {
             RepUser user = getManager().getUserMaster(userId);
-            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
+            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, TroveUtils.singleton(partitionId)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
-        for(Integer uid : getManager().getReplicasOnPartition(partitionId)) {
+        for(TIntIterator iter = getManager().getReplicasOnPartition(partitionId).iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             RepUser user = getManager().getUserMaster(uid);
-            for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
-                getManager().getReplicaOnPartition(user.getId(), iter.next()).removeReplicaPartitionId(partitionId);
+            for(TIntIterator iter2 = user.getReplicaPids().iterator(); iter2.hasNext(); ) {
+                getManager().getReplicaOnPartition(user.getId(), iter2.next()).removeReplicaPartitionId(partitionId);
             }
 
             //Delete it from the master's replicaPartitionIds
@@ -140,11 +142,12 @@ public class SparMiddleware extends AbstractRepMiddleware {
         getManager().removePartition(partitionId);
     }
 
-    Set<Integer> getUsersToReplicate(Set<Integer> uids, Integer pid) {
+    Set<Integer> getUsersToReplicate(TIntSet uids, Integer pid) {
         Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
         int minReplicas = getManager().getMinNumReplicas();
         Set<Integer> usersToReplicate = new HashSet<>();
-        for(Integer uid : uids) {
+        for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
                 usersToReplicate.add(uid);
             }
@@ -152,9 +155,10 @@ public class SparMiddleware extends AbstractRepMiddleware {
         return usersToReplicate;
     }
 
-    Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(Set<Integer> uids, Integer pid) {
+    Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(TIntSet uids, Integer pid) {
         Map<Integer, Integer> counts = new HashMap<>();
-        for(Integer uid : uids) {
+        for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
             int count = 0;
             RepUser user = getManager().getUserMaster(uid);
             count += user.getBasePid().equals(pid) ? 0 : 1;
@@ -166,8 +170,8 @@ public class SparMiddleware extends AbstractRepMiddleware {
         return counts;
     }
 
-    Set<Integer> determineAffectedUsers(Integer partitionIdToBeRemoved) {
-        Set<Integer> possibilities = new HashSet<>(getManager().getMastersOnPartition(partitionIdToBeRemoved));
+    TIntSet determineAffectedUsers(Integer partitionIdToBeRemoved) {
+        TIntSet possibilities = new TIntHashSet(getManager().getMastersOnPartition(partitionIdToBeRemoved));
         possibilities.addAll(getManager().getReplicasOnPartition(partitionIdToBeRemoved));
         return possibilities;
     }

@@ -1,6 +1,8 @@
 package io.vntr.manager;
 
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
@@ -435,9 +437,9 @@ public class RepManagerTest {
 
 //        SparBefriendingStrategy strategy = new SparBefriendingStrategy(manager);
 //        Set<Integer> replicasToDeleteInSourcePartition = new HashSet<>(strategy.findReplicasInMovingPartitionToDelete(repUser1, replicasToAddInDestinationPartition));
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
-        Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), manager.getUids());
-        TIntSet replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(repUser1, new TIntHashSet(replicasToAddInDestinationPartition), minNumReplicas, TroveUtils.convert(uidToReplicasMap), TroveUtils.convert1(uidToPidMap), manager.getFriendships());
+        TIntIntMap uidToPidMap = TroveUtils.getUToMasterMap(manager.getPartitionToUserMap());
+        TIntObjectMap<TIntSet> uidToReplicasMap = TroveUtils.getUToReplicasMap(manager.getPartitionToReplicasMap(), new TIntHashSet(manager.getUids()));
+        TIntSet replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(repUser1, new TIntHashSet(replicasToAddInDestinationPartition), minNumReplicas, uidToReplicasMap, uidToPidMap, manager.getFriendships());
         manager.moveUser(repUser1, newPartitionId, replicasToAddInDestinationPartition, TroveUtils.convert(replicasToDeleteInSourcePartition));
 
         RepUser repUser1Again = manager.getUserMaster(userId1);

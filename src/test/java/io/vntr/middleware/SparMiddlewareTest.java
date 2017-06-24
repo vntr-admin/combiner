@@ -60,14 +60,14 @@ public class SparMiddlewareTest {
         SparMiddleware middleware = new SparMiddleware(manager);
 
         middleware.performRebalace(NO_CHANGE,  3, 19); //should not change anything, including replicas
-        Map<Integer, Set<Integer>> mastersAfter   = manager.getPartitionToUserMap();
-        Map<Integer, Set<Integer>> replicasAfter  = manager.getPartitionToReplicasMap();
+        TIntObjectMap<TIntSet> mastersAfter   = manager.getPartitionToUserMap();
+        TIntObjectMap<TIntSet> replicasAfter  = manager.getPartitionToReplicasMap();
 
         //Should not change masters
-        assertEquals(partitions, mastersAfter);
+        assertEquals(convert(partitions), mastersAfter);
 
         //Should not change replicas
-        assertEquals(replicaPartitions, replicasAfter);
+        assertEquals(convert(replicaPartitions), replicasAfter);
 
 
         //No change test 2: one replica added
@@ -79,16 +79,16 @@ public class SparMiddlewareTest {
         replicasAfter  = manager.getPartitionToReplicasMap();
 
         //Should not change masters
-        assertEquals(partitions, mastersAfter);
+        assertEquals(convert(partitions), mastersAfter);
 
         //Should add 17 to p2 and change nothing else
         assertFalse(replicaPartitions.get(2).contains(17));
-        assertEquals(initSet(replicaPartitions.get(2), 17), replicasAfter.get(2));
+        assertEquals(new TIntHashSet(initSet(replicaPartitions.get(2), 17)), replicasAfter.get(2));
 
         //Should change nothing else
-        assertEquals(replicaPartitions.get(1), replicasAfter.get(1));
-        assertEquals(replicaPartitions.get(3), replicasAfter.get(3));
-        assertEquals(replicaPartitions.get(4), replicasAfter.get(4));
+        assertEquals(new TIntHashSet(replicaPartitions.get(1)), replicasAfter.get(1));
+        assertEquals(new TIntHashSet(replicaPartitions.get(3)), replicasAfter.get(3));
+        assertEquals(new TIntHashSet(replicaPartitions.get(4)), replicasAfter.get(4));
 
 
         //No change test 3: 2 replicas added
@@ -100,19 +100,19 @@ public class SparMiddlewareTest {
         replicasAfter  = manager.getPartitionToReplicasMap();
 
         //Should not change masters
-        assertEquals(partitions, mastersAfter);
+        assertEquals(convert(partitions), mastersAfter);
 
         //Should add 17 to p2
         assertFalse(replicaPartitions.get(2).contains(17));
-        assertEquals(initSet(replicaPartitions.get(2), 17), replicasAfter.get(2));
+        assertEquals(new TIntHashSet(initSet(replicaPartitions.get(2), 17)), replicasAfter.get(2));
 
         //Should add 10 to p4
         assertFalse(replicaPartitions.get(4).contains(10));
-        assertEquals(initSet(replicaPartitions.get(4), 10), replicasAfter.get(4));
+        assertEquals(new TIntHashSet(initSet(replicaPartitions.get(4), 10)), replicasAfter.get(4));
 
         //Should change nothing else
-        assertEquals(replicaPartitions.get(1), replicasAfter.get(1));
-        assertEquals(replicaPartitions.get(3), replicasAfter.get(3));
+        assertEquals(new TIntHashSet(replicaPartitions.get(1)), replicasAfter.get(1));
+        assertEquals(new TIntHashSet(replicaPartitions.get(3)), replicasAfter.get(3));
 
         //Small to large test
         manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
@@ -126,11 +126,11 @@ public class SparMiddlewareTest {
         assertTrue(partitions.get(1).contains(4));
         assertFalse(partitions.get(4).contains(4));
         assertFalse(mastersAfter.get(1).contains(1));
-        assertEquals(initSet(partitions.get(4), 1), mastersAfter.get(4));
+        assertEquals(new TIntHashSet(initSet(partitions.get(4), 1)), mastersAfter.get(4));
 
         //Shouldn't change p2 or p3
-        assertEquals(partitions.get(2), mastersAfter.get(2));
-        assertEquals(partitions.get(3), mastersAfter.get(3));
+        assertEquals(new TIntHashSet(partitions.get(2)), mastersAfter.get(2));
+        assertEquals(new TIntHashSet(partitions.get(3)), mastersAfter.get(3));
 
         //Should remove a replica of 14 from p1
         assertTrue(replicaPartitions.get(1).contains(14));
@@ -147,8 +147,8 @@ public class SparMiddlewareTest {
         assertTrue(replicasAfter.get(4).containsAll(initSet(4, 6, 10)));
 
         //Shouldn't change p2 or p3
-        assertEquals(replicaPartitions.get(2), replicasAfter.get(2));
-        assertEquals(replicaPartitions.get(3), replicasAfter.get(3));
+        assertEquals(new TIntHashSet(replicaPartitions.get(2)), replicasAfter.get(2));
+        assertEquals(new TIntHashSet(replicaPartitions.get(3)), replicasAfter.get(3));
 
 
         //Large to small test
@@ -166,17 +166,17 @@ public class SparMiddlewareTest {
         assertTrue(mastersAfter.get(1).contains(11));
 
         //Shouldn't change p2 or p4
-        assertEquals(partitions.get(2), mastersAfter.get(2));
-        assertEquals(partitions.get(4), mastersAfter.get(4));
+        assertEquals(new TIntHashSet(partitions.get(2)), mastersAfter.get(2));
+        assertEquals(new TIntHashSet(partitions.get(4)), mastersAfter.get(4));
 
         //Should remove a replica of 10 from p3
         assertTrue(replicaPartitions.get(3).contains(10));
         assertFalse(replicasAfter.get(3).contains(10));
 
         //Shouldn't change p1, p2 or p4
-        assertEquals(replicaPartitions.get(1), replicasAfter.get(1));
-        assertEquals(replicaPartitions.get(2), replicasAfter.get(2));
-        assertEquals(replicaPartitions.get(4), replicasAfter.get(4));
+        assertEquals(new TIntHashSet(replicaPartitions.get(1)), replicasAfter.get(1));
+        assertEquals(new TIntHashSet(replicaPartitions.get(2)), replicasAfter.get(2));
+        assertEquals(new TIntHashSet(replicaPartitions.get(4)), replicasAfter.get(4));
     }
 
 
@@ -335,7 +335,7 @@ public class SparMiddlewareTest {
         RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
-        assertEquals(initSet(1, 4, 5, 16, 18, 20), middleware.determineUsersWhoWillNeedAnAdditionalReplica(1));
+        assertEquals(TroveUtils.initSet(1, 4, 5, 16, 18, 20), middleware.determineUsersWhoWillNeedAnAdditionalReplica(1));
     }
 
     @Test
@@ -381,7 +381,7 @@ public class SparMiddlewareTest {
         for(int uid=1; uid<20; uid++) {
             int pid = ((uid-1)/5) + 1;
             Set<Integer> possibleAnswers = initSet((pid+1)%4 + 1, (pid+2)%4 + 1);
-            int newPid = middleware.getRandomPartitionIdWhereThisUserIsNotPresent(manager.getUserMaster(uid), Collections.<Integer>emptySet());
+            int newPid = middleware.getRandomPartitionIdWhereThisUserIsNotPresent(manager.getUserMaster(uid), new TIntHashSet());
             assertTrue(possibleAnswers.contains(newPid));
         }
     }

@@ -1,11 +1,14 @@
 package io.vntr.middleware;
 
+import gnu.trove.set.TIntSet;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
 import io.vntr.utils.TroveUtils;
 
 import java.util.*;
+
+import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -69,7 +72,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     @Override
     public Integer getNumberOfFriendships() {
         int numFriendships=0;
-        for(Set<Integer> friends : getFriendships().values()) {
+        for(TIntSet friends : manager.getFriendships().valueCollection()) {
             numFriendships += friends.size();
         }
         return numFriendships / 2;
@@ -77,12 +80,12 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Set<Integer> getUserIds() {
-        return manager.getUids();
+        return convert(manager.getUids());
     }
 
     @Override
     public Set<Integer> getPartitionIds() {
-        return manager.getPids();
+        return convert(manager.getPids());
     }
 
     @Override
@@ -93,12 +96,12 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return manager.getPartitionToUsers();
+        return convert(manager.getPartitionToUsers());
     }
 
     @Override
     public Map<Integer, Set<Integer>> getFriendships() {
-        return TroveUtils.convert(manager.getFriendships());
+        return convert(manager.getFriendships());
     }
 
     @Override

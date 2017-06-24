@@ -9,10 +9,7 @@ import io.vntr.migration.HMigrator;
 import io.vntr.repartition.HRepartitioner;
 import io.vntr.repartition.NoRepResults;
 
-import java.util.*;
-
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
-import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 9/19/16.
@@ -41,7 +38,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
-        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), convert(getFriendships()), convert(getPartitionToUserMap()));
+        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), manager.getFriendships(), manager.getPartitionToUsers());
 
         if(strategy == SMALL_TO_LARGE) {
             manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
@@ -53,7 +50,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
 
     @Override
     public void removePartition(Integer partitionId) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, gamma, convert(manager.getPartitionToUsers()), manager.getFriendships());
+        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, gamma, manager.getPartitionToUsers(), manager.getFriendships());
         for(Integer uid : targets.keys()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
@@ -71,7 +68,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, convert(manager.getPartitionToUsers()), convert(getFriendships()));
+        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), manager.getFriendships());
         int numMoves = noRepResults.getLogicalMoves();
         if(numMoves > 0) {
             manager.increaseTallyLogical(numMoves);

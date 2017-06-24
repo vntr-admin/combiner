@@ -1,18 +1,16 @@
 package io.vntr.middleware;
 
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SparmesRepartitioner;
 import io.vntr.manager.RepManager;
-import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.TroveUtils;
 
-import java.util.*;
-
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.*;
 
 /**
  * Created by robertlindquist on 9/28/16.
@@ -38,14 +36,14 @@ public class SparmesMiddleware extends SparMiddleware {
     }
 
     void repartition() {
-        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, TroveUtils.convert(getPartitionToUserMap()), TroveUtils.convert(getPartitionToReplicasMap()), TroveUtils.convert(getFriendships()));
+        RepResults repResults = SparmesRepartitioner.repartition(k, maxIterations, gamma, minNumReplicas, getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), getManager().getFriendships());
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults);
     }
 
     void physicallyMigrate(RepResults repResults) {
-        Map<Integer, Integer> currentUidToPidMap = getUToMasterMap(getPartitionToUserMap());
-        Map<Integer, Set<Integer>> currentUidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getUserIds());
+        TIntIntMap currentUidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
+        TIntObjectMap<TIntSet> currentUidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TIntHashSet(getManager().getUids()));
 
         for(int uid : getManager().getUids()) {
             int currentPid = currentUidToPidMap.get(uid);
@@ -59,7 +57,7 @@ public class SparmesMiddleware extends SparMiddleware {
 
             //add and remove replicas as specified in the repResults
             TIntSet newReplicas = repResults.getUidsToReplicaPids().get(uid);
-            Set<Integer> currentReplicas = currentUidToReplicasMap.get(uid);
+            TIntSet currentReplicas = currentUidToReplicasMap.get(uid);
             if(!currentReplicas.equals(newReplicas)) {
                 for(TIntIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
                     int newReplica = iter.next();
@@ -67,7 +65,8 @@ public class SparmesMiddleware extends SparMiddleware {
                         getManager().addReplica(getManager().getUserMaster(uid), newReplica);
                     }
                 }
-                for(int oldReplica : currentReplicas) {
+                for(TIntIterator iter = currentReplicas.iterator(); iter.hasNext(); ) {
+                    int oldReplica = iter.next();
                     if(!newReplicas.contains(oldReplica)) {
                         getManager().removeReplica(getManager().getUserMaster(uid), oldReplica);
                     }
@@ -105,7 +104,7 @@ public class SparmesMiddleware extends SparMiddleware {
             TIntSet newLocations = new TIntHashSet(getPartitionIds());
             newLocations.removeAll(replicaLocations);
             newLocations.remove(user.getBasePid());
-            TIntSet newReplicaPids = TroveUtils.getKDistinctValuesFromArray(deficit, newLocations.toArray());
+            TIntSet newReplicaPids = getKDistinctValuesFromArray(deficit, newLocations.toArray());
             for(TIntIterator iter = newReplicaPids.iterator(); iter.hasNext(); ) {
                 getManager().addReplica(user, iter.next());
             }

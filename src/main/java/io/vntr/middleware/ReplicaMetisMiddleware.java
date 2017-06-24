@@ -1,15 +1,17 @@
 package io.vntr.middleware;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.ReplicaMetisRepartitioner;
 import io.vntr.repartition.RepResults;
-import io.vntr.utils.TroveUtils;
-import io.vntr.utils.Utils;
 
-import java.util.Map;
-import java.util.Set;
+import static io.vntr.utils.TroveUtils.*;
+
 
 /**
  * Created by robertlindquist on 6/4/17.
@@ -41,24 +43,24 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
 
     void repartition() {
         clearReplicas();
-        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, TroveUtils.convert(getFriendships()), new TIntHashSet(getPartitionIds()), minNumReplicas);
+        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, getManager().getFriendships(), new TIntHashSet(getManager().getPids()), minNumReplicas);
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
-        physicallyMigrate(TroveUtils.convert(repResults.getUidToPidMap()), TroveUtils.convert(repResults.getUidsToReplicaPids()));
+        physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
     }
 
     void clearReplicas() {
-        Map<Integer, Set<Integer>> replicaLocations = Utils.copyMapSet(Utils.getUToReplicasMap(getPartitionToReplicasMap(), getUserIds()));
-        for(Integer uid : replicaLocations.keySet()) {
-            for(Integer replicaPid : replicaLocations.get(uid)) {
-                getManager().removeReplica(getManager().getUserMaster(uid), replicaPid);
+        TIntObjectMap<TIntSet> replicaLocations = copyTIntObjectMapIntSet(getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TIntHashSet(getManager().getUids())));
+        for(Integer uid : replicaLocations.keys()) {
+            for(TIntIterator iter = replicaLocations.get(uid).iterator(); iter.hasNext(); ) {
+                getManager().removeReplica(getManager().getUserMaster(uid), iter.next());
             }
         }
     }
 
-    void physicallyMigrate(Map<Integer, Integer> newPids, Map<Integer, Set<Integer>> newReplicaPids) {
-        for(Integer uid : newPids.keySet()) {
+    void physicallyMigrate(TIntIntMap newPids, TIntObjectMap<TIntSet> newReplicaPids) {
+        for(Integer uid : newPids.keys()) {
             Integer newPid = newPids.get(uid);
-            Set<Integer> newReplicas = newReplicaPids.get(uid);
+            TIntSet newReplicas = newReplicaPids.get(uid);
 
             RepUser user = getManager().getUserMaster(uid);
             Integer oldPid = user.getBasePid();
@@ -68,8 +70,8 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
                 getManager().increaseTally(1);
             }
 
-            for(Integer replicaPid : newReplicas) {
-                getManager().addReplica(user, replicaPid);
+            for(TIntIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
+                getManager().addReplica(user, iter.next());
             }
         }
     }

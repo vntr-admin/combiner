@@ -45,7 +45,7 @@ public class HermesMiddlewareTest {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
         }
 
-        TIntObjectMap<TIntSet> finalTopology = convert(manager.getPartitionToUsers());
+        TIntObjectMap<TIntSet> finalTopology = manager.getPartitionToUsers();
         TIntSet observedUsers = new TIntHashSet();
         for(Integer pid : finalTopology.keys()) {
             observedUsers.addAll(finalTopology.get(pid));
