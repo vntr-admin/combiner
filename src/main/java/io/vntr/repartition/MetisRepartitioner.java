@@ -11,27 +11,28 @@ import gnu.trove.set.hash.TIntHashSet;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Scanner;
+
+import static java.util.Arrays.sort;
 
 /**
  * Created by robertlindquist on 4/24/17.
  */
 public class MetisRepartitioner {
-    public static TIntIntMap partition(String commandLiteral, String tempDir, TIntObjectMap<TIntSet> friendships, TIntSet pids) {
-        int numPartitions = pids.size();
+    public static TIntIntMap partition(String commandLiteral, String tempDir, TIntObjectMap<TIntSet> tFriendships, TIntSet tPids) {
+        int numPartitions = tPids.size();
         try {
             String inputFile = tempDir + File.separator + "e_pluribus_unum__" + System.nanoTime() + ".txt";
             String outputFile = inputFile + ".part." + numPartitions;
 
-            TIntIntMap reverseUidMap = new TIntIntHashMap((int)(friendships.size() * 1.1));
-            TIntIntMap mapping = getTranslationToZN(friendships.keySet(), reverseUidMap);
-            TIntObjectMap<TIntSet> translatedFriendships = translateFriendshipsToZNBased(friendships, mapping);
+            TIntIntMap reverseUidMap = new TIntIntHashMap(tFriendships.size()+1);
+            TIntIntMap mapping = getTranslationToZN(tFriendships.keys(), reverseUidMap);
+            TIntObjectMap<TIntSet> translatedFriendships = translateFriendshipsToZNBased(tFriendships, mapping);
             writeAdjacencyGraphMetisStyle(translatedFriendships, inputFile);
 
-            TIntIntMap results = innerPartition(commandLiteral, outputFile, inputFile, numPartitions, friendships.size());
+            TIntIntMap results = innerPartition(commandLiteral, outputFile, inputFile, numPartitions, tFriendships.size());
 
-            TIntIntMap reversePidMap = getReversePidMap(pids);
+            TIntIntMap reversePidMap = getReversePidMap(tPids);
             TIntIntMap translatedResults = translatePartitioningFromZNBased(results, reverseUidMap, reversePidMap);
 
             return translatedResults;
@@ -41,13 +42,13 @@ public class MetisRepartitioner {
     }
 
     private static TIntIntMap getReversePidMap(TIntSet pids) {
-        int[] sortedArray = pids.toArray();
-        Arrays.sort(sortedArray);
+        int[] sortedPids = pids.toArray();
+        sort(sortedPids);
 
         TIntIntMap reversePidMap = new TIntIntHashMap(pids.size()+1);
         int count = 0;
-        for(int i=0; i<sortedArray.length; i++) {
-            reversePidMap.put(count, sortedArray[i]);
+        for(int i=0; i<sortedPids.length; i++) {
+            reversePidMap.put(count, sortedPids[i]);
         }
 
         return reversePidMap;
@@ -68,34 +69,36 @@ public class MetisRepartitioner {
     }
 
     private static void writeAdjacencyGraphMetisStyle(TIntObjectMap<TIntSet> friendships, String filename) throws FileNotFoundException {
-        int[] sortedArray = friendships.keys();
-        Arrays.sort(sortedArray);
-
+        int[] sortedUids = friendships.keys();
+        sort(sortedUids);
         PrintWriter pw = new PrintWriter(filename);
+
         pw.println(friendships.size() + " " + getNumEdges(friendships));
 
-        for(int i=0; i<sortedArray.length; i++) {
-            TIntSet friends = friendships.get(sortedArray[i]);
+        for(int i=0; i<sortedUids.length; i++) {
+            int next = sortedUids[i];
+            TIntSet friends = friendships.get(next);
             String line = formatLine(friends);
             pw.println(line);
         }
         pw.close();
     }
 
-    private static TIntIntMap getTranslationToZN(TIntSet keys, TIntIntMap reverseMap) {
-        int[] sortedArray = keys.toArray();
-        Arrays.sort(sortedArray);
-        TIntIntMap dict = new TIntIntHashMap(sortedArray.length+1);
-        for(int i=0; i<sortedArray.length; i++) {
-            int next = sortedArray[i];
-            dict.put(next, i);
-            reverseMap.put(i, next);
+    private static TIntIntMap getTranslationToZN(int[] uids, TIntIntMap reverseMap) {
+        sort(uids);
+        TIntIntMap dict = new TIntIntHashMap();
+        int index = 1;
+        for(int i=0; i<uids.length; i++) {
+            int nextUid = uids[i];
+            dict.put(nextUid, index);
+            reverseMap.put(index, nextUid);
+            index++;
         }
         return dict;
     }
 
     private static TIntObjectMap<TIntSet> translateFriendshipsToZNBased(TIntObjectMap<TIntSet> originalFriendships, TIntIntMap mapping) {
-        TIntObjectMap<TIntSet> translated = new TIntObjectHashMap<>(mapping.size()+1);
+        TIntObjectMap<TIntSet> translated = new TIntObjectHashMap<>();
         for(int i : originalFriendships.keys()) {
             TIntSet translatedFriends = new TIntHashSet();
             for(TIntIterator iter = originalFriendships.get(i).iterator(); iter.hasNext(); ) {
@@ -107,7 +110,7 @@ public class MetisRepartitioner {
     }
 
     private static TIntIntMap translatePartitioningFromZNBased(TIntIntMap zNBasedPartitioning, TIntIntMap reverseUidMap, TIntIntMap reversePidMap) {
-        TIntIntMap translatedPartitioning = new TIntIntHashMap(zNBasedPartitioning.size()+1);
+        TIntIntMap translatedPartitioning = new TIntIntHashMap();
         for(int i : zNBasedPartitioning.keys()) {
             int rawPid = zNBasedPartitioning.get(i);
             int translatedUid = reverseUidMap.get(i);
@@ -126,12 +129,14 @@ public class MetisRepartitioner {
     }
 
     static String formatLine(TIntSet friends) {
-        int[] array = friends.toArray();
-        Arrays.sort(array);
+        int[] sortedFriendIds = friends.toArray();
+        sort(sortedFriendIds);
         StringBuilder builder = new StringBuilder();
-        for(int i=0; i<array.length; i++) {
-            builder.append(array[i]);
-            if(i < array.length-1) {
+
+        for(int i=0; i<sortedFriendIds.length; i++) {
+            int friendId = sortedFriendIds[i];
+            builder.append(friendId);
+            if(i < sortedFriendIds.length-1) {
                 builder.append(' ');
             }
         }
