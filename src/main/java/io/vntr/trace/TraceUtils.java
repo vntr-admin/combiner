@@ -64,7 +64,7 @@ public class TraceUtils {
     static TIntObjectMap<TIntSet> parseMapSetLine(String line) {
         String tempLine = line.substring(1, line.length()-1);
         String[] chunks = tempLine.split("\\], ");
-        TIntObjectMap<TIntSet> mapSet = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> mapSet = new TIntObjectHashMap<>(chunks.length+1);
         for(int i=0; i<chunks.length; i++) {
             String chunk = chunks[i];
             if(i==chunks.length-1) {

@@ -8,17 +8,17 @@ public interface IMiddleware {
 
     void addUser(User user);
 
-    void removeUser(Integer userId);
+    void removeUser(Integer uid);
 
-    void befriend(Integer smallerUserId, Integer largerUserId);
+    void befriend(Integer smallerUid, Integer largerUid);
 
-    void unfriend(Integer smallerUserId, Integer largerUserId);
+    void unfriend(Integer smallerUid, Integer largerUid);
 
     int addPartition();
 
-    void addPartition(Integer partitionId);
+    void addPartition(Integer pid);
 
-    void removePartition(Integer partitionId);
+    void removePartition(Integer pid);
 
     void broadcastDowntime();
 }

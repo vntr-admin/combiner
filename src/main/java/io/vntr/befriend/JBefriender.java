@@ -13,27 +13,27 @@ import static io.vntr.utils.TroveUtils.*;
  */
 public class JBefriender {
 
-    public static Result rebalance(Integer smallerUserId, Integer largerUserId, int k, float alpha, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions) {
+    public static Result rebalance(Integer smallerUid, Integer largerUid, int k, float alpha, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions) {
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
-        int smallerPid = uidToPidMap.get(smallerUserId);
-        int largerPid = uidToPidMap.get(largerUserId);
+        int smallerPid = uidToPidMap.get(smallerUid);
+        int largerPid = uidToPidMap.get(largerUid);
 
         if (smallerPid != largerPid) {
-            Integer smallerPartnerId = findPartnerOnPartition(smallerUserId, partitions.get(largerPid), k, alpha, friendships, uidToPidMap);
-            Integer largerPartnerId = findPartnerOnPartition(largerUserId, partitions.get(smallerPid), k, alpha, friendships, uidToPidMap);
+            Integer smallerPartnerId = findPartnerOnPartition(smallerUid, partitions.get(largerPid), k, alpha, friendships, uidToPidMap);
+            Integer largerPartnerId = findPartnerOnPartition(largerUid, partitions.get(smallerPid), k, alpha, friendships, uidToPidMap);
 
             if (smallerPartnerId != null && largerPartnerId == null) {
-                return new Result(smallerUserId, smallerPartnerId);
+                return new Result(smallerUid, smallerPartnerId);
             } else if (largerPartnerId != null && smallerPartnerId == null) {
-                return new Result(largerUserId, largerPartnerId);
+                return new Result(largerUid, largerPartnerId);
             } else if (smallerPartnerId != null && largerPartnerId != null) {
                 int gainSmallerToLarger = calculateGain(smallerPartnerId, largerPartnerId, friendships, uidToPidMap);
                 int gainLargerToSmaller = calculateGain(largerPartnerId, smallerPartnerId, friendships, uidToPidMap);
                 if (gainSmallerToLarger >= gainLargerToSmaller) {
-                    return new Result(smallerUserId, smallerPartnerId);
+                    return new Result(smallerUid, smallerPartnerId);
                 } else {
-                    return new Result(largerUserId, largerPartnerId);
+                    return new Result(largerUid, largerPartnerId);
                 }
             }
         }

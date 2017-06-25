@@ -35,30 +35,30 @@ public class RepManagerTest {
         assertTrue(manager.getNumUsers() == 0);
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
         assertTrue(manager.getNumUsers() == 1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
         assertTrue(manager.getNumUsers() == 2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
         assertTrue(manager.getNumUsers() == 3);
     }
 
     @Test
-    public void testGetAllPartitionIds() {
+    public void testGetAllPids() {
         RepManager manager = new RepManager(2, 0);
         Integer firstId = manager.addPartition();
         RepManager.Partition firstPartition = manager.getPartitionById(firstId);
@@ -83,13 +83,13 @@ public class RepManagerTest {
         assertNotEquals(secondId, fourthId);
         assertNotEquals(thirdId, fourthId);
 
-        TIntSet partitionIds = manager.getPids();
+        TIntSet pids = manager.getPids();
 
-        assertTrue(partitionIds.size() == 4);
-        assertTrue(partitionIds.contains(firstId));
-        assertTrue(partitionIds.contains(secondId));
-        assertTrue(partitionIds.contains(thirdId));
-        assertTrue(partitionIds.contains(fourthId));
+        assertTrue(pids.size() == 4);
+        assertTrue(pids.contains(firstId));
+        assertTrue(pids.contains(secondId));
+        assertTrue(pids.contains(thirdId));
+        assertTrue(pids.contains(fourthId));
     }
 
     @Test
@@ -118,15 +118,15 @@ public class RepManagerTest {
         assertNotEquals(secondId, fourthId);
         assertNotEquals(thirdId, fourthId);
 
-        Integer userId = 23;
-        User user = new User(userId);
+        Integer uid = 23;
+        User user = new User(uid);
         manager.addUser(user);
 
-        RepUser repUser = manager.getUserMaster(userId);
+        RepUser repUser = manager.getUserMaster(uid);
         assertEquals(repUser.getId(), user.getId());
 
         assertTrue(repUser.getReplicaPids().size() == manager.getMinNumReplicas());
-        verifyRepUsersReplicas(manager, repUser, userId);
+        verifyRepUsersReplicas(manager, repUser, uid);
     }
 
     @Test
@@ -138,29 +138,29 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             RepManager.Partition partition = manager.getPartitionById(iter.next());
             assertTrue(partition.getNumMasters() == 0 || partition.getNumMasters() == 1);
         }
 
-        for (Integer userId : userIdToUserMap.keys()) {
-            User user = userIdToUserMap.get(userId);
-            RepUser repUser = manager.getUserMaster(userId);
+        for (Integer uid : userIdToUserMap.keys()) {
+            User user = userIdToUserMap.get(uid);
+            RepUser repUser = manager.getUserMaster(uid);
             assertEquals(repUser.getId(), user.getId());
 
             assertTrue(repUser.getReplicaPids().size() == manager.getMinNumReplicas());
@@ -168,10 +168,10 @@ public class RepManagerTest {
                 int pid = iter.next();
                 RepManager.Partition partition = manager.getPartitionById(pid);
                 boolean shouldContainReplica = repUser.getReplicaPids().contains(pid);
-                boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
+                boolean containsReplica = partition.getIdsOfReplicas().contains(uid);
                 assertTrue(containsReplica == shouldContainReplica);
                 if (shouldContainReplica) {
-                    RepUser replica = partition.getReplicaById(userId);
+                    RepUser replica = partition.getReplicaById(uid);
                     assertEquals(replica.getId(), repUser.getId());
                     assertEquals(replica.getBasePid(), repUser.getBasePid());
                     assertEquals(replica.getReplicaPids(), repUser.getReplicaPids());
@@ -180,21 +180,21 @@ public class RepManagerTest {
         }
 
         assertTrue(manager.getNumUsers() == 3);
-        manager.removeUser(userId1);
+        manager.removeUser(uid1);
         assertTrue(manager.getNumUsers() == 2);
 
-        assertNull(manager.getUserMaster(userId1));
+        assertNull(manager.getUserMaster(uid1));
 
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             RepManager.Partition partition = manager.getPartitionById(iter.next());
-            assertFalse(partition.getIdsOfMasters().contains(userId1));
-            assertFalse(partition.getIdsOfReplicas().contains(userId1));
+            assertFalse(partition.getIdsOfMasters().contains(uid1));
+            assertFalse(partition.getIdsOfReplicas().contains(uid1));
         }
 
-        userIdToUserMap.remove(userId1);
-        for (Integer userId : userIdToUserMap.keys()) {
-            User user = userIdToUserMap.get(userId);
-            RepUser repUser = manager.getUserMaster(userId);
+        userIdToUserMap.remove(uid1);
+        for (Integer uid : userIdToUserMap.keys()) {
+            User user = userIdToUserMap.get(uid);
+            RepUser repUser = manager.getUserMaster(uid);
             assertEquals(repUser.getId(), user.getId());
 
             assertTrue(repUser.getReplicaPids().size() == manager.getMinNumReplicas());
@@ -202,7 +202,7 @@ public class RepManagerTest {
                 int pid = iter.next();
                 RepManager.Partition partition = manager.getPartitionById(pid);
                 boolean shouldContainReplica = repUser.getReplicaPids().contains(pid);
-                boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
+                boolean containsReplica = partition.getIdsOfReplicas().contains(uid);
                 assertTrue(containsReplica == shouldContainReplica);
             }
         }
@@ -239,10 +239,10 @@ public class RepManagerTest {
 
         manager.removePartition(secondId);
 
-        TIntSet partitionIds = manager.getPids();
-        assertTrue(partitionIds.size() == 2);
-        assertTrue(partitionIds.contains(firstId));
-        assertTrue(partitionIds.contains(thirdId));
+        TIntSet pids = manager.getPids();
+        assertTrue(pids.size() == 2);
+        assertTrue(pids.contains(firstId));
+        assertTrue(pids.contains(thirdId));
     }
 
     @Test
@@ -254,25 +254,25 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
 
-        for (Integer userId : userIdToUserMap.keys()) {
-            User user = userIdToUserMap.get(userId);
-            RepUser repUser = manager.getUserMaster(userId);
+        for (Integer uid : userIdToUserMap.keys()) {
+            User user = userIdToUserMap.get(uid);
+            RepUser repUser = manager.getUserMaster(uid);
             assertEquals(repUser.getId(), user.getId());
 
             assertTrue(repUser.getReplicaPids().size() == manager.getMinNumReplicas());
@@ -280,28 +280,28 @@ public class RepManagerTest {
                 int pid = iter.next();
                 RepManager.Partition partition = manager.getPartitionById(pid);
                 boolean shouldContainReplica = repUser.getReplicaPids().contains(pid);
-                boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
+                boolean containsReplica = partition.getIdsOfReplicas().contains(uid);
                 assertTrue(containsReplica == shouldContainReplica);
             }
         }
 
         assertTrue(manager.getNumUsers() == 3);
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        Integer newPartitionId = manager.getRandomPidWhereThisUserIsNotPresent(repUser1);
-        assertFalse(repUser1.getReplicaPids().contains(newPartitionId));
-        manager.addReplica(manager.getUserMaster(userId1), newPartitionId);
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        Integer newPid = manager.getRandomPidWhereThisUserIsNotPresent(repUser1);
+        assertFalse(repUser1.getReplicaPids().contains(newPid));
+        manager.addReplica(manager.getUserMaster(uid1), newPid);
 
         assertTrue(repUser1.getReplicaPids().size() == manager.getMinNumReplicas() + 1);
-        verifyRepUsersReplicas(manager, repUser1, userId1);
+        verifyRepUsersReplicas(manager, repUser1, uid1);
     }
 
-    private static void verifyRepUsersReplicas(RepManager manager, RepUser repUser, int userId1) {
+    private static void verifyRepUsersReplicas(RepManager manager, RepUser repUser, int uid1) {
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             int pid = iter.next();
             RepManager.Partition partition = manager.getPartitionById(pid);
             boolean shouldContainReplica = repUser.getReplicaPids().contains(pid);
-            boolean containsReplica = partition.getIdsOfReplicas().contains(userId1);
+            boolean containsReplica = partition.getIdsOfReplicas().contains(uid1);
             assertTrue(containsReplica == shouldContainReplica);
         }
     }
@@ -315,25 +315,25 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
 
-        for (Integer userId : userIdToUserMap.keys()) {
-            User user = userIdToUserMap.get(userId);
-            RepUser repUser = manager.getUserMaster(userId);
+        for (Integer uid : userIdToUserMap.keys()) {
+            User user = userIdToUserMap.get(uid);
+            RepUser repUser = manager.getUserMaster(uid);
             assertEquals(repUser.getId(), user.getId());
 
             assertTrue(repUser.getReplicaPids().size() == manager.getMinNumReplicas());
@@ -341,23 +341,23 @@ public class RepManagerTest {
                 int pid = iter.next();
                 RepManager.Partition partition = manager.getPartitionById(pid);
                 boolean shouldContainReplica = repUser.getReplicaPids().contains(pid);
-                boolean containsReplica = partition.getIdsOfReplicas().contains(userId);
+                boolean containsReplica = partition.getIdsOfReplicas().contains(uid);
                 assertTrue(containsReplica == shouldContainReplica);
             }
         }
 
         assertTrue(manager.getNumUsers() == 3);
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        Integer newPartitionId = manager.getRandomPidWhereThisUserIsNotPresent(repUser1);
-        assertFalse(repUser1.getReplicaPids().contains(newPartitionId));
-        manager.addReplica(manager.getUserMaster(userId1), newPartitionId);
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        Integer newPid = manager.getRandomPidWhereThisUserIsNotPresent(repUser1);
+        assertFalse(repUser1.getReplicaPids().contains(newPid));
+        manager.addReplica(manager.getUserMaster(uid1), newPid);
 
         assertTrue(repUser1.getReplicaPids().size() == manager.getMinNumReplicas() + 1);
-        verifyRepUsersReplicas(manager, repUser1, userId1);
+        verifyRepUsersReplicas(manager, repUser1, uid1);
 
         TIntSet replicaSetCopy = new TIntHashSet(repUser1.getReplicaPids());
-        replicaSetCopy.remove(newPartitionId);
+        replicaSetCopy.remove(newPid);
         Integer replicaPartitionToRemove = replicaSetCopy.iterator().next();
 
         manager.removeReplica(repUser1, replicaPartitionToRemove);
@@ -365,7 +365,7 @@ public class RepManagerTest {
         assertFalse(repUser1.getReplicaPids().contains(replicaPartitionToRemove));
         assertTrue(repUser1.getReplicaPids().size() == manager.getMinNumReplicas());
 
-        verifyRepUsersReplicas(manager, repUser1, userId1);
+        verifyRepUsersReplicas(manager, repUser1, uid1);
     }
 
     @Test
@@ -379,51 +379,51 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        RepUser repUser3 = manager.getUserMaster(userId3);
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        RepUser repUser3 = manager.getUserMaster(uid3);
 
         manager.befriend(repUser3, repUser1);
 
-        Integer oldPartitionId = repUser1.getBasePid();
+        Integer oldPid = repUser1.getBasePid();
         TIntSet oldReplicaIds = repUser1.getReplicaPids();
 
         //Check that the partitions are correct
-        assertNotNull(manager.getPartitionById(oldPartitionId).getMasterById(userId1));
+        assertNotNull(manager.getPartitionById(oldPid).getMasterById(uid1));
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             int pid = iter.next();
-            if (pid != oldPartitionId) {
-                assertNull(manager.getPartitionById(pid).getMasterById(userId1));
+            if (pid != oldPid) {
+                assertNull(manager.getPartitionById(pid).getMasterById(uid1));
             }
         }
 
         //Check that the replicas are correct:
         for(TIntIterator iter = repUser1.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId1);
-            assertEquals(replica.getBasePid(), oldPartitionId);
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid1);
+            assertEquals(replica.getBasePid(), oldPid);
             assertEquals(replica.getReplicaPids(), oldReplicaIds);
         }
 
-        Integer newPartitionId = manager.getPidWithFewestMasters();
+        Integer newPid = manager.getPidWithFewestMasters();
         TIntSet replicasToAddInDestinationPartition = new TIntHashSet();
         for(TIntIterator iter = repUser1.getFriendIDs().iterator(); iter.hasNext(); ) {
             int friendId = iter.next();
             RepUser friend = manager.getUserMaster(friendId);
-            if (!friend.getBasePid().equals(newPartitionId) && !friend.getReplicaPids().contains(newPartitionId)) {
+            if (!friend.getBasePid().equals(newPid) && !friend.getReplicaPids().contains(newPid)) {
                 replicasToAddInDestinationPartition.add(friendId);
             }
         }
@@ -433,28 +433,28 @@ public class RepManagerTest {
         TIntIntMap uidToPidMap = getUToMasterMap(manager.getPartitionToUserMap());
         TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(manager.getPartitionToReplicasMap(), new TIntHashSet(manager.getUids()));
         TIntSet replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(repUser1, new TIntHashSet(replicasToAddInDestinationPartition), minNumReplicas, uidToReplicasMap, uidToPidMap, manager.getFriendships());
-        manager.moveUser(repUser1, newPartitionId, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
+        manager.moveUser(repUser1, newPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
 
-        RepUser repUser1Again = manager.getUserMaster(userId1);
+        RepUser repUser1Again = manager.getUserMaster(uid1);
         TIntSet expectedReplicaIds = new TIntHashSet(oldReplicaIds);
-        expectedReplicaIds.remove(newPartitionId);
+        expectedReplicaIds.remove(newPid);
         assertEquals(expectedReplicaIds, repUser1Again.getReplicaPids());
-        assertEquals(newPartitionId, repUser1Again.getBasePid());
+        assertEquals(newPid, repUser1Again.getBasePid());
 
         //Check that the partitions are correct
-        assertNotNull(manager.getPartitionById(newPartitionId).getMasterById(userId1));
+        assertNotNull(manager.getPartitionById(newPid).getMasterById(uid1));
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             int pid = iter.next();
-            if (pid != newPartitionId) {
-                assertNull(manager.getPartitionById(pid).getMasterById(userId1));
+            if (pid != newPid) {
+                assertNull(manager.getPartitionById(pid).getMasterById(uid1));
             }
         }
 
         //Check that the replicas are correct:
         for(TIntIterator iter = repUser1Again.getReplicaPids().iterator(); iter.hasNext(); ) {
-            int partitionId = iter.next();
-            RepUser replica = manager.getPartitionById(partitionId).getReplicaById(userId1);
-            assertEquals(replica.getBasePid(), newPartitionId);
+            int pid = iter.next();
+            RepUser replica = manager.getPartitionById(pid).getReplicaById(uid1);
+            assertEquals(replica.getBasePid(), newPid);
             assertEquals(replica.getReplicaPids(), expectedReplicaIds);
         }
     }
@@ -470,40 +470,40 @@ public class RepManagerTest {
 
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        RepUser repUser3 = manager.getUserMaster(userId3);
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        RepUser repUser3 = manager.getUserMaster(uid3);
 
         //This should not be true, as it would violate our balance constraint
         assertNotEquals(repUser1.getBasePid(), repUser3.getBasePid());
 
         manager.befriend(repUser3, repUser1);
 
-        assertTrue(repUser1.getFriendIDs().contains(userId3));
-        assertTrue(repUser3.getFriendIDs().contains(userId1));
+        assertTrue(repUser1.getFriendIDs().contains(uid3));
+        assertTrue(repUser3.getFriendIDs().contains(uid1));
 
         for(TIntIterator iter = repUser1.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId1);
-            assertTrue(replica.getFriendIDs().contains(userId3));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid1);
+            assertTrue(replica.getFriendIDs().contains(uid3));
         }
 
         for(TIntIterator iter = repUser3.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId3);
-            assertTrue(replica.getFriendIDs().contains(userId1));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid3);
+            assertTrue(replica.getFriendIDs().contains(uid1));
         }
     }
 
@@ -517,24 +517,24 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        RepUser repUser2 = manager.getUserMaster(userId2);
-        RepUser repUser3 = manager.getUserMaster(userId3);
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        RepUser repUser2 = manager.getUserMaster(uid2);
+        RepUser repUser3 = manager.getUserMaster(uid3);
 
         //This should not be true, as it would violate our balance constraint
         assertNotEquals(repUser1.getBasePid(), repUser3.getBasePid());
@@ -542,48 +542,48 @@ public class RepManagerTest {
         manager.befriend(repUser3, repUser1);
         manager.befriend(repUser2, repUser1);
 
-        assertTrue(repUser1.getFriendIDs().contains(userId3));
-        assertTrue(repUser1.getFriendIDs().contains(userId2));
-        assertTrue(repUser2.getFriendIDs().contains(userId1));
-        assertTrue(repUser3.getFriendIDs().contains(userId1));
+        assertTrue(repUser1.getFriendIDs().contains(uid3));
+        assertTrue(repUser1.getFriendIDs().contains(uid2));
+        assertTrue(repUser2.getFriendIDs().contains(uid1));
+        assertTrue(repUser3.getFriendIDs().contains(uid1));
 
         for(TIntIterator iter = repUser1.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId1);
-            assertTrue(replica.getFriendIDs().contains(userId3));
-            assertTrue(replica.getFriendIDs().contains(userId2));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid1);
+            assertTrue(replica.getFriendIDs().contains(uid3));
+            assertTrue(replica.getFriendIDs().contains(uid2));
         }
 
         for(TIntIterator iter = repUser2.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId2);
-            assertTrue(replica.getFriendIDs().contains(userId1));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid2);
+            assertTrue(replica.getFriendIDs().contains(uid1));
         }
 
         for(TIntIterator iter = repUser3.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId3);
-            assertTrue(replica.getFriendIDs().contains(userId1));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid3);
+            assertTrue(replica.getFriendIDs().contains(uid1));
         }
 
         manager.unfriend(repUser2, repUser1);
 
-        assertTrue(repUser1.getFriendIDs().contains(userId3));
-        assertFalse(repUser1.getFriendIDs().contains(userId2));
-        assertFalse(repUser2.getFriendIDs().contains(userId1));
-        assertTrue(repUser3.getFriendIDs().contains(userId1));
+        assertTrue(repUser1.getFriendIDs().contains(uid3));
+        assertFalse(repUser1.getFriendIDs().contains(uid2));
+        assertFalse(repUser2.getFriendIDs().contains(uid1));
+        assertTrue(repUser3.getFriendIDs().contains(uid1));
 
         for(TIntIterator iter = repUser1.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId1);
-            assertTrue(replica.getFriendIDs().contains(userId3));
-            assertFalse(replica.getFriendIDs().contains(userId2));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid1);
+            assertTrue(replica.getFriendIDs().contains(uid3));
+            assertFalse(replica.getFriendIDs().contains(uid2));
         }
 
         for(TIntIterator iter = repUser2.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId2);
-            assertFalse(replica.getFriendIDs().contains(userId1));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid2);
+            assertFalse(replica.getFriendIDs().contains(uid1));
         }
 
         for(TIntIterator iter = repUser3.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId3);
-            assertTrue(replica.getFriendIDs().contains(userId1));
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid3);
+            assertTrue(replica.getFriendIDs().contains(uid1));
         }
     }
 
@@ -597,49 +597,49 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        Integer user1OriginalMasterPartitionId = repUser1.getBasePid();
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        Integer user1OriginalBasePid = repUser1.getBasePid();
         TIntSet user1OriginalReplicaIds = new TIntHashSet(repUser1.getReplicaPids());
         for(TIntIterator iter = repUser1.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId1);
-            assertEquals(replica.getBasePid(), user1OriginalMasterPartitionId);
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid1);
+            assertEquals(replica.getBasePid(), user1OriginalBasePid);
             assertEquals(replica.getReplicaPids(), user1OriginalReplicaIds);
         }
 
-        Integer user1NewMasterPartitionId = repUser1.getReplicaPids().iterator().next();
-        assertNotEquals(user1NewMasterPartitionId, user1OriginalMasterPartitionId);
-        manager.promoteReplicaToMaster(userId1, user1NewMasterPartitionId);
+        Integer user1NewBasePid = repUser1.getReplicaPids().iterator().next();
+        assertNotEquals(user1NewBasePid, user1OriginalBasePid);
+        manager.promoteReplicaToMaster(uid1, user1NewBasePid);
 
         TIntSet user1NewReplicaIds = new TIntHashSet(user1OriginalReplicaIds);
-        user1NewReplicaIds.remove(user1NewMasterPartitionId);
-        RepUser repUser1Again = manager.getUserMaster(userId1);
-        assertEquals(repUser1Again.getBasePid(), user1NewMasterPartitionId);
+        user1NewReplicaIds.remove(user1NewBasePid);
+        RepUser repUser1Again = manager.getUserMaster(uid1);
+        assertEquals(repUser1Again.getBasePid(), user1NewBasePid);
         assertEquals(repUser1Again.getReplicaPids(), user1NewReplicaIds);
 
         for(TIntIterator iter = repUser1Again.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(userId1);
-            assertEquals(replica.getBasePid(), user1NewMasterPartitionId);
+            RepUser replica = manager.getPartitionById(iter.next()).getReplicaById(uid1);
+            assertEquals(replica.getBasePid(), user1NewBasePid);
             assertEquals(replica.getReplicaPids(), user1NewReplicaIds);
         }
     }
 
     @Test
-    public void testGetRandomPartitionIdWhereThisUserIsNotPresent() {
+    public void testGetRandomPidWhereThisUserIsNotPresent() {
         RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
@@ -648,33 +648,33 @@ public class RepManagerTest {
         manager.addPartition();
 
         TIntObjectMap<User> userIdToUserMap = new TIntObjectHashMap<>();
-        Integer userId1 = 23;
-        User user1 = new User(userId1);
+        Integer uid1 = 23;
+        User user1 = new User(uid1);
         manager.addUser(user1);
-        userIdToUserMap.put(userId1, user1);
+        userIdToUserMap.put(uid1, user1);
 
-        Integer userId2 = 15;
-        User user2 = new User(userId2);
+        Integer uid2 = 15;
+        User user2 = new User(uid2);
         manager.addUser(user2);
-        userIdToUserMap.put(userId2, user2);
+        userIdToUserMap.put(uid2, user2);
 
-        Integer userId3 = 2;
-        User user3 = new User(userId3);
+        Integer uid3 = 2;
+        User user3 = new User(uid3);
         manager.addUser(user3);
-        userIdToUserMap.put(userId3, user3);
+        userIdToUserMap.put(uid3, user3);
 
         TIntSet partitionsWithoutThisUser = new TIntHashSet();
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             int pid = iter.next();
             RepManager.Partition partition = manager.getPartitionById(pid);
-            if (!partition.getIdsOfMasters().contains(userId1) && !partition.getIdsOfReplicas().contains(userId1)) {
+            if (!partition.getIdsOfMasters().contains(uid1) && !partition.getIdsOfReplicas().contains(uid1)) {
                 partitionsWithoutThisUser.add(pid);
             }
         }
 
-        RepUser repUser1 = manager.getUserMaster(userId1);
-        Integer partitionIdWhereThisUserIsNotPresent = manager.getRandomPidWhereThisUserIsNotPresent(repUser1);
-        assertTrue(partitionsWithoutThisUser.contains(partitionIdWhereThisUserIsNotPresent));
+        RepUser repUser1 = manager.getUserMaster(uid1);
+        Integer pidWhereThisUserIsNotPresent = manager.getRandomPidWhereThisUserIsNotPresent(repUser1);
+        assertTrue(partitionsWithoutThisUser.contains(pidWhereThisUserIsNotPresent));
     }
 
     @Test
@@ -682,12 +682,12 @@ public class RepManagerTest {
         RepManager manager = new RepManager(2, 0);
         manager.addPartition();
         manager.addPartition();
-        Integer thirdPartitionId = manager.addPartition();
+        Integer thirdPid = manager.addPartition();
         manager.addPartition();
         manager.addPartition();
-        TIntSet initialReplicaLocations = manager.getPartitionsToAddInitialReplicas(thirdPartitionId);
+        TIntSet initialReplicaLocations = manager.getPartitionsToAddInitialReplicas(thirdPid);
 
-        assertFalse(initialReplicaLocations.contains(thirdPartitionId));
+        assertFalse(initialReplicaLocations.contains(thirdPid));
     }
 
     @Test

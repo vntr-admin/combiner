@@ -15,11 +15,11 @@ public class J2Middleware extends JabarMiddleware {
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, 1f, getManager().getPartitionToUsers(), getManager().getFriendships());
+    public void removePartition(Integer pid) {
+        TIntIntMap targets = HMigrator.migrateOffPartition(pid, 1f, getManager().getPartitionToUsers(), getManager().getFriendships());
         for(Integer uid : targets.keys()) {
             getManager().moveUser(uid, targets.get(uid), true);
         }
-        getManager().removePartition(partitionId);
+        getManager().removePartition(pid);
     }
 }

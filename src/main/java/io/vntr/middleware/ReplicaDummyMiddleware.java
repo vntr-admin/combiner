@@ -19,71 +19,71 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = getManager().getUserMaster(smallerUserId);
-        RepUser largerUser = getManager().getUserMaster(largerUserId);
+    public void befriend(Integer smallerUid, Integer largerUid) {
+        RepUser smallerUser = getManager().getUserMaster(smallerUid);
+        RepUser largerUser = getManager().getUserMaster(largerUid);
         getManager().befriend(smallerUser, largerUser);
 
         int smallerPid = smallerUser.getBasePid();
         int largerPid = largerUser.getBasePid();
         if(smallerPid != largerPid) {
-            if(!getManager().getReplicasOnPartition(largerPid).contains(smallerUserId)) {
+            if(!getManager().getReplicasOnPartition(largerPid).contains(smallerUid)) {
                 getManager().addReplica(smallerUser, largerPid);
             }
-            if(!getManager().getReplicasOnPartition(smallerPid).contains(largerUserId)) {
+            if(!getManager().getReplicasOnPartition(smallerPid).contains(largerUid)) {
                 getManager().addReplica(largerUser, smallerPid);
             }
         }
     }
 
     @Override
-    public void unfriend(Integer smallerUserId, Integer largerUserId) {
-        RepUser smallerUser = getManager().getUserMaster(smallerUserId);
-        RepUser largerUser = getManager().getUserMaster(largerUserId);
+    public void unfriend(Integer smallerUid, Integer largerUid) {
+        RepUser smallerUser = getManager().getUserMaster(smallerUid);
+        RepUser largerUser = getManager().getUserMaster(largerUid);
         getManager().unfriend(smallerUser, largerUser);
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
+    public void removePartition(Integer pid) {
         //First, determine which users will need more replicas once this partition is kaput
-        TIntSet usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(partitionId);
+        TIntSet usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(pid);
         
         //Second, determine the migration strategy
-        TIntIntMap migrationStrategy = getUserMigrationStrategy(partitionId, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), false);
+        TIntIntMap migrationStrategy = getUserMigrationStrategy(pid, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), false);
 
         //Third, promote replicas to masters as specified in the migration strategy
-        for (Integer userId : migrationStrategy.keys()) {
-            RepUser user = getManager().getUserMaster(userId);
-            Integer newPartitionId = migrationStrategy.get(userId);
+        for (Integer uid : migrationStrategy.keys()) {
+            RepUser user = getManager().getUserMaster(uid);
+            Integer newPid = migrationStrategy.get(uid);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
-            if (!user.getReplicaPids().contains(newPartitionId)) {
-                getManager().addReplica(user, newPartitionId);
-                usersInNeedOfNewReplicas.remove(userId);
+            if (!user.getReplicaPids().contains(newPid)) {
+                getManager().addReplica(user, newPid);
+                usersInNeedOfNewReplicas.remove(uid);
             }
-            getManager().promoteReplicaToMaster(userId, newPartitionId);
+            getManager().promoteReplicaToMaster(uid, newPid);
         }
 
         //Fourth, add replicas as appropriate
         for(TIntIterator iter = usersInNeedOfNewReplicas.iterator(); iter.hasNext(); ) {
             RepUser user = getManager().getUserMaster(iter.next());
-            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
+            getManager().addReplica(user, getRandomPidWhereThisUserIsNotPresent(user, singleton(pid)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
-        for(TIntIterator iter = getManager().getReplicasOnPartition(partitionId).iterator(); iter.hasNext(); ) {
+        for(TIntIterator iter = getManager().getReplicasOnPartition(pid).iterator(); iter.hasNext(); ) {
             int uid = iter.next();
             RepUser user = getManager().getUserMaster(uid);
             for(TIntIterator iter2 = user.getReplicaPids().iterator(); iter2.hasNext(); ) {
-                getManager().getReplicaOnPartition(user.getId(), iter2.next()).removeReplicaPartitionId(partitionId);
+                getManager().getReplicaOnPartition(user.getId(), iter2.next()).removeReplicaPid(pid);
             }
 
-            //Delete it from the master's replicaPartitionIds
-            user.removeReplicaPartitionId(partitionId);
+            //Delete it from the master's replicaPids
+            user.removeReplicaPid(pid);
         }
 
         //Finally, actually drop partition
-        getManager().removePartition(partitionId);
+        getManager().removePartition(pid);
     }
 
     @Override

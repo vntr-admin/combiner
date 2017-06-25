@@ -11,7 +11,7 @@ public interface IMiddlewareAnalyzer extends IMiddleware {
     Integer getNumberOfUsers();
     Integer getNumberOfFriendships();
     TIntSet getUserIds();
-    TIntSet getPartitionIds();
+    TIntSet getPids();
     Integer getEdgeCut();
     Integer getReplicationCount();
     Long getMigrationTally();

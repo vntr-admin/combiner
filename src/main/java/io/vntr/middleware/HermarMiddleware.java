@@ -29,9 +29,9 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        super.befriend(smallerUserId, largerUserId);
-        handleRebalancing(smallerUserId, largerUserId);
+    public void befriend(Integer smallerUid, Integer largerUid) {
+        super.befriend(smallerUid, largerUid);
+        handleRebalancing(smallerUid, largerUid);
     }
 
     void handleRebalancing(Integer smallerUserId, Integer largerUserId) {
@@ -49,12 +49,12 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, gamma, manager.getPartitionToUsers(), manager.getFriendships());
+    public void removePartition(Integer pid) {
+        TIntIntMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
         for(Integer uid : targets.keys()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
-        manager.removePartition(partitionId);
+        manager.removePartition(pid);
         repartition();
     }
 

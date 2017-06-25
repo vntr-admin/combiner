@@ -336,7 +336,7 @@ public class SparMiddlewareTest {
     }
 
     @Test
-    public void testGetRandomPartitionIdWhereThisUserIsNotPresent() {
+    public void testGetRandomPidWhereThisUserIsNotPresent() {
         int minNumReplicas = 1;
         TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
@@ -378,7 +378,7 @@ public class SparMiddlewareTest {
         for(int uid=1; uid<20; uid++) {
             int pid = ((uid-1)/5) + 1;
             TIntSet possibleAnswers = initSet((pid+1)%4 + 1, (pid+2)%4 + 1);
-            int newPid = middleware.getRandomPartitionIdWhereThisUserIsNotPresent(manager.getUserMaster(uid), new TIntHashSet());
+            int newPid = middleware.getRandomPidWhereThisUserIsNotPresent(manager.getUserMaster(uid), new TIntHashSet());
             assertTrue(possibleAnswers.contains(newPid));
         }
     }

@@ -151,7 +151,7 @@ public class ProbabilityUtils
 
     public static double calculateExpectedQueryDelay(TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions) {
         TIntIntMap uidToPidMap = TroveUtils.getUToMasterMap(partitions);
-        TIntObjectMap<TIntSet> uidToFriendPidsMap = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> uidToFriendPidsMap = new TIntObjectHashMap<>(friendships.size()+1);
         for(int uid : friendships.keys()) {
             uidToFriendPidsMap.put(uid, new TIntHashSet());
         }

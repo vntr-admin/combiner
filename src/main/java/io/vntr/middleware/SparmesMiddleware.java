@@ -102,7 +102,7 @@ public class SparmesMiddleware extends SparMiddleware {
         TIntSet replicaLocations = user.getReplicaPids();
         int deficit = minNumReplicas - replicaLocations.size();
         if(deficit > 0) {
-            TIntSet newLocations = new TIntHashSet(getPartitionIds());
+            TIntSet newLocations = new TIntHashSet(getPids());
             newLocations.removeAll(replicaLocations);
             newLocations.remove(user.getBasePid());
             TIntSet newReplicaPids = getKDistinctValuesFromArray(deficit, newLocations.toArray());

@@ -86,7 +86,7 @@ public class MetisRepartitioner {
 
     private static TIntIntMap getTranslationToZN(int[] uids, TIntIntMap reverseMap) {
         sort(uids);
-        TIntIntMap dict = new TIntIntHashMap();
+        TIntIntMap dict = new TIntIntHashMap(uids.length+1);
         int index = 1;
         for(int i=0; i<uids.length; i++) {
             int nextUid = uids[i];
@@ -100,7 +100,7 @@ public class MetisRepartitioner {
     private static TIntObjectMap<TIntSet> translateFriendshipsToZNBased(TIntObjectMap<TIntSet> originalFriendships, TIntIntMap mapping) {
         TIntObjectMap<TIntSet> translated = new TIntObjectHashMap<>();
         for(int i : originalFriendships.keys()) {
-            TIntSet translatedFriends = new TIntHashSet();
+            TIntSet translatedFriends = new TIntHashSet(originalFriendships.get(i).size()+1);
             for(TIntIterator iter = originalFriendships.get(i).iterator(); iter.hasNext(); ) {
                 translatedFriends.add(mapping.get(iter.next()));
             }
@@ -110,7 +110,7 @@ public class MetisRepartitioner {
     }
 
     private static TIntIntMap translatePartitioningFromZNBased(TIntIntMap zNBasedPartitioning, TIntIntMap reverseUidMap, TIntIntMap reversePidMap) {
-        TIntIntMap translatedPartitioning = new TIntIntHashMap();
+        TIntIntMap translatedPartitioning = new TIntIntHashMap(zNBasedPartitioning.size()+1);
         for(int i : zNBasedPartitioning.keys()) {
             int rawPid = zNBasedPartitioning.get(i);
             int translatedUid = reverseUidMap.get(i);

@@ -20,21 +20,21 @@ public class RepUser extends User {
         return replicaPids;
     }
 
-    public void addReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPids.add(replicaPartitionId);
+    public void addReplicaPids(Integer replicaPid) {
+        this.replicaPids.add(replicaPid);
     }
 
-    public void removeReplicaPartitionId(Integer replicaPartitionId) {
-        this.replicaPids.remove(replicaPartitionId);
+    public void removeReplicaPid(Integer replicaPid) {
+        this.replicaPids.remove(replicaPid);
     }
 
-    public void addReplicaPartitionIds(TIntSet replicaPartitionIds) {
-        this.replicaPids.addAll(replicaPartitionIds);
+    public void addReplicaPids(TIntSet replicaPid) {
+        this.replicaPids.addAll(replicaPid);
     }
 
     public RepUser dupe() {
         RepUser user = new RepUser(getId(), getBasePid());
-        user.addReplicaPartitionIds(replicaPids);
+        user.addReplicaPids(replicaPids);
         for(TIntIterator iter = getFriendIDs().iterator(); iter.hasNext(); ) {
             user.befriend(iter.next());
         }

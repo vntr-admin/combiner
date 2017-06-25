@@ -18,7 +18,7 @@ import static io.vntr.utils.TroveUtils.*;
 
 public class SMigrator {
 
-    public static TIntIntMap getUserMigrationStrategy(Integer partitionId, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, boolean scoreTargets) {
+    public static TIntIntMap getUserMigrationStrategy(Integer pid, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, boolean scoreTargets) {
         //Reallocate the N/M master nodes hosted in that server to the remaining M-1 servers equally.
         //Decide the server in which a slave replica is promoted to master, based on the ratio of its neighbors that already exist on that server.
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
@@ -28,18 +28,18 @@ public class SMigrator {
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
-        TIntSet masterIds = partitions.get(partitionId);
-        TIntIntMap remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(partitionId), uidToPidMap.size(), pidToMasterCounts);
+        TIntSet masterIds = partitions.get(pid);
+        TIntIntMap remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(pid), uidToPidMap.size(), pidToMasterCounts);
         TIntIntMap strategy = new TIntIntHashMap(masterIds.size() + 1);
 
         if(scoreTargets) {
             NavigableSet<Target> targets = new TreeSet<>();
             for(TIntIterator iter = masterIds.iterator(); iter.hasNext(); ) {
-                int userId = iter.next();
-                for(TIntIterator iter2 = uidToReplicasMap.get(userId).iterator(); iter2.hasNext(); ) {
-                    int replicaPartitionId = iter2.next();
-                    float score = scoreReplicaPromotion(friendships.get(userId), partitions.get(replicaPartitionId));
-                    Target target = new Target(userId, replicaPartitionId, partitionId, score);
+                int uid = iter.next();
+                for(TIntIterator iter2 = uidToReplicasMap.get(uid).iterator(); iter2.hasNext(); ) {
+                    int replicaPid = iter2.next();
+                    float score = scoreReplicaPromotion(friendships.get(uid), partitions.get(replicaPid));
+                    Target target = new Target(uid, replicaPid, pid, score);
                     targets.add(target);
                 }
             }
@@ -65,7 +65,7 @@ public class SMigrator {
                 strategy.put(uid, targetPid);
             }
             else {
-                strategy.put(uid, getLeastOverloadedPartition(strategy, partitionId, pidToMasterCounts));
+                strategy.put(uid, getLeastOverloadedPartition(strategy, pid, pidToMasterCounts));
             }
         }
 
@@ -128,19 +128,19 @@ public class SMigrator {
         return ((float) (numFriendsOnPartition * numFriendsOnPartition)) / numFriendsTotal;
     }
 
-    static TIntIntMap getRemainingSpotsInPartitions(TIntSet partitionIdsToSkip, int numUsers, TIntIntMap pToMasterCounts) {
-        int numPartitions = pToMasterCounts.size() - partitionIdsToSkip.size();
+    static TIntIntMap getRemainingSpotsInPartitions(TIntSet pidsToSkip, int numUsers, TIntIntMap pToMasterCounts) {
+        int numPartitions = pToMasterCounts.size() - pidsToSkip.size();
         int maxUsersPerPartition = numUsers / numPartitions;
         if (numUsers % numPartitions != 0) {
             maxUsersPerPartition++;
         }
 
         TIntIntMap remainingSpotsInPartitions = new TIntIntHashMap(pToMasterCounts.size()+1);
-        for (Integer partitionId : pToMasterCounts.keys()) {
-            if(partitionIdsToSkip.contains(partitionId)) {
+        for (Integer pid : pToMasterCounts.keys()) {
+            if(pidsToSkip.contains(pid)) {
                 continue;
             }
-            remainingSpotsInPartitions.put(partitionId, maxUsersPerPartition - pToMasterCounts.get(partitionId));
+            remainingSpotsInPartitions.put(pid, maxUsersPerPartition - pToMasterCounts.get(pid));
         }
 
         return remainingSpotsInPartitions;

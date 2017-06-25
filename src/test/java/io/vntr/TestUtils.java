@@ -29,12 +29,12 @@ public class TestUtils {
     }
 
     public static TIntObjectMap<TIntSet> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
-        TIntObjectMap<TIntSet> userIdToFriendIds = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> userIdToFriendIds = new TIntObjectHashMap<>(numUsers+1);
         for(int id=0; id<numUsers; id++) {
             userIdToFriendIds.put(id, new TIntHashSet());
         }
 
-        TIntObjectMap<TIntSet> groupIdToUserIds = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> groupIdToUserIds = new TIntObjectHashMap<>(numGroups+1);
         for(int id=0; id<numGroups; id++) {
             groupIdToUserIds.put(id, new TIntHashSet());
         }
@@ -49,13 +49,13 @@ public class TestUtils {
 
         for(TIntSet groupMembers : groupIdToUserIds.valueCollection()) {
             for(TIntIterator iter = groupMembers.iterator(); iter.hasNext(); ) {
-                int userId = iter.next();
+                int uid = iter.next();
                 for(TIntIterator iter2 = groupMembers.iterator(); iter2.hasNext(); ) {
-                    int otherUserId = iter2.next();
-                    if(userId < otherUserId) { //this avoids running it once for each user
+                    int otherUid = iter2.next();
+                    if(uid < otherUid) { //this avoids running it once for each user
                         if(Math.random() < intraGroupFriendshipProbability) {
-                            userIdToFriendIds.get(userId).add(otherUserId);
-                            userIdToFriendIds.get(otherUserId).add(userId);
+                            userIdToFriendIds.get(uid).add(otherUid);
+                            userIdToFriendIds.get(otherUid).add(uid);
                         }
                     }
                 }
@@ -66,7 +66,7 @@ public class TestUtils {
     }
 
     public static TIntObjectMap<TIntSet> getRandomPartitioning(TIntSet pids, TIntSet uids) {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>(pids.size()+1);
         TIntSet pidCopies = new TIntHashSet(pids);
         int numPartitions = pidCopies.size();
         int numUsers = uids.size();
@@ -128,7 +128,7 @@ public class TestUtils {
             return null;
         }
         String[] ids = mainPart.split(", ");
-        TIntSet idSet = new TIntHashSet();
+        TIntSet idSet = new TIntHashSet(ids.length+1);
         for(String id : ids) {
             idSet.add(Integer.parseInt(id));
         }

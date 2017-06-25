@@ -18,9 +18,9 @@ public class DummyMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
-        TIntSet partition = manager.getPartition(partitionId);
-        manager.removePartition(partitionId);
+    public void removePartition(Integer pid) {
+        TIntSet partition = manager.getPartition(pid);
+        manager.removePartition(pid);
         for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
             Integer newPid = getRandomElement(manager.getPids());

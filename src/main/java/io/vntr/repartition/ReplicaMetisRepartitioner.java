@@ -17,7 +17,7 @@ public class ReplicaMetisRepartitioner {
 
         TIntIntMap uidToPidMap = MetisRepartitioner.partition(commandLiteral, tempDir, friendships, pids);
 
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>(pids.size()+1);
         for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
             partitions.put(iter.next(), new TIntHashSet());
         }

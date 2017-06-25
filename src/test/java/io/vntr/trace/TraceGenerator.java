@@ -70,7 +70,7 @@ public class TraceGenerator {
         if(numPids < 3 + MIN_NUM_REPLICAS) {
             numPids = 3 + MIN_NUM_REPLICAS;
         }
-        TIntSet pids = new TIntHashSet();
+        TIntSet pids = new TIntHashSet(numPids+1);
         for (int pid = 0; pid < numPids; pid++) {
             pids.add(pid);
         }

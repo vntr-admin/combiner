@@ -26,17 +26,17 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        super.befriend(smallerUserId, largerUserId);
+    public void befriend(Integer smallerUid, Integer largerUid) {
+        super.befriend(smallerUid, largerUid);
         if(Math.random() > .9) {
             repartition();
         }
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
-        TIntSet partition = manager.getPartition(partitionId);
-        manager.removePartition(partitionId);
+    public void removePartition(Integer pid) {
+        TIntSet partition = manager.getPartition(pid);
+        manager.removePartition(pid);
         for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
             Integer newPid = getRandomElement(manager.getPids());

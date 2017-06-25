@@ -29,8 +29,8 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        super.befriend(smallerUserId, largerUserId);
+    public void befriend(Integer smallerUid, Integer largerUid) {
+        super.befriend(smallerUid, largerUid);
         if(Math.random() > .9) {
             repartition();
         }

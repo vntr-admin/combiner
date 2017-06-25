@@ -53,7 +53,7 @@ public class NoRepManager {
 
     public void addUser(User user) {
         if(user.getBasePid() == null) {
-            user.setBasePid(getInitialPartitionId());
+            user.setBasePid(getInitialPid());
         }
         uMap.put(user.getId(), user);
         pMap.get(user.getBasePid()).add(user.getId());
@@ -81,7 +81,7 @@ public class NoRepManager {
         getUser(id2).unfriend(id1);
     }
 
-    Integer getInitialPartitionId() {
+    Integer getInitialPid() {
         if(placeNewUserRandomly) {
             return getRandomElement(pMap.keySet());
         }

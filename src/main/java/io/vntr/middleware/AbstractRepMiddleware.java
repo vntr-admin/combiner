@@ -36,8 +36,8 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Integer userId) {
-        manager.removeUser(userId);
+    public void removeUser(Integer uid) {
+        manager.removeUser(uid);
     }
 
     @Override
@@ -46,11 +46,11 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public void addPartition(Integer partitionId) {
-        manager.addPartition(partitionId);
+    public void addPartition(Integer pid) {
+        manager.addPartition(pid);
     }
 
-    Integer getRandomPartitionIdWhereThisUserIsNotPresent(RepUser user, TIntSet pidsToExclude) {
+    Integer getRandomPidWhereThisUserIsNotPresent(RepUser user, TIntSet pidsToExclude) {
         TIntSet potentialReplicaLocations = new TIntHashSet(manager.getPids());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getBasePid());
@@ -84,7 +84,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public TIntSet getPartitionIds() {
+    public TIntSet getPids() {
         return manager.getPids();
     }
 
@@ -115,7 +115,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
-        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>(getNumberOfPartitions()+1);
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             int pid = iter.next();
             m.put(pid, manager.getReplicasOnPartition(pid));
@@ -148,23 +148,23 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
         //SPAR ignores downtime
     }
 
-    TIntSet determineUsersWhoWillNeedAnAdditionalReplica(Integer partitionIdToBeRemoved) {
+    TIntSet determineUsersWhoWillNeedAnAdditionalReplica(Integer pidToBeRemoved) {
         TIntSet usersInNeedOfNewReplicas = new TIntHashSet();
 
         //First, determine which users will need more replicas once this partition is kaput
-        for(TIntIterator iter = getManager().getMastersOnPartition(partitionIdToBeRemoved).iterator(); iter.hasNext(); ) {
-            int userId = iter.next();
-            RepUser user = getManager().getUserMaster(userId);
+        for(TIntIterator iter = getManager().getMastersOnPartition(pidToBeRemoved).iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
+            RepUser user = getManager().getUserMaster(uid);
             if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
+                usersInNeedOfNewReplicas.add(uid);
             }
         }
 
-        for(TIntIterator iter = getManager().getReplicasOnPartition(partitionIdToBeRemoved).iterator(); iter.hasNext(); ) {
-            int userId = iter.next();
-            RepUser user = getManager().getUserMaster(userId);
+        for(TIntIterator iter = getManager().getReplicasOnPartition(pidToBeRemoved).iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
+            RepUser user = getManager().getUserMaster(uid);
             if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
-                usersInNeedOfNewReplicas.add(userId);
+                usersInNeedOfNewReplicas.add(uid);
             }
         }
 

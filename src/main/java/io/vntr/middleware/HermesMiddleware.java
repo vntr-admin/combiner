@@ -31,12 +31,12 @@ public class HermesMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(partitionId, gamma, manager.getPartitionToUsers(), manager.getFriendships());
+    public void removePartition(Integer pid) {
+        TIntIntMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
         for(Integer uid : targets.keys()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
-        manager.removePartition(partitionId);
+        manager.removePartition(pid);
     }
 
     @Override

@@ -193,14 +193,14 @@ public class SpajaRepartitioner {
         return swapChanges;
     }
 
-    static TIntSet findReplicasToAddToTargetPartition(Integer uid, Integer targetPartitionId, State state) {
+    static TIntSet findReplicasToAddToTargetPartition(Integer uid, Integer targetPid, State state) {
         TIntSet replicasToAdd = new TIntHashSet();
         for(TIntIterator iter = state.getFriendships().get(uid).iterator(); iter.hasNext(); ) {
             int friendId = iter.next();
             int friendPid = state.getLogicalPids().get(friendId);
-            if(targetPartitionId != friendPid) {
+            if(targetPid != friendPid) {
                 TIntSet friendReplicaPids = state.getLogicalReplicaPids().get(friendId);
-                if(!friendReplicaPids.contains(targetPartitionId)) {
+                if(!friendReplicaPids.contains(targetPid)) {
                     replicasToAdd.add(friendId);
                 }
             }
@@ -214,8 +214,8 @@ public class SpajaRepartitioner {
 
         for(TIntIterator iter = state.getFriendships().get(uid).iterator(); iter.hasNext(); ) {
             int friendId = iter.next();
-            Integer friendMasterPartitionId = state.getLogicalPids().get(friendId);
-            if (pid.equals(friendMasterPartitionId)) {
+            Integer friendBasePid = state.getLogicalPids().get(friendId);
+            if (pid.equals(friendBasePid)) {
                 return true;
             }
         }

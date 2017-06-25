@@ -238,7 +238,7 @@ public class JRepartitioner {
         }
 
         public void initUidToPidToFriendCount(TIntObjectMap<TIntSet> partitions) {
-            uidToPidToFriendCounts = new TIntObjectHashMap<>();
+            uidToPidToFriendCounts = new TIntObjectHashMap<>(friendships.size()+1);
             for(int uid : friendships.keys()) {
                 TIntIntMap counts = new TIntIntHashMap(partitions.size()+1);
                 for(int pid : partitions.keys()) {

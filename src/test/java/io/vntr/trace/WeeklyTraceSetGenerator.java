@@ -104,7 +104,7 @@ public class WeeklyTraceSetGenerator {
         if(numPids < 3 + maxMinNumReplicas) {
             numPids = 3 + maxMinNumReplicas;
         }
-        TIntSet originalPids = new TIntHashSet();
+        TIntSet originalPids = new TIntHashSet(numPids+1);
         for (int pid = 0; pid < numPids; pid++) {
             originalPids.add(pid);
         }
@@ -322,7 +322,7 @@ public class WeeklyTraceSetGenerator {
 
     private static TIntObjectMap<TIntSet> getSoftStartPartitions(TIntSet pids, String metisCommand, String metisTempDir) {
         TIntIntMap softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, bidirectionalFriendships, new TIntHashSet(pids));
-        TIntObjectMap<TIntSet> softStartPartitions = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> softStartPartitions = new TIntObjectHashMap<>(pids.size()+1);
         for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
             softStartPartitions.put(iter.next(), new TIntHashSet());
         }

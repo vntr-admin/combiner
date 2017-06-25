@@ -265,7 +265,7 @@ public class TroveUtils {
     }
 
     public static TIntSet singleton(int val) {
-        TIntSet set = new TIntHashSet();
+        TIntSet set = new TIntHashSet(2);
         set.add(val);
         return set;
     }

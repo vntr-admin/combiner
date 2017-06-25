@@ -67,21 +67,21 @@ public class RepManager {
     }
 
     public void addUser(User user) {
-        Integer masterPartitionId = getPidWithFewestMasters();
+        Integer masterPid = getPidWithFewestMasters();
 
-        RepUser RepUser = new RepUser(user.getId(), masterPartitionId);
+        RepUser RepUser = new RepUser(user.getId(), masterPid);
 
-        addUser(RepUser, masterPartitionId);
+        addUser(RepUser, masterPid);
 
-        for(TIntIterator iter = getPartitionsToAddInitialReplicas(masterPartitionId).iterator(); iter.hasNext(); ) {
+        for(TIntIterator iter = getPartitionsToAddInitialReplicas(masterPid).iterator(); iter.hasNext(); ) {
             addReplica(RepUser, iter.next());
         }
     }
 
-    public void addUser(RepUser user, Integer masterPartitionId) {
+    public void addUser(RepUser user, Integer masterPid) {
         int uid = user.getId();
-        getPartitionById(masterPartitionId).addMaster(user);
-        uMap.put(uid, masterPartitionId);
+        getPartitionById(masterPid).addMaster(user);
+        uMap.put(uid, masterPid);
         if(uid >= nextUid) {
             nextUid = uid + 1;
         }
@@ -106,8 +106,8 @@ public class RepManager {
             friendMaster.unfriend(uid);
 
             for(TIntIterator iter2 = friendMaster.getReplicaPids().iterator(); iter2.hasNext(); ) {
-                int friendReplicaPartitionId = iter2.next();
-                Partition friendReplicaPartition = getPartitionById(friendReplicaPartitionId);
+                int friendReplicaPid = iter2.next();
+                Partition friendReplicaPartition = getPartitionById(friendReplicaPid);
                 friendReplicaPartition.getReplicaById(friendId).unfriend(uid);
             }
         }
@@ -133,12 +133,12 @@ public class RepManager {
     public void addReplica(RepUser user, Integer destPid) {
         RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
-        //Update the replicaPartitionIds to reflect this addition
-        replicaOfUser.addReplicaPartitionId(destPid);
+        //Update the replicaPids to reflect this addition
+        replicaOfUser.addReplicaPids(destPid);
         for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
-            pMap.get(iter.next()).getReplicaById(user.getId()).addReplicaPartitionId(destPid);
+            pMap.get(iter.next()).getReplicaById(user.getId()).addReplicaPids(destPid);
         }
-        user.addReplicaPartitionId(destPid);
+        user.addReplicaPids(destPid);
     }
 
     public RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
@@ -148,15 +148,15 @@ public class RepManager {
     }
 
     public void removeReplica(RepUser user, Integer removalPid) {
-        //Delete it from each replica's replicaPartitionIds
+        //Delete it from each replica's replicaPids
         for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
             Partition p = pMap.get(iter.next());
             RepUser r = p.getReplicaById(user.getId());
-            r.removeReplicaPartitionId(removalPid);
+            r.removeReplicaPid(removalPid);
         }
 
-        //Delete it from the master's replicaPartitionIds
-        user.removeReplicaPartitionId(removalPid);
+        //Delete it from the master's replicaPids
+        user.removeReplicaPid(removalPid);
 
         //Actually remove the replica from the partition itself
         pMap.get(removalPid).removeReplica(user.getId());
@@ -242,27 +242,27 @@ public class RepManager {
         }
     }
 
-    public void promoteReplicaToMaster(Integer userId, Integer partitionId) {
-        Partition partition = pMap.get(partitionId);
-        RepUser user = partition.getReplicaById(userId);
-        user.setBasePid(partitionId);
-        user.removeReplicaPartitionId(partitionId);
+    public void promoteReplicaToMaster(Integer uid, Integer pid) {
+        Partition partition = pMap.get(pid);
+        RepUser user = partition.getReplicaById(uid);
+        user.setBasePid(pid);
+        user.removeReplicaPid(pid);
         partition.addMaster(user);
-        partition.removeReplica(userId);
+        partition.removeReplica(uid);
 
-        uMap.put(userId, partitionId);
+        uMap.put(uid, pid);
 
         for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
-            RepUser replica = pMap.get(iter.next()).getReplicaById(userId);
-            replica.setBasePid(partitionId);
-            replica.removeReplicaPartitionId(partitionId);
+            RepUser replica = pMap.get(iter.next()).getReplicaById(uid);
+            replica.setBasePid(pid);
+            replica.removeReplicaPid(pid);
         }
 
         //Add replicas of friends in pid if they don't already exists
         for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
             int friendId = iter.next();
             if(!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
-                addReplica(getUserMaster(friendId), partitionId);
+                addReplica(getUserMaster(friendId), pid);
             }
         }
     }
@@ -388,7 +388,7 @@ public class RepManager {
         //check replicas
         for(Integer uid : uMap.keys()) {
             RepUser user = getUserMaster(uid);
-            TIntSet observedReplicaPids = new TIntHashSet();
+            TIntSet observedReplicaPids = new TIntHashSet(pMap.size()+1);
             for(Integer pid : pMap.keys()) {
                 if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {
                     observedReplicaPids.add(pid);
@@ -477,12 +477,12 @@ public class RepManager {
             return idToReplicaMap.remove(id);
         }
 
-        RepUser getMasterById(Integer userId) {
-            return idToMasterMap.get(userId);
+        RepUser getMasterById(Integer uid) {
+            return idToMasterMap.get(uid);
         }
 
-        RepUser getReplicaById(Integer userId) {
-            return idToReplicaMap.get(userId);
+        RepUser getReplicaById(Integer uid) {
+            return idToReplicaMap.get(uid);
         }
 
         int getNumMasters() {

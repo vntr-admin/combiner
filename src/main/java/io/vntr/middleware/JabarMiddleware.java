@@ -17,9 +17,9 @@ public class JabarMiddleware extends JabejaMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        super.befriend(smallerUserId, largerUserId);
-        rebalance(smallerUserId, largerUserId);
+    public void befriend(Integer smallerUid, Integer largerUid) {
+        super.befriend(smallerUid, largerUid);
+        rebalance(smallerUid, largerUid);
     }
 
     void rebalance(Integer smallerUserId, Integer largerUserId) {

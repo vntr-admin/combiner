@@ -34,18 +34,18 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Integer userId) {
-        manager.removeUser(userId);
+    public void removeUser(Integer uid) {
+        manager.removeUser(uid);
     }
 
     @Override
-    public void befriend(Integer smallerUserId, Integer largerUserId) {
-        manager.befriend(smallerUserId, largerUserId);
+    public void befriend(Integer smallerUid, Integer largerUid) {
+        manager.befriend(smallerUid, largerUid);
     }
 
     @Override
-    public void unfriend(Integer smallerUserId, Integer largerUserId) {
-        manager.unfriend(smallerUserId, largerUserId);
+    public void unfriend(Integer smallerUid, Integer largerUid) {
+        manager.unfriend(smallerUid, largerUid);
     }
 
     @Override
@@ -54,8 +54,8 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public void addPartition(Integer partitionId) {
-        manager.addPartition(partitionId);
+    public void addPartition(Integer pid) {
+        manager.addPartition(pid);
     }
 
     @Override
@@ -83,7 +83,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public TIntSet getPartitionIds() {
+    public TIntSet getPids() {
         return manager.getPids();
     }
 
@@ -110,7 +110,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
 
     @Override
     public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
-        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>();
+        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>(getNumberOfPartitions()+1);
         for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
             m.put(iter.next(), new TIntHashSet());
         }

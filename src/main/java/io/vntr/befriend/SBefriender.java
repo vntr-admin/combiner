@@ -64,12 +64,12 @@ public class SBefriender {
     }
 
     static int calcNumReplicasStay(RepUser smallerUser, RepUser largerUser, TIntObjectMap<TIntSet> replicas) {
-        Integer smallerPartitionId = smallerUser.getBasePid();
-        Integer largerPartitionId = largerUser.getBasePid();
-        boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPids().contains(smallerPartitionId);
-        boolean smallerReplicaExistsOnLargerMaster = smallerUser.getReplicaPids().contains(largerPartitionId);
+        Integer smallerPid = smallerUser.getBasePid();
+        Integer largerPid = largerUser.getBasePid();
+        boolean largerReplicaExistsOnSmallerMaster = largerUser.getReplicaPids().contains(smallerPid);
+        boolean smallerReplicaExistsOnLargerMaster = smallerUser.getReplicaPids().contains(largerPid);
         int deltaReplicas = (largerReplicaExistsOnSmallerMaster ? 0 : 1) + (smallerReplicaExistsOnLargerMaster ? 0 : 1);
-        int curReplicas = replicas.get(smallerPartitionId).size() + replicas.get(largerPartitionId).size();
+        int curReplicas = replicas.get(smallerPid).size() + replicas.get(largerPid).size();
         return curReplicas + deltaReplicas;
     }
 
@@ -94,13 +94,13 @@ public class SBefriender {
         return curReplicas + deltaReplicas;
     }
 
-    public static TIntSet findReplicasToAddToTargetPartition(RepUser movingUser, Integer targetPartitionId, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidToReplicasMap) {
+    public static TIntSet findReplicasToAddToTargetPartition(RepUser movingUser, Integer targetPid, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidToReplicasMap) {
         TIntSet replicasToAddInStayingPartition = new TIntHashSet();
         for(TIntIterator iter = movingUser.getFriendIDs().iterator(); iter.hasNext(); ) {
             int friendId = iter.next();
             int pid = uidToPidMap.get(friendId);
             TIntSet replicaPids = uidToReplicasMap.get(friendId);
-            if (targetPartitionId != pid && !replicaPids.contains(targetPartitionId)) {
+            if (targetPid != pid && !replicaPids.contains(targetPid)) {
                 replicasToAddInStayingPartition.add(friendId);
             }
         }

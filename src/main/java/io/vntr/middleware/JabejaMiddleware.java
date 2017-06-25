@@ -41,9 +41,9 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer partitionId) {
-        TIntSet partition = getManager().getPartition(partitionId);
-        getManager().removePartition(partitionId);
+    public void removePartition(Integer pid) {
+        TIntSet partition = getManager().getPartition(pid);
+        getManager().removePartition(pid);
         for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
             Integer newPid = getRandomElement(getManager().getPids());
             getManager().moveUser(iter.next(), newPid, true);
