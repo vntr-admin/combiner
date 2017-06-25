@@ -7,7 +7,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import io.vntr.utils.Utils;
 
 import java.util.Arrays;
 
@@ -32,7 +31,7 @@ public class JRepartitioner {
 
             for(float t = initialT; t >= 1; t -= deltaT) {
                 int[] randomUserArray = friendships.keys();
-                Utils.shuffle(randomUserArray);
+                shuffle(randomUserArray);
                 for(Integer uid : randomUserArray) {
                     Integer partnerId = null;
                     if(!incremental) {
@@ -158,7 +157,7 @@ public class JRepartitioner {
 
     static TIntObjectMap<TIntSet> getRandomLogicalPartitions(TIntSet uids, TIntSet pids) {
         int[] pidArray = getPidsToAssign(uids.size(), pids);
-        Utils.shuffle(pidArray);
+        shuffle(pidArray);
 
         TIntObjectMap<TIntSet> logicalPartitions = new TIntObjectHashMap<>(pids.size()+1);
         for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
@@ -196,7 +195,7 @@ public class JRepartitioner {
 
         //Step 2: fill the remainder (if any) with randomly-selected pids (no more than once each)
         int[] remainingPidArray = pids.toArray();
-        Utils.shuffle(remainingPidArray);
+        shuffle(remainingPidArray);
         int nextPidIndex = 0;
         while(index < replicatedPids.length) {
             replicatedPids[index] = remainingPidArray[nextPidIndex++];

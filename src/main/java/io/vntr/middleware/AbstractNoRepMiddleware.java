@@ -1,14 +1,13 @@
 package io.vntr.middleware;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.TroveUtils;
-
-import java.util.*;
-
-import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -79,13 +78,13 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Set<Integer> getUserIds() {
-        return convert(manager.getUids());
+    public TIntSet getUserIds() {
+        return manager.getUids();
     }
 
     @Override
-    public Set<Integer> getPartitionIds() {
-        return convert(manager.getPids());
+    public TIntSet getPartitionIds() {
+        return manager.getPids();
     }
 
     @Override
@@ -95,13 +94,13 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
 
 
     @Override
-    public Map<Integer, Set<Integer>> getPartitionToUserMap() {
-        return convert(manager.getPartitionToUsers());
+    public TIntObjectMap<TIntSet> getPartitionToUserMap() {
+        return manager.getPartitionToUsers();
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getFriendships() {
-        return convert(manager.getFriendships());
+    public TIntObjectMap<TIntSet> getFriendships() {
+        return manager.getFriendships();
     }
 
     @Override
@@ -110,10 +109,10 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Map<Integer, Set<Integer>> getPartitionToReplicasMap() {
-        Map<Integer, Set<Integer>> m = new HashMap<>();
-        for(int pid : getPartitionIds()) {
-            m.put(pid, Collections.<Integer>emptySet());
+    public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
+        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>();
+        for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
+            m.put(iter.next(), new TIntHashSet());
         }
         return m;
     }

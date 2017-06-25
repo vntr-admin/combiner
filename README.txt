@@ -328,7 +328,7 @@ Replica Dummy Repartitioner:
 Replica METIS Repartitioner
     Description: Kind of like SPAR, but repartitions with METIS after downtime
     and some befriend operations (at random), and then generates partitions
-    that meet the k-replication and replica-colocation constraints.
+    that meet the k-replication and replica-collocation constraints.
     Type Name: RMETIS
     Arguments:
         -minReps n

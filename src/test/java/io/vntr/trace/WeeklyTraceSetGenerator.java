@@ -1,12 +1,17 @@
 package io.vntr.trace;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.linked.TIntLinkedList;
 import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.TestUtils;
 import io.vntr.repartition.MetisRepartitioner;
-import io.vntr.utils.ProbabilityUtils;
 import io.vntr.utils.TroveUtils;
-import io.vntr.utils.Utils;
 
 import java.io.FileInputStream;
 import java.util.*;
@@ -14,9 +19,7 @@ import java.util.*;
 import static io.vntr.trace.TRACE_ACTION.*;
 import static io.vntr.utils.ProbabilityUtils.chooseKeyFromMapSetInProportionToSetSize;
 import static io.vntr.utils.ProbabilityUtils.chooseKeyValuePairFromMapSetUniformly;
-import static io.vntr.utils.ProbabilityUtils.getRandomElement;
-import static io.vntr.utils.Utils.copyMapSet;
-import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
+import static io.vntr.utils.TroveUtils.convert;
 import static java.util.Collections.nCopies;
 
 /**
@@ -70,7 +73,7 @@ public class WeeklyTraceSetGenerator {
     private static final String INPUT_FILE = LESKOVEC_FACEBOOK_FILENAME;
     private static final String OUTPUT_FILENAME_STUB = OUTPUT_DIR + "facebook_";
 
-    private static Map<Integer, Set<Integer>> bidirectionalFriendships;
+    private static TIntObjectMap<TIntSet> bidirectionalFriendships;
 
     public static void main(String[] args) throws Exception {
         long nanoTime = System.nanoTime();
@@ -92,8 +95,8 @@ public class WeeklyTraceSetGenerator {
     }
 
     private static BaseTraces generateTrace(String metisCommand, String metisTempDir) throws Exception {
-        Map<Integer, Set<Integer>> originalFriendships = copyMapSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
-        bidirectionalFriendships = generateBidirectionalFriendshipSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
+        TIntObjectMap<TIntSet> originalFriendships = TroveUtils.copyTIntObjectMapIntSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
+        bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
 
         int numPids = 1 + (bidirectionalFriendships.size() / USERS_PER_PARTITION);
 
@@ -101,21 +104,21 @@ public class WeeklyTraceSetGenerator {
         if(numPids < 3 + maxMinNumReplicas) {
             numPids = 3 + maxMinNumReplicas;
         }
-        Set<Integer> originalPids = new HashSet<>();
+        TIntSet originalPids = new TIntHashSet();
         for (int pid = 0; pid < numPids; pid++) {
             originalPids.add(pid);
         }
 
-        Map<Integer, Set<Integer>> hardStartPartitions = TestUtils.getRandomPartitioning(originalPids, bidirectionalFriendships.keySet());
-        Map<Integer, Set<Integer>> softStartPartitions = getSoftStartPartitions(originalPids, metisCommand, metisTempDir);
-        Map<Integer, Map<Integer, Set<Integer>>> hardStartReplicasMap = new HashMap<>();
-        Map<Integer, Map<Integer, Set<Integer>>> softStartReplicasMap = new HashMap<>();
+        TIntObjectMap<TIntSet> hardStartPartitions = TestUtils.getRandomPartitioning(originalPids, bidirectionalFriendships.keySet());
+        TIntObjectMap<TIntSet> softStartPartitions = getSoftStartPartitions(originalPids, metisCommand, metisTempDir);
+        Map<Integer, TIntObjectMap<TIntSet>> hardStartReplicasMap = new HashMap<>();
+        Map<Integer, TIntObjectMap<TIntSet>> softStartReplicasMap = new HashMap<>();
         for(int minNumReplicas : MIN_NUM_REPLICAS_OPTIONS) {
-            hardStartReplicasMap.put(minNumReplicas, Utils.getInitialReplicasObeyingKReplication(minNumReplicas, hardStartPartitions, bidirectionalFriendships));
-            softStartReplicasMap.put(minNumReplicas, Utils.getInitialReplicasObeyingKReplication(minNumReplicas, softStartPartitions, bidirectionalFriendships));
+            hardStartReplicasMap.put(minNumReplicas, TroveUtils.getInitialReplicasObeyingKReplication(minNumReplicas, hardStartPartitions, bidirectionalFriendships));
+            softStartReplicasMap.put(minNumReplicas, TroveUtils.getInitialReplicasObeyingKReplication(minNumReplicas, softStartPartitions, bidirectionalFriendships));
         }
 
-        List<FullTraceAction> actions = generateActions(new HashSet<>(originalPids));
+        List<FullTraceAction> actions = generateActions(new TIntHashSet(originalPids));
         Map<Integer, BaseTrace> minNumReplicasToHardStartTracesMap = new HashMap<>();
         for(int minNumReplicas : hardStartReplicasMap.keySet()) {
             BaseTrace trace = new TraceWithReplicas(originalFriendships, hardStartPartitions, hardStartReplicasMap.get(minNumReplicas), actions);
@@ -131,13 +134,13 @@ public class WeeklyTraceSetGenerator {
         return new BaseTraces(minNumReplicasToHardStartTracesMap, minNumReplicasToSoftStartTracesMap);
     }
 
-    private static List<FullTraceAction> generateActions(Set<Integer> pids) {
-        Set<Integer> possiblePartitionRemovalIndices = new HashSet<>(NUM_ACTIONS+1);
+    private static List<FullTraceAction> generateActions(TIntSet pids) {
+        TIntSet possiblePartitionRemovalIndices = new TIntHashSet(NUM_ACTIONS+1);
         for(int i=0; i<NUM_ACTIONS; i++) {
             possiblePartitionRemovalIndices.add(i);
         }
         possiblePartitionRemovalIndices.removeAll(Arrays.asList(DOWNTIME_INDICES));
-        Set<Integer> partitionRemovalIndices = ProbabilityUtils.getKDistinctValuesFromList(NUM_PARTITION_REMOVALS, possiblePartitionRemovalIndices);
+        TIntSet partitionRemovalIndices = TroveUtils.getKDistinctValuesFromArray(NUM_PARTITION_REMOVALS, possiblePartitionRemovalIndices.toArray());
 
         int numPartitions = pids.size();
         int numUsers = bidirectionalFriendships.size();
@@ -189,19 +192,19 @@ public class WeeklyTraceSetGenerator {
 
     static FullTraceAction addU() {
         int newUid = ++maxUid;
-        bidirectionalFriendships.put(newUid, new HashSet<Integer>());
+        bidirectionalFriendships.put(newUid, new TIntHashSet());
         return new FullTraceAction(ADD_USER, newUid);
     }
 
     static FullTraceAction cutU() {
-        int userToRemove = getRandomElement(bidirectionalFriendships.keySet());
-        Set<Integer> friends = bidirectionalFriendships.get(userToRemove);
+        int userToRemove = TroveUtils.getRandomElement(bidirectionalFriendships.keySet());
+        TIntSet friends = bidirectionalFriendships.get(userToRemove);
         if(friends.contains(userToRemove)) {
             throw new RuntimeException("User " + userToRemove + " is friends with itself");
         }
 
-        for(int friendId : bidirectionalFriendships.get(userToRemove)) {
-            bidirectionalFriendships.get(friendId).remove(userToRemove);
+        for(TIntIterator iter = bidirectionalFriendships.get(userToRemove).iterator(); iter.hasNext(); ) {
+            bidirectionalFriendships.get(iter.next()).remove(userToRemove);
         }
         bidirectionalFriendships.remove(userToRemove);
 
@@ -210,15 +213,15 @@ public class WeeklyTraceSetGenerator {
 
     static FullTraceAction addF() {
         int uid = chooseKeyFromMapSetInProportionToSetSize(bidirectionalFriendships);
-        List<Integer> friendIds = new LinkedList<>(bidirectionalFriendships.get(uid));
+        TIntList friendIds = new TIntArrayList(bidirectionalFriendships.get(uid));
 
         //Grab a new friend either uniformly from friends of friends, or at random from everyone this user hasn't befriended
         if(Math.random() > PROB_RANDOM_FRIENDSHIP) {
 
             //We want all friends of this friend, except people who are already friends with uid
-            List<Integer> friendsOfFriends = new LinkedList<>();
-            for(int friendId : friendIds) {
-                friendsOfFriends.addAll(bidirectionalFriendships.get(friendId));
+            TIntList friendsOfFriends = new TIntLinkedList();
+            for(int i=0; i<friendIds.size(); i++) {
+                friendsOfFriends.addAll(convert(bidirectionalFriendships.get(friendIds.get(i))));
             }
             friendsOfFriends.removeAll(Collections.singleton(uid));
             friendsOfFriends.removeAll(friendIds);
@@ -226,13 +229,13 @@ public class WeeklyTraceSetGenerator {
                 throw new RuntimeException("user " + uid + " might befriend itself");
             }
             if(!friendsOfFriends.isEmpty()) {
-                int friendId = ProbabilityUtils.getRandomElement(friendsOfFriends);
+                int friendId = friendIds.get((int) (Math.random() * friendsOfFriends.size()));
                 return innerBefriend(uid, friendId);
             }
         }
 
         //TODO: figure out how to select a nonFriendId with a preference towards those with a similar number of friends
-        Set<Integer> nonFriendIds = new HashSet<>(bidirectionalFriendships.keySet());
+        TIntSet nonFriendIds = new TIntHashSet(bidirectionalFriendships.keySet());
         nonFriendIds.removeAll(friendIds);
         nonFriendIds.removeAll(Collections.singleton(uid));
 
@@ -249,15 +252,16 @@ public class WeeklyTraceSetGenerator {
         return innerBefriend(uid, friendId);
     }
 
-    static int chooseKeyFromMapSetWithCorrelationToSizeOfNode(Map<Integer, Set<Integer>> mapset, Set<Integer> candidates, int numFriendsOfUser) {
+    static int chooseKeyFromMapSetWithCorrelationToSizeOfNode(TIntObjectMap<TIntSet> mapset, TIntSet candidates, int numFriendsOfUser) {
         double numFriendsOfUserDouble = (double) numFriendsOfUser;
-        List<Integer> keys = new ArrayList<>(mapset.size() * 100);
-        for(int key : candidates) {
+        TIntList keys = new TIntArrayList(mapset.size() * 100);
+        for(TIntIterator iter = candidates.iterator(); iter.hasNext(); ) {
+            int key = iter.next();
             int numEntries = getNumEntries((double) mapset.get(key).size(), numFriendsOfUserDouble);
             keys.addAll(nCopies(numEntries, key)); //this is intentional: we want numEntries copies of key in there
         }
 
-        return ProbabilityUtils.getRandomElement(keys);
+        return keys.get((int) (Math.random() * keys.size()));
     }
 
     static int getNumEntries(double thisSize, double comparisonSize) {
@@ -285,14 +289,14 @@ public class WeeklyTraceSetGenerator {
         return new FullTraceAction(UNFRIEND, val1, val2);
     }
 
-    static FullTraceAction addP(Set<Integer> pids) {
+    static FullTraceAction addP(TIntSet pids) {
         int newPid = ++maxPid;
         pids.add(newPid);
         return new FullTraceAction(ADD_PARTITION, newPid);
     }
 
-    static FullTraceAction cutP(Set<Integer> pids) {
-        int partitionToRemove = getRandomElement(pids);
+    static FullTraceAction cutP(TIntSet pids) {
+        int partitionToRemove = TroveUtils.getRandomElement(pids);
         pids.remove(partitionToRemove);
 
         return new FullTraceAction(REMOVE_PARTITION, partitionToRemove);
@@ -316,11 +320,11 @@ public class WeeklyTraceSetGenerator {
         }
     }
 
-    private static Map<Integer, Set<Integer>> getSoftStartPartitions(Set<Integer> pids, String metisCommand, String metisTempDir) {
-        TIntIntMap softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, TroveUtils.convert(bidirectionalFriendships), new TIntHashSet(pids));
-        Map<Integer, Set<Integer>> softStartPartitions = new HashMap<>();
-        for(int pid : pids) {
-            softStartPartitions.put(pid, new HashSet<Integer>());
+    private static TIntObjectMap<TIntSet> getSoftStartPartitions(TIntSet pids, String metisCommand, String metisTempDir) {
+        TIntIntMap softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, bidirectionalFriendships, new TIntHashSet(pids));
+        TIntObjectMap<TIntSet> softStartPartitions = new TIntObjectHashMap<>();
+        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
+            softStartPartitions.put(iter.next(), new TIntHashSet());
         }
         for(int uid : softStartUidToPidMap.keys()) {
             int pid = softStartUidToPidMap.get(uid);

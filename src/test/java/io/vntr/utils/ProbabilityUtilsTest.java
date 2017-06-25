@@ -1,8 +1,9 @@
 package io.vntr.utils;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
 import org.junit.Test;
-
-import java.util.*;
 
 /**
  * Created by robertlindquist on 1/18/17.
@@ -11,15 +12,15 @@ public class ProbabilityUtilsTest {
 
     @Test
     public void testCalculateDegreeCentralityAssortivityCoefficient() {
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
-        friendships.put(0, new HashSet<>(Arrays.asList(1, 2, 3)));
-        friendships.put(1, new HashSet<>(Arrays.asList(0, 2)));
-        friendships.put(2, new HashSet<>(Arrays.asList(0, 1, 3)));
-        friendships.put(3, new HashSet<>(Arrays.asList(0, 2, 4)));
-        friendships.put(4, new HashSet<>(Arrays.asList(3, 5)));
-        friendships.put(5, new HashSet<>(Arrays.asList(4, 6, 7)));
-        friendships.put(6, new HashSet<>(Arrays.asList(5, 7)));
-        friendships.put(7, new HashSet<>(Arrays.asList(5, 6)));
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
+        friendships.put(0, TroveUtils.initSet(1, 2, 3));
+        friendships.put(1, TroveUtils.initSet(0, 2));
+        friendships.put(2, TroveUtils.initSet(0, 1, 3));
+        friendships.put(3, TroveUtils.initSet(0, 2, 4));
+        friendships.put(4, TroveUtils.initSet(3, 5));
+        friendships.put(5, TroveUtils.initSet(4, 6, 7));
+        friendships.put(6, TroveUtils.initSet(5, 7));
+        friendships.put(7, TroveUtils.initSet(5, 6));
 
         System.out.println(ProbabilityUtils.calculateAssortivityCoefficient(friendships));
     }

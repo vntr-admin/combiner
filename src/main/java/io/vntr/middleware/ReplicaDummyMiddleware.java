@@ -7,7 +7,7 @@ import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 
 import static io.vntr.migration.SMigrator.getUserMigrationStrategy;
-import static io.vntr.utils.TroveUtils.singleton;
+import static io.vntr.utils.TroveUtils.*;
 
 /**
  * Created by robertlindquist on 11/23/16.

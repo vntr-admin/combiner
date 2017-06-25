@@ -7,7 +7,6 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import io.vntr.utils.Utils;
 
 import static io.vntr.utils.TroveUtils.*;
 
@@ -30,7 +29,7 @@ public class SpajaRepartitioner {
             for(float t = initialT; t >= 1; t -= deltaT) {
                 int[] randomUserIdArray = new int[friendships.size()];
                 System.arraycopy(friendships.keys(), 0, randomUserIdArray, 0, friendships.size());
-                Utils.shuffle(randomUserIdArray);
+                shuffle(randomUserIdArray);
                 for (Integer uid : randomUserIdArray) {
                     TIntSet swapCandidates = getKDistinctValuesFromArray(k, friendships.keys());
 

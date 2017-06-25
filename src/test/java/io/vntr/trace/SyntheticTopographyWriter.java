@@ -1,6 +1,9 @@
 package io.vntr.trace;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
 import io.vntr.utils.ProbabilityUtils;
+import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
 import java.io.PrintWriter;
@@ -8,7 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
-import static io.vntr.utils.Utils.*;
+import static io.vntr.utils.TroveUtils.convert;
 
 /**
  * Created by robertlindquist on 1/19/17.
@@ -27,10 +30,10 @@ public class SyntheticTopographyWriter {
     @Test
     public void generateIt() throws Exception {
         double maxAssortivity = Double.MIN_VALUE;
-        Map<Integer, Set<Integer>> highestAssortivityFriendships = null;
+        TIntObjectMap<TIntSet> highestAssortivityFriendships = null;
         for(int i=0; i<1000; i++) {
             System.out.println(i);
-            Map<Integer, Set<Integer>> friendships = getTopographyForMultigroupSocialNetwork(NUM_USERS, NUM_GROUPS, GROUP_PROB, FRIEND_PROB);
+            TIntObjectMap<TIntSet> friendships = getTopographyForMultigroupSocialNetwork(NUM_USERS, NUM_GROUPS, GROUP_PROB, FRIEND_PROB);
             printStatistics(friendships);
             double assortivity = ProbabilityUtils.calculateAssortivityCoefficient(friendships);
             if(assortivity > maxAssortivity) {
@@ -59,14 +62,14 @@ public class SyntheticTopographyWriter {
         return String.format(filnameFormat, NUM_USERS, numF, NUM_GROUPS, groupProb, friendProb, date);
     }
 
-    public static void saveFriendshipsToFile(Map<Integer, Set<Integer>> friendships, String filename) throws Exception {
+    public static void saveFriendshipsToFile(TIntObjectMap<TIntSet> friendships, String filename) throws Exception {
         PrintWriter pw = new PrintWriter(filename);
-        for(Iterator<Integer> iter = getIter(friendships.keySet()); iter.hasNext(); ) {
+        for(Iterator<Integer> iter = getIter(convert(friendships.keySet())); iter.hasNext(); ) {
             StringBuilder builder = new StringBuilder();
             int uid = iter.next();
             builder.append(uid);
             builder.append(": ");
-            for(Iterator<Integer> innerIter = getIter(friendships.get(uid)); innerIter.hasNext(); ) {
+            for(Iterator<Integer> innerIter = getIter(convert(friendships.get(uid))); innerIter.hasNext(); ) {
                 int friendId = innerIter.next();
                 if(friendId < uid) {
                     continue;
@@ -86,21 +89,21 @@ public class SyntheticTopographyWriter {
         return new TreeSet<>(set).iterator();
     }
 
-    private static int countFriendships(Map<Integer, Set<Integer>> friendships) {
+    private static int countFriendships(TIntObjectMap<TIntSet> friendships) {
         int numF = 0;
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             numF += friendships.get(uid).size();
         }
         return numF;
     }
 
-    static void printStatistics(Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+    static void printStatistics(TIntObjectMap<TIntSet> friendships) {
+        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
         int numU = friendships.size();
         int numF = 0;
         NavigableSet<Integer> numFriends = new TreeSet<>();
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             numF += friendships.get(uid).size();
             numFriends.add(bidirectionalFriendships.get(uid).size());
         }

@@ -12,15 +12,8 @@ import io.vntr.manager.NoRepManager;
 import io.vntr.manager.RepManager;
 import org.junit.Test;
 
-import java.util.*;
-
-import static io.vntr.TestUtils.initSet;
 import static io.vntr.utils.InitUtils.initNoRepManager;
 import static io.vntr.utils.InitUtils.initRepManager;
-import static io.vntr.utils.TroveUtils.convert;
-import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
-import static io.vntr.utils.Utils.getUToMasterMap;
-import static io.vntr.utils.Utils.getUToReplicasMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -66,7 +59,7 @@ public class InitUtilsTest {
 
         TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
-        RepManager manager = initRepManager(minNumReplicas+1, 0, convert(partitions), convert(friendships), convert(replicaPartitions));
+        RepManager manager = initRepManager(minNumReplicas+1, 0, partitions, friendships, replicaPartitions);
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
 
@@ -75,7 +68,7 @@ public class InitUtilsTest {
         replicaPartitions.put(3, TroveUtils.initSet( 8,  9, 10, 11, 12, 13, 14));
 
 
-        manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicaPartitions));
+        manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
 
 
         assertEquals(manager.getEdgeCut(), (Integer) 25);
@@ -136,7 +129,7 @@ public class InitUtilsTest {
 
         int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
 
-        NoRepManager manager = initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = initNoRepManager(0, true, partitions, friendships);
         assertEquals(new TIntHashSet(manager.getPids()), partitions.keySet());
         assertEquals(partitions, manager.getPartitionToUsers());
         assertEquals(bidirectionalFriendships, manager.getFriendships());

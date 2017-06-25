@@ -1,5 +1,10 @@
 package io.vntr.trace;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.*;
@@ -12,10 +17,10 @@ public class TraceTestUtils {
     public static BaseTrace getFullTraceFromFile(String filename) {
         BaseTrace baseTrace = null;
         List<FullTraceAction> actions = new LinkedList<>();
-        Map<Integer, Set<Integer>> friendships = null;
+        TIntObjectMap<TIntSet> friendships = null;
         Set<Integer> pids = null;
-        Map<Integer, Set<Integer>> partitions = null;
-        Map<Integer, Set<Integer>> replicas = null;
+        TIntObjectMap<TIntSet> partitions = null;
+        TIntObjectMap<TIntSet> replicas = null;
 
         Scanner scanner = null;
 
@@ -24,13 +29,13 @@ public class TraceTestUtils {
             while(scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if(line.startsWith("F: ")) {
-                    friendships = parseMapSetLine(line.substring(3));
+                    friendships = TraceUtils.parseMapSetLine(line.substring(3));
                 } else if(line.startsWith("PIDS: ")) {
                     pids = parseSetLine(line.substring(6));
                 } else if(line.startsWith("P: ")) {
-                    partitions = parseMapSetLine(line.substring(3));
+                    partitions = TraceUtils.parseMapSetLine(line.substring(3));
                 } else if(line.startsWith("R: ")) {
-                    replicas = parseMapSetLine(line.substring(3));
+                    replicas = TraceUtils.parseMapSetLine(line.substring(3));
                 } else if(line.startsWith("A0")) {
                     if(friendships == null || pids == null) {
                         throw new RuntimeException("Malformed file");
@@ -69,31 +74,6 @@ public class TraceTestUtils {
             }
         }
         return baseTrace;
-    }
-
-    static Map<Integer, Set<Integer>> parseMapSetLine(String line) {
-        String tempLine = line.substring(1, line.length()-1);
-        String[] chunks = tempLine.split("\\], ");
-        Map<Integer, Set<Integer>> mapSet = new HashMap<>();
-        for(int i=0; i<chunks.length; i++) {
-            String chunk = chunks[i];
-            if(i==chunks.length-1) {
-                chunk = chunk.substring(0, chunk.length()-1);
-            }
-            int equalsIndex = chunk.indexOf('=');
-            int key = Integer.parseInt(chunk.substring(0, equalsIndex));
-            String[] values = chunk.substring(equalsIndex+2).split(", ");
-            Set<Integer> set = new HashSet<>();
-            for(String value : values) {
-                if(!value.isEmpty()) {
-                    set.add(Integer.parseInt(value));
-                }
-            }
-            mapSet.put(key, set);
-
-        }
-
-        return mapSet;
     }
 
     static Set<Integer> parseSetLine(String line) {

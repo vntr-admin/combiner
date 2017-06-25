@@ -223,7 +223,7 @@ public class TroveUtilsTest {
 
     @Test
     public void testGenerateBidirectionalFriendshipSet() {
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));

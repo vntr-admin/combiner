@@ -78,7 +78,7 @@ public class TroveUtils {
         }
         Map<Integer, Set<Integer>> mapSet = new HashMap<>();
         for(int pid : trove.keys()) {
-            mapSet.put(pid, new HashSet<Integer>(convert(trove.get(pid))));
+            mapSet.put(pid, new HashSet<>(convert(trove.get(pid))));
         }
         return mapSet;
     }
@@ -141,7 +141,7 @@ public class TroveUtils {
     }
 
     public static Integer getRandomElement(TIntSet tIntSet) {
-        int size = -1;
+        int size;
         if(tIntSet != null && (size = tIntSet.size()) > 0) {
             int index = (int)(size * Math.random());
             return tIntSet.toArray()[index];
@@ -155,6 +155,13 @@ public class TroveUtils {
         trove.addAll(args);
         return trove;
     }
+
+    public static TIntSet initSet(TIntSet initialSet, int... args) {
+        TIntSet trove = new TIntHashSet(initialSet);
+        trove.addAll(args);
+        return trove;
+    }
+
 
     public static TIntObjectMap<TIntSet> generateBidirectionalFriendshipSet(TIntObjectMap<TIntSet> friendships) {
         TIntObjectMap<TIntSet> bidirectionalFriendshipSet = new TIntObjectHashMap<>(friendships.size()+1);
@@ -287,6 +294,23 @@ public class TroveUtils {
             }
         }
         return newArray;
+    }
+
+    //Taken from Java 8's java.util.Collections
+    private static Random r;
+
+    public static void shuffle(int arr[]) {
+        Random rnd = r;
+        if (rnd == null) {
+            r = rnd = new Random();
+        }
+
+        for (int i=arr.length; i>1; i--) {
+            int nextInt = rnd.nextInt(i);
+            int tmp = arr[i-1];
+            arr[i-1] = arr[nextInt];
+            arr[nextInt] = tmp;
+        }
     }
 }
 

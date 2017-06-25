@@ -2,17 +2,12 @@ package io.vntr.befriend;
 
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.HRepartitioner;
-import io.vntr.utils.TroveUtils;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.assertTrue;
@@ -56,9 +51,9 @@ public class HBefrienderTest {
 
         TIntObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, bidirectionalFriendships, new TIntHashSet(friendships.keys()), gammaBarelyAllowingSixOnPartition);
 
-        Map<Integer, Map<Integer, Integer>> expectedResults = new HashMap<>();
+        TIntObjectMap<TIntIntMap> expectedResults = new TIntObjectHashMap<>();
         for(int uid : friendships.keys()) {
-            expectedResults.put(uid, new HashMap<Integer, Integer>());
+            expectedResults.put(uid, new TIntIntHashMap());
         }
 
         expectedResults.get(1) .put(2, 0);

@@ -3,12 +3,10 @@ package io.vntr.middleware;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.MetisRepartitioner;
-import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.TroveUtils;
 
+import static io.vntr.utils.TroveUtils.getRandomElement;
 
 /**
  * Created by robertlindquist on 12/5/16.
@@ -37,11 +35,11 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
 
     @Override
     public void removePartition(Integer partitionId) {
-        TIntSet parition = manager.getPartition(partitionId);
+        TIntSet partition = manager.getPartition(partitionId);
         manager.removePartition(partitionId);
-        for(TIntIterator iter = parition.iterator(); iter.hasNext(); ) {
+        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
-            Integer newPid = TroveUtils.getRandomElement(manager.getPids());
+            Integer newPid = getRandomElement(manager.getPids());
             manager.moveUser(uid, newPid, true);
         }
     }

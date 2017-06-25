@@ -59,7 +59,7 @@ public class HRepartitionerTest {
 
             TIntIntMap pToWeight = user.getpToWeight();
             for(int pid : partitions.keys()) {
-                assertTrue(pToWeight.get(pid) == (Integer) partitions.get(pid).size());
+                assertTrue(pToWeight.get(pid) == partitions.get(pid).size());
             }
 
             TIntIntMap pToFriendCount = user.getpToFriendCount();

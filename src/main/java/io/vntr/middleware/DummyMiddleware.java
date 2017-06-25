@@ -3,9 +3,6 @@ package io.vntr.middleware;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;
 import io.vntr.manager.NoRepManager;
-import io.vntr.utils.ProbabilityUtils;
-
-import java.util.*;
 
 import static io.vntr.utils.TroveUtils.getRandomElement;
 

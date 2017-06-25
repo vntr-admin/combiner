@@ -1,7 +1,9 @@
 package io.vntr.migration;
 
+import gnu.trove.map.TFloatObjectMap;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TFloatObjectHashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
@@ -9,8 +11,6 @@ import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.Target;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import static io.vntr.utils.TroveUtils.*;
@@ -49,12 +49,12 @@ public class HMigratorTest {
         float gamma4 = fifteenUserCutoff - differential;
         float gamma5 = fifteenUserCutoff + differential;
 
-        Map<Float, Map<Integer, Boolean>> expectedResults = new HashMap<>();
-        expectedResults.put(gamma1, new HashMap<Integer, Boolean>());
-        expectedResults.put(gamma2, new HashMap<Integer, Boolean>());
-        expectedResults.put(gamma3, new HashMap<Integer, Boolean>());
-        expectedResults.put(gamma4, new HashMap<Integer, Boolean>());
-        expectedResults.put(gamma5, new HashMap<Integer, Boolean>());
+        TFloatObjectMap<TIntObjectMap<Boolean>> expectedResults = new TFloatObjectHashMap<>();
+        expectedResults.put(gamma1, new TIntObjectHashMap<Boolean>());
+        expectedResults.put(gamma2, new TIntObjectHashMap<Boolean>());
+        expectedResults.put(gamma3, new TIntObjectHashMap<Boolean>());
+        expectedResults.put(gamma4, new TIntObjectHashMap<Boolean>());
+        expectedResults.put(gamma5, new TIntObjectHashMap<Boolean>());
 
         expectedResults.get(gamma1).put(2, false);
         expectedResults.get(gamma1).put(3, false);
@@ -81,8 +81,8 @@ public class HMigratorTest {
         expectedResults.get(gamma5).put(4, false);
         expectedResults.get(gamma5).put(5, false);
 
-        for(float gamma : expectedResults.keySet()) {
-            for(int pid : expectedResults.get(gamma).keySet()) {
+        for(float gamma : expectedResults.keys()) {
+            for(int pid : expectedResults.get(gamma).keys()) {
                 boolean expectedResult = expectedResults.get(gamma).get(pid);
                 boolean result = HMigrator.isOverloaded(pid, userCounts, gamma, numUsers);
                 assertTrue(expectedResult == result);

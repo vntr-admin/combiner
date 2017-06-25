@@ -1,14 +1,14 @@
 package io.vntr.migration;
 
+import gnu.trove.map.TIntFloatMap;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntFloatHashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
-
-import java.util.*;
 
 import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.assertEquals;
@@ -133,9 +133,9 @@ public class SMigratorTest {
         TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
-        Map<Integer, Map<Integer, Float>> expectedResults = new HashMap<>();
+        TIntObjectMap<TIntFloatMap> expectedResults = new TIntObjectHashMap<>();
         for(int i : friendships.keys()) {
-            expectedResults.put(i, new HashMap<Integer, Float>());
+            expectedResults.put(i, new TIntFloatHashMap());
         }
 
         expectedResults.get( 1).put(2, 0f);
@@ -159,9 +159,9 @@ public class SMigratorTest {
         expectedResults.get(13).put(1, 0f);
 
         //score should be numFriendsOnPartition^2 / numFriendsTotal
-        for(int uid : expectedResults.keySet()) {
+        for(int uid : expectedResults.keys()) {
             float numFriends = bidirectionalFriendships.get(uid).size();
-            for(int pid : expectedResults.get(uid).keySet()) {
+            for(int pid : expectedResults.get(uid).keys()) {
                 TIntSet friendIds = new TIntHashSet(bidirectionalFriendships.get(uid));
                 friendIds.retainAll(partitions.get(pid));
                 float friendsOnPartition = friendIds.size();
@@ -169,8 +169,8 @@ public class SMigratorTest {
             }
         }
 
-        for(int uid : expectedResults.keySet()) {
-            for (int pid : expectedResults.get(uid).keySet()) {
+        for(int uid : expectedResults.keys()) {
+            for (int pid : expectedResults.get(uid).keys()) {
                 float expectedResult = expectedResults.get(uid).get(pid);
                 float result = SMigrator.scoreReplicaPromotion(bidirectionalFriendships.get(uid), partitions.get(pid));
                 assertTrue(expectedResult == result);

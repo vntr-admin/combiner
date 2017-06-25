@@ -41,12 +41,9 @@ public class RepManager {
     }
 
     public RepUser getUserMaster(Integer id) {
-        Integer partitionId = uMap.get(id);
-        if (partitionId != null) {
-            Partition partition = getPartitionById(partitionId);
-            if (partition != null) {
-                return partition.getMasterById(id);
-            }
+        Partition partition = getPartitionById(uMap.get(id));
+        if (partition != null) {
+            return partition.getMasterById(id);
         }
         return null;
     }

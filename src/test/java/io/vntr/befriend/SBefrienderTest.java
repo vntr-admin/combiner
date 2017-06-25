@@ -9,8 +9,6 @@ import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import org.junit.Test;
 
-import java.util.*;
-
 import static io.vntr.utils.InitUtils.initRepManager;
 import static io.vntr.utils.TroveUtils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
@@ -72,7 +70,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
 
         int uid1 = 7;
         int pid1 = 2;
@@ -117,7 +115,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
@@ -132,11 +130,11 @@ public class SBefrienderTest {
 
         int curNumReplicas = replicas.get(pid1).size() + replicas.get(pid2).size();
 
-        int numRelicas1To2 = calcNumReplicasMove(u1, u2, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, bidirectionalFriendships);
-        assertTrue(numRelicas1To2 == curNumReplicas + 1);
+        int numReplicas1To2 = calcNumReplicasMove(u1, u2, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, bidirectionalFriendships);
+        assertTrue(numReplicas1To2 == curNumReplicas + 1);
 
-        int numRelicas2To1 = calcNumReplicasMove(u2, u1, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, bidirectionalFriendships);
-        assertTrue(numRelicas2To1 == curNumReplicas);
+        int numReplicas2To1 = calcNumReplicasMove(u2, u1, replicas, minNumReplicas, uidToPidMap, uidToReplicasMap, bidirectionalFriendships);
+        assertTrue(numReplicas2To1 == curNumReplicas);
     }
 
     @Test
@@ -168,12 +166,12 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
 
         //uid -> pid -> toAdd
-        Map<Integer, TIntObjectMap<TIntSet>> expectedResults = new HashMap<>();
+        TIntObjectMap<TIntObjectMap<TIntSet>> expectedResults = new TIntObjectHashMap<>();
         for(int uid : friendships.keys()) {
             expectedResults.put(uid, new TIntObjectHashMap<TIntSet>());
         }
@@ -245,12 +243,12 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(replicas, friendships.keySet());
         TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        Map<Integer, TIntObjectMap<TIntSet>> expectedResults = new HashMap<>();
+        TIntObjectMap<TIntObjectMap<TIntSet>> expectedResults = new TIntObjectHashMap<>();
         for(int uid : friendships.keys()) {
             expectedResults.put(uid, new TIntObjectHashMap<TIntSet>());
         }
@@ -325,7 +323,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
@@ -378,7 +376,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         Boolean[] expectedResults = {null,
@@ -422,7 +420,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
 
@@ -474,7 +472,7 @@ public class SBefrienderTest {
         replicas.put(2, initSet( 1, 2, 3,  5, 10, 11));
         replicas.put(3, initSet( 1, 2, 3,  4,  5,  6, 8, 9));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
 
         //Case 1: staying user has no replica in moving partition

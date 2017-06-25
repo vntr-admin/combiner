@@ -1,9 +1,9 @@
 package io.vntr.middleware;
 
-import java.util.*;
-
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.RepUser;
@@ -11,13 +11,9 @@ import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.SBefriender;
 import io.vntr.manager.RepManager;
 import io.vntr.migration.SMigrator;
-import io.vntr.utils.TroveUtils;
 
-import static io.vntr.utils.TroveUtils.convert;
-import static io.vntr.utils.TroveUtils.convert1;
-import static io.vntr.utils.Utils.*;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
-import static java.util.Collections.singleton;
+import static io.vntr.utils.TroveUtils.*;
 
 public class SparMiddleware extends AbstractRepMiddleware {
 
@@ -36,14 +32,14 @@ public class SparMiddleware extends AbstractRepMiddleware {
         boolean colocatedMasters = smallerUserPid.equals(largerUserPid);
         boolean colocatedReplicas = smallerUser.getReplicaPids().contains(largerUserPid) && largerUser.getReplicaPids().contains(smallerUserPid);
         if(!colocatedMasters && !colocatedReplicas) {
-            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getManager().getMinNumReplicas(), convert(getFriendships()), convert(getPartitionToUserMap()), convert(getPartitionToReplicasMap()));
-            performRebalace(strategy, smallerUserId, largerUserId);
+            BEFRIEND_REBALANCE_STRATEGY strategy = SBefriender.determineBestBefriendingRebalanceStrategy(smallerUser, largerUser, getManager().getMinNumReplicas(), getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap());
+            performRebalance(strategy, smallerUserId, largerUserId);
         }
 
         getManager().befriend(smallerUser, largerUser);
     }
 
-    void performRebalace(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
+    void performRebalance(BEFRIEND_REBALANCE_STRATEGY strategy, Integer smallUid, Integer largeUid) {
         RepUser smallerUser = getManager().getUserMaster(smallUid);
         RepUser largerUser = getManager().getUserMaster(largeUid);
         Integer smallerUserPid = smallerUser.getBasePid();
@@ -59,11 +55,11 @@ public class SparMiddleware extends AbstractRepMiddleware {
         } else {
             RepUser moving = (strategy == SMALL_TO_LARGE) ? smallerUser : largerUser;
             Integer targetPid = (strategy == SMALL_TO_LARGE) ? largerUserPid : smallerUserPid;
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getPartitionToUserMap());
-            Map<Integer, Set<Integer>> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getUserIds());
+            TIntIntMap uidToPidMap = getUToMasterMap(getPartitionToUserMap());
+            TIntObjectMap<TIntSet> uidToReplicasMap = getUToReplicasMap(getPartitionToReplicasMap(), getUserIds());
 
-            TIntSet replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, convert1(uidToPidMap), convert(uidToReplicasMap));
-            TIntSet replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, getManager().getMinNumReplicas(), convert(uidToReplicasMap), convert1(uidToPidMap), convert(getFriendships()));
+            TIntSet replicasToAddInDestinationPartition = SBefriender.findReplicasToAddToTargetPartition(moving, targetPid, uidToPidMap, uidToReplicasMap);
+            TIntSet replicasToDeleteInSourcePartition = SBefriender.findReplicasInMovingPartitionToDelete(moving, replicasToAddInDestinationPartition, getManager().getMinNumReplicas(), uidToReplicasMap, uidToPidMap, getFriendships());
             getManager().moveUser(moving, targetPid, replicasToAddInDestinationPartition, replicasToDeleteInSourcePartition);
         }
     }
@@ -79,10 +75,10 @@ public class SparMiddleware extends AbstractRepMiddleware {
         RepUser largerUser = getManager().getUserMaster(largerUserId);
 
         if (!smallerUser.getBasePid().equals(largerUser.getBasePid())) {
-            Map<Integer, Integer> uidToPidMap = getUToMasterMap(getPartitionToUserMap());
-            Map<Integer, Set<Integer>> friendships = getFriendships();
-            boolean smallerReplicaWasOnlyThereForLarger = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser, convert1(uidToPidMap), convert(friendships)).contains(smallerUserId);
-            boolean largerReplicaWasOnlyThereForSmaller = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser, convert1(uidToPidMap), convert(friendships)).contains(largerUserId);
+            TIntIntMap uidToPidMap = getUToMasterMap(getPartitionToUserMap());
+            TIntObjectMap<TIntSet> friendships = getFriendships();
+            boolean smallerReplicaWasOnlyThereForLarger = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(largerUser, uidToPidMap, friendships).contains(smallerUserId);
+            boolean largerReplicaWasOnlyThereForSmaller = SBefriender.findReplicasInPartitionThatWereOnlyThereForThisUsersSake(smallerUser, uidToPidMap, friendships).contains(largerUserId);
 
             if (smallerReplicaWasOnlyThereForLarger && smallerUser.getReplicaPids().size() > getManager().getMinNumReplicas()) {
                 getManager().removeReplica(smallerUser, largerUser.getBasePid());
@@ -101,7 +97,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
         TIntSet affectedUsers = determineAffectedUsers(partitionId);
 
         //Second, determine the migration strategy
-        TIntIntMap migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, convert(getFriendships()), convert(getPartitionToUserMap()), convert(getPartitionToReplicasMap()), true);
+        TIntIntMap migrationStrategy = SMigrator.getUserMigrationStrategy(partitionId, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap(), true);
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer userId : migrationStrategy.keys()) {
@@ -118,12 +114,12 @@ public class SparMiddleware extends AbstractRepMiddleware {
             getManager().promoteReplicaToMaster(userId, newPartitionId);
         }
 
-        Set<Integer> usersToReplicate = getUsersToReplicate(affectedUsers, partitionId);
+        TIntSet usersToReplicate = getUsersToReplicate(affectedUsers, partitionId);
 
         //Fourth, add replicas as appropriate
-        for (Integer userId : usersToReplicate) {
-            RepUser user = getManager().getUserMaster(userId);
-            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, TroveUtils.singleton(partitionId)));
+        for(TIntIterator iter = usersToReplicate.iterator(); iter.hasNext(); ) {
+            RepUser user = getManager().getUserMaster(iter.next());
+            getManager().addReplica(user, getRandomPartitionIdWhereThisUserIsNotPresent(user, singleton(partitionId)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
@@ -142,10 +138,10 @@ public class SparMiddleware extends AbstractRepMiddleware {
         getManager().removePartition(partitionId);
     }
 
-    Set<Integer> getUsersToReplicate(TIntSet uids, Integer pid) {
-        Map<Integer, Integer> numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
+    TIntSet getUsersToReplicate(TIntSet uids, Integer pid) {
+        TIntIntMap numReplicasAndMastersNotOnPartitionToBeRemoved = getCountOfReplicasAndMastersNotOnPartition(uids, pid);
         int minReplicas = getManager().getMinNumReplicas();
-        Set<Integer> usersToReplicate = new HashSet<>();
+        TIntSet usersToReplicate = new TIntHashSet();
         for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
             if(numReplicasAndMastersNotOnPartitionToBeRemoved.get(uid) <= minReplicas) {
@@ -155,8 +151,8 @@ public class SparMiddleware extends AbstractRepMiddleware {
         return usersToReplicate;
     }
 
-    Map<Integer, Integer> getCountOfReplicasAndMastersNotOnPartition(TIntSet uids, Integer pid) {
-        Map<Integer, Integer> counts = new HashMap<>();
+    TIntIntMap getCountOfReplicasAndMastersNotOnPartition(TIntSet uids, Integer pid) {
+        TIntIntMap counts = new TIntIntHashMap();
         for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
             int count = 0;

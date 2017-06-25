@@ -1,26 +1,27 @@
 package io.vntr.trace;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
+
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by robertlindquist on 4/1/17.
  */
 public class Trace {
-    private Map<Integer, Set<Integer>> friendships;
+    private TIntObjectMap<TIntSet> friendships;
     private List<TraceAction> actions;
-    private Map<Integer, Set<Integer>> partitions;
-    private Map<Integer, Set<Integer>> replicas;
+    private TIntObjectMap<TIntSet> partitions;
+    private TIntObjectMap<TIntSet> replicas;
 
     public Trace() {
     }
 
-    public Map<Integer, Set<Integer>> getFriendships() {
+    public TIntObjectMap<TIntSet> getFriendships() {
         return friendships;
     }
 
-    public void setFriendships(Map<Integer, Set<Integer>> friendships) {
+    public void setFriendships(TIntObjectMap<TIntSet> friendships) {
         this.friendships = friendships;
     }
 
@@ -32,19 +33,19 @@ public class Trace {
         this.actions = actions;
     }
 
-    public Map<Integer, Set<Integer>> getPartitions() {
+    public TIntObjectMap<TIntSet> getPartitions() {
         return partitions;
     }
 
-    public void setPartitions(Map<Integer, Set<Integer>> partitions) {
+    public void setPartitions(TIntObjectMap<TIntSet> partitions) {
         this.partitions = partitions;
     }
 
-    public Map<Integer, Set<Integer>> getReplicas() {
+    public TIntObjectMap<TIntSet> getReplicas() {
         return replicas;
     }
 
-    public void setReplicas(Map<Integer, Set<Integer>> replicas) {
+    public void setReplicas(TIntObjectMap<TIntSet> replicas) {
         this.replicas = replicas;
     }
 }

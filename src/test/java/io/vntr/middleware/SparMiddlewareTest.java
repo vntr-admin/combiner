@@ -8,26 +8,23 @@ import io.vntr.manager.RepManager;
 import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
-import java.util.*;
-
-import static io.vntr.TestUtils.initSet;
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 import static io.vntr.utils.InitUtils.initRepManager;
-import static io.vntr.utils.TroveUtils.convert;
+import static io.vntr.utils.TroveUtils.*;
 import static org.junit.Assert.*;
 
 public class SparMiddlewareTest {
 
     @Test
-    public void testPerformRebalace() {
+    public void testPerformRebalance() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -47,9 +44,9 @@ public class SparMiddlewareTest {
         friendships.put(17, initSet(18));
         friendships.put(18, initSet(19));
         friendships.put(19, initSet(20));
-        friendships.put(20, Collections.<Integer>emptySet());
+        friendships.put(20, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
+        TIntObjectMap<TIntSet> replicaPartitions = new TIntObjectHashMap<>();
         replicaPartitions.put(1, initSet( 6,  8,  9, 10, 12, 14, 15, 16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 11, 14, 16, 18, 19, 20));
         replicaPartitions.put(3, initSet( 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 16, 17));
@@ -59,27 +56,27 @@ public class SparMiddlewareTest {
         RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
-        middleware.performRebalace(NO_CHANGE,  3, 19); //should not change anything, including replicas
+        middleware.performRebalance(NO_CHANGE,  3, 19); //should not change anything, including replicas
         TIntObjectMap<TIntSet> mastersAfter   = manager.getPartitionToUserMap();
         TIntObjectMap<TIntSet> replicasAfter  = manager.getPartitionToReplicasMap();
 
         //Should not change masters
-        assertEquals(convert(partitions), mastersAfter);
+        assertEquals(partitions, mastersAfter);
 
         //Should not change replicas
-        assertEquals(convert(replicaPartitions), replicasAfter);
+        assertEquals(replicaPartitions, replicasAfter);
 
 
         //No change test 2: one replica added
         manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
-        middleware.performRebalace(NO_CHANGE,  7, 17); //should add 17 replica to p2
+        middleware.performRebalance(NO_CHANGE,  7, 17); //should add 17 replica to p2
         mastersAfter   = manager.getPartitionToUserMap();
         replicasAfter  = manager.getPartitionToReplicasMap();
 
         //Should not change masters
-        assertEquals(convert(partitions), mastersAfter);
+        assertEquals(partitions, mastersAfter);
 
         //Should add 17 to p2 and change nothing else
         assertFalse(replicaPartitions.get(2).contains(17));
@@ -95,12 +92,12 @@ public class SparMiddlewareTest {
         manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
-        middleware.performRebalace(NO_CHANGE, 10, 17); //should add 17 replica to p2 and a copy of 10 to p4
+        middleware.performRebalance(NO_CHANGE, 10, 17); //should add 17 replica to p2 and a copy of 10 to p4
         mastersAfter   = manager.getPartitionToUserMap();
         replicasAfter  = manager.getPartitionToReplicasMap();
 
         //Should not change masters
-        assertEquals(convert(partitions), mastersAfter);
+        assertEquals(partitions, mastersAfter);
 
         //Should add 17 to p2
         assertFalse(replicaPartitions.get(2).contains(17));
@@ -118,7 +115,7 @@ public class SparMiddlewareTest {
         manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
-        middleware.performRebalace(SMALL_TO_LARGE, 1, 19); //should move 1 to p4; should remove a replica of 14 from p1; should remove a replica of 1 from p4; should add replicas of 4, 6, and 10 to p4
+        middleware.performRebalance(SMALL_TO_LARGE, 1, 19); //should move 1 to p4; should remove a replica of 14 from p1; should remove a replica of 1 from p4; should add replicas of 4, 6, and 10 to p4
         mastersAfter   = manager.getPartitionToUserMap();
         replicasAfter  = manager.getPartitionToReplicasMap();
 
@@ -155,7 +152,7 @@ public class SparMiddlewareTest {
         manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         middleware = new SparMiddleware(manager);
 
-        middleware.performRebalace(LARGE_TO_SMALL, 2, 11); //should move 11 to p1; should remove a replica of 10 from p3
+        middleware.performRebalance(LARGE_TO_SMALL, 2, 11); //should move 11 to p1; should remove a replica of 10 from p3
         mastersAfter   = manager.getPartitionToUserMap();
         replicasAfter  = manager.getPartitionToReplicasMap();
 
@@ -218,7 +215,7 @@ public class SparMiddlewareTest {
         replicaPartitions.put(3, TroveUtils.initSet( 6,  7,  8,  9, 10,  2, 17));
         replicaPartitions.put(4, TroveUtils.initSet(11, 12, 13, 14, 15,  3,  5));
 
-        RepManager manager = initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicaPartitions));
+        RepManager manager = initRepManager(minNumReplicas, 0, partitions, friendships, replicaPartitions);
         SparMiddleware middleware = new SparMiddleware(manager);
 
         assertEquals((Integer) 28, middleware.getEdgeCut());
@@ -244,13 +241,13 @@ public class SparMiddlewareTest {
     @Test
     public void testRemovePartition() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -270,9 +267,9 @@ public class SparMiddlewareTest {
         friendships.put(17, initSet(18));
         friendships.put(18, initSet(19));
         friendships.put(19, initSet(20));
-        friendships.put(20, Collections.<Integer>emptySet());
+        friendships.put(20, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
+        TIntObjectMap<TIntSet> replicaPartitions = new TIntObjectHashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 19));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
@@ -285,12 +282,12 @@ public class SparMiddlewareTest {
 
         middleware.removePartition(1);
 
-        Map<Integer, Set<Integer>> expectedPMap = new HashMap<>();
+        TIntObjectMap<TIntSet> expectedPMap = new TIntObjectHashMap<>();
         expectedPMap.put(2, initSet( 6,  7,  8,  9, 10,  1,  4,  5));
         expectedPMap.put(3, initSet(11, 12, 13, 14, 15,  2));
         expectedPMap.put(4, initSet(16, 17, 18, 19, 20,  3));
 
-        Map<Integer, Set<Integer>> pMap = middleware.getPartitionToUserMap();
+        TIntObjectMap<TIntSet> pMap = middleware.getPartitionToUserMap();
 
         assertEquals(pMap, expectedPMap);
     }
@@ -298,13 +295,13 @@ public class SparMiddlewareTest {
     @Test
     public void testDetermineUsersWhoWillNeedAnAdditionalReplica() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -324,9 +321,9 @@ public class SparMiddlewareTest {
         friendships.put(17, initSet(18));
         friendships.put(18, initSet(19));
         friendships.put(19, initSet(20));
-        friendships.put(20, Collections.<Integer>emptySet());
+        friendships.put(20, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
+        TIntObjectMap<TIntSet> replicaPartitions = new TIntObjectHashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5, 19));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10,  2, 17));
@@ -341,13 +338,13 @@ public class SparMiddlewareTest {
     @Test
     public void testGetRandomPartitionIdWhereThisUserIsNotPresent() {
         int minNumReplicas = 1;
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4,  5));
         partitions.put(2, initSet( 6,  7,  8,  9, 10));
         partitions.put(3, initSet(11, 12, 13, 14, 15));
         partitions.put(4, initSet(16, 17, 18, 19, 20));
 
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
         friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
         friendships.put( 3, initSet( 4,  8, 12, 16, 20));
@@ -367,9 +364,9 @@ public class SparMiddlewareTest {
         friendships.put(17, initSet(18));
         friendships.put(18, initSet(19));
         friendships.put(19, initSet(20));
-        friendships.put(20, Collections.<Integer>emptySet());
+        friendships.put(20, new TIntHashSet());
 
-        Map<Integer, Set<Integer>> replicaPartitions = new HashMap<>();
+        TIntObjectMap<TIntSet> replicaPartitions = new TIntObjectHashMap<>();
         replicaPartitions.put(1, initSet(16, 17, 18, 19, 20));
         replicaPartitions.put(2, initSet( 1,  2,  3,  4,  5));
         replicaPartitions.put(3, initSet( 6,  7,  8,  9, 10));
@@ -380,7 +377,7 @@ public class SparMiddlewareTest {
 
         for(int uid=1; uid<20; uid++) {
             int pid = ((uid-1)/5) + 1;
-            Set<Integer> possibleAnswers = initSet((pid+1)%4 + 1, (pid+2)%4 + 1);
+            TIntSet possibleAnswers = initSet((pid+1)%4 + 1, (pid+2)%4 + 1);
             int newPid = middleware.getRandomPartitionIdWhereThisUserIsNotPresent(manager.getUserMaster(uid), new TIntHashSet());
             assertTrue(possibleAnswers.contains(newPid));
         }

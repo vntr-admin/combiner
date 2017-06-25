@@ -1,12 +1,15 @@
 package io.vntr;
 
- import io.vntr.utils.ProbabilityUtils;
+ import gnu.trove.iterator.TIntIterator;
+ import gnu.trove.map.TIntObjectMap;
+ import gnu.trove.map.hash.TIntObjectHashMap;
+ import gnu.trove.set.TIntSet;
+ import gnu.trove.set.hash.TIntHashSet;
+ import io.vntr.utils.TroveUtils;
 
  import java.io.File;
  import java.util.*;
 
- import static io.vntr.utils.Utils.getUToMasterMap;
- import static io.vntr.utils.ProbabilityUtils.getKDistinctValuesFromList;
 
 /**
  * Created by robertlindquist on 9/24/16.
@@ -25,28 +28,30 @@ public class TestUtils {
         return set;
     }
 
-    public static Map<Integer, Set<Integer>> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
-        Map<Integer, Set<Integer>> userIdToFriendIds = new HashMap<>();
+    public static TIntObjectMap<TIntSet> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
+        TIntObjectMap<TIntSet> userIdToFriendIds = new TIntObjectHashMap<>();
         for(int id=0; id<numUsers; id++) {
-            userIdToFriendIds.put(id, new HashSet<Integer>());
+            userIdToFriendIds.put(id, new TIntHashSet());
         }
 
-        Map<Integer, Set<Integer>> groupIdToUserIds = new HashMap<>();
+        TIntObjectMap<TIntSet> groupIdToUserIds = new TIntObjectHashMap<>();
         for(int id=0; id<numGroups; id++) {
-            groupIdToUserIds.put(id, new HashSet<Integer>());
+            groupIdToUserIds.put(id, new TIntHashSet());
         }
 
-        for(Integer userId : userIdToFriendIds.keySet()) {
-            for(Integer groupId : groupIdToUserIds.keySet()) {
+        for(Integer userId : userIdToFriendIds.keys()) {
+            for(Integer groupId : groupIdToUserIds.keys()) {
                 if(Math.random() < groupMembershipProbability) {
                     groupIdToUserIds.get(groupId).add(userId);
                 }
             }
         }
 
-        for(Set<Integer> groupMembers : groupIdToUserIds.values()) {
-            for(int userId : groupMembers) {
-                for(int otherUserId : groupMembers) {
+        for(TIntSet groupMembers : groupIdToUserIds.valueCollection()) {
+            for(TIntIterator iter = groupMembers.iterator(); iter.hasNext(); ) {
+                int userId = iter.next();
+                for(TIntIterator iter2 = groupMembers.iterator(); iter2.hasNext(); ) {
+                    int otherUserId = iter2.next();
                     if(userId < otherUserId) { //this avoids running it once for each user
                         if(Math.random() < intraGroupFriendshipProbability) {
                             userIdToFriendIds.get(userId).add(otherUserId);
@@ -60,21 +65,21 @@ public class TestUtils {
         return userIdToFriendIds;
     }
 
-    public static Map<Integer, Set<Integer>> getRandomPartitioning(Set<Integer> pids, Set<Integer> uids) {
-        Map<Integer, Set<Integer>> partitions = new HashMap<>();
-        Set<Integer> pidCopies = new HashSet<>(pids);
+    public static TIntObjectMap<TIntSet> getRandomPartitioning(TIntSet pids, TIntSet uids) {
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        TIntSet pidCopies = new TIntHashSet(pids);
         int numPartitions = pidCopies.size();
         int numUsers = uids.size();
         int usersPerPartition = numUsers / numPartitions;
         int numRemainderUsers = numUsers % numPartitions;
-        Set<Integer> remainingUids = new HashSet<>(uids);
+        TIntSet remainingUids = new TIntHashSet(uids);
         while(remainingUids.size() > 0) {
             int k = usersPerPartition;
             if(numRemainderUsers > 0) {
                 k++;
                 numRemainderUsers--;
             }
-            Set<Integer> pUids = ProbabilityUtils.getKDistinctValuesFromList(k, remainingUids);
+            TIntSet pUids = TroveUtils.getKDistinctValuesFromArray(k, remainingUids.toArray());
             remainingUids.removeAll(pUids);
             Integer pid = pidCopies.iterator().next();
             pidCopies.remove(pid);
@@ -83,15 +88,15 @@ public class TestUtils {
         return partitions;
     }
 
-    public static Map<Integer, Set<Integer>> extractFriendshipsFromFile(String filename) throws Exception {
-        Map<Integer, Set<Integer>> friendships = new HashMap<>();
+    public static TIntObjectMap<TIntSet> extractFriendshipsFromFile(String filename) throws Exception {
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
         File file = new File(filename);
         Scanner scanner = new Scanner(file);
-        Set<Integer> allUids = new HashSet<>();
+        TIntSet allUids = new TIntHashSet();
         while(scanner.hasNextLine()) {
             String line = scanner.nextLine();
             Integer uid = extractIdFromLine(line);
-            Set<Integer> friends = extractFriendsFromLine(line);
+            TIntSet friends = extractFriendsFromLine(line);
             if(uid != null) {
                 allUids.add(uid);
                 if(friends != null) {
@@ -101,8 +106,8 @@ public class TestUtils {
             }
         }
         allUids.removeAll(friendships.keySet());
-        for(Integer friendless : allUids) {
-            friendships.put(friendless, new HashSet<Integer>());
+        for(TIntIterator iter = allUids.iterator(); iter.hasNext(); ) {
+            friendships.put(iter.next(), new TIntHashSet());
         }
         return friendships;
     }
@@ -114,7 +119,7 @@ public class TestUtils {
         return Integer.parseInt(line.substring(0, line.indexOf(':')));
     }
 
-    static Set<Integer> extractFriendsFromLine(String line) {
+    static TIntSet extractFriendsFromLine(String line) {
         if(line == null || line.length() < 4 || line.indexOf(':') < 0) {
             return null;
         }
@@ -123,16 +128,16 @@ public class TestUtils {
             return null;
         }
         String[] ids = mainPart.split(", ");
-        Set<Integer> idSet = new HashSet<>();
+        TIntSet idSet = new TIntHashSet();
         for(String id : ids) {
             idSet.add(Integer.parseInt(id));
         }
         return idSet;
     }
 
-    public static Set<Integer> findKeysForUser(Map<Integer, Set<Integer>> m, int uid) {
-        Set<Integer> keys = new HashSet<>();
-        for(int key : m.keySet()) {
+    public static TIntSet findKeysForUser(TIntObjectMap<TIntSet> m, int uid) {
+        TIntSet keys = new TIntHashSet();
+        for(int key : m.keys()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
             }

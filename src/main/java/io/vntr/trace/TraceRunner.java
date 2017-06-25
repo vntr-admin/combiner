@@ -1,5 +1,11 @@
 package io.vntr.trace;
 
+import gnu.trove.list.TDoubleList;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.array.TLongArrayList;
 import io.vntr.middleware.*;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
@@ -135,28 +141,28 @@ public class TraceRunner {
     }
 
     static class Recorder {
-        private List<Integer> indexList;
-        private List<Integer> numPartitionsList;
-        private List<Integer> numUsersList;
-        private List<Integer> numFriendshipsList;
-        private List<Double>  assortivityList;
-        private List<Integer> edgeCutList;
-        private List<Integer> numReplicasList;
-        private List<Long> numMovesList;
-        private List<Double>  delayList;
+        private TIntList indexList;
+        private TIntList numPartitionsList;
+        private TIntList numUsersList;
+        private TIntList numFriendshipsList;
+        private TDoubleList  assortivityList;
+        private TIntList edgeCutList;
+        private TIntList numReplicasList;
+        private TLongList numMovesList;
+        private TDoubleList  delayList;
         private Map<TraceAction.ACTION, Integer> deltaEdgeCuts;
         private Map<TraceAction.ACTION, Integer> deltaReps;
 
         public Recorder(int traceLength) {
-            indexList         = new ArrayList<>(traceLength+1);
-            numPartitionsList = new ArrayList<>(traceLength+1);
-            numUsersList      = new ArrayList<>(traceLength+1);
-            numFriendshipsList = new ArrayList<>(traceLength+1);
-            assortivityList   = new ArrayList<>(traceLength+1);
-            edgeCutList       = new ArrayList<>(traceLength+1);
-            numReplicasList   = new ArrayList<>(traceLength+1);
-            numMovesList      = new ArrayList<>(traceLength+1);
-            delayList         = new ArrayList<>(traceLength+1);
+            indexList         = new TIntArrayList(traceLength + 1);
+            numPartitionsList = new TIntArrayList(traceLength+1);
+            numUsersList      = new TIntArrayList(traceLength+1);
+            numFriendshipsList = new TIntArrayList(traceLength+1);
+            assortivityList   = new TDoubleArrayList(traceLength+1);
+            edgeCutList       = new TIntArrayList(traceLength+1);
+            numReplicasList   = new TIntArrayList(traceLength+1);
+            numMovesList      = new TLongArrayList(traceLength+1);
+            delayList         = new TDoubleArrayList(traceLength+1);
 
             deltaEdgeCuts = new HashMap<>();
             deltaReps     = new HashMap<>();
@@ -166,39 +172,39 @@ public class TraceRunner {
             }
         }
 
-        public List<Integer> getIndexList() {
+        public TIntList getIndexList() {
             return indexList;
         }
 
-        public List<Integer> getNumPartitionsList() {
+        public TIntList getNumPartitionsList() {
             return numPartitionsList;
         }
 
-        public List<Integer> getNumUsersList() {
+        public TIntList getNumUsersList() {
             return numUsersList;
         }
 
-        public List<Integer> getNumFriendshipsList() {
+        public TIntList getNumFriendshipsList() {
             return numFriendshipsList;
         }
 
-        public List<Double> getAssortivityList() {
+        public TDoubleList getAssortivityList() {
             return assortivityList;
         }
 
-        public List<Integer> getEdgeCutList() {
+        public TIntList getEdgeCutList() {
             return edgeCutList;
         }
 
-        public List<Integer> getNumReplicasList() {
+        public TIntList getNumReplicasList() {
             return numReplicasList;
         }
 
-        public List<Long> getNumMovesList() {
+        public TLongList getNumMovesList() {
             return numMovesList;
         }
 
-        public List<Double> getDelayList() {
+        public TDoubleList getDelayList() {
             return delayList;
         }
 

@@ -5,18 +5,10 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.manager.NoRepManager;
-import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.TroveUtils;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import static io.vntr.TestUtils.getTopographyForMultigroupSocialNetwork;
 import static io.vntr.utils.InitUtils.initNoRepManager;
-import static io.vntr.utils.TroveUtils.convert;
 import static org.junit.Assert.*;
 
 /**
@@ -28,9 +20,12 @@ public class HermesMiddlewareTest {
     public void testRemovePartition() {
         int numUsers = 1000;
         int numPartitions = 10;
+        int numGroups = 12;
+        float groupProb = 0.1f;
+        float intraGroupFriendshipProb = 0.1f;
 
         float gamma = 1.5f;
-        TIntObjectMap<TIntSet> friendships = convert(getTopographyForMultigroupSocialNetwork(numUsers, 12, 0.1f, 0.1f));
+        TIntObjectMap<TIntSet> friendships = getTopographyForMultigroupSocialNetwork(numUsers, numGroups, groupProb, intraGroupFriendshipProb);
         TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         for(int pid=0; pid<numPartitions; pid++) {
             partitions.put(pid, new TIntHashSet());
@@ -38,9 +33,10 @@ public class HermesMiddlewareTest {
         for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
-        NoRepManager manager = initNoRepManager(0, false, convert(partitions), convert(friendships));
+        NoRepManager manager = initNoRepManager(0, false, partitions, friendships);
         HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
-        middleware.removePartition(ProbabilityUtils.getKDistinctValuesBetweenMandNInclusive(1, 0, (numPartitions - 1)).iterator().next());
+        int partitionToRemove = (int)(Math.random() * numPartitions);
+        middleware.removePartition((int)(Math.random() * numPartitions));
         for(Integer uid : friendships.keys()) {
             assertEquals(manager.getUser(uid).getFriendIDs(), friendships.get(uid));
         }

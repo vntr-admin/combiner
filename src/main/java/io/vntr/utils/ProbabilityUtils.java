@@ -1,20 +1,22 @@
 package io.vntr.utils;
 
-import cern.jet.random.engine.DRand;
-import cern.jet.random.engine.RandomEngine;
-import cern.jet.random.sampling.RandomSampler;
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
 import java.util.*;
 
-import static io.vntr.utils.Utils.getUToMasterMap;
 import static java.util.Collections.nCopies;
 
 public class ProbabilityUtils
 {
-    private static RandomEngine randomEngine = new DRand(((int) System.nanoTime()) >>> 2);
-
     private static class DoublePair implements Comparable<DoublePair>{
         public final Double mean;
         public final Double stdDeviation;
@@ -86,38 +88,6 @@ public class ProbabilityUtils
         return drawKFromLogNormalDistributionAndReturnMax(mean, stdDeviation, 1);
     }
 
-	public static Set<Integer> getKDistinctValuesBetweenMandNInclusive(int k, int m, int n)
-	{
-		List<Integer> tempList = new LinkedList<>();
-		for(int i = m; i <= n; i++)
-		{
-			tempList.add(i);
-		}
-
-		return getKDistinctValuesFromList(k, tempList);
-	}
-
-	public static int getRandomElement(Collection<Integer> set) {
-        return getKDistinctValuesFromList(1, new LinkedList<>(set)).iterator().next();
-    }
-
-	public static Set<Integer> getKDistinctValuesFromList(int k, Collection<Integer> set)
-	{
-		return getKDistinctValuesFromList(k, new LinkedList<>(set));
-	}
-
-	public static Set<Integer> getKDistinctValuesFromList(int k, List<Integer> list)
-	{
-	    long[] indices = new long[k];
-        RandomSampler.sample(k, list.size(), k, 0, indices, 0, randomEngine);
-
-		Set<Integer> returnSet = new HashSet<>();
-		for(long index : indices) {
-		    returnSet.add(list.get((int) index));
-        }
-		return returnSet;
-	}
-
     //Take a LogNormal distribution with mean=12.08... and std. dev=0.4463... and sample (index) times at random, returning the largest of those samples.
     //Run this many, many times, average it out, and you get the following.
     private static final double[] LND_12_08441436510468D__0_44631395858726847 = {
@@ -179,15 +149,16 @@ public class ProbabilityUtils
             1608847.201841079
     };
 
-    public static double calculateExpectedQueryDelay(Map<Integer, Set<Integer>> friendships, Map<Integer, Set<Integer>> partitions) {
-        Map<Integer, Integer> uidToPidMap = getUToMasterMap(partitions);
-        Map<Integer, Set<Integer>> uidToFriendPidsMap = new HashMap<>();
-        for(int uid : friendships.keySet()) {
-            uidToFriendPidsMap.put(uid, new HashSet<Integer>());
+    public static double calculateExpectedQueryDelay(TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions) {
+        TIntIntMap uidToPidMap = TroveUtils.getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> uidToFriendPidsMap = new TIntObjectHashMap<>();
+        for(int uid : friendships.keys()) {
+            uidToFriendPidsMap.put(uid, new TIntHashSet());
         }
 
-        for(int uid : friendships.keySet()) {
-            for(int friendId : friendships.get(uid)) {
+        for(int uid : friendships.keys()) {
+            for(TIntIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
+                int friendId = iter.next();
                 if(uid < friendId) {
                     int pid = uidToPidMap.get(uid);
                     int friendPid = uidToPidMap.get(friendId);
@@ -198,7 +169,7 @@ public class ProbabilityUtils
         }
 
         double sum = 0;
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             double expectedDelay = LND_12_08441436510468D__0_44631395858726847[uidToFriendPidsMap.get(uid).size()];
             sum += expectedDelay;
         }
@@ -206,19 +177,20 @@ public class ProbabilityUtils
         return sum / friendships.size();
     }
 
-	public static double calculateAssortivityCoefficient(Map<Integer, Set<Integer>> bidirectionalFriendships) {
+	public static double calculateAssortivityCoefficient(TIntObjectMap<TIntSet> bidirectionalFriendships) {
 		//We calculate "the Pearson correlation coefficient of the degrees at either ends of an edge"
         //Newman, M. E. (2002). Assortative mixing in networks. Physical review letters, 89(20), 208701.
         //This is also called "Degree-Centrality Assortativity"
         int edgeCount = 0;
-        for(Set<Integer> friends : bidirectionalFriendships.values()) {
+        for(TIntSet friends : bidirectionalFriendships.valueCollection()) {
             edgeCount += friends.size();
         }
         double[] x = new double[edgeCount];
         double[] y = new double[edgeCount];
         int i=0;
-        for(int uid1 : bidirectionalFriendships.keySet()) {
-            for(int uid2 : bidirectionalFriendships.get(uid1)) {
+        for(int uid1 : bidirectionalFriendships.keys()) {
+            for(TIntIterator iter = bidirectionalFriendships.get(uid1).iterator(); iter.hasNext(); ) {
+                int uid2 = iter.next();
                 x[i] = bidirectionalFriendships.get(uid1).size();
                 y[i] = bidirectionalFriendships.get(uid2).size();
                 i++;
@@ -228,19 +200,19 @@ public class ProbabilityUtils
         return new PearsonsCorrelation().correlation(x, y);
 	}
 
-	public static int chooseKeyFromMapSetInProportionToSetSize(Map<Integer, Set<Integer>> mapset) {
-        List<Integer> keys = new ArrayList<>(mapset.size() * 100);
-        for(int key : mapset.keySet()) {
+	public static int chooseKeyFromMapSetInProportionToSetSize(TIntObjectMap<TIntSet> mapset) {
+        TIntList keys = new TIntArrayList(mapset.size() * 100);
+        for(int key : mapset.keys()) {
             //this is intentional: we want mapset.get(key).size() copies of key in there
             keys.addAll(nCopies(mapset.get(key).size(), key));
         }
 
-        return ProbabilityUtils.getRandomElement(keys);
+        return keys.get((int)(Math.random() * keys.size()));
     }
 
-    public static List<Integer> chooseKeyValuePairFromMapSetUniformly(Map<Integer, Set<Integer>> mapset) {
+    public static List<Integer> chooseKeyValuePairFromMapSetUniformly(TIntObjectMap<TIntSet> mapset) {
         int key = chooseKeyFromMapSetInProportionToSetSize(mapset);
-        int value = getRandomElement(mapset.get(key));
+        int value = TroveUtils.getRandomElement(mapset.get(key));
         return Arrays.asList(key, value);
     }
 }

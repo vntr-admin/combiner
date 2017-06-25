@@ -1,14 +1,20 @@
 package io.vntr.trace;
 
+import gnu.trove.iterator.TIntIterator;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.list.linked.TIntLinkedList;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
+import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.TestUtils;
 import io.vntr.utils.ProbabilityUtils;
-import io.vntr.utils.Utils;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
 import static io.vntr.TestUtils.*;
-import static io.vntr.utils.Utils.copyMapSet;
-import static io.vntr.utils.Utils.generateBidirectionalFriendshipSet;
+import static io.vntr.utils.TroveUtils.*;
 import static io.vntr.trace.TRACE_ACTION.*;
 import static io.vntr.utils.ProbabilityUtils.*;
 
@@ -57,20 +63,20 @@ public class TraceGenerator {
     }
 
     private static BaseTrace generateTrace(String filename, int numActions) throws Exception {
-        Map<Integer, Set<Integer>> mutableFriendships = TestUtils.extractFriendshipsFromFile(filename);
-        Map<Integer, Set<Integer>> friendships = copyMapSet(mutableFriendships);
+        TIntObjectMap<TIntSet> mutableFriendships = TestUtils.extractFriendshipsFromFile(filename);
+        TIntObjectMap<TIntSet> friendships = copyTIntObjectMapIntSet(mutableFriendships);
 
         int numPids = 1 + (mutableFriendships.size() / USERS_PER_PARTITION);
         if(numPids < 3 + MIN_NUM_REPLICAS) {
             numPids = 3 + MIN_NUM_REPLICAS;
         }
-        Set<Integer> pids = new HashSet<>();
+        TIntSet pids = new TIntHashSet();
         for (int pid = 0; pid < numPids; pid++) {
             pids.add(pid);
         }
 
-        Map<Integer, Set<Integer>> partitions = TestUtils.getRandomPartitioning(pids, mutableFriendships.keySet());
-        Map<Integer, Set<Integer>> replicas = Utils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, mutableFriendships);
+        TIntObjectMap<TIntSet> partitions = TestUtils.getRandomPartitioning(pids, mutableFriendships.keySet());
+        TIntObjectMap<TIntSet> replicas = TroveUtils.getInitialReplicasObeyingKReplication(MIN_NUM_REPLICAS, partitions, mutableFriendships);
 
         TRACE_ACTION[] script = new TRACE_ACTION[numActions];
         for (int j = 0; j < numActions - 1; j++) {
@@ -113,13 +119,13 @@ public class TraceGenerator {
         return new TraceWithReplicas(friendships, partitions, replicas, actions);
     }
 
-    static void printStatistics(int numP, Map<Integer, Set<Integer>> friendships) {
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+    static void printStatistics(int numP, TIntObjectMap<TIntSet> friendships) {
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         int numU = friendships.size();
         int numF = 0;
         NavigableSet<Integer> numFriends = new TreeSet<>();
-        for(int uid : friendships.keySet()) {
+        for(int uid : friendships.keys()) {
             numF += friendships.get(uid).size();
             numFriends.add(bidirectionalFriendships.get(uid).size());
         }
@@ -148,48 +154,48 @@ public class TraceGenerator {
         return DOWNTIME;
     }
 
-    static FullTraceAction addU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction addU(TIntObjectMap<TIntSet> friendships, TIntSet pids) {
         int newUid = ++maxUid;
-        friendships.put(newUid, new HashSet<Integer>());
+        friendships.put(newUid, new TIntHashSet());
 
         return new FullTraceAction(ADD_USER, newUid);
     }
 
-    static FullTraceAction cutU(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction cutU(TIntObjectMap<TIntSet> friendships, TIntSet pids) {
         int userToRemove = getRandomElement(friendships.keySet());
 
-        for(int friendId : findKeysForUser(friendships, userToRemove)) {
-            friendships.get(friendId).remove(userToRemove);
+        for(TIntIterator iter = findKeysForUser(friendships, userToRemove).iterator(); iter.hasNext(); ) {
+            friendships.get(iter.next()).remove(userToRemove);
         }
 
         friendships.remove(userToRemove);
         return new FullTraceAction(REMOVE_USER, userToRemove);
     }
 
-    static FullTraceAction addF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
-        Map<Integer, Set<Integer>> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+    static FullTraceAction addF(TIntObjectMap<TIntSet> friendships, TIntSet pids) {
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
         int uid = chooseKeyFromMapSetInProportionToSetSize(bidirectionalFriendships);
-        List<Integer> friendIds = new LinkedList<>(bidirectionalFriendships.get(uid));
+        TIntList friendIds = new TIntArrayList(bidirectionalFriendships.get(uid));
 
         //Grab a new friend either uniformly from friends of friends, or at random from everyone this user hasn't befriended
         if(Math.random() > PROB_RANDOM_FRIENDSHIP) {
-            List<Integer> friendsOfFriends = new LinkedList<>();
-            for(int friendId : friendIds) {
+            TIntList friendsOfFriends = new TIntLinkedList();
+            for(int i=0; i<friendIds.size(); i++) {
                 //We want all friends of this friend, except people who are already friends with uid
-                Set<Integer> friendsOfThisFriend = new HashSet<>(friendships.get(friendId));
+                TIntSet friendsOfThisFriend = new TIntHashSet(friendships.get(friendIds.get(i)));
                 friendsOfThisFriend.addAll(findKeysForUser(friendships, uid));
                 friendsOfThisFriend.removeAll(friendIds);
                 friendsOfThisFriend.remove(uid);
-                friendsOfFriends.addAll(friendsOfThisFriend);
+                friendsOfFriends.addAll(convert(friendsOfThisFriend));
             }
             if(!friendsOfFriends.isEmpty()) {
-                int friendId = ProbabilityUtils.getRandomElement(friendsOfFriends);
+                int friendId = friendsOfFriends.get((int) (friendsOfFriends.size() * Math.random()));
                 return innerBefriend(uid, friendId, friendships);
             }
         }
 
         //TODO: figure out how to select a nonFriendId with a preference towards those with a similar number of friends
-        Set<Integer> nonFriendIds = new HashSet<>(friendships.keySet());
+        TIntSet nonFriendIds = new TIntHashSet(friendships.keySet());
         nonFriendIds.removeAll(friendIds);
         nonFriendIds.remove(uid);
 
@@ -197,7 +203,7 @@ public class TraceGenerator {
             throw new RuntimeException("User " + uid + " is friends with everyone!");
         }
 
-        Map<Integer, Set<Integer>> bidirectionalNonFriends = copyMapSet(bidirectionalFriendships);
+        TIntObjectMap<TIntSet> bidirectionalNonFriends = copyTIntObjectMapIntSet(bidirectionalFriendships);
         bidirectionalNonFriends.keySet().retainAll(nonFriendIds);
 
         int friendId = chooseKeyFromMapSetWithCorrelationToSizeOfNode(bidirectionalNonFriends, bidirectionalFriendships.get(uid).size());
@@ -205,14 +211,14 @@ public class TraceGenerator {
         return innerBefriend(uid, friendId, friendships);
     }
 
-    private static FullTraceAction innerBefriend(int oneUid, int theOtherUid, Map<Integer, Set<Integer>> friendships) {
+    private static FullTraceAction innerBefriend(int oneUid, int theOtherUid, TIntObjectMap<TIntSet> friendships) {
         int val1 = Math.min(oneUid, theOtherUid);
         int val2 = Math.max(oneUid, theOtherUid);
         friendships.get(val1).add(val2);
         return new FullTraceAction(BEFRIEND, val1, val2);
     }
 
-    static FullTraceAction cutF(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction cutF(TIntObjectMap<TIntSet> friendships, TIntSet pids) {
         List<Integer> friendship = chooseKeyValuePairFromMapSetUniformly(friendships);
         int val1 = Math.min(friendship.get(0), friendship.get(1));
         int val2 = Math.max(friendship.get(0), friendship.get(1));
@@ -221,30 +227,30 @@ public class TraceGenerator {
         return new FullTraceAction(UNFRIEND, val1, val2);
     }
 
-    static FullTraceAction addP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction addP(TIntObjectMap<TIntSet> friendships, TIntSet pids) {
         int newPid = ++maxPid;
         pids.add(newPid);
         return new FullTraceAction(ADD_PARTITION, newPid);
     }
 
-    static FullTraceAction cutP(Map<Integer, Set<Integer>> friendships, Set<Integer> pids) {
+    static FullTraceAction cutP(TIntObjectMap<TIntSet> friendships, TIntSet pids) {
         int partitionToRemove = getRandomElement(pids);
         pids.remove(partitionToRemove);
 
         return new FullTraceAction(REMOVE_PARTITION, partitionToRemove);
     }
 
-    static int chooseKeyFromMapSetWithCorrelationToSizeOfNode(Map<Integer, Set<Integer>> mapset, int numFriendsOfUser) {
+    static int chooseKeyFromMapSetWithCorrelationToSizeOfNode(TIntObjectMap<TIntSet> mapset, int numFriendsOfUser) {
         double numFriendsOfUserDouble = (double) numFriendsOfUser;
-        List<Integer> keys = new ArrayList<>(mapset.size() * 100);
-        for(int key : mapset.keySet()) {
+        TIntList keys = new TIntArrayList(mapset.size() * 100);
+        for(int key : mapset.keys()) {
             int numEntries = getNumEntries((double) mapset.get(key).size(), numFriendsOfUserDouble);
             for(int i=0; i<numEntries; i++) {
                 keys.add(key); //this is intentional: we want numEntries copies of key in there
             }
         }
 
-        return ProbabilityUtils.getRandomElement(keys);
+        return keys.get((int) (Math.random() * keys.size()));
     }
 
     static int getNumEntries(double thisSize, double comparisonSize) {

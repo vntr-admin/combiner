@@ -1,40 +1,41 @@
 package io.vntr.trace;
 
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.set.TIntSet;
+
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by robertlindquist on 10/20/16.
  */
 public class BaseTrace {
 
-    private Map<Integer, Set<Integer>> friendships;
-    private Set<Integer> pids;
+    private TIntObjectMap<TIntSet> friendships;
+    private TIntSet pids;
     private List<FullTraceAction> actions;
 
     public BaseTrace() {
     }
 
-    public BaseTrace(Map<Integer, Set<Integer>> friendships, Set<Integer> pids, List<FullTraceAction> actions) {
+    public BaseTrace(TIntObjectMap<TIntSet> friendships, TIntSet pids, List<FullTraceAction> actions) {
         this.friendships = friendships;
         this.pids = pids;
         this.actions = actions;
     }
 
-    public Map<Integer, Set<Integer>> getFriendships() {
+    public TIntObjectMap<TIntSet> getFriendships() {
         return friendships;
     }
 
-    public void setFriendships(Map<Integer, Set<Integer>> friendships) {
+    public void setFriendships(TIntObjectMap<TIntSet> friendships) {
         this.friendships = friendships;
     }
 
-    public Set<Integer> getPids() {
+    public TIntSet getPids() {
         return pids;
     }
 
-    public void setPids(Set<Integer> pids) {
+    public void setPids(TIntSet pids) {
         this.pids = pids;
     }
 

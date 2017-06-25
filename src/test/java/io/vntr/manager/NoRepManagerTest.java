@@ -41,7 +41,7 @@ public class NoRepManagerTest {
         friendships.get(uidToMove).remove(uidToUnfriend);
         friendships.get(uidToUnfriend).remove(uidToMove);
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
         for(Integer pid : partitions.keys()) {
             for(TIntIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
@@ -80,7 +80,7 @@ public class NoRepManagerTest {
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
         TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
 
@@ -132,7 +132,7 @@ public class NoRepManagerTest {
         friendships.get(uidToRemove).remove(8);
         friendships.get(8).remove(uidToRemove);
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
         TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(bidirectionalFriendships, manager.getFriendships());
@@ -178,7 +178,7 @@ public class NoRepManagerTest {
         friendships.get(notFriend1Id).remove(notFriend2Id);
         friendships.get(notFriend2Id).remove(notFriend1Id);
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
         for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
             int uid1 = iter.next();
@@ -227,7 +227,7 @@ public class NoRepManagerTest {
         Integer notFriend1Id = 7;
         Integer notFriend2Id = 8;
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
         for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
             int uid1 = iter.next();
@@ -274,7 +274,7 @@ public class NoRepManagerTest {
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
         assertEquals(manager.getPids(), partitions.keySet());
 
@@ -312,7 +312,7 @@ public class NoRepManagerTest {
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
         assertEquals(manager.getPids(), partitions.keySet());
 
@@ -350,7 +350,7 @@ public class NoRepManagerTest {
             }
         }
 
-        NoRepManager manager = InitUtils.initNoRepManager(0, true, convert(partitions), convert(friendships));
+        NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
         Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
         assertEquals(manager.getEdgeCut(), expectedCut);

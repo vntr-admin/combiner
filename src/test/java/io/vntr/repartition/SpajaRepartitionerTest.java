@@ -162,7 +162,7 @@ public class SpajaRepartitionerTest {
 
         TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
-        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, convert(partitions), convert(friendships), convert(replicas));
+        RepManager manager = InitUtils.initRepManager(minNumReplicas, 0, partitions, friendships, replicas);
         SpajaRepartitioner.State state = new SpajaRepartitioner.State(minNumReplicas, alpha, initialT, deltaT, k, bidirectionalFriendships);
         fillState(state, partitions, replicas);
 
