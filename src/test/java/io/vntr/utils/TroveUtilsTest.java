@@ -9,9 +9,11 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 
-
 import static io.vntr.utils.TroveUtils.*;
+import static io.vntr.utils.TroveUtils.removeUniqueElementFromNonEmptyArray;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -270,29 +272,128 @@ public class TroveUtilsTest {
         assertEquals(expectedBidirectionalFriendships, generateBidirectionalFriendshipSet(friendships));
     }
 
-
     @Test
     public void testIntersection() {
-        //TODO: do this
+        TIntSet a = initSet( 1,  2,  3,  4,  5);
+        TIntSet b = initSet( 2,  4,  6,  8, 10);
+        TIntSet c = initSet( 3,  6,  9, 12, 15);
+        TIntSet d = initSet( 7, 11, 13, 17, 19);
+
+        TIntSet expectedAB = initSet(2, 4);
+        TIntSet expectedAC = initSet(3);
+        TIntSet expectedBC = initSet(6);
+        TIntSet expectedAD = new TIntHashSet();
+        TIntSet expectedBD = new TIntHashSet();
+        TIntSet expectedCD = new TIntHashSet();
+
+        assertEquals(intersection(a, b), expectedAB);
+        assertEquals(intersection(a, c), expectedAC);
+        assertEquals(intersection(b, c), expectedBC);
+        assertEquals(intersection(a, d), expectedAD);
+        assertEquals(intersection(b, d), expectedBD);
+        assertEquals(intersection(c, d), expectedCD);
+        assertEquals(intersection(new TIntHashSet(), new TIntHashSet()), new TIntHashSet());
     }
 
     @Test
     public void testGetInitialReplicasObeyingKReplication() {
-        //TODO: do this
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, initSet( 1,  2,  3,  4,  5));
+        partitions.put(2, initSet( 6,  7,  8,  9, 10));
+        partitions.put(3, initSet(11, 12, 13, 14, 15));
+        partitions.put(4, initSet(16, 17, 18, 19, 20));
+
+        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
+        friendships.put( 1, initSet( 2,  4,  6,  8, 10, 12, 14, 16, 18, 20));
+        friendships.put( 2, initSet( 3,  6,  9, 12, 15, 18));
+        friendships.put( 3, initSet( 4,  8, 12, 16, 20));
+        friendships.put( 4, initSet( 5, 10, 15));
+        friendships.put( 5, initSet( 6, 12, 18));
+        friendships.put( 6, initSet( 7, 14));
+        friendships.put( 7, initSet( 8, 16));
+        friendships.put( 8, initSet( 9, 18));
+        friendships.put( 9, initSet(10, 20));
+        friendships.put(10, initSet(11));
+        friendships.put(11, initSet(12));
+        friendships.put(12, initSet(13));
+        friendships.put(13, initSet(14));
+        friendships.put(14, initSet(15));
+        friendships.put(15, initSet(16));
+        friendships.put(16, initSet(17));
+        friendships.put(17, initSet(18));
+        friendships.put(18, initSet(19));
+        friendships.put(19, initSet(20));
+        friendships.put(20, new TIntHashSet());
+
+        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
+        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+
+        int minNumReplicas = 1;
+        TIntObjectMap<TIntSet> result = getInitialReplicasObeyingKReplication(minNumReplicas, partitions, bidirectionalFriendships);
+        for(int uid : friendships.keys()) {
+            int numReplicas = 0;
+            for(int pid : partitions.keys()) {
+                if(result.get(pid).contains(uid)) {
+                    numReplicas++;
+                }
+            }
+            assertTrue(numReplicas >= minNumReplicas);
+
+            for(TIntIterator iter = bidirectionalFriendships.get(uid).iterator(); iter.hasNext(); ) {
+                int thisUsersPid = uidToPidMap.get(uid);
+                int friendId = iter.next();
+                int friendPid = uidToPidMap.get(friendId);
+                assertTrue(thisUsersPid == friendPid || result.get(thisUsersPid).contains(friendId));
+            }
+        }
     }
 
     @Test
     public void testSingleton() {
-        //TODO: do this
+        TIntSet expectedResult = new TIntHashSet();
+        expectedResult.add(7);
+        TIntSet result = singleton(7);
+        assertEquals(expectedResult, result);
     }
 
     @Test
     public void testCopyTIntObjectMapIntSet() {
-        //TODO: do this
+        TIntObjectMap<TIntSet> expectedResult = new TIntObjectHashMap<>();
+        expectedResult.put(1, initSet(1, 2, 3, 4));
+        expectedResult.put(2, initSet(2, 4, 6, 8));
+        expectedResult.put(3, initSet(3, 6, 9, 12));
+
+        TIntObjectMap<TIntSet> original = new TIntObjectHashMap<>();
+        original.put(1, initSet(1, 2, 3, 4));
+        original.put(2, initSet(2, 4, 6, 8));
+        original.put(3, initSet(3, 6, 9, 12));
+
+        TIntObjectMap<TIntSet> result = copyTIntObjectMapIntSet(original);
+
+        assertEquals(expectedResult, result);
     }
 
     @Test
     public void testRemoveUniqueElementFromNonEmptyArray() {
-        //TODO: do this
+        int[] original = new int[]{1, 2, 3, 4, 6, 7, 5};
+
+        int[] expectedResult1 = new int[]{2, 3, 4, 6, 7, 5};
+        int[] expectedResult14 = new int[]{2, 3, 6, 7, 5};
+        int[] expectedResult146 = new int[]{2, 3, 7, 5};
+
+        int[] result1 = removeUniqueElementFromNonEmptyArray(original, 1);
+        assertArrayEquals(expectedResult1, result1);
+
+        int[] result14 = removeUniqueElementFromNonEmptyArray(result1, 4);
+        assertArrayEquals(expectedResult14, result14);
+
+        int[] result146 = removeUniqueElementFromNonEmptyArray(result14, 6);
+        assertArrayEquals(expectedResult146, result146);
+
+        //double-check that the arrays themselves were not modified
+        assertArrayEquals(original, new int[]{1, 2, 3, 4, 6, 7, 5});
+        assertArrayEquals(expectedResult1, result1);
+        assertArrayEquals(expectedResult14, result14);
+        assertArrayEquals(expectedResult146, result146);
     }
 }
