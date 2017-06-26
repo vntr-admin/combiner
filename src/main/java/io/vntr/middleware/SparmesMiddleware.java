@@ -1,10 +1,10 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.RepUser;
 import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SparmesRepartitioner;
@@ -17,12 +17,12 @@ import static io.vntr.utils.TroveUtils.*;
  */
 public class SparmesMiddleware extends SparMiddleware {
 
-    private final int minNumReplicas;
-    private final int maxIterations;
+    private final short minNumReplicas;
+    private final short maxIterations;
     private final float gamma;
-    private final int k;
+    private final short k;
 
-    public SparmesMiddleware(int minNumReplicas, float gamma, int k, int maxIterations, RepManager manager) {
+    public SparmesMiddleware(short minNumReplicas, float gamma, short k, short maxIterations, RepManager manager) {
         super(manager);
         this.minNumReplicas = minNumReplicas;
         this.gamma = gamma;
@@ -42,13 +42,13 @@ public class SparmesMiddleware extends SparMiddleware {
     }
 
     void physicallyMigrate(RepResults repResults) {
-        TIntIntMap currentUidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
-        TIntObjectMap<TIntSet> currentUidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TIntHashSet(getManager().getUids()));
+        TShortShortMap currentUidToPidMap = getUToMasterMap(getManager().getPartitionToUserMap());
+        TShortObjectMap<TShortSet> currentUidToReplicasMap = getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TShortHashSet(getManager().getUids()));
 
-        for(TIntIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            int currentPid = currentUidToPidMap.get(uid);
-            int newPid = repResults.getUidToPidMap().get(uid);
+        for(TShortIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
+            short currentPid = currentUidToPidMap.get(uid);
+            short newPid = repResults.getUidToPidMap().get(uid);
 
             //move master
             if(currentPid != newPid) {
@@ -57,17 +57,17 @@ public class SparmesMiddleware extends SparMiddleware {
             }
 
             //add and remove replicas as specified in the repResults
-            TIntSet newReplicas = repResults.getUidsToReplicaPids().get(uid);
-            TIntSet currentReplicas = currentUidToReplicasMap.get(uid);
+            TShortSet newReplicas = repResults.getUidsToReplicaPids().get(uid);
+            TShortSet currentReplicas = currentUidToReplicasMap.get(uid);
             if(!currentReplicas.equals(newReplicas)) {
-                for(TIntIterator iter2 = newReplicas.iterator(); iter2.hasNext(); ) {
-                    int newReplica = iter2.next();
+                for(TShortIterator iter2 = newReplicas.iterator(); iter2.hasNext(); ) {
+                    short newReplica = iter2.next();
                     if(!currentReplicas.contains(newReplica)) {
                         getManager().addReplica(getManager().getUserMaster(uid), newReplica);
                     }
                 }
-                for(TIntIterator iter2 = currentReplicas.iterator(); iter2.hasNext(); ) {
-                    int oldReplica = iter2.next();
+                for(TShortIterator iter2 = currentReplicas.iterator(); iter2.hasNext(); ) {
+                    short oldReplica = iter2.next();
                     if(!newReplicas.contains(oldReplica)) {
                         getManager().removeReplica(getManager().getUserMaster(uid), oldReplica);
                     }
@@ -76,37 +76,37 @@ public class SparmesMiddleware extends SparMiddleware {
         }
 
         //shore up friend replicas (ideally would be unnecessary)
-        for(TIntIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
             shoreUpFriendReplicas(iter.next());
         }
 
         //ensure k replication
-        for(TIntIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = getManager().getUids().iterator(); iter.hasNext(); ) {
             ensureKReplication(iter.next());
         }
     }
 
-    void shoreUpFriendReplicas(int uid) {
+    void shoreUpFriendReplicas(short uid) {
         RepUser user = getManager().getUserMaster(uid);
-        int pid = user.getBasePid();
-        TIntSet friends = new TIntHashSet(user.getFriendIDs());
+        short pid = user.getBasePid();
+        TShortSet friends = new TShortHashSet(user.getFriendIDs());
         friends.removeAll(getManager().getMastersOnPartition(pid));
         friends.removeAll(getManager().getReplicasOnPartition(pid));
-        for(TIntIterator iter = friends.iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = friends.iterator(); iter.hasNext(); ) {
             getManager().addReplica(getManager().getUserMaster(iter.next()), pid);
         }
     }
 
-    void ensureKReplication(int uid) {
+    void ensureKReplication(short uid) {
         RepUser user = getManager().getUserMaster(uid);
-        TIntSet replicaLocations = user.getReplicaPids();
-        int deficit = minNumReplicas - replicaLocations.size();
+        TShortSet replicaLocations = user.getReplicaPids();
+        short deficit = (short)(minNumReplicas - replicaLocations.size());
         if(deficit > 0) {
-            TIntSet newLocations = new TIntHashSet(getPids());
+            TShortSet newLocations = new TShortHashSet(getPids());
             newLocations.removeAll(replicaLocations);
             newLocations.remove(user.getBasePid());
-            TIntSet newReplicaPids = getKDistinctValuesFromArray(deficit, newLocations.toArray());
-            for(TIntIterator iter = newReplicaPids.iterator(); iter.hasNext(); ) {
+            TShortSet newReplicaPids = getKDistinctValuesFromArray(deficit, newLocations.toArray());
+            for(TShortIterator iter = newReplicaPids.iterator(); iter.hasNext(); ) {
                 getManager().addReplica(user, iter.next());
             }
         }

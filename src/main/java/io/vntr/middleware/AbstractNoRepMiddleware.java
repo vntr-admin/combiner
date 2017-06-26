@@ -1,10 +1,10 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
@@ -24,7 +24,7 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public int addUser() {
+    public short addUser() {
         return manager.addUser();
     }
 
@@ -34,72 +34,72 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Integer uid) {
+    public void removeUser(short uid) {
         manager.removeUser(uid);
     }
 
     @Override
-    public void befriend(Integer smallerUid, Integer largerUid) {
+    public void befriend(short smallerUid, short largerUid) {
         manager.befriend(smallerUid, largerUid);
     }
 
     @Override
-    public void unfriend(Integer smallerUid, Integer largerUid) {
+    public void unfriend(short smallerUid, short largerUid) {
         manager.unfriend(smallerUid, largerUid);
     }
 
     @Override
-    public int addPartition() {
+    public short addPartition() {
         return manager.addPartition();
     }
 
     @Override
-    public void addPartition(Integer pid) {
+    public void addPartition(short pid) {
         manager.addPartition(pid);
     }
 
     @Override
-    public Integer getNumberOfPartitions() {
+    public short getNumberOfPartitions() {
         return manager.getNumPartitions();
     }
 
     @Override
-    public Integer getNumberOfUsers() {
+    public short getNumberOfUsers() {
         return manager.getNumUsers();
     }
 
     @Override
-    public Integer getNumberOfFriendships() {
+    public int getNumberOfFriendships() {
         int numFriendships=0;
-        for(TIntSet friends : manager.getFriendships().valueCollection()) {
+        for(TShortSet friends : manager.getFriendships().valueCollection()) {
             numFriendships += friends.size();
         }
         return numFriendships / 2;
     }
 
     @Override
-    public TIntSet getUserIds() {
+    public TShortSet getUserIds() {
         return manager.getUids();
     }
 
     @Override
-    public TIntSet getPids() {
+    public TShortSet getPids() {
         return manager.getPids();
     }
 
     @Override
-    public Integer getEdgeCut() {
+    public int getEdgeCut() {
         return manager.getEdgeCut();
     }
 
 
     @Override
-    public TIntObjectMap<TIntSet> getPartitionToUserMap() {
+    public TShortObjectMap<TShortSet> getPartitionToUserMap() {
         return manager.getPartitionToUsers();
     }
 
     @Override
-    public TIntObjectMap<TIntSet> getFriendships() {
+    public TShortObjectMap<TShortSet> getFriendships() {
         return manager.getFriendships();
     }
 
@@ -109,10 +109,10 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
-        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>(getNumberOfPartitions()+1);
-        for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
-            m.put(iter.next(), new TIntHashSet());
+    public TShortObjectMap<TShortSet> getPartitionToReplicasMap() {
+        TShortObjectMap<TShortSet> m = new TShortObjectHashMap<>(getNumberOfPartitions()+1);
+        for(TShortIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
+            m.put(iter.next(), new TShortHashSet());
         }
         return m;
     }
@@ -133,12 +133,12 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Long getMigrationTally() {
+    public long getMigrationTally() {
         return manager.getMigrationTally();
     }
 
     @Override
-    public Integer getReplicationCount() {
+    public int getReplicationCount() {
         return 0; //No-Rep doesn't replicate
     }
 

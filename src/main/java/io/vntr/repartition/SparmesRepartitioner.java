@@ -1,12 +1,12 @@
 package io.vntr.repartition;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortShortHashMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 import java.util.*;
 
@@ -17,7 +17,7 @@ import static io.vntr.utils.TroveUtils.*;
  */
 public class SparmesRepartitioner {
 
-    public static RepResults repartition(int k, int maxIterations, float gamma, int minNumReplicas, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, TIntObjectMap<TIntSet> friendships) {
+    public static RepResults repartition(short k, int maxIterations, float gamma, short minNumReplicas, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> replicas, TShortObjectMap<TShortSet> friendships) {
         int moves = 0;
         State state = State.init(minNumReplicas, gamma, partitions, replicas, friendships);
 
@@ -34,20 +34,20 @@ public class SparmesRepartitioner {
             }
         }
 
-        TIntIntMap uidsToPids = getUToMasterMap(state.getLogicalPartitions());
-        TIntObjectMap<TIntSet> uidsToReplicaPids = getUToReplicasMap(state.getLogicalReplicaPartitions(), friendships.keySet());
+        TShortShortMap uidsToPids = getUToMasterMap(state.getLogicalPartitions());
+        TShortObjectMap<TShortSet> uidsToReplicaPids = getUToReplicasMap(state.getLogicalReplicaPartitions(), friendships.keySet());
 
         return new RepResults(moves, uidsToPids, uidsToReplicaPids);
     }
 
-    static int performStage(boolean firstStage, int k, State state) {
+    static int performStage(boolean firstStage, short k, State state) {
         Set<Target> targets = new HashSet<>();
 
-        for(int pid : state.getLogicalPartitions().keys()) {
+        for(short pid : state.getLogicalPartitions().keys()) {
             targets.addAll(getPartitionCandidates(pid, firstStage, k, state));
         }
 
-        TIntObjectMap<TIntSet> uidToReplicaPids = getUToReplicasMap(state.getLogicalReplicaPartitions(), state.getLogicalUsers().keySet());
+        TShortObjectMap<TShortSet> uidToReplicaPids = getUToReplicasMap(state.getLogicalReplicaPartitions(), state.getLogicalUsers().keySet());
         for(Target target : targets) {
             migrateLogically(target, state, uidToReplicaPids);
         }
@@ -55,10 +55,10 @@ public class SparmesRepartitioner {
         return targets.size();
     }
 
-    static Set<Target> getPartitionCandidates(int pid, boolean firstIteration, int k, State state) {
+    static Set<Target> getPartitionCandidates(short pid, boolean firstIteration, short k, State state) {
         NavigableSet<Target> candidates = new TreeSet<>();
-        for(TIntIterator iter = state.getLogicalPartitions().get(pid).iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
+        for(TShortIterator iter = state.getLogicalPartitions().get(pid).iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
             Target target = state.getLogicalUsers().get(uid).getTarget(firstIteration);
             if(target.pid != null) {
                 candidates.add(target);
@@ -74,14 +74,14 @@ public class SparmesRepartitioner {
         return topKCandidates;
     }
 
-    static void migrateLogically(Target target, State state, TIntObjectMap<TIntSet> uidToReplicaPids) {
-        TIntObjectMap<TIntSet> logicalPids = state.getLogicalPartitions();
-        TIntObjectMap<TIntSet> logicalReplicaPids = state.getLogicalReplicaPartitions();
+    static void migrateLogically(Target target, State state, TShortObjectMap<TShortSet> uidToReplicaPids) {
+        TShortObjectMap<TShortSet> logicalPids = state.getLogicalPartitions();
+        TShortObjectMap<TShortSet> logicalReplicaPids = state.getLogicalReplicaPartitions();
 
-        TIntSet oldMasters = logicalPids.get(target.oldPid);
-        TIntSet newMasters = logicalPids.get(target.pid);
-        TIntSet oldReplicas = logicalReplicaPids.get(target.oldPid);
-        TIntSet newReplicas = logicalReplicaPids.get(target.pid);
+        TShortSet oldMasters = logicalPids.get(target.oldPid);
+        TShortSet newMasters = logicalPids.get(target.pid);
+        TShortSet oldReplicas = logicalReplicaPids.get(target.oldPid);
+        TShortSet newReplicas = logicalReplicaPids.get(target.pid);
 
         LogicalUser user = state.getLogicalUsers().get(target.uid);
 
@@ -98,8 +98,8 @@ public class SparmesRepartitioner {
         }
 
         //Second, replicate friends in new partition if they aren't there already
-        for(TIntIterator iter = user.getFriendIds().iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
+        for(TShortIterator iter = user.getFriendIds().iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
             if(!newMasters.contains(friendId) && !newReplicas.contains(friendId)) {
                 newReplicas.add(friendId);
             }
@@ -112,22 +112,22 @@ public class SparmesRepartitioner {
         newReplicas.remove(target.uid); //doesn't cause a problem if it wasn't already there
 
         //Second, if we've violated k-constraints, choose another partition at random and replicate this user there
-        TIntSet replicaPids = uidToReplicaPids.get(target.uid);
+        TShortSet replicaPids = uidToReplicaPids.get(target.uid);
         if(replicaPids.size() < user.getMinNumReplicas()) {
-            TIntSet potentialReplicaLocations = new TIntHashSet(logicalReplicaPids.keySet());
+            TShortSet potentialReplicaLocations = new TShortHashSet(logicalReplicaPids.keySet());
             potentialReplicaLocations.remove(target.pid);
             potentialReplicaLocations.removeAll(replicaPids);
-            int newReplicaPid = getRandomElement(potentialReplicaLocations);
+            short newReplicaPid = getRandomElement(potentialReplicaLocations);
             logicalReplicaPids.get(newReplicaPid).add(target.uid);
         }
 
         //Third, remove friends replicas from old partition if they weren't being used for any other reason and don't violate k-replication
-        TIntSet friendReplicasToRemoveFromOldPartition = new TIntHashSet(user.getFriendIds());
+        TShortSet friendReplicasToRemoveFromOldPartition = new TShortHashSet(user.getFriendIds());
         friendReplicasToRemoveFromOldPartition.retainAll(oldReplicas);
 
-        for(TIntIterator iter = friendReplicasToRemoveFromOldPartition.iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
-            TIntSet friendsOfFriend = state.getLogicalUsers().get(friendId).getFriendIds();
+        for(TShortIterator iter = friendReplicasToRemoveFromOldPartition.iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
+            TShortSet friendsOfFriend = state.getLogicalUsers().get(friendId).getFriendIds();
             if(disjoint(friendsOfFriend, oldMasters)) {
                 int numFriendReplicas = uidToReplicaPids.get(friendId).size();
                 if(numFriendReplicas > user.getMinNumReplicas()) {
@@ -138,56 +138,56 @@ public class SparmesRepartitioner {
     }
 
     static class State {
-        private int minNumReplicas;
+        private short minNumReplicas;
         private float gamma;
-        private TIntObjectMap<TIntSet> friendships;
+        private TShortObjectMap<TShortSet> friendships;
 
-        private TIntObjectMap<LogicalUser> logicalUsers;
-        private TIntObjectMap<TIntSet> logicalPartitions;
-        private TIntObjectMap<TIntSet> logicalReplicaPartitions;
+        private TShortObjectMap<LogicalUser> logicalUsers;
+        private TShortObjectMap<TShortSet> logicalPartitions;
+        private TShortObjectMap<TShortSet> logicalReplicaPartitions;
 
         public State() {
         }
 
-        public TIntObjectMap<LogicalUser> getLogicalUsers() {
+        public TShortObjectMap<LogicalUser> getLogicalUsers() {
             return logicalUsers;
         }
 
-        public void setLogicalUsers(TIntObjectMap<LogicalUser> logicalUsers) {
+        public void setLogicalUsers(TShortObjectMap<LogicalUser> logicalUsers) {
             this.logicalUsers = logicalUsers;
         }
 
-        public TIntObjectMap<TIntSet> getLogicalPartitions() {
+        public TShortObjectMap<TShortSet> getLogicalPartitions() {
             return logicalPartitions;
         }
 
-        public void setLogicalPartitions(TIntObjectMap<TIntSet> logicalPartitions) {
+        public void setLogicalPartitions(TShortObjectMap<TShortSet> logicalPartitions) {
             this.logicalPartitions = logicalPartitions;
         }
 
-        public TIntObjectMap<TIntSet> getLogicalReplicaPartitions() {
+        public TShortObjectMap<TShortSet> getLogicalReplicaPartitions() {
             return logicalReplicaPartitions;
         }
 
-        public void setLogicalReplicaPartitions(TIntObjectMap<TIntSet> logicalReplicaPartitions) {
+        public void setLogicalReplicaPartitions(TShortObjectMap<TShortSet> logicalReplicaPartitions) {
             this.logicalReplicaPartitions = logicalReplicaPartitions;
         }
 
-        static State init(int minNumReplicas, float gamma, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, TIntObjectMap<TIntSet> friendships) {
+        static State init(short minNumReplicas, float gamma, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> replicas, TShortObjectMap<TShortSet> friendships) {
             State state = new State();
             state.minNumReplicas = minNumReplicas;
             state.gamma = gamma;
             state.friendships = friendships;
 
-            TIntObjectMap<TIntSet> logicalPartitions = new TIntObjectHashMap<>(partitions.size()+1);
-            for(int pid : partitions.keys()) {
-                logicalPartitions.put(pid, new TIntHashSet(partitions.get(pid)));
+            TShortObjectMap<TShortSet> logicalPartitions = new TShortObjectHashMap<>(partitions.size()+1);
+            for(short pid : partitions.keys()) {
+                logicalPartitions.put(pid, new TShortHashSet(partitions.get(pid)));
             }
             state.setLogicalPartitions(logicalPartitions);
 
-            TIntObjectMap<TIntSet> logicalReplicas = new TIntObjectHashMap<>(partitions.size()+1);
-            for(int pid : replicas.keys()) {
-                logicalReplicas.put(pid, new TIntHashSet(replicas.get(pid)));
+            TShortObjectMap<TShortSet> logicalReplicas = new TShortObjectHashMap<>(partitions.size()+1);
+            for(short pid : replicas.keys()) {
+                logicalReplicas.put(pid, new TShortHashSet(replicas.get(pid)));
             }
             state.setLogicalReplicaPartitions(logicalReplicas);
 
@@ -200,28 +200,28 @@ public class SparmesRepartitioner {
             setLogicalUsers(initLogicalUsers(minNumReplicas, gamma, logicalPartitions, logicalReplicaPartitions, friendships));
         }
 
-        static TIntObjectMap<LogicalUser> initLogicalUsers(int minNumReplicas, float gamma, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, TIntObjectMap<TIntSet> friendships) {
-            TIntObjectMap<LogicalUser> logicalUsers = new TIntObjectHashMap<>(friendships.size()+1);
+        static TShortObjectMap<LogicalUser> initLogicalUsers(short minNumReplicas, float gamma, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> replicas, TShortObjectMap<TShortSet> friendships) {
+            TShortObjectMap<LogicalUser> logicalUsers = new TShortObjectHashMap<>(friendships.size()+1);
 
-            int maxPid = max(partitions.keySet());
-            int maxUid = max(friendships.keySet());
+            short maxPid = max(partitions.keySet());
+            short maxUid = max(friendships.keySet());
 
-            TIntIntMap uidToPidMap = getUToMasterMap(partitions);
-            TIntObjectMap<TIntSet> uidToReplicaMap = getUToReplicasMap(replicas, friendships.keySet());
-            int[] numDeletionCandidates = getNumDeletionCandidates(maxUid, minNumReplicas, friendships, replicas, uidToPidMap, uidToReplicaMap);
-            TIntObjectMap<TIntIntMap> uidToNumFriendsToAddInEachPartition = getUidToNumFriendsToAddInEachPartition(friendships, uidToReplicaMap, uidToPidMap, partitions.keySet(), maxPid);
+            TShortShortMap uidToPidMap = getUToMasterMap(partitions);
+            TShortObjectMap<TShortSet> uidToReplicaMap = getUToReplicasMap(replicas, friendships.keySet());
+            short[] numDeletionCandidates = getNumDeletionCandidates(maxUid, minNumReplicas, friendships, replicas, uidToPidMap, uidToReplicaMap);
+            TShortObjectMap<TShortShortMap> uidToNumFriendsToAddInEachPartition = getUidToNumFriendsToAddInEachPartition(friendships, uidToReplicaMap, uidToPidMap, partitions.keySet(), maxPid);
 
-            TIntIntMap pToWeight = getUserCounts(partitions);
+            TShortShortMap pToWeight = getUserCounts(partitions);
             int totalWeight = 0;
-            for(int key : pToWeight.keys()) {
+            for(short key : pToWeight.keys()) {
                 totalWeight += pToWeight.get(key);
             }
 
-            for(int uid : friendships.keys()) {
-                TIntSet friendIds = new TIntHashSet(friendships.get(uid));
-                TIntIntMap pToFriendCount = getPToFriendCount(friendIds, uidToPidMap, partitions.keySet(), maxPid);
+            for(short uid : friendships.keys()) {
+                TShortSet friendIds = new TShortHashSet(friendships.get(uid));
+                TShortShortMap pToFriendCount = getPToFriendCount(friendIds, uidToPidMap, partitions.keySet(), maxPid);
 
-                int numFriendReplicasToDeleteInSourcePartition = numDeletionCandidates[uid];
+                short numFriendReplicasToDeleteInSourcePartition = numDeletionCandidates[uid];
                 boolean replicateInSourcePartition = !disjoint(friendIds, partitions.get(uidToPidMap.get(uid)));
 
                 LogicalUser user = new LogicalUser(
@@ -230,8 +230,8 @@ public class SparmesRepartitioner {
                         gamma,
                         friendIds,
                         pToFriendCount,
-                        new TIntIntHashMap(pToWeight),
-                        new TIntHashSet(uidToReplicaMap.get(uid)),
+                        new TShortShortHashMap(pToWeight),
+                        new TShortHashSet(uidToReplicaMap.get(uid)),
                         uidToNumFriendsToAddInEachPartition.get(uid),
                         numFriendReplicasToDeleteInSourcePartition,
                         replicateInSourcePartition,
@@ -245,16 +245,16 @@ public class SparmesRepartitioner {
             return logicalUsers;
         }
 
-        static int[] getNumDeletionCandidates(int maxUid, int minNumReplicas, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> replicas, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidToReplicasMap) {
-            int[] numDeletionCandidates = new int[maxUid+1];
+        static short[] getNumDeletionCandidates(short maxUid, short minNumReplicas, TShortObjectMap<TShortSet> friendships, TShortObjectMap<TShortSet> replicas, TShortShortMap uidToPidMap, TShortObjectMap<TShortSet> uidToReplicasMap) {
+            short[] numDeletionCandidates = new short[maxUid+1];
 
-            for(int pid : replicas.keys()) {
-middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNext(); ) {
-                    int replicaId = iter.next();
-                    Integer friendOnPartition = null;
+            for(short pid : replicas.keys()) {
+middle:         for(TShortIterator iter = replicas.get(pid).iterator(); iter.hasNext(); ) {
+                    short replicaId = iter.next();
+                    Short friendOnPartition = null;
 
-                    for(TIntIterator iter2 = friendships.get(replicaId).iterator(); iter2.hasNext(); ) {
-                        int friendId = iter2.next();
+                    for(TShortIterator iter2 = friendships.get(replicaId).iterator(); iter2.hasNext(); ) {
+                        short friendId = iter2.next();
                         if(uidToPidMap.get(friendId) == pid) {
                             if(friendOnPartition != null) {
                                 continue middle;
@@ -271,18 +271,18 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             return numDeletionCandidates;
         }
 
-        static TIntObjectMap<TIntIntMap> getUidToNumFriendsToAddInEachPartition(TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> uidToReplicaMap, TIntIntMap uidToPidMap, TIntSet pids, int maxPid) {
-            TIntObjectMap<TIntIntMap> uidToNumFriendsToAddInEachPartition = new TIntObjectHashMap<>(friendships.size()+1);
+        static TShortObjectMap<TShortShortMap> getUidToNumFriendsToAddInEachPartition(TShortObjectMap<TShortSet> friendships, TShortObjectMap<TShortSet> uidToReplicaMap, TShortShortMap uidToPidMap, TShortSet pids, int maxPid) {
+            TShortObjectMap<TShortShortMap> uidToNumFriendsToAddInEachPartition = new TShortObjectHashMap<>(friendships.size()+1);
 
-            for(int uid : friendships.keys()) {
+            for(short uid : friendships.keys()) {
                 //you have to add a replica of each friend who isn't present in the partition
-                TIntSet friendIds = friendships.get(uid);
-                int[] friendsToAdd = new int[maxPid+1];
-                Arrays.fill(friendsToAdd, friendIds.size());
+                TShortSet friendIds = friendships.get(uid);
+                short[] friendsToAdd = new short[maxPid+1];
+                Arrays.fill(friendsToAdd, (short)friendIds.size());
 
-                for(TIntIterator iter = friendIds.iterator(); iter.hasNext(); ) {
-                    int friendId = iter.next();
-                    for(TIntIterator iter2 = uidToReplicaMap.get(friendId).iterator(); iter2.hasNext(); ) {
+                for(TShortIterator iter = friendIds.iterator(); iter.hasNext(); ) {
+                    short friendId = iter.next();
+                    for(TShortIterator iter2 = uidToReplicaMap.get(friendId).iterator(); iter2.hasNext(); ) {
                         int friendLocation = iter2.next();
                         friendsToAdd[friendLocation]--;
                     }
@@ -290,9 +290,9 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
                 }
 
                 int pid = uidToPidMap.get(uid);
-                TIntIntMap numFriendsToAddInEachPartition = new TIntIntHashMap(pids.size()+1);
-                for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
-                    int pid1 = iter.next();
+                TShortShortMap numFriendsToAddInEachPartition = new TShortShortHashMap(pids.size()+1);
+                for(TShortIterator iter = pids.iterator(); iter.hasNext(); ) {
+                    short pid1 = iter.next();
                     if(pid1 != pid) {
                         numFriendsToAddInEachPartition.put(pid1, friendsToAdd[pid1]);
                     }
@@ -302,15 +302,15 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             return uidToNumFriendsToAddInEachPartition;
         }
 
-        static TIntIntMap getPToFriendCount(TIntSet friendIds, TIntIntMap uidToPidMap, TIntSet pids, int maxPid) {
-            int[] friendCounts = new int[maxPid+1];
-            for(TIntIterator iter = friendIds.iterator(); iter.hasNext(); ) {
-                int friendId = iter.next();
+        static TShortShortMap getPToFriendCount(TShortSet friendIds, TShortShortMap uidToPidMap, TShortSet pids, int maxPid) {
+            short[] friendCounts = new short[maxPid+1];
+            for(TShortIterator iter = friendIds.iterator(); iter.hasNext(); ) {
+                short friendId = iter.next();
                 friendCounts[uidToPidMap.get(friendId)]++;
             }
-            TIntIntMap pToFriendCount = new TIntIntHashMap(pids.size()+1);
-            for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
-                int pid = iter.next();
+            TShortShortMap pToFriendCount = new TShortShortHashMap(pids.size()+1);
+            for(TShortIterator iter = pids.iterator(); iter.hasNext(); ) {
+                short pid = iter.next();
                 pToFriendCount.put(pid, friendCounts[pid]);
             }
             return pToFriendCount;
@@ -321,7 +321,7 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
                 if(user.replicaLocations.size() < this.minNumReplicas) {
                     throw new RuntimeException("User " + user.id + " has " + this.minNumReplicas + "-replication problem.");
                 }
-                for(int pid : this.getLogicalPartitions().keys()) {
+                for(short pid : this.getLogicalPartitions().keys()) {
                     boolean userHasMasterHere = this.getLogicalPartitions().get(pid).contains(user.id);
                     boolean userIsReplicatedHere = this.getLogicalReplicaPartitions().get(pid).contains(user.id);
 
@@ -335,8 +335,8 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
                         throw new RuntimeException("User " + user.id + " has a replica problem in " + pid);
                     }
                 }
-                for(TIntIterator iter = user.friendIds.iterator(); iter.hasNext(); ) {
-                    int friendId = iter.next();
+                for(TShortIterator iter = user.friendIds.iterator(); iter.hasNext(); ) {
+                    short friendId = iter.next();
                     boolean friendHasMasterHere = this.logicalPartitions.get(user.pid).contains(friendId);
                     boolean friendHasReplicaHere = this.logicalReplicaPartitions.get(user.pid).contains(friendId);
                     if(!friendHasMasterHere && !friendHasReplicaHere) {
@@ -349,21 +349,21 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
     }
 
     static class LogicalUser {
-        private final int minNumReplicas;
-        private final int id;
-        private final int pid;
+        private final short minNumReplicas;
+        private final short id;
+        private final short pid;
         private final float gamma;
-        private final Integer totalWeight;
-        private final TIntIntMap pToFriendCount;
-        private final TIntIntMap pToWeight;
-        private final TIntSet friendIds;
+        private final int totalWeight;
+        private final TShortShortMap pToFriendCount;
+        private final TShortShortMap pToWeight;
+        private final TShortSet friendIds;
 
-        private final TIntSet replicaLocations;
-        private final TIntIntMap numFriendsToAddInEachPartition;
+        private final TShortSet replicaLocations;
+        private final TShortShortMap numFriendsToAddInEachPartition;
         private final int numFriendReplicasToDeleteInSourcePartition;
         private final boolean replicateInSourcePartition;
 
-        public LogicalUser(int id, int pid, float gamma, TIntSet friendIds, TIntIntMap pToFriendCount, TIntIntMap pToWeight, TIntSet replicaLocations, TIntIntMap numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, int totalWeight, int minNumReplicas) {
+        public LogicalUser(short id, short pid, float gamma, TShortSet friendIds, TShortShortMap pToFriendCount, TShortShortMap pToWeight, TShortSet replicaLocations, TShortShortMap numFriendsToAddInEachPartition, int numFriendReplicasToDeleteInSourcePartition, boolean replicateInSourcePartition, int totalWeight, short minNumReplicas) {
             this.id = id;
             this.pid = pid;
             this.gamma = gamma;
@@ -378,7 +378,7 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             this.minNumReplicas = minNumReplicas;
         }
 
-        public TIntSet getFriendIds() {
+        public TShortSet getFriendIds() {
             return friendIds;
         }
 
@@ -394,19 +394,19 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             return totalWeight;
         }
 
-        public TIntIntMap getpToFriendCount() {
+        public TShortShortMap getpToFriendCount() {
             return pToFriendCount;
         }
 
-        public TIntIntMap getpToWeight() {
+        public TShortShortMap getpToWeight() {
             return pToWeight;
         }
 
-        public TIntSet getReplicaLocations() {
+        public TShortSet getReplicaLocations() {
             return replicaLocations;
         }
 
-        public TIntIntMap getNumFriendsToAddInEachPartition() {
+        public TShortShortMap getNumFriendsToAddInEachPartition() {
             return numFriendsToAddInEachPartition;
         }
 
@@ -418,7 +418,7 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             return replicateInSourcePartition;
         }
 
-        private float getImbalanceFactor(Integer pId, Integer offset) {
+        private float getImbalanceFactor(short pId, short offset) {
             float partitionWeight = pToWeight.get(pId) + offset;
             float averageWeight = ((float) totalWeight) / pToWeight.keySet().size();
             return partitionWeight / averageWeight;
@@ -436,7 +436,7 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             if (Float.compare(that.gamma, gamma) != 0) return false;
             if (numFriendReplicasToDeleteInSourcePartition != that.numFriendReplicasToDeleteInSourcePartition) return false;
             if (replicateInSourcePartition != that.replicateInSourcePartition) return false;
-            if (!totalWeight.equals(that.totalWeight)) return false;
+            if (totalWeight != that.totalWeight) return false;
             if (!pToFriendCount.equals(that.pToFriendCount)) return false;
             if (!pToWeight.equals(that.pToWeight)) return false;
             if (!replicaLocations.equals(that.replicaLocations)) return false;
@@ -449,7 +449,7 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             int result = id;
             result = 31 * result + pid;
             result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
-            result = 31 * result + totalWeight.hashCode();
+            result = 31 * result + totalWeight;
             result = 31 * result + pToFriendCount.hashCode();
             result = 31 * result + pToWeight.hashCode();
             result = 31 * result + replicaLocations.hashCode();
@@ -464,23 +464,23 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
         }
 
         public Target getTarget(boolean firstStage) {
-            boolean underweight = getImbalanceFactor(pid, -1) < (2-gamma);
-            boolean overweight = getImbalanceFactor(pid, 0) > gamma;
+            boolean underweight = getImbalanceFactor(pid, (short) -1) < (2-gamma);
+            boolean overweight = getImbalanceFactor(pid, (short) 0) > gamma;
             if(underweight) {
                 return new Target(id, null, null, 0f);
             }
 
-            Integer target = null;
-            Integer maxGain = 0;
+            Short target = null;
+            short maxGain = 0;
 
             if(overweight) {
-                maxGain = Integer.MIN_VALUE;
+                maxGain = Short.MIN_VALUE;
             }
 
-            for(int targetPid : pToFriendCount.keys()) {
+            for(short targetPid : pToFriendCount.keys()) {
                 if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
-                    float balanceFactor = getImbalanceFactor(targetPid, 1);
-                    int gain = calculateGain(targetPid);
+                    float balanceFactor = getImbalanceFactor(targetPid, (short)1);
+                    short gain = calculateGain(targetPid);
                     if(gain > maxGain && balanceFactor < gamma) {
                         target = targetPid;
                         maxGain = gain;
@@ -490,14 +490,14 @@ middle:         for(TIntIterator iter = replicas.get(pid).iterator(); iter.hasNe
             return new Target(id, target, pid, (float) maxGain);
         }
 
-        private int calculateGain(Integer targetPid) {
+        private short calculateGain(short targetPid) {
             boolean deleteReplicaInTargetPartition = replicaLocations.contains(targetPid) && replicaLocations.size() > minNumReplicas; //TODO: this assumes we won't add other replicas, so it's not tight
             int numToDelete = numFriendReplicasToDeleteInSourcePartition + (deleteReplicaInTargetPartition ? 1 : 0);
 
             int numFriendReplicasToAddInTargetPartition = numFriendsToAddInEachPartition.get(targetPid);
             int numToAdd = numFriendReplicasToAddInTargetPartition + (replicateInSourcePartition ? 1 : 0);
 
-            return numToDelete - numToAdd;
+            return (short)(numToDelete - numToAdd);
         }
     }
 

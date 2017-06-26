@@ -1,10 +1,10 @@
 package io.vntr.repartition;
 
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.TestUtils;
 import org.junit.Test;
 
@@ -22,49 +22,49 @@ public class HRepartitionerTest {
     public void testInitState() {
         float gamma = 1.05f;
 
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
-        friendships.put(2,  initSet(3, 6, 9, 12));
-        friendships.put(3,  initSet(4, 8, 12));
-        friendships.put(4,  initSet(5, 10));
-        friendships.put(5,  initSet(6, 12));
-        friendships.put(6,  initSet(7));
-        friendships.put(7,  initSet(8));
-        friendships.put(8,  initSet(9));
-        friendships.put(9,  initSet(10));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, new TIntHashSet());
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        friendships.put((short)1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put((short)2,  initSet(3, 6, 9, 12));
+        friendships.put((short)3,  initSet(4, 8, 12));
+        friendships.put((short)4,  initSet(5, 10));
+        friendships.put((short)5,  initSet(6, 12));
+        friendships.put((short)6,  initSet(7));
+        friendships.put((short)7,  initSet(8));
+        friendships.put((short)8,  initSet(9));
+        friendships.put((short)9,  initSet(10));
+        friendships.put((short)10, initSet(11));
+        friendships.put((short)11, initSet(12));
+        friendships.put((short)12, initSet(13));
+        friendships.put((short)13, new TShortHashSet());
 
-        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
         assertEquals(state.getLogicalPartitions(), partitions);
 
-        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
+        TShortShortMap uidToPidMap = getUToMasterMap(partitions);
         assertArrayEquals(friendships.keys(), state.getLogicalUsers().keys());
-        for(int uid : friendships.keys()) {
+        for(short uid : friendships.keys()) {
             HRepartitioner.LogicalUser user = state.getLogicalUsers().get(uid);
 
-            assertEquals(user.getId(), (Integer) uid);
+            assertTrue(user.getId() == uid);
             assertTrue(user.getPid() == uidToPidMap.get(uid));
-            assertEquals(user.getTotalWeight(), (Integer) friendships.size());
+            assertTrue(user.getTotalWeight() == friendships.size());
 
-            TIntIntMap pToWeight = user.getpToWeight();
-            for(int pid : partitions.keys()) {
+            TShortShortMap pToWeight = user.getpToWeight();
+            for(short pid : partitions.keys()) {
                 assertTrue(pToWeight.get(pid) == partitions.get(pid).size());
             }
 
-            TIntIntMap pToFriendCount = user.getpToFriendCount();
-            for(int pid : partitions.keys()) {
-                TIntSet friends = new TIntHashSet(bidirectionalFriendships.get(uid));
+            TShortShortMap pToFriendCount = user.getpToFriendCount();
+            for(short pid : partitions.keys()) {
+                TShortSet friends = new TShortHashSet(bidirectionalFriendships.get(uid));
                 friends.retainAll(partitions.get(pid));
                 assertTrue(pToFriendCount.get(pid) == friends.size());
             }
@@ -75,35 +75,35 @@ public class HRepartitionerTest {
     public void testLogicallyMigrateAndUpdateLogicalUsers() {
         float gamma = 1.05f;
 
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
-        friendships.put(2,  initSet(3, 6, 9, 12));
-        friendships.put(3,  initSet(4, 8, 12));
-        friendships.put(4,  initSet(5, 10));
-        friendships.put(5,  initSet(6, 12));
-        friendships.put(6,  initSet(7));
-        friendships.put(7,  initSet(8));
-        friendships.put(8,  initSet(9));
-        friendships.put(9,  initSet(10));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, new TIntHashSet());
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        friendships.put((short)1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put((short)2,  initSet(3, 6, 9, 12));
+        friendships.put((short)3,  initSet(4, 8, 12));
+        friendships.put((short)4,  initSet(5, 10));
+        friendships.put((short)5,  initSet(6, 12));
+        friendships.put((short)6,  initSet(7));
+        friendships.put((short)7,  initSet(8));
+        friendships.put((short)8,  initSet(9));
+        friendships.put((short)9,  initSet(10));
+        friendships.put((short)10, initSet(11));
+        friendships.put((short)11, initSet(12));
+        friendships.put((short)12, initSet(13));
+        friendships.put((short)13, new TShortHashSet());
 
-        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
-        Integer uid1 = 1;
-        Integer pid1 = 1;
+        short uid1 = 1;
+        short pid1 = 1;
 
-        Integer uid2 = 8;
-        Integer pid2 = 2;
+        short uid2 = 8;
+        short pid2 = 2;
 
         assertTrue(state.getLogicalPartitions().get(pid1).contains(uid1));
         assertTrue(state.getLogicalPartitions().get(pid2).contains(uid2));
@@ -127,63 +127,63 @@ public class HRepartitionerTest {
     public void testGetCandidatesFirstStage() {
         float gamma = 1.5f;
 
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
-        friendships.put(2,  initSet(3, 6, 9, 12));
-        friendships.put(3,  initSet(4, 8, 12));
-        friendships.put(4,  initSet(5, 10));
-        friendships.put(5,  initSet(6, 12));
-        friendships.put(6,  initSet(7, 12, 13));
-        friendships.put(7,  initSet(8));
-        friendships.put(8,  initSet(9));
-        friendships.put(9,  initSet(10));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, new TIntHashSet());
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        friendships.put((short)1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put((short)2,  initSet(3, 6, 9, 12));
+        friendships.put((short)3,  initSet(4, 8, 12));
+        friendships.put((short)4,  initSet(5, 10));
+        friendships.put((short)5,  initSet(6, 12));
+        friendships.put((short)6,  initSet(7, 12, 13));
+        friendships.put((short)7,  initSet(8));
+        friendships.put((short)8,  initSet(9));
+        friendships.put((short)9,  initSet(10));
+        friendships.put((short)10, initSet(11));
+        friendships.put((short)11, initSet(12));
+        friendships.put((short)12, initSet(13));
+        friendships.put((short)13, new TShortHashSet());
 
-        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
-        Set<Target> targets = HRepartitioner.getCandidates(2, true, 3, state);
-        assertEquals(targets, TestUtils.initSet(new Target(6, 3, 2, 1f)));
+        Set<Target> targets = HRepartitioner.getCandidates((short)2, true, (short)3, state);
+        assertEquals(targets, TestUtils.initSet(new Target((short)6, (short)3, (short)2, 1f)));
     }
 
     @Test
     public void testGetCandidatesSecondStage() {
         float gamma = 1.5f;
 
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
-        friendships.put(2,  initSet(3, 6, 9, 12));
-        friendships.put(3,  initSet(4, 8, 12));
-        friendships.put(4,  initSet(5, 10));
-        friendships.put(5,  initSet(6, 12));
-        friendships.put(6,  initSet(7, 12, 13));
-        friendships.put(7,  initSet(8));
-        friendships.put(8,  initSet(9));
-        friendships.put(9,  initSet(10));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, new TIntHashSet());
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        friendships.put((short)1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put((short)2,  initSet(3, 6, 9, 12));
+        friendships.put((short)3,  initSet(4, 8, 12));
+        friendships.put((short)4,  initSet(5, 10));
+        friendships.put((short)5,  initSet(6, 12));
+        friendships.put((short)6,  initSet(7, 12, 13));
+        friendships.put((short)7,  initSet(8));
+        friendships.put((short)8,  initSet(9));
+        friendships.put((short)9,  initSet(10));
+        friendships.put((short)10, initSet(11));
+        friendships.put((short)11, initSet(12));
+        friendships.put((short)12, initSet(13));
+        friendships.put((short)13, new TShortHashSet());
 
-        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         HRepartitioner.State state = HRepartitioner.initState(partitions, bidirectionalFriendships, gamma);
 
-        Set<Target> targets = HRepartitioner.getCandidates(2, false, 3, state);
-        assertEquals(targets, TestUtils.initSet(new Target(6, 1, 2, 2f)));
+        Set<Target> targets = HRepartitioner.getCandidates((short)2, false, (short)3, state);
+        assertEquals(targets, TestUtils.initSet(new Target((short)6, (short)1, (short)2, 2f)));
     }
 }

@@ -1,12 +1,12 @@
 package io.vntr.repartition;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortShortHashMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 import java.util.*;
 
@@ -16,7 +16,7 @@ import static io.vntr.utils.TroveUtils.*;
  * Created by robertlindquist on 4/21/17.
  */
 public class HRepartitioner {
-    public static NoRepResults repartition(int k, int maxIterations, float gamma, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships) {
+    public static NoRepResults repartition(short k, short maxIterations, float gamma, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> friendships) {
         int moves = 0;
         State state = initState(partitions, friendships, gamma);
         for(int i=0; i<maxIterations; i++) {
@@ -38,9 +38,9 @@ public class HRepartitioner {
         return new NoRepResults(getUToMasterMap(state.getLogicalPartitions()), moves);
     }
 
-    static Set<Target> performStage(boolean firstStage, int k, State state) {
+    static Set<Target> performStage(boolean firstStage, short k, State state) {
         Set<Target> targets = new HashSet<>();
-        for(int pid : state.getLogicalPartitions().keys()) {
+        for(short pid : state.getLogicalPartitions().keys()) {
             targets.addAll(getCandidates(pid, firstStage, k, state));
         }
 
@@ -49,10 +49,10 @@ public class HRepartitioner {
         return targets;
     }
 
-    static Set<Target> getCandidates(int pid, boolean firstIteration, int k, State state) {
+    static Set<Target> getCandidates(short pid, boolean firstIteration, short k, State state) {
         NavigableSet<Target> candidates = new TreeSet<>();
-        for(TIntIterator iter = state.getLogicalPartitions().get(pid).iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
+        for(TShortIterator iter = state.getLogicalPartitions().get(pid).iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
             Target target = state.getLogicalUsers().get(uid).getTargetPart(firstIteration);
             if(target.pid != null) {
                 candidates.add(target);
@@ -75,13 +75,13 @@ public class HRepartitioner {
         }
     }
 
-    static State initState(TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, float gamma) {
+    static State initState(TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> friendships, float gamma) {
         State state = new State();
-        TIntObjectMap<TIntSet> logicalPartitions = new TIntObjectHashMap<>(partitions.size() + 1);
+        TShortObjectMap<TShortSet> logicalPartitions = new TShortObjectHashMap<>(partitions.size() + 1);
 
-        for(int pid : partitions.keys()) {
-            TIntSet uids = partitions.get(pid);
-            logicalPartitions.put(pid, new TIntHashSet(uids));
+        for(short pid : partitions.keys()) {
+            TShortSet uids = partitions.get(pid);
+            logicalPartitions.put(pid, new TShortHashSet(uids));
         }
 
         state.setLogicalPartitions(logicalPartitions);
@@ -90,32 +90,32 @@ public class HRepartitioner {
         return state;
     }
 
-    public static TIntObjectMap<LogicalUser> initLogicalUsers(TIntObjectMap<TIntSet> logicalPids, TIntObjectMap<TIntSet> friendships, TIntSet uidsToInclude, float gamma) {
-        TIntIntMap uidToPidMap = getUToMasterMap(logicalPids);
+    public static TShortObjectMap<LogicalUser> initLogicalUsers(TShortObjectMap<TShortSet> logicalPids, TShortObjectMap<TShortSet> friendships, TShortSet uidsToInclude, float gamma) {
+        TShortShortMap uidToPidMap = getUToMasterMap(logicalPids);
 
-        TIntIntMap pToWeight = new TIntIntHashMap(logicalPids.size() + 1);
+        TShortShortMap pToWeight = new TShortShortHashMap(logicalPids.size() + 1);
         int totalWeight = 0;
-        for(int pid : logicalPids.keys()) {
-            int numUsersOnPartition = logicalPids.get(pid).size();
+        for(short pid : logicalPids.keys()) {
+            short numUsersOnPartition = (short) logicalPids.get(pid).size();
             pToWeight.put(pid, numUsersOnPartition);
             totalWeight += numUsersOnPartition;
         }
 
-        TIntObjectMap<LogicalUser> logicalUsers = new TIntObjectHashMap<>();
-        for(TIntIterator iter = uidsToInclude.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            TIntIntMap pToFriendCount = new TIntIntHashMap(logicalPids.size() + 1);
-            for(int pid : logicalPids.keys()) {
-                pToFriendCount.put(pid, 0);
+        TShortObjectMap<LogicalUser> logicalUsers = new TShortObjectHashMap<>();
+        for(TShortIterator iter = uidsToInclude.iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
+            TShortShortMap pToFriendCount = new TShortShortHashMap(logicalPids.size() + 1);
+            for(short pid : logicalPids.keys()) {
+                pToFriendCount.put(pid, (short) 0);
             }
-            for(TIntIterator iter2 = friendships.get(uid).iterator(); iter2.hasNext(); ) {
-                int friendId = iter2.next();
-                int pid = uidToPidMap.get(friendId);
-                pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
+            for(TShortIterator iter2 = friendships.get(uid).iterator(); iter2.hasNext(); ) {
+                short friendId = iter2.next();
+                short pid = uidToPidMap.get(friendId);
+                pToFriendCount.put(pid, (short)(pToFriendCount.get(pid) + 1));
             }
 
-            int pid = uidToPidMap.get(uid);
-            logicalUsers.put(uid, new LogicalUser(uid, pid, gamma, pToFriendCount, new TIntIntHashMap(pToWeight), totalWeight));
+            short pid = uidToPidMap.get(uid);
+            logicalUsers.put(uid, new LogicalUser(uid, pid, gamma, pToFriendCount, new TShortShortHashMap(pToWeight), totalWeight));
         }
 
         return logicalUsers;
@@ -123,59 +123,59 @@ public class HRepartitioner {
 
     static class State {
 
-        private TIntObjectMap<TIntSet> logicalPartitions;
-        private TIntObjectMap<LogicalUser> logicalUsers;
+        private TShortObjectMap<TShortSet> logicalPartitions;
+        private TShortObjectMap<LogicalUser> logicalUsers;
         public State() {
         }
 
-        public TIntObjectMap<TIntSet> getLogicalPartitions() {
+        public TShortObjectMap<TShortSet> getLogicalPartitions() {
             return logicalPartitions;
         }
 
-        public void setLogicalPartitions(TIntObjectMap<TIntSet> logicalPartitions) {
+        public void setLogicalPartitions(TShortObjectMap<TShortSet> logicalPartitions) {
             this.logicalPartitions = logicalPartitions;
         }
 
-        public TIntObjectMap<LogicalUser> getLogicalUsers() {
+        public TShortObjectMap<LogicalUser> getLogicalUsers() {
             return logicalUsers;
         }
 
-        public void updateLogicalUsers(TIntObjectMap<TIntSet> friendships, float gamma) {
+        public void updateLogicalUsers(TShortObjectMap<TShortSet> friendships, float gamma) {
             setLogicalUsers(initLogicalUsers(logicalPartitions, friendships, friendships.keySet(), gamma));
         }
 
-        public void updateLogicalUsers(Set<Target> targets, TIntObjectMap<TIntSet> friendships) {
-            TIntIntMap pToWeight = getUserCounts(logicalPartitions);
-            for(int uid : logicalUsers.keys()) {
-                logicalUsers.get(uid).pToWeight = new TIntIntHashMap(pToWeight);
+        public void updateLogicalUsers(Set<Target> targets, TShortObjectMap<TShortSet> friendships) {
+            TShortShortMap pToWeight = getUserCounts(logicalPartitions);
+            for(short uid : logicalUsers.keys()) {
+                logicalUsers.get(uid).pToWeight = new TShortShortHashMap(pToWeight);
             }
             for(Target target : targets) {
                 getLogicalUsers().get(target.uid).pid = target.pid;
 
-                for(TIntIterator iter = friendships.get(target.uid).iterator(); iter.hasNext(); ) {
-                    int friendId = iter.next();
-                    TIntIntMap pToFriendCount = logicalUsers.get(friendId).pToFriendCount;
-                    pToFriendCount.put(target.oldPid, pToFriendCount.get(target.oldPid) - 1);
-                    pToFriendCount.put(target.pid, pToFriendCount.get(target.pid) + 1);
+                for(TShortIterator iter = friendships.get(target.uid).iterator(); iter.hasNext(); ) {
+                    short friendId = iter.next();
+                    TShortShortMap pToFriendCount = logicalUsers.get(friendId).pToFriendCount;
+                    pToFriendCount.put(target.oldPid, (short)(pToFriendCount.get(target.oldPid) - 1));
+                    pToFriendCount.put(target.pid, (short)(pToFriendCount.get(target.pid) + 1));
                 }
             }
         }
 
-        public void setLogicalUsers(TIntObjectMap<LogicalUser> logicalUsers) {
+        public void setLogicalUsers(TShortObjectMap<LogicalUser> logicalUsers) {
             this.logicalUsers = logicalUsers;
         }
 
     }
 
     public static class LogicalUser {
-        private final Integer id;
-        private Integer pid;
+        private final short id;
+        private short pid;
         private float gamma;
-        private TIntIntMap pToFriendCount;
-        private TIntIntMap pToWeight;
-        private final Integer totalWeight;
+        private TShortShortMap pToFriendCount;
+        private TShortShortMap pToWeight;
+        private final int totalWeight;
 
-        public LogicalUser(Integer id, Integer pid, float gamma, TIntIntMap pToFriendCount, TIntIntMap pToWeight, Integer totalWeight) {
+        public LogicalUser(short id, short pid, float gamma, TShortShortMap pToFriendCount, TShortShortMap pToWeight, int totalWeight) {
             this.id = id;
             this.pid = pid;
             this.gamma = gamma;
@@ -184,46 +184,46 @@ public class HRepartitioner {
             this.totalWeight = totalWeight;
         }
 
-        public Integer getId() {
+        public short getId() {
             return id;
         }
 
-        public TIntIntMap getpToWeight() {
+        public TShortShortMap getpToWeight() {
             return pToWeight;
         }
 
-        public Integer getTotalWeight() {
+        public int getTotalWeight() {
             return totalWeight;
         }
 
-        public Integer getPid() {
+        public short getPid() {
             return pid;
         }
 
-        public TIntIntMap getpToFriendCount() {
+        public TShortShortMap getpToFriendCount() {
             return pToFriendCount;
         }
 
         public Target getTargetPart(boolean firstStage) {
-            boolean underweight = getImbalanceFactor(pid, -1) < (2-gamma);
-            boolean overweight  = getImbalanceFactor(pid, 0)  > gamma;
+            boolean underweight = getImbalanceFactor(pid, (short)-1) < (2-gamma);
+            boolean overweight  = getImbalanceFactor(pid, (short) 0)  > gamma;
 
             if(underweight) {
                 return new Target(id, null, null, 0f);
             }
 
-            TIntSet targets = new TIntHashSet();
+            TShortSet targets = new TShortHashSet();
             Integer maxGain = overweight ? Integer.MIN_VALUE : 0;
 
-            for(Integer targetPid : pToFriendCount.keys()) {
+            for(short targetPid : pToFriendCount.keys()) {
 
                 if((firstStage && targetPid > pid) || (!firstStage && targetPid < pid)) {
 
                     int gain = pToFriendCount.get(targetPid) - pToFriendCount.get(pid);
-                    float balanceFactor = getImbalanceFactor(targetPid, 1);
+                    float balanceFactor = getImbalanceFactor(targetPid, (short)1);
 
                     if (gain > maxGain && balanceFactor < gamma) {
-                        targets = new TIntHashSet();
+                        targets = new TShortHashSet();
                         targets.add(targetPid);
                         maxGain = gain;
                     } else if (gain == maxGain && (overweight || gain > 0)) {
@@ -232,12 +232,12 @@ public class HRepartitioner {
                 }
             }
 
-            Integer targetPid = null;
+            Short targetPid = null;
             if(!targets.isEmpty()) {
                 int minWeightForPartition = Integer.MAX_VALUE;
-                for(TIntIterator iter = targets.iterator(); iter.hasNext(); ) {
-                    int curTarget = iter.next();
-                    int curWeight = pToWeight.get(curTarget);
+                for(TShortIterator iter = targets.iterator(); iter.hasNext(); ) {
+                    short curTarget = iter.next();
+                    short curWeight = pToWeight.get(curTarget);
                     if(curWeight < minWeightForPartition) {
                         minWeightForPartition = curWeight;
                         targetPid = curTarget;
@@ -248,7 +248,7 @@ public class HRepartitioner {
             return new Target(id, targetPid, pid, (float) maxGain);
         }
 
-        public float getImbalanceFactor(Integer pId, Integer offset) {
+        public float getImbalanceFactor(short pId, short offset) {
             float partitionWeight = pToWeight.get(pId) + offset;
             float averageWeight = ((float) totalWeight) / pToWeight.keySet().size();
             return partitionWeight / averageWeight;
@@ -262,22 +262,22 @@ public class HRepartitioner {
             LogicalUser that = (LogicalUser) o;
 
             if (Float.compare(that.gamma, gamma) != 0) return false;
-            if (!id.equals(that.id)) return false;
-            if (!pid.equals(that.pid)) return false;
-            if (!pToFriendCount.equals(that.pToFriendCount)) return false;
-            if (!pToWeight.equals(that.pToWeight)) return false;
-            return totalWeight.equals(that.totalWeight);
+            if (id !=(that.id)) return false;
+            if (pid != that.pid) return false;
+            if (pToFriendCount != that.pToFriendCount) return false;
+            if (pToWeight != that.pToWeight) return false;
+            return totalWeight == that.totalWeight;
 
         }
 
         @Override
         public int hashCode() {
-            int result = id.hashCode();
-            result = 31 * result + pid.hashCode();
+            int result = id;
+            result = 31 * result + pid;
             result = 31 * result + (gamma != +0.0f ? Float.floatToIntBits(gamma) : 0);
             result = 31 * result + pToFriendCount.hashCode();
             result = 31 * result + pToWeight.hashCode();
-            result = 31 * result + totalWeight.hashCode();
+            result = 31 * result + totalWeight;
             return result;
         }
 

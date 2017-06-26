@@ -1,9 +1,7 @@
 package io.vntr.trace;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -17,10 +15,10 @@ public class TraceTestUtils {
     public static BaseTrace getFullTraceFromFile(String filename) {
         BaseTrace baseTrace = null;
         List<FullTraceAction> actions = new LinkedList<>();
-        TIntObjectMap<TIntSet> friendships = null;
+        TShortObjectMap<TShortSet> friendships = null;
         Set<Integer> pids = null;
-        TIntObjectMap<TIntSet> partitions = null;
-        TIntObjectMap<TIntSet> replicas = null;
+        TShortObjectMap<TShortSet> partitions = null;
+        TShortObjectMap<TShortSet> replicas = null;
 
         Scanner scanner = null;
 

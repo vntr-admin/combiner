@@ -1,7 +1,7 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.set.TIntSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.set.TShortSet;
 import io.vntr.manager.NoRepManager;
 
 import static io.vntr.utils.TroveUtils.getRandomElement;
@@ -18,18 +18,18 @@ public class DummyMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntSet partition = manager.getPartition(pid);
+    public void removePartition(short pid) {
+        TShortSet partition = manager.getPartition(pid);
         manager.removePartition(pid);
-        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            Integer newPid = getRandomElement(manager.getPids());
+        for(TShortIterator iter = partition.iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
+            short newPid = getRandomElement(manager.getPids());
             manager.moveUser(uid, newPid, true);
         }
     }
 
     @Override
-    public Long getMigrationTally() {
+    public long getMigrationTally() {
         return 0L; //No migration in dummy
     }
 

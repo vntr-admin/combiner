@@ -1,8 +1,8 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.set.TShortSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 
@@ -19,13 +19,13 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUid, Integer largerUid) {
+    public void befriend(short smallerUid, short largerUid) {
         RepUser smallerUser = getManager().getUserMaster(smallerUid);
         RepUser largerUser = getManager().getUserMaster(largerUid);
         getManager().befriend(smallerUser, largerUser);
 
-        int smallerPid = smallerUser.getBasePid();
-        int largerPid = largerUser.getBasePid();
+        short smallerPid = smallerUser.getBasePid();
+        short largerPid = largerUser.getBasePid();
         if(smallerPid != largerPid) {
             if(!getManager().getReplicasOnPartition(largerPid).contains(smallerUid)) {
                 getManager().addReplica(smallerUser, largerPid);
@@ -37,24 +37,24 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
     }
 
     @Override
-    public void unfriend(Integer smallerUid, Integer largerUid) {
+    public void unfriend(short smallerUid, short largerUid) {
         RepUser smallerUser = getManager().getUserMaster(smallerUid);
         RepUser largerUser = getManager().getUserMaster(largerUid);
         getManager().unfriend(smallerUser, largerUser);
     }
 
     @Override
-    public void removePartition(Integer pid) {
+    public void removePartition(short pid) {
         //First, determine which users will need more replicas once this partition is kaput
-        TIntSet usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(pid);
+        TShortSet usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(pid);
         
         //Second, determine the migration strategy
-        TIntIntMap migrationStrategy = getUserMigrationStrategy(pid, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), false);
+        TShortShortMap migrationStrategy = getUserMigrationStrategy(pid, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), false);
 
         //Third, promote replicas to masters as specified in the migration strategy
-        for (Integer uid : migrationStrategy.keys()) {
+        for (short uid : migrationStrategy.keys()) {
             RepUser user = getManager().getUserMaster(uid);
-            Integer newPid = migrationStrategy.get(uid);
+            short newPid = migrationStrategy.get(uid);
 
             //If this is a simple water-filling one, there might not be a replica in the partition
             if (!user.getReplicaPids().contains(newPid)) {
@@ -65,16 +65,16 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         }
 
         //Fourth, add replicas as appropriate
-        for(TIntIterator iter = usersInNeedOfNewReplicas.iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = usersInNeedOfNewReplicas.iterator(); iter.hasNext(); ) {
             RepUser user = getManager().getUserMaster(iter.next());
             getManager().addReplica(user, getRandomPidWhereThisUserIsNotPresent(user, singleton(pid)));
         }
 
         //Fifth, remove references to replicas formerly on this partition
-        for(TIntIterator iter = getManager().getReplicasOnPartition(pid).iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
+        for(TShortIterator iter = getManager().getReplicasOnPartition(pid).iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
             RepUser user = getManager().getUserMaster(uid);
-            for(TIntIterator iter2 = user.getReplicaPids().iterator(); iter2.hasNext(); ) {
+            for(TShortIterator iter2 = user.getReplicaPids().iterator(); iter2.hasNext(); ) {
                 getManager().getReplicaOnPartition(user.getId(), iter2.next()).removeReplicaPid(pid);
             }
 
@@ -87,7 +87,7 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
     }
 
     @Override
-    public Long getMigrationTally() {
+    public long getMigrationTally() {
         return 0L; //Replica Dummy doesn't migrate users
     }
 

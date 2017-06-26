@@ -4,12 +4,12 @@ package io.vntr.repartition;
  * Created by robertlindquist on 4/21/17.
  */
 public class Target implements Comparable<Target> {
-    public final int uid;
-    public final Integer pid;
-    public final Integer oldPid;
+    public final short uid;
+    public final Short pid;
+    public final Short oldPid;
     public final Float gain;
 
-    public Target(int uid, Integer pid, Integer oldPid, Float gain) {
+    public Target(short uid, Short pid, Short oldPid, Float gain) {
         this.uid = uid;
         this.pid = pid;
         this.oldPid = oldPid;

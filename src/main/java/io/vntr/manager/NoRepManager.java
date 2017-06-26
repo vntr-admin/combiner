@@ -1,10 +1,10 @@
 package io.vntr.manager;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.User;
 
 import static io.vntr.utils.TroveUtils.getRandomElement;
@@ -14,8 +14,8 @@ import static io.vntr.utils.TroveUtils.getRandomElement;
  */
 public class NoRepManager {
 
-    private TIntObjectMap<User> uMap;
-    private TIntObjectMap<TIntSet> pMap;
+    private TShortObjectMap<User> uMap;
+    private TShortObjectMap<TShortSet> pMap;
 
     private final boolean placeNewUserRandomly;
 
@@ -23,110 +23,110 @@ public class NoRepManager {
     private long logicalMigrationTally;
     private final double logicalMigrationRatio;
 
-    private int nextPid = 1;
-    private int nextUid = 1;
+    private short nextPid = 1;
+    private short nextUid = 1;
 
     public NoRepManager(double logicalMigrationRatio, boolean placeNewUserRandomly) {
         this.placeNewUserRandomly = placeNewUserRandomly;
         this.logicalMigrationRatio = logicalMigrationRatio;
-        uMap = new TIntObjectHashMap<>();
-        pMap = new TIntObjectHashMap<>();
+        uMap = new TShortObjectHashMap<>();
+        pMap = new TShortObjectHashMap<>();
     }
 
-    public TIntSet getUids() {
+    public TShortSet getUids() {
         return uMap.keySet();
     }
 
-    public User getUser(Integer uid) {
+    public User getUser(Short uid) {
         return uMap.get(uid);
     }
 
-    public TIntSet getPartition(Integer pid) {
+    public TShortSet getPartition(Short pid) {
         return pMap.get(pid);
     }
 
-    public int addUser() {
-        int newUid = nextUid;
+    public short addUser() {
+        short newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
     public void addUser(User user) {
-        if(user.getBasePid() == null) {
+        if(user.getBasePid() == -1) {
             user.setBasePid(getInitialPid());
         }
         uMap.put(user.getId(), user);
         pMap.get(user.getBasePid()).add(user.getId());
         if(user.getId() >= nextUid) {
-            nextUid = user.getId() + 1;
+            nextUid = (short)(user.getId() + 1);
         }
     }
 
-    public void removeUser(Integer uid) {
-        TIntSet friendIds = new TIntHashSet(getUser(uid).getFriendIDs());
-        for(TIntIterator iter = friendIds.iterator(); iter.hasNext(); ) {
+    public void removeUser(short uid) {
+        TShortSet friendIds = new TShortHashSet(getUser(uid).getFriendIDs());
+        for(TShortIterator iter = friendIds.iterator(); iter.hasNext(); ) {
             unfriend(uid, iter.next());
         }
         getPartition(getPidForUser(uid)).remove(uid);
         uMap.remove(uid);
     }
 
-    public void befriend(Integer id1, Integer id2) {
+    public void befriend(short id1, short id2) {
         getUser(id1).befriend(id2);
         getUser(id2).befriend(id1);
     }
 
-    public void unfriend(Integer id1, Integer id2) {
+    public void unfriend(short id1, short id2) {
         getUser(id1).unfriend(id2);
         getUser(id2).unfriend(id1);
     }
 
-    Integer getInitialPid() {
-        if(placeNewUserRandomly) {
-            return getRandomElement(pMap.keySet());
-        }
-        else {
+    short getInitialPid() {
+        if(!placeNewUserRandomly) {
             int minUsers = Integer.MAX_VALUE;
-            Integer minPartition = null;
-            for(int pid : pMap.keys()) {
+            Short minPartition = null;
+            for(short pid : pMap.keys()) {
                 if(pMap.get(pid).size() < minUsers) {
                     minUsers = pMap.get(pid).size();
                     minPartition = pid;
                 }
             }
-            return minPartition;
+            if(minPartition != null) {
+                return minPartition;
+            }
         }
+        return getRandomElement(pMap.keySet());
     }
 
-    public Integer addPartition() {
-        int pid = nextPid;
+    public short addPartition() {
+        short pid = nextPid;
         addPartition(pid);
         return pid;
     }
 
-    public void addPartition(Integer pid) {
-        pMap.put(pid, new TIntHashSet());
+    public void addPartition(short pid) {
+        pMap.put(pid, new TShortHashSet());
         if(pid >= nextPid) {
-            nextPid = pid + 1;
+            nextPid = (short)(pid + 1);
         }
     }
 
-    public void removePartition(Integer pid) {
+    public void removePartition(short pid) {
         pMap.remove(pid);
     }
 
-    public Integer getNumUsers() {
-        return uMap.size();
+    public short getNumUsers() {
+        return (short) uMap.size();
     }
 
-    public Integer getNumPartitions() {
-        return pMap.size();
+    public short getNumPartitions() {
+        return (short) pMap.size();
     }
 
     public Integer getEdgeCut() {
         int count = 0;
         for(User user : uMap.valueCollection()) {
-            for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            for(TShortIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
                 if(user.getBasePid() < getUser(iter.next()).getBasePid()) {
                     count++;
                 }
@@ -135,18 +135,18 @@ public class NoRepManager {
         return count;
     }
 
-    public TIntObjectMap<TIntSet> getPartitionToUsers() {
-        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(pMap.size()+1);
-        for(TIntIterator iter = getPids().iterator(); iter.hasNext(); ) {
-            int pid = iter.next();
-            map.put(pid, new TIntHashSet(pMap.get(pid)));
+    public TShortObjectMap<TShortSet> getPartitionToUsers() {
+        TShortObjectMap<TShortSet> map = new TShortObjectHashMap<>(pMap.size()+1);
+        for(TShortIterator iter = getPids().iterator(); iter.hasNext(); ) {
+            short pid = iter.next();
+            map.put(pid, new TShortHashSet(pMap.get(pid)));
         }
         return map;
     }
 
-    public void moveUser(Integer uid, Integer pid, boolean omitFromTally) {
+    public void moveUser(short uid, short pid, boolean omitFromTally) {
         User user = getUser(uid);
-        int oldPid = user.getBasePid();
+        short oldPid = user.getBasePid();
         if(pMap.containsKey(oldPid)) {
             pMap.get(user.getBasePid()).remove(uid);
         }
@@ -157,14 +157,14 @@ public class NoRepManager {
         }
     }
 
-    public TIntSet getPids() {
+    public TShortSet getPids() {
         return pMap.keySet();
     }
 
-    public TIntObjectMap<TIntSet> getFriendships() {
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>(getNumPartitions() + 1);
-        for(Integer uid : uMap.keys()) {
-            friendships.put(uid, new TIntHashSet(getUser(uid).getFriendIDs()));
+    public TShortObjectMap<TShortSet> getFriendships() {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>(getNumPartitions() + 1);
+        for(short uid : uMap.keys()) {
+            friendships.put(uid, new TShortHashSet(getUser(uid).getFriendIDs()));
         }
         return friendships;
     }
@@ -187,9 +187,9 @@ public class NoRepManager {
     }
 
     public void checkValidity() {
-        for(Integer uid : uMap.keys()) {
-            Integer observedMasterPid = null;
-            for(Integer pid : pMap.keys()) {
+        for(short uid : uMap.keys()) {
+            Short observedMasterPid = null;
+            for(short pid : pMap.keys()) {
                 if(pMap.get(pid).contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");
@@ -210,7 +210,7 @@ public class NoRepManager {
         }
     }
 
-    public Integer getPidForUser(Integer uid) {
+    public short getPidForUser(short uid) {
         return uMap.get(uid).getBasePid();
     }
 

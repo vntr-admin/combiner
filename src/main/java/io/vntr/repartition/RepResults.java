@@ -1,18 +1,18 @@
 package io.vntr.repartition;
 
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 /**
  * Created by robertlindquist on 4/26/17.
  */
 public class RepResults {
     private final int numLogicalMoves;
-    private final TIntIntMap uidToPidMap;
-    private final TIntObjectMap<TIntSet> uidsToReplicaPids;
+    private final TShortShortMap uidToPidMap;
+    private final TShortObjectMap<TShortSet> uidsToReplicaPids;
 
-    public RepResults(int numLogicalMoves, TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> uidsToReplicaPids) {
+    public RepResults(int numLogicalMoves, TShortShortMap uidToPidMap, TShortObjectMap<TShortSet> uidsToReplicaPids) {
         this.numLogicalMoves = numLogicalMoves;
         this.uidToPidMap = uidToPidMap;
         this.uidsToReplicaPids = uidsToReplicaPids;
@@ -22,11 +22,11 @@ public class RepResults {
         return numLogicalMoves;
     }
 
-    public TIntIntMap getUidToPidMap() {
+    public TShortShortMap getUidToPidMap() {
         return uidToPidMap;
     }
 
-    public TIntObjectMap<TIntSet> getUidsToReplicaPids() {
+    public TShortObjectMap<TShortSet> getUidsToReplicaPids() {
         return uidsToReplicaPids;
     }
 }

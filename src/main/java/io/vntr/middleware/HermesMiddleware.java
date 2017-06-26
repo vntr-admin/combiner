@@ -1,6 +1,6 @@
 package io.vntr.middleware;
 
-import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TShortShortMap;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.migration.HMigrator;
@@ -12,11 +12,11 @@ import io.vntr.repartition.NoRepResults;
  */
 public class HermesMiddleware extends AbstractNoRepMiddleware {
     private final float gamma;
-    private final int k;
-    private final int maxIterations;
+    private final short k;
+    private final short maxIterations;
     private NoRepManager manager;
 
-    public HermesMiddleware(float gamma, int k, int maxIterations, NoRepManager manager) {
+    public HermesMiddleware(float gamma, short k, short maxIterations, NoRepManager manager) {
         super(manager);
         this.gamma = gamma;
         this.k = k;
@@ -31,9 +31,9 @@ public class HermesMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
-        for(Integer uid : targets.keys()) {
+    public void removePartition(short pid) {
+        TShortShortMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
+        for(short uid : targets.keys()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
         manager.removePartition(pid);
@@ -53,9 +53,9 @@ public class HermesMiddleware extends AbstractNoRepMiddleware {
         }
     }
 
-    void physicallyMigrate(TIntIntMap uidsToPids) {
-        for(int uid : uidsToPids.keys()) {
-            int pid = uidsToPids.get(uid);
+    void physicallyMigrate(TShortShortMap uidsToPids) {
+        for(short uid : uidsToPids.keys()) {
+            short pid = uidsToPids.get(uid);
             User user = manager.getUser(uid);
             if(user.getBasePid() != pid) {
                 manager.moveUser(uid, pid, false);

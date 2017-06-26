@@ -1,7 +1,7 @@
 package io.vntr.trace;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 import java.util.List;
 
@@ -9,19 +9,19 @@ import java.util.List;
  * Created by robertlindquist on 4/1/17.
  */
 public class Trace {
-    private TIntObjectMap<TIntSet> friendships;
+    private TShortObjectMap<TShortSet> friendships;
     private List<TraceAction> actions;
-    private TIntObjectMap<TIntSet> partitions;
-    private TIntObjectMap<TIntSet> replicas;
+    private TShortObjectMap<TShortSet> partitions;
+    private TShortObjectMap<TShortSet> replicas;
 
     public Trace() {
     }
 
-    public TIntObjectMap<TIntSet> getFriendships() {
+    public TShortObjectMap<TShortSet> getFriendships() {
         return friendships;
     }
 
-    public void setFriendships(TIntObjectMap<TIntSet> friendships) {
+    public void setFriendships(TShortObjectMap<TShortSet> friendships) {
         this.friendships = friendships;
     }
 
@@ -33,19 +33,19 @@ public class Trace {
         this.actions = actions;
     }
 
-    public TIntObjectMap<TIntSet> getPartitions() {
+    public TShortObjectMap<TShortSet> getPartitions() {
         return partitions;
     }
 
-    public void setPartitions(TIntObjectMap<TIntSet> partitions) {
+    public void setPartitions(TShortObjectMap<TShortSet> partitions) {
         this.partitions = partitions;
     }
 
-    public TIntObjectMap<TIntSet> getReplicas() {
+    public TShortObjectMap<TShortSet> getReplicas() {
         return replicas;
     }
 
-    public void setReplicas(TIntObjectMap<TIntSet> replicas) {
+    public void setReplicas(TShortObjectMap<TShortSet> replicas) {
         this.replicas = replicas;
     }
 }

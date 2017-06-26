@@ -1,7 +1,6 @@
 package io.vntr.middleware;
 
-import gnu.trove.map.TIntIntMap;
-import io.vntr.befriend.JBefriender;
+import gnu.trove.map.TShortShortMap;
 import io.vntr.manager.NoRepManager;
 import io.vntr.migration.HMigrator;
 
@@ -10,14 +9,14 @@ import io.vntr.migration.HMigrator;
  */
 public class J2Middleware extends JabarMiddleware {
 
-    public J2Middleware(float alpha, float initialT, float deltaT, int k, NoRepManager manager) {
+    public J2Middleware(float alpha, float initialT, float deltaT, short k, NoRepManager manager) {
         super(alpha, initialT, deltaT, k, manager);
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(pid, 1f, getManager().getPartitionToUsers(), getManager().getFriendships());
-        for(Integer uid : targets.keys()) {
+    public void removePartition(short pid) {
+        TShortShortMap targets = HMigrator.migrateOffPartition(pid, 1f, getManager().getPartitionToUsers(), getManager().getFriendships());
+        for(short uid : targets.keys()) {
             getManager().moveUser(uid, targets.get(uid), true);
         }
         getManager().removePartition(pid);

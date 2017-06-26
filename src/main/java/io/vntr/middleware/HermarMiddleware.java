@@ -1,6 +1,6 @@
 package io.vntr.middleware;
 
-import gnu.trove.map.TIntIntMap;
+import gnu.trove.map.TShortShortMap;
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.HBefriender;
@@ -16,11 +16,11 @@ import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
  */
 public class HermarMiddleware extends AbstractNoRepMiddleware {
     private final float gamma;
-    private final int k;
-    private final int maxIterations;
+    private final short k;
+    private final short maxIterations;
     private NoRepManager manager;
 
-    public HermarMiddleware(float gamma, int k, int maxIterations, NoRepManager manager) {
+    public HermarMiddleware(float gamma, short k, short maxIterations, NoRepManager manager) {
         super(manager);
         this.gamma = gamma;
         this.k = k;
@@ -29,12 +29,12 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUid, Integer largerUid) {
+    public void befriend(short smallerUid, short largerUid) {
         super.befriend(smallerUid, largerUid);
         handleRebalancing(smallerUid, largerUid);
     }
 
-    void handleRebalancing(Integer smallerUserId, Integer largerUserId) {
+    void handleRebalancing(short smallerUserId, short largerUserId) {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
@@ -49,9 +49,9 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
-        for(Integer uid : targets.keys()) {
+    public void removePartition(short pid) {
+        TShortShortMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
+        for(short uid : targets.keys()) {
             manager.moveUser(uid, targets.get(uid), true);
         }
         manager.removePartition(pid);
@@ -76,9 +76,9 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         }
     }
 
-    void physicallyMigrate(TIntIntMap uidsToPids) {
-        for(int uid : uidsToPids.keys()) {
-            int pid = uidsToPids.get(uid);
+    void physicallyMigrate(TShortShortMap uidsToPids) {
+        for(short uid : uidsToPids.keys()) {
+            short pid = uidsToPids.get(uid);
             User user = manager.getUser(uid);
             if(user.getBasePid() != pid) {
                 manager.moveUser(uid, pid, false);

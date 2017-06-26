@@ -1,10 +1,10 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
 import io.vntr.manager.RepManager;
@@ -26,7 +26,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public int addUser() {
+    public short addUser() {
         return manager.addUser();
     }
 
@@ -36,75 +36,75 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public void removeUser(Integer uid) {
+    public void removeUser(short uid) {
         manager.removeUser(uid);
     }
 
     @Override
-    public int addPartition() {
+    public short addPartition() {
         return manager.addPartition();
     }
 
     @Override
-    public void addPartition(Integer pid) {
+    public void addPartition(short pid) {
         manager.addPartition(pid);
     }
 
-    Integer getRandomPidWhereThisUserIsNotPresent(RepUser user, TIntSet pidsToExclude) {
-        TIntSet potentialReplicaLocations = new TIntHashSet(manager.getPids());
+    short getRandomPidWhereThisUserIsNotPresent(RepUser user, TShortSet pidsToExclude) {
+        TShortSet potentialReplicaLocations = new TShortHashSet(manager.getPids());
         potentialReplicaLocations.removeAll(pidsToExclude);
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
-        int[] array = potentialReplicaLocations.toArray();
+        short[] array = potentialReplicaLocations.toArray();
         return array[(int) (array.length * Math.random())];
     }
 
     @Override
-    public Integer getNumberOfPartitions() {
-        return manager.getPids().size();
+    public short getNumberOfPartitions() {
+        return (short) manager.getPids().size();
     }
 
     @Override
-    public Integer getNumberOfUsers() {
+    public short getNumberOfUsers() {
         return manager.getNumUsers();
     }
 
     @Override
-    public Integer getNumberOfFriendships() {
+    public int getNumberOfFriendships() {
         int numFriendships=0;
-        for(TIntSet friends : manager.getFriendships().valueCollection()) {
+        for(TShortSet friends : manager.getFriendships().valueCollection()) {
             numFriendships += friends.size();
         }
         return numFriendships / 2;
     }
 
     @Override
-    public TIntSet getUserIds() {
+    public TShortSet getUserIds() {
         return manager.getUids();
     }
 
     @Override
-    public TIntSet getPids() {
+    public TShortSet getPids() {
         return manager.getPids();
     }
 
     @Override
-    public Integer getEdgeCut() {
+    public int getEdgeCut() {
         return manager.getEdgeCut();
     }
 
     @Override
-    public TIntObjectMap<TIntSet> getPartitionToUserMap() {
+    public TShortObjectMap<TShortSet> getPartitionToUserMap() {
         return manager.getPartitionToUserMap();
     }
 
     @Override
-    public Integer getReplicationCount() {
+    public int getReplicationCount() {
         return manager.getReplicationCount();
     }
 
     @Override
-    public TIntObjectMap<TIntSet> getFriendships() {
+    public TShortObjectMap<TShortSet> getFriendships() {
         return manager.getFriendships();
     }
 
@@ -114,10 +114,10 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
-        TIntObjectMap<TIntSet> m = new TIntObjectHashMap<>(getNumberOfPartitions()+1);
-        for(TIntIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
-            int pid = iter.next();
+    public TShortObjectMap<TShortSet> getPartitionToReplicasMap() {
+        TShortObjectMap<TShortSet> m = new TShortObjectHashMap<>(getNumberOfPartitions()+1);
+        for(TShortIterator iter = manager.getPids().iterator(); iter.hasNext(); ) {
+            short pid = iter.next();
             m.put(pid, manager.getReplicasOnPartition(pid));
         }
         return m;
@@ -139,7 +139,7 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
     }
 
     @Override
-    public Long getMigrationTally() {
+    public long getMigrationTally() {
         return getManager().getMigrationTally();
     }
 
@@ -148,20 +148,20 @@ public abstract class AbstractRepMiddleware implements IMiddlewareAnalyzer {
         //SPAR ignores downtime
     }
 
-    TIntSet determineUsersWhoWillNeedAnAdditionalReplica(Integer pidToBeRemoved) {
-        TIntSet usersInNeedOfNewReplicas = new TIntHashSet();
+    TShortSet determineUsersWhoWillNeedAnAdditionalReplica(short pidToBeRemoved) {
+        TShortSet usersInNeedOfNewReplicas = new TShortHashSet();
 
         //First, determine which users will need more replicas once this partition is kaput
-        for(TIntIterator iter = getManager().getMastersOnPartition(pidToBeRemoved).iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
+        for(TShortIterator iter = getManager().getMastersOnPartition(pidToBeRemoved).iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
             RepUser user = getManager().getUserMaster(uid);
             if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(uid);
             }
         }
 
-        for(TIntIterator iter = getManager().getReplicasOnPartition(pidToBeRemoved).iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
+        for(TShortIterator iter = getManager().getReplicasOnPartition(pidToBeRemoved).iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
             RepUser user = getManager().getUserMaster(uid);
             if (user.getReplicaPids().size() <= getManager().getMinNumReplicas()) {
                 usersInNeedOfNewReplicas.add(uid);

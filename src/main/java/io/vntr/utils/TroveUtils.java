@@ -3,13 +3,13 @@ package io.vntr.utils;
 import cern.jet.random.engine.DRand;
 import cern.jet.random.engine.RandomEngine;
 import cern.jet.random.sampling.RandomSampler;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortShortHashMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 import java.util.*;
 
@@ -19,8 +19,8 @@ import java.util.*;
 public class TroveUtils {
     private static RandomEngine randomEngine = new DRand(((int) System.nanoTime()) >>> 2);
 
-    public static boolean disjoint(TIntSet set1, TIntSet set2) {
-        for(TIntIterator iter = set1.iterator(); iter.hasNext(); ) {
+    public static boolean disjoint(TShortSet set1, TShortSet set2) {
+        for(TShortIterator iter = set1.iterator(); iter.hasNext(); ) {
             if(set2.contains(iter.next())) {
                 return false;
             }
@@ -28,66 +28,66 @@ public class TroveUtils {
         return true;
     }
 
-    public static Set<Integer> convert(TIntSet trove) {
+    public static Set<Short> convert(TShortSet trove) {
         if(trove == null) {
             return null;
         }
-        Set<Integer> set = new HashSet<>(trove.size()+1);
-        for(TIntIterator iter = trove.iterator(); iter.hasNext(); ) {
+        Set<Short> set = new HashSet<>(trove.size()+1);
+        for(TShortIterator iter = trove.iterator(); iter.hasNext(); ) {
             set.add(iter.next());
         }
         return set;
     }
 
-    public static TIntIntMap convert1(Map<Integer, Integer> map) {
+    public static TShortShortMap convert1(Map<Short, Short> map) {
         if(map == null) {
             return null;
         }
-        TIntIntMap tIntIntMap = new TIntIntHashMap(map.size()+1);
-        for(int key : map.keySet()) {
+        TShortShortMap tIntIntMap = new TShortShortHashMap(map.size()+1);
+        for(short key : map.keySet()) {
             tIntIntMap.put(key, map.get(key));
         }
         return tIntIntMap;
     }
 
-    public static Map<Integer, Integer> convert(TIntIntMap trove) {
+    public static Map<Short, Short> convert(TShortShortMap trove) {
         if(trove == null) {
             return null;
         }
-        Map<Integer, Integer> map = new HashMap<>(trove.size()+1);
-        for(int key : trove.keys()) {
+        Map<Short, Short> map = new HashMap<>(trove.size()+1);
+        for(short key : trove.keys()) {
             map.put(key, trove.get(key));
         }
         return map;
     }
 
-    public static TIntObjectMap<TIntSet> convert(Map<Integer, Set<Integer>> mapSet) {
+    public static TShortObjectMap<TShortSet> convert(Map<Short, Set<Short>> mapSet) {
         if(mapSet== null) {
             return null;
         }
-        TIntObjectMap<TIntSet> trove = new TIntObjectHashMap<>(mapSet.size() + 1);
-        for(int pid : mapSet.keySet()) {
-            trove.put(pid, new TIntHashSet(mapSet.get(pid)));
+        TShortObjectMap<TShortSet> trove = new TShortObjectHashMap<>(mapSet.size() + 1);
+        for(short pid : mapSet.keySet()) {
+            trove.put(pid, new TShortHashSet(mapSet.get(pid)));
         }
         return trove;
     }
 
-    public static Map<Integer, Set<Integer>> convert(TIntObjectMap<TIntSet> trove) {
+    public static Map<Short, Set<Short>> convert(TShortObjectMap<TShortSet> trove) {
         if(trove == null) {
             return null;
         }
-        Map<Integer, Set<Integer>> mapSet = new HashMap<>();
-        for(int pid : trove.keys()) {
+        Map<Short, Set<Short>> mapSet = new HashMap<>();
+        for(short pid : trove.keys()) {
             mapSet.put(pid, new HashSet<>(convert(trove.get(pid))));
         }
         return mapSet;
     }
 
 
-    public static Integer max(TIntSet tIntSet) {
-        Integer max = null;
-        for(TIntIterator iter = tIntSet.iterator(); iter.hasNext(); ) {
-            int next = iter.next();
+    public static Short max(TShortSet tShortSet) {
+        Short max = null;
+        for(TShortIterator iter = tShortSet.iterator(); iter.hasNext(); ) {
+            short next = iter.next();
             if(max == null || next > max) {
                 max = next;
             }
@@ -95,10 +95,10 @@ public class TroveUtils {
         return max;
     }
 
-    public static Integer min(TIntSet tIntSet) {
-        Integer min = null;
-        for(TIntIterator iter = tIntSet.iterator(); iter.hasNext(); ) {
-            int next = iter.next();
+    public static Short min(TShortSet tIntSet) {
+        Short min = null;
+        for(TShortIterator iter = tIntSet.iterator(); iter.hasNext(); ) {
+            short next = iter.next();
             if(min == null || next < min) {
                 min = next;
             }
@@ -106,71 +106,75 @@ public class TroveUtils {
         return min;
     }
 
-    public static TIntIntMap getUserCounts(TIntObjectMap<TIntSet> partitions) {
-        TIntIntMap map = new TIntIntHashMap(partitions.size()+1);
-        for(int pid : partitions.keys()) {
-            map.put(pid, partitions.get(pid).size());
+    public static TShortShortMap getUserCounts(TShortObjectMap<TShortSet> partitions) {
+        TShortShortMap map = new TShortShortHashMap(partitions.size()+1);
+        for(short pid : partitions.keys()) {
+            map.put(pid, (short) partitions.get(pid).size());
         }
         return map;
     }
 
-    public static TIntIntMap getUToMasterMap(TIntObjectMap<TIntSet> partitions) {
-        TIntIntMap map = new TIntIntHashMap(partitions.size() * 100);
-        for(int pid : partitions.keys()) {
-            for(TIntIterator iter = partitions.get(pid).iterator(); iter.hasNext(); ) {
-                int uid = iter.next();
+    public static TShortShortMap getUToMasterMap(TShortObjectMap<TShortSet> partitions) {
+        TShortShortMap map = new TShortShortHashMap(partitions.size() * 100);
+        for(short pid : partitions.keys()) {
+            for(TShortIterator iter = partitions.get(pid).iterator(); iter.hasNext(); ) {
+                short uid = iter.next();
                 map.put(uid, pid);
             }
         }
         return map;
     }
 
-    public static TIntObjectMap<TIntSet> getUToReplicasMap(TIntObjectMap<TIntSet> replicaPartitions, TIntSet allUids) {
-        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(allUids.size()+1);
-        for(TIntIterator iter = allUids.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            map.put(uid, new TIntHashSet());
+    public static TShortObjectMap<TShortSet> getUToReplicasMap(TShortObjectMap<TShortSet> replicaPartitions, TShortSet allUids) {
+        TShortObjectMap<TShortSet> map = new TShortObjectHashMap<>(allUids.size()+1);
+        for(TShortIterator iter = allUids.iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
+            map.put(uid, new TShortHashSet());
         }
-        for(int pid : replicaPartitions.keys()) {
-            for(TIntIterator iter = replicaPartitions.get(pid).iterator(); iter.hasNext(); ) {
-                int uid = iter.next();
+        for(short pid : replicaPartitions.keys()) {
+            for(TShortIterator iter = replicaPartitions.get(pid).iterator(); iter.hasNext(); ) {
+                short uid = iter.next();
                 map.get(uid).add(pid);
             }
         }
         return map;
     }
 
-    public static Integer getRandomElement(TIntSet tIntSet) {
-        int size;
-        if(tIntSet != null && (size = tIntSet.size()) > 0) {
-            int index = (int)(size * Math.random());
-            return tIntSet.toArray()[index];
+    public static Short getRandomElement(TShortSet tShortSet) {
+        short size;
+        if(tShortSet != null && (size = ((short)tShortSet.size())) > 0) {
+            short index = (short)(size * Math.random());
+            return tShortSet.toArray()[index];
         }
 
         return null;
     }
 
-    public static TIntSet initSet(int... args) {
-        TIntSet trove = new TIntHashSet(args.length+1);
-        trove.addAll(args);
-        return trove;
-    }
-
-    public static TIntSet initSet(TIntSet initialSet, int... args) {
-        TIntSet trove = new TIntHashSet(initialSet);
-        trove.addAll(args);
-        return trove;
-    }
-
-
-    public static TIntObjectMap<TIntSet> generateBidirectionalFriendshipSet(TIntObjectMap<TIntSet> friendships) {
-        TIntObjectMap<TIntSet> bidirectionalFriendshipSet = new TIntObjectHashMap<>(friendships.size()+1);
-        for(int uid : friendships.keys()) {
-            bidirectionalFriendshipSet.put(uid, new TIntHashSet());
+    public static TShortSet initSet(int... args) {
+        TShortSet trove = new TShortHashSet(args.length+1);
+        for(int i : args) {
+            trove.add((short) i);
         }
-        for(int uid1 : friendships.keys()) {
-            for(TIntIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
-                int uid2 = iter.next();
+        return trove;
+    }
+
+    public static TShortSet initSet(TShortSet initialSet, int... args) {
+        TShortSet trove = new TShortHashSet(initialSet);
+        for(int i : args) {
+            trove.add((short) i);
+        }
+        return trove;
+    }
+
+
+    public static TShortObjectMap<TShortSet> generateBidirectionalFriendshipSet(TShortObjectMap<TShortSet> friendships) {
+        TShortObjectMap<TShortSet> bidirectionalFriendshipSet = new TShortObjectHashMap<>(friendships.size()+1);
+        for(short uid : friendships.keys()) {
+            bidirectionalFriendshipSet.put(uid, new TShortHashSet());
+        }
+        for(short uid1 : friendships.keys()) {
+            for(TShortIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
+                short uid2 = iter.next();
                 bidirectionalFriendshipSet.get(uid1).add(uid2);
                 bidirectionalFriendshipSet.get(uid2).add(uid1);
             }
@@ -178,38 +182,38 @@ public class TroveUtils {
         return bidirectionalFriendshipSet;
     }
 
-    public static TIntIntMap getPToFriendCount(Integer uid, TIntObjectMap<TIntSet> friendships, TIntIntMap uidToPidMap, TIntSet pids) {
-        TIntIntMap pToFriendCount = new TIntIntHashMap(pids.size()+1);
-        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
-            pToFriendCount.put(iter.next(), 0);
+    public static TShortShortMap getPToFriendCount(short uid, TShortObjectMap<TShortSet> friendships, TShortShortMap uidToPidMap, TShortSet pids) {
+        TShortShortMap pToFriendCount = new TShortShortHashMap(pids.size()+1);
+        for(TShortIterator iter = pids.iterator(); iter.hasNext(); ) {
+            pToFriendCount.put(iter.next(), (short) 0);
         }
-        for(TIntIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
-            Integer pid = uidToPidMap.get(iter.next());
-            pToFriendCount.put(pid, pToFriendCount.get(pid) + 1);
+        for(TShortIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
+            short pid = uidToPidMap.get(iter.next());
+            pToFriendCount.put(pid, (short)(pToFriendCount.get(pid) + 1));
         }
         return pToFriendCount;
     }
 
-    public static TIntSet getKDistinctValuesFromArray(int k, int[] array)
+    public static TShortSet getKDistinctValuesFromArray(short k, short[] array)
     {
         if(k >= array.length) {
-            return new TIntHashSet(array);
+            return new TShortHashSet(array);
         }
 
         long[] indices = new long[k];
         RandomSampler.sample(k, array.length, k, 0, indices, 0, randomEngine);
 
-        TIntSet returnSet = new TIntHashSet(array.length+1);
+        TShortSet returnSet = new TShortHashSet(array.length+1);
         for(long index : indices) {
             returnSet.add(array[(int)index]);
         }
         return returnSet;
     }
 
-    public static TIntSet intersection(TIntSet set1, TIntSet set2) {
-        TIntSet intersection = new TIntHashSet();
-        for(TIntIterator iter = set1.iterator(); iter.hasNext(); ) {
-            int next = iter.next();
+    public static TShortSet intersection(TShortSet set1, TShortSet set2) {
+        TShortSet intersection = new TShortHashSet();
+        for(TShortIterator iter = set1.iterator(); iter.hasNext(); ) {
+            short next = iter.next();
             if(set2.contains(next)) {
                 intersection.add(next);
             }
@@ -217,27 +221,27 @@ public class TroveUtils {
         return intersection;
     }
 
-    public static TIntObjectMap<TIntSet> getInitialReplicasObeyingKReplication(int minNumReplicas, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships) {
-        TIntObjectMap<TIntSet> replicas = new TIntObjectHashMap<>(partitions.size()+1);
-        for(Integer pid : partitions.keys()) {
-            replicas.put(pid, new TIntHashSet());
+    public static TShortObjectMap<TShortSet> getInitialReplicasObeyingKReplication(short minNumReplicas, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> friendships) {
+        TShortObjectMap<TShortSet> replicas = new TShortObjectHashMap<>(partitions.size()+1);
+        for(short pid : partitions.keys()) {
+            replicas.put(pid, new TShortHashSet());
         }
 
-        TIntObjectMap<TIntSet> replicaLocations = new TIntObjectHashMap<>(friendships.size()+1);
-        for(Integer uid : friendships.keys()) {
-            replicaLocations.put(uid, new TIntHashSet());
+        TShortObjectMap<TShortSet> replicaLocations = new TShortObjectHashMap<>(friendships.size()+1);
+        for(short uid : friendships.keys()) {
+            replicaLocations.put(uid, new TShortHashSet());
         }
 
-        TIntIntMap uMap = getUToMasterMap(partitions);
+        TShortShortMap uMap = getUToMasterMap(partitions);
 
         //Step 1: add replicas for friends in different partitions
-        for(Integer uid1 : friendships.keys()) {
-            for(TIntIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
-                int uid2 = iter.next();
+        for(short uid1 : friendships.keys()) {
+            for(TShortIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
+                short uid2 = iter.next();
                 if(uid1 < uid2) {
-                    Integer pid1 = uMap.get(uid1);
-                    Integer pid2 = uMap.get(uid2);
-                    if(!pid1.equals(pid2)) {
+                    short pid1 = uMap.get(uid1);
+                    short pid2 = uMap.get(uid2);
+                    if(pid1 != pid2) {
                         replicas.get(pid1).add(uid2);
                         replicas.get(pid2).add(uid1);
                         replicaLocations.get(uid1).add(pid2);
@@ -248,14 +252,14 @@ public class TroveUtils {
         }
 
         //Step 2: add replicas as necessary for k-replication
-        for(Integer uid : replicaLocations.keys()) {
-            int numShort = minNumReplicas - replicaLocations.get(uid).size();
+        for(short uid : replicaLocations.keys()) {
+            short numShort = (short)(minNumReplicas - replicaLocations.get(uid).size());
             if(numShort > 0) {
-                TIntSet possibilities = new TIntHashSet(partitions.keySet());
+                TShortSet possibilities = new TShortHashSet(partitions.keySet());
                 possibilities.removeAll(replicaLocations.get(uid));
                 possibilities.remove(uMap.get(uid));
-                TIntSet newReplicas = getKDistinctValuesFromArray(numShort, possibilities.toArray());
-                for(TIntIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
+                TShortSet newReplicas = getKDistinctValuesFromArray(numShort, possibilities.toArray());
+                for(TShortIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
                     replicas.get(iter.next()).add(uid);
                 }
             }
@@ -264,25 +268,25 @@ public class TroveUtils {
         return replicas;
     }
 
-    public static TIntSet singleton(int val) {
-        TIntSet set = new TIntHashSet(2);
+    public static TShortSet singleton(short val) {
+        TShortSet set = new TShortHashSet(2);
         set.add(val);
         return set;
     }
 
-    public static TIntObjectMap<TIntSet> copyTIntObjectMapIntSet(TIntObjectMap<TIntSet> map) {
-        TIntObjectMap<TIntSet> retMap = new TIntObjectHashMap<>(map.size()+1);
-        for(int key : map.keys()) {
-            retMap.put(key, new TIntHashSet(map.get(key)));
+    public static TShortObjectMap<TShortSet> copyTShortObjectMapIntSet(TShortObjectMap<TShortSet> map) {
+        TShortObjectMap<TShortSet> retMap = new TShortObjectHashMap<>(map.size()+1);
+        for(short key : map.keys()) {
+            retMap.put(key, new TShortHashSet(map.get(key)));
         }
         return retMap;
     }
 
-    public static int[] removeUniqueElementFromNonEmptyArray(int[] array, int uniqueElement) {
-        int[] newArray = new int[array.length-1];
+    public static short[] removeUniqueElementFromNonEmptyArray(short[] array, short uniqueElement) {
+        short[] newArray = new short[array.length-1];
         boolean foundMasterPid = false;
-        for(int i=0; i<array.length; i++) {
-            int pid = array[i];
+        for(short i=0; i<array.length; i++) {
+            short pid = array[i];
             if(pid == uniqueElement) {
                 foundMasterPid = true;
             }
@@ -299,7 +303,7 @@ public class TroveUtils {
     //Taken from Java 8's java.util.Collections
     private static Random r;
 
-    public static void shuffle(int arr[]) {
+    public static void shuffle(short arr[]) {
         Random rnd = r;
         if (rnd == null) {
             r = rnd = new Random();
@@ -307,7 +311,7 @@ public class TroveUtils {
 
         for (int i=arr.length; i>1; i--) {
             int nextInt = rnd.nextInt(i);
-            int tmp = arr[i-1];
+            short tmp = arr[i-1];
             arr[i-1] = arr[nextInt];
             arr[nextInt] = tmp;
         }

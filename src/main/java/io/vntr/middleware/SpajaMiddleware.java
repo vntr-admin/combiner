@@ -1,23 +1,23 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.RepResults;
 import io.vntr.repartition.SpajaRepartitioner;
 
 public class SpajaMiddleware extends SparMiddleware {
-    private final int minNumReplicas;
+    private final short minNumReplicas;
     private final float alpha;
     private final float initialT;
     private final float deltaT;
-    private final int k;
+    private final short k;
 
-    public SpajaMiddleware(int minNumReplicas, float alpha, float initialT, float deltaT, int k, RepManager manager) {
+    public SpajaMiddleware(short minNumReplicas, float alpha, float initialT, float deltaT, short k, RepManager manager) {
         super(manager);
         this.minNumReplicas = minNumReplicas;
         this.alpha = alpha;
@@ -37,31 +37,30 @@ public class SpajaMiddleware extends SparMiddleware {
         physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
     }
 
-    void physicallyMigrate(TIntIntMap newPids, TIntObjectMap<TIntSet> newReplicaPids) {
-        for(Integer uid : newPids.keys()) {
-            Integer newPid = newPids.get(uid);
-            TIntSet newReplicas = newReplicaPids.get(uid);
+    void physicallyMigrate(TShortShortMap newPids, TShortObjectMap<TShortSet> newReplicaPids) {
+        for(short uid : newPids.keys()) {
+            short newPid = newPids.get(uid);
+            TShortSet newReplicas = newReplicaPids.get(uid);
 
             RepUser user = getManager().getUserMaster(uid);
-            Integer oldPid = user.getBasePid();
-            TIntSet oldReplicas = user.getReplicaPids();
+            short oldPid = user.getBasePid();
+            TShortSet oldReplicas = user.getReplicaPids();
 
-            if(!oldPid.equals(newPid)) {
+            if(oldPid != (newPid)) {
                 getManager().moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
                 getManager().increaseTally(1);
             }
 
             if(!oldReplicas.equals(newReplicas)) {
-                TIntSet replicasToAdd = new TIntHashSet(newReplicas);
+                TShortSet replicasToAdd = new TShortHashSet(newReplicas);
                 replicasToAdd.removeAll(oldReplicas);
-                for(TIntIterator iter = replicasToAdd.iterator(); iter.hasNext(); ) {
-                    int replicaPid = iter.next();
-                    getManager().addReplica(user, replicaPid);
+                for(TShortIterator iter = replicasToAdd.iterator(); iter.hasNext(); ) {
+                    getManager().addReplica(user, iter.next());
                 }
 
-                TIntSet replicasToRemove = new TIntHashSet(oldReplicas);
+                TShortSet replicasToRemove = new TShortHashSet(oldReplicas);
                 replicasToRemove.removeAll(newReplicas);
-                for(TIntIterator iter = replicasToRemove.iterator(); iter.hasNext(); ) {
+                for(TShortIterator iter = replicasToRemove.iterator(); iter.hasNext(); ) {
                     getManager().removeReplica(user, iter.next());
                 }
             }

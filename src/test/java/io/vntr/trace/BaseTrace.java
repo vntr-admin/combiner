@@ -1,7 +1,7 @@
 package io.vntr.trace;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 import java.util.List;
 
@@ -10,32 +10,32 @@ import java.util.List;
  */
 public class BaseTrace {
 
-    private TIntObjectMap<TIntSet> friendships;
-    private TIntSet pids;
+    private TShortObjectMap<TShortSet> friendships;
+    private TShortSet pids;
     private List<FullTraceAction> actions;
 
     public BaseTrace() {
     }
 
-    public BaseTrace(TIntObjectMap<TIntSet> friendships, TIntSet pids, List<FullTraceAction> actions) {
+    public BaseTrace(TShortObjectMap<TShortSet> friendships, TShortSet pids, List<FullTraceAction> actions) {
         this.friendships = friendships;
         this.pids = pids;
         this.actions = actions;
     }
 
-    public TIntObjectMap<TIntSet> getFriendships() {
+    public TShortObjectMap<TShortSet> getFriendships() {
         return friendships;
     }
 
-    public void setFriendships(TIntObjectMap<TIntSet> friendships) {
+    public void setFriendships(TShortObjectMap<TShortSet> friendships) {
         this.friendships = friendships;
     }
 
-    public TIntSet getPids() {
+    public TShortSet getPids() {
         return pids;
     }
 
-    public void setPids(TIntSet pids) {
+    public void setPids(TShortSet pids) {
         this.pids = pids;
     }
 

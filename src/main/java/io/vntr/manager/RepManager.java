@@ -1,46 +1,46 @@
 package io.vntr.manager;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortShortHashMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.RepUser;
 import io.vntr.User;
 
 import static io.vntr.utils.TroveUtils.*;
 
 public class RepManager {
-    private final int minNumReplicas;
+    private final short minNumReplicas;
 
-    private int nextPid = 1;
-    private int nextUid = 1;
+    private short nextPid = 1;
+    private short nextUid = 1;
 
     private long migrationTally;
     private long logicalMigrationTally;
     private final double logicalMigrationRatio;
 
-    private TIntObjectMap<Partition> pMap;
-    private TIntIntMap uMap;
+    private TShortObjectMap<Partition> pMap;
+    private TShortShortMap uMap;
 
-    public RepManager(int minNumReplicas, double logicalMigrationRatio) {
+    public RepManager(short minNumReplicas, double logicalMigrationRatio) {
         this.minNumReplicas = minNumReplicas;
         this.logicalMigrationRatio = logicalMigrationRatio;
-        pMap = new TIntObjectHashMap<>();
-        uMap = new TIntIntHashMap();
+        pMap = new TShortObjectHashMap<>();
+        uMap = new TShortShortHashMap();
     }
 
-    public int getMinNumReplicas() {
+    public short getMinNumReplicas() {
         return minNumReplicas;
     }
 
-    Partition getPartitionById(Integer id) {
+    Partition getPartitionById(short id) {
         return pMap.get(id);
     }
 
-    public RepUser getUserMaster(Integer id) {
+    public RepUser getUserMaster(short id) {
         Partition partition = getPartitionById(uMap.get(id));
         if (partition != null) {
             return partition.getMasterById(id);
@@ -48,51 +48,51 @@ public class RepManager {
         return null;
     }
 
-    public int getNumUsers() {
-        return uMap.size();
+    public short getNumUsers() {
+        return (short) uMap.size();
     }
 
-    public TIntSet getPids() {
+    public TShortSet getPids() {
         return pMap.keySet();
     }
 
-    public TIntSet getUids() {
+    public TShortSet getUids() {
         return uMap.keySet();
     }
 
-    public int addUser() {
-        int newUid = nextUid;
+    public short addUser() {
+        short newUid = nextUid;
         addUser(new User(newUid));
         return newUid;
     }
 
     public void addUser(User user) {
-        Integer masterPid = getPidWithFewestMasters();
+        short masterPid = getPidWithFewestMasters();
 
         RepUser RepUser = new RepUser(user.getId(), masterPid);
 
         addUser(RepUser, masterPid);
 
-        for(TIntIterator iter = getPartitionsToAddInitialReplicas(masterPid).iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = getPartitionsToAddInitialReplicas(masterPid).iterator(); iter.hasNext(); ) {
             addReplica(RepUser, iter.next());
         }
     }
 
-    public void addUser(RepUser user, Integer masterPid) {
-        int uid = user.getId();
+    public void addUser(RepUser user, short masterPid) {
+        short uid = user.getId();
         getPartitionById(masterPid).addMaster(user);
         uMap.put(uid, masterPid);
         if(uid >= nextUid) {
-            nextUid = uid + 1;
+            nextUid = (short) (uid + 1);
         }
     }
 
-    public void removeUser(Integer uid) {
+    public void removeUser(short uid) {
         RepUser user = getUserMaster(uid);
 
         //Remove user from relevant partitions
         getPartitionById(user.getBasePid()).removeMaster(uid);
-        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
             getPartitionById(iter.next()).removeReplica(uid);
         }
 
@@ -100,56 +100,56 @@ public class RepManager {
         uMap.remove(uid);
 
         //Remove friendships
-        for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
+        for(TShortIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
             RepUser friendMaster = getUserMaster(friendId);
             friendMaster.unfriend(uid);
 
-            for(TIntIterator iter2 = friendMaster.getReplicaPids().iterator(); iter2.hasNext(); ) {
-                int friendReplicaPid = iter2.next();
+            for(TShortIterator iter2 = friendMaster.getReplicaPids().iterator(); iter2.hasNext(); ) {
+                short friendReplicaPid = iter2.next();
                 Partition friendReplicaPartition = getPartitionById(friendReplicaPid);
                 friendReplicaPartition.getReplicaById(friendId).unfriend(uid);
             }
         }
     }
 
-    public Integer addPartition() {
-        Integer newId = nextPid;
+    public short addPartition() {
+        short newId = nextPid;
         addPartition(newId);
         return newId;
     }
 
-    public void addPartition(Integer pid) {
+    public void addPartition(short pid) {
         pMap.put(pid, new Partition(pid));
         if(pid >= nextPid) {
-            nextPid = pid + 1;
+            nextPid = (short)(pid + 1);
         }
     }
 
-    public void removePartition(Integer id) {
+    public void removePartition(short id) {
         pMap.remove(id);
     }
 
-    public void addReplica(RepUser user, Integer destPid) {
+    public void addReplica(RepUser user, short destPid) {
         RepUser replicaOfUser = addReplicaNoUpdates(user, destPid);
 
         //Update the replicaPids to reflect this addition
         replicaOfUser.addReplicaPids(destPid);
-        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
             pMap.get(iter.next()).getReplicaById(user.getId()).addReplicaPids(destPid);
         }
         user.addReplicaPids(destPid);
     }
 
-    public RepUser addReplicaNoUpdates(RepUser user, Integer destPid) {
+    public RepUser addReplicaNoUpdates(RepUser user, short destPid) {
         RepUser replica = user.dupe();
         pMap.get(destPid).addReplica(replica);
         return replica;
     }
 
-    public void removeReplica(RepUser user, Integer removalPid) {
+    public void removeReplica(RepUser user, short removalPid) {
         //Delete it from each replica's replicaPids
-        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
             Partition p = pMap.get(iter.next());
             RepUser r = p.getReplicaById(user.getId());
             r.removeReplicaPid(removalPid);
@@ -162,22 +162,22 @@ public class RepManager {
         pMap.get(removalPid).removeReplica(user.getId());
     }
 
-    public void moveUser(RepUser user, Integer toPid, TIntSet replicateInDestinationPartition, TIntSet replicasToDeleteInSourcePartition) {
+    public void moveUser(RepUser user, short toPid, TShortSet replicateInDestinationPartition, TShortSet replicasToDeleteInSourcePartition) {
         //Step 1: move the actual user
-        Integer uid = user.getId();
-        Integer fromPid = user.getBasePid();
+        short uid = user.getId();
+        short fromPid = user.getBasePid();
 
         moveMasterAndInformReplicas(uid, fromPid, toPid);
 
         //Step 2: add the necessary replicas
-        for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
             if (uMap.get(iter.next()) == fromPid) {
                 addReplica(user, fromPid);
                 break;
             }
         }
 
-        for(TIntIterator iter = replicateInDestinationPartition.iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = replicateInDestinationPartition.iterator(); iter.hasNext(); ) {
             addReplica(getUserMaster(iter.next()), toPid);
         }
 
@@ -197,14 +197,14 @@ public class RepManager {
         }
 
         //delete the replica of the appropriate friends in oldPartition
-        for(TIntIterator iter = replicasToDeleteInSourcePartition.iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = replicasToDeleteInSourcePartition.iterator(); iter.hasNext(); ) {
             removeReplica(getUserMaster(iter.next()), fromPid);
         }
 
         increaseTally(1);
     }
 
-    public void moveMasterAndInformReplicas(Integer uid, Integer fromPid, Integer toPid) {
+    public void moveMasterAndInformReplicas(short uid, short fromPid, short toPid) {
         RepUser user = getUserMaster(uid);
         getPartitionById(fromPid).removeMaster(uid);
         getPartitionById(toPid).addMaster(user);
@@ -213,7 +213,7 @@ public class RepManager {
 
         user.setBasePid(toPid);
 
-        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
             pMap.get(iter.next()).getReplicaById(uid).setBasePid(toPid);
         }
     }
@@ -222,10 +222,10 @@ public class RepManager {
         smallerUser.befriend(largerUser.getId());
         largerUser.befriend(smallerUser.getId());
 
-        for(TIntIterator iter = smallerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = smallerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
             pMap.get(iter.next()).getReplicaById(smallerUser.getId()).befriend(largerUser.getId());
         }
-        for(TIntIterator iter = largerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = largerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
             pMap.get(iter.next()).getReplicaById(largerUser.getId()).befriend(smallerUser.getId());
         }
     }
@@ -234,15 +234,15 @@ public class RepManager {
         smallerUser.unfriend(largerUser.getId());
         largerUser.unfriend(smallerUser.getId());
 
-        for(TIntIterator iter = smallerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = smallerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
             pMap.get(iter.next()).getReplicaById(smallerUser.getId()).unfriend(largerUser.getId());
         }
-        for(TIntIterator iter = largerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = largerUser.getReplicaPids().iterator(); iter.hasNext(); ) {
             pMap.get(iter.next()).getReplicaById(largerUser.getId()).unfriend(smallerUser.getId());
         }
     }
 
-    public void promoteReplicaToMaster(Integer uid, Integer pid) {
+    public void promoteReplicaToMaster(short uid, short pid) {
         Partition partition = pMap.get(pid);
         RepUser user = partition.getReplicaById(uid);
         user.setBasePid(pid);
@@ -252,26 +252,26 @@ public class RepManager {
 
         uMap.put(uid, pid);
 
-        for(TIntIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = user.getReplicaPids().iterator(); iter.hasNext(); ) {
             RepUser replica = pMap.get(iter.next()).getReplicaById(uid);
             replica.setBasePid(pid);
             replica.removeReplicaPid(pid);
         }
 
         //Add replicas of friends in pid if they don't already exists
-        for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
+        for(TShortIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
             if(!partition.getIdsOfMasters().contains(friendId) && !partition.getIdsOfReplicas().contains(friendId)) {
                 addReplica(getUserMaster(friendId), pid);
             }
         }
     }
 
-    public Integer getPidWithFewestMasters() {
+    public short getPidWithFewestMasters() {
         int minMasters = Integer.MAX_VALUE;
-        Integer minId = -1;
+        short minId = -1;
 
-        for (Integer id : pMap.keys()) {
+        for (short id : pMap.keys()) {
             int numMasters = getPartitionById(id).getNumMasters();
             if (numMasters < minMasters) {
                 minMasters = numMasters;
@@ -282,30 +282,30 @@ public class RepManager {
         return minId;
     }
 
-    public Integer getRandomPidWhereThisUserIsNotPresent(RepUser user) {
-        TIntSet potentialReplicaLocations = new TIntHashSet(pMap.keySet());
+    public short getRandomPidWhereThisUserIsNotPresent(RepUser user) {
+        TShortSet potentialReplicaLocations = new TShortHashSet(pMap.keySet());
         potentialReplicaLocations.remove(user.getBasePid());
         potentialReplicaLocations.removeAll(user.getReplicaPids());
-        int[] array = potentialReplicaLocations.toArray();
+        short[] array = potentialReplicaLocations.toArray();
         return array[(int)(array.length * Math.random())];
     }
 
-    public TIntSet getPartitionsToAddInitialReplicas(Integer masterPid) {
-        int[] pidsMinusMasterPid = removeUniqueElementFromNonEmptyArray(pMap.keySet().toArray(), masterPid);
+    public TShortSet getPartitionsToAddInitialReplicas(short masterPid) {
+        short[] pidsMinusMasterPid = removeUniqueElementFromNonEmptyArray(pMap.keySet().toArray(), masterPid);
         return getKDistinctValuesFromArray(getMinNumReplicas(), pidsMinusMasterPid);
     }
 
-    public TIntObjectMap<TIntSet> getPartitionToUserMap() {
-        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(pMap.size() + 1);
-        for (Integer pid : pMap.keys()) {
+    public TShortObjectMap<TShortSet> getPartitionToUserMap() {
+        TShortObjectMap<TShortSet> map = new TShortObjectHashMap<>(pMap.size() + 1);
+        for (short pid : pMap.keys()) {
             map.put(pid, getPartitionById(pid).getIdsOfMasters());
         }
         return map;
     }
 
-    public TIntObjectMap<TIntSet> getPartitionToReplicasMap() {
-        TIntObjectMap<TIntSet> map = new TIntObjectHashMap<>(pMap.size() + 1);
-        for (Integer pid : pMap.keys()) {
+    public TShortObjectMap<TShortSet> getPartitionToReplicasMap() {
+        TShortObjectMap<TShortSet> map = new TShortObjectHashMap<>(pMap.size() + 1);
+        for (short pid : pMap.keys()) {
             map.put(pid, getPartitionById(pid).getIdsOfReplicas());
         }
         return map;
@@ -313,10 +313,10 @@ public class RepManager {
 
     public Integer getEdgeCut() {
         int count = 0;
-        for (Integer uid : uMap.keys()) {
+        for (short uid : uMap.keys()) {
             RepUser user = getUserMaster(uid);
-            Integer pid = user.getBasePid();
-            for(TIntIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
+            short pid = user.getBasePid();
+            for(TShortIterator iter = user.getFriendIDs().iterator(); iter.hasNext(); ) {
                 if (pid < uMap.get(iter.next())) {
                     count++;
                 }
@@ -327,15 +327,15 @@ public class RepManager {
 
     public Integer getReplicationCount() {
         int count = 0;
-        for(TIntIterator iter = getPids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = getPids().iterator(); iter.hasNext(); ) {
             count += getPartitionById(iter.next()).getNumReplicas();
         }
         return count;
     }
 
-    public TIntObjectMap<TIntSet> getFriendships() {
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>(uMap.size()+1);
-        for(Integer uid : uMap.keys()) {
+    public TShortObjectMap<TShortSet> getFriendships() {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>(uMap.size()+1);
+        for(short uid : uMap.keys()) {
             friendships.put(uid, getUserMaster(uid).getFriendIDs());
         }
         return friendships;
@@ -361,9 +361,9 @@ public class RepManager {
     public void checkValidity() {
 
         //Check masters
-        for(Integer uid : uMap.keys()) {
-            Integer observedMasterPid = null;
-            for(Integer pid : pMap.keys()) {
+        for(short uid : uMap.keys()) {
+            Short observedMasterPid = null;
+            for(short pid : pMap.keys()) {
                 if(pMap.get(pid).getIdsOfMasters().contains(uid)) {
                     if(observedMasterPid != null) {
                         throw new RuntimeException("user cannot be in multiple partitions");
@@ -386,10 +386,10 @@ public class RepManager {
         }
 
         //check replicas
-        for(Integer uid : uMap.keys()) {
+        for(short uid : uMap.keys()) {
             RepUser user = getUserMaster(uid);
-            TIntSet observedReplicaPids = new TIntHashSet(pMap.size()+1);
-            for(Integer pid : pMap.keys()) {
+            TShortSet observedReplicaPids = new TShortHashSet(pMap.size()+1);
+            for(short pid : pMap.keys()) {
                 if(pMap.get(pid).getIdsOfReplicas().contains(uid)) {
                     observedReplicaPids.add(pid);
                 }
@@ -410,16 +410,16 @@ public class RepManager {
 
     private boolean checkLocalSemantics() {
         boolean valid = true;
-        TIntObjectMap<TIntSet> friendships = getFriendships();
-        TIntObjectMap<TIntSet> partitions  = getPartitionToUserMap();
-        TIntObjectMap<TIntSet> replicas    = getPartitionToReplicasMap();
-        for(int uid1 : friendships.keys()) {
-            for(TIntIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
-                int uid2 = iter.next();
-                TIntSet uid1Replicas = findKeysForUser(replicas, uid1);
-                TIntSet uid2Replicas = findKeysForUser(replicas, uid2);
-                int pid1 = findKeysForUser(partitions, uid1).iterator().next();
-                int pid2 = findKeysForUser(partitions, uid2).iterator().next();
+        TShortObjectMap<TShortSet> friendships = getFriendships();
+        TShortObjectMap<TShortSet> partitions  = getPartitionToUserMap();
+        TShortObjectMap<TShortSet> replicas    = getPartitionToReplicasMap();
+        for(short uid1 : friendships.keys()) {
+            for(TShortIterator iter = friendships.get(uid1).iterator(); iter.hasNext(); ) {
+                short uid2 = iter.next();
+                TShortSet uid1Replicas = findKeysForUser(replicas, uid1);
+                TShortSet uid2Replicas = findKeysForUser(replicas, uid2);
+                short pid1 = findKeysForUser(partitions, uid1).iterator().next();
+                short pid2 = findKeysForUser(partitions, uid2).iterator().next();
                 if(pid1 != pid2) {
                     //If they aren't colocated, they have replicas in each other's partitions
                     valid &= uid1Replicas.contains(pid2);
@@ -430,9 +430,9 @@ public class RepManager {
         return valid;
     }
 
-    private static TIntSet findKeysForUser(TIntObjectMap<TIntSet> m, int uid) {
-        TIntSet keys = new TIntHashSet();
-        for(int key : m.keys()) {
+    private static TShortSet findKeysForUser(TShortObjectMap<TShortSet> m, short uid) {
+        TShortSet keys = new TShortHashSet();
+        for(short key : m.keys()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
             }
@@ -440,24 +440,24 @@ public class RepManager {
         return keys;
     }
 
-    public TIntSet getMastersOnPartition(int pid) {
+    public TShortSet getMastersOnPartition(short pid) {
         return getPartitionById(pid).getIdsOfMasters();
     }
 
-    public TIntSet getReplicasOnPartition(int pid) {
+    public TShortSet getReplicasOnPartition(short pid) {
         return getPartitionById(pid).getIdsOfReplicas();
     }
 
-    public RepUser getReplicaOnPartition(int uid, int pid) {
+    public RepUser getReplicaOnPartition(short uid, short pid) {
         return getPartitionById(pid).getReplicaById(uid);
     }
 
     static class Partition {
-        private TIntObjectMap<RepUser> idToMasterMap = new TIntObjectHashMap<>();
-        private TIntObjectMap<RepUser> idToReplicaMap = new TIntObjectHashMap<>();
-        private final Integer id;
+        private TShortObjectMap<RepUser> idToMasterMap = new TShortObjectHashMap<>();
+        private TShortObjectMap<RepUser> idToReplicaMap = new TShortObjectHashMap<>();
+        private final short id;
 
-        Partition(Integer id) {
+        Partition(short id) {
             this.id = id;
         }
 
@@ -465,7 +465,7 @@ public class RepManager {
             idToMasterMap.put(user.getId(), user);
         }
 
-        User removeMaster(Integer id) {
+        User removeMaster(short id) {
             return idToMasterMap.remove(id);
         }
 
@@ -473,15 +473,15 @@ public class RepManager {
             idToReplicaMap.put(user.getId(), user);
         }
 
-        User removeReplica(Integer id) {
+        User removeReplica(short id) {
             return idToReplicaMap.remove(id);
         }
 
-        RepUser getMasterById(Integer uid) {
+        RepUser getMasterById(short uid) {
             return idToMasterMap.get(uid);
         }
 
-        RepUser getReplicaById(Integer uid) {
+        RepUser getReplicaById(short uid) {
             return idToReplicaMap.get(uid);
         }
 
@@ -493,15 +493,15 @@ public class RepManager {
             return idToReplicaMap.size();
         }
 
-        TIntSet getIdsOfMasters() {
+        TShortSet getIdsOfMasters() {
             return idToMasterMap.keySet();
         }
 
-        public TIntSet getIdsOfReplicas() {
+        public TShortSet getIdsOfReplicas() {
             return idToReplicaMap.keySet();
         }
 
-        public Integer getId() {
+        public short getId() {
             return id;
         }
 

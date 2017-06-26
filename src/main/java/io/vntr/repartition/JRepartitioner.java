@@ -1,12 +1,12 @@
 package io.vntr.repartition;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortShortHashMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 import java.util.Arrays;
 
@@ -17,23 +17,23 @@ import static io.vntr.utils.TroveUtils.*;
  */
 public class JRepartitioner {
 
-    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, boolean incremental) {
-        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
+    public static NoRepResults repartition(float alpha, float initialT, float deltaT, short k, int numRestarts, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> friendships, boolean incremental) {
+        TShortShortMap uidToPidMap = getUToMasterMap(partitions);
         int bestEdgeCut = getEdgeCut(uidToPidMap, friendships);
-        TIntIntMap bestLogicalPids = null;
+        TShortShortMap bestLogicalPids = null;
 
         int logicalMigrationCount = 0;
         for (int i = 0; i < numRestarts; i++) {
             State state = initState(alpha, friendships);
-            TIntObjectMap<TIntSet> logicalPartitions = incremental ? partitions : getRandomLogicalPartitions(friendships.keySet(), partitions.keySet());
+            TShortObjectMap<TShortSet> logicalPartitions = incremental ? partitions : getRandomLogicalPartitions(friendships.keySet(), partitions.keySet());
             state.setLogicalPids(getUToMasterMap(logicalPartitions));
             state.initUidToPidToFriendCount(logicalPartitions);
 
             for(float t = initialT; t >= 1; t -= deltaT) {
-                int[] randomUserArray = friendships.keys();
+                short[] randomUserArray = friendships.keys();
                 shuffle(randomUserArray);
-                for(Integer uid : randomUserArray) {
-                    Integer partnerId = null;
+                for(short uid : randomUserArray) {
+                    Short partnerId = null;
                     if(!incremental) {
                         partnerId = findPartner(uid, sample(k, partitions.get(uidToPidMap.get(uid))), t, state);
                     }
@@ -53,30 +53,30 @@ public class JRepartitioner {
             int edgeCut = getEdgeCut(state.getLogicalPids(), state.getFriendships());
             if(edgeCut < bestEdgeCut) {
                 bestEdgeCut = edgeCut;
-                bestLogicalPids = new TIntIntHashMap(state.getLogicalPids());
+                bestLogicalPids = new TShortShortHashMap(state.getLogicalPids());
             }
         }
 
         return new NoRepResults(bestLogicalPids, logicalMigrationCount);
     }
 
-    static Integer findPartner(Integer uid, TIntSet candidates, float t, State state) {
-        Integer bestPartner = null;
+    static Short findPartner(short uid, TShortSet candidates, float t, State state) {
+        Short bestPartner = null;
         float bestScore = 0f;
 
-        Integer logicalPid = state.getLogicalPids().get(uid);
+        short logicalPid = state.getLogicalPids().get(uid);
 
-        for(TIntIterator iter = candidates.iterator(); iter.hasNext(); ) {
-            int partnerId = iter.next();
-            Integer theirLogicalPid = state.getLogicalPids().get(partnerId);
+        for(TShortIterator iter = candidates.iterator(); iter.hasNext(); ) {
+            short partnerId = iter.next();
+            Short theirLogicalPid = state.getLogicalPids().get(partnerId);
             if(theirLogicalPid.equals(logicalPid)) {
                 continue;
             }
 
-            int myNeighborsOnMine      = state.getUidToPidToFriendCounts().get(uid).get(logicalPid);
-            int myNeighborsOnTheirs    = state.getUidToPidToFriendCounts().get(uid).get(theirLogicalPid);
-            int theirNeighborsOnMine   = state.getUidToPidToFriendCounts().get(partnerId).get(logicalPid);
-            int theirNeighborsOnTheirs = state.getUidToPidToFriendCounts().get(partnerId).get(theirLogicalPid);
+            short myNeighborsOnMine      = state.getUidToPidToFriendCounts().get(uid).get(logicalPid);
+            short myNeighborsOnTheirs    = state.getUidToPidToFriendCounts().get(uid).get(theirLogicalPid);
+            short theirNeighborsOnMine   = state.getUidToPidToFriendCounts().get(partnerId).get(logicalPid);
+            short theirNeighborsOnTheirs = state.getUidToPidToFriendCounts().get(partnerId).get(theirLogicalPid);
 
             float oldScore = (float) (Math.pow(myNeighborsOnMine, state.getAlpha()) + Math.pow(theirNeighborsOnTheirs, state.getAlpha()));
             float newScore = (float) (Math.pow(myNeighborsOnTheirs, state.getAlpha()) + Math.pow(theirNeighborsOnMine, state.getAlpha()));
@@ -90,11 +90,11 @@ public class JRepartitioner {
         return bestPartner;
     }
 
-    static int[] howManyFriendsHaveLogicalPartitions(int uid, int[] pids, State state) {
-        int[] counts = new int[pids.length];
-        for(TIntIterator iter = state.getFriendships().get(uid).iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
-            int friendPid = state.getLogicalPids().get(friendId);
+    static short[] howManyFriendsHaveLogicalPartitions(short uid, short[] pids, State state) {
+        short[] counts = new short[pids.length];
+        for(TShortIterator iter = state.getFriendships().get(uid).iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
+            short friendPid = state.getLogicalPids().get(friendId);
             for(int i=0; i<pids.length; i++) {
                 if(pids[i] == friendPid) {
                     counts[i]++;
@@ -104,49 +104,49 @@ public class JRepartitioner {
         return counts;
     }
 
-    static TIntSet sample(int n, TIntSet uids) {
-        return uids.size() > n ? getKDistinctValuesFromArray(n, uids.toArray()) : new TIntHashSet(uids);
+    static TShortSet sample(short n, TShortSet uids) {
+        return uids.size() > n ? getKDistinctValuesFromArray(n, uids.toArray()) : new TShortHashSet(uids);
     }
 
-    static void logicalSwap(Integer uid1, Integer uid2, State state) {
-        Integer pid1 = state.getLogicalPids().get(uid1);
-        Integer pid2 = state.getLogicalPids().get(uid2);
+    static void logicalSwap(short uid1, short uid2, State state) {
+        short pid1 = state.getLogicalPids().get(uid1);
+        short pid2 = state.getLogicalPids().get(uid2);
 
         state.getLogicalPids().put(uid1, pid2);
         state.getLogicalPids().put(uid2, pid1);
 
-        for(TIntIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
-            TIntIntMap counts = state.getUidToPidToFriendCounts().get(friendId);
-            counts.put(pid1, counts.get(pid1) - 1);
-            counts.put(pid2, counts.get(pid2) + 1);
+        for(TShortIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
+            TShortShortMap counts = state.getUidToPidToFriendCounts().get(friendId);
+            counts.put(pid1, (short)(counts.get(pid1) - 1));
+            counts.put(pid2, (short)(counts.get(pid2) + 1));
         }
 
-        for(TIntIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
-            int friendId = iter.next();
-            TIntIntMap counts = state.getUidToPidToFriendCounts().get(friendId);
-            counts.put(pid2, counts.get(pid2) - 1);
-            counts.put(pid1, counts.get(pid1) + 1);
+        for(TShortIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
+            short friendId = iter.next();
+            TShortShortMap counts = state.getUidToPidToFriendCounts().get(friendId);
+            counts.put(pid2, (short)(counts.get(pid2) - 1));
+            counts.put(pid1, (short)(counts.get(pid1) + 1));
         }
 
     }
 
-    static State initState(float alpha, TIntObjectMap<TIntSet> friendships) {
-        TIntObjectMap<TIntSet> friendshipsCopy = new TIntObjectHashMap<>(friendships.size()+1);
-        for(Integer uid : friendships.keys()) {
-            friendshipsCopy.put(uid, new TIntHashSet(friendships.get(uid)));
+    static State initState(float alpha, TShortObjectMap<TShortSet> friendships) {
+        TShortObjectMap<TShortSet> friendshipsCopy = new TShortObjectHashMap<>(friendships.size()+1);
+        for(short uid : friendships.keys()) {
+            friendshipsCopy.put(uid, new TShortHashSet(friendships.get(uid)));
         }
         return new State(alpha, friendshipsCopy);
     }
 
-    static int getEdgeCut(TIntIntMap uidToPidMap, TIntObjectMap<TIntSet> friendships) {
+    static int getEdgeCut(TShortShortMap uidToPidMap, TShortObjectMap<TShortSet> friendships) {
         int count = 0;
-        for(Integer uid : uidToPidMap.keys()) {
-            Integer pid = uidToPidMap.get(uid);
+        for(short uid : uidToPidMap.keys()) {
+            short pid = uidToPidMap.get(uid);
 
-            for(TIntIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
-                int friendId = iter.next();
-                Integer friendPid = uidToPidMap.get(friendId);
+            for(TShortIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
+                short friendId = iter.next();
+                short friendPid = uidToPidMap.get(friendId);
                 if(pid < friendPid) {
                     count++;
                 }
@@ -155,19 +155,19 @@ public class JRepartitioner {
         return count;
     }
 
-    static TIntObjectMap<TIntSet> getRandomLogicalPartitions(TIntSet uids, TIntSet pids) {
-        int[] pidArray = getPidsToAssign(uids.size(), pids);
+    static TShortObjectMap<TShortSet> getRandomLogicalPartitions(TShortSet uids, TShortSet pids) {
+        short[] pidArray = getPidsToAssign(uids.size(), pids);
         shuffle(pidArray);
 
-        TIntObjectMap<TIntSet> logicalPartitions = new TIntObjectHashMap<>(pids.size()+1);
-        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
-            int pid = iter.next();
-            logicalPartitions.put(pid, new TIntHashSet());
+        TShortObjectMap<TShortSet> logicalPartitions = new TShortObjectHashMap<>(pids.size()+1);
+        for(TShortIterator iter = pids.iterator(); iter.hasNext(); ) {
+            short pid = iter.next();
+            logicalPartitions.put(pid, new TShortHashSet());
         }
 
         int index = 0;
-        for(TIntIterator iter = uids.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
+        for(TShortIterator iter = uids.iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
             logicalPartitions.get(pidArray[index]).add(uid);
             index++;
         }
@@ -175,26 +175,26 @@ public class JRepartitioner {
         return logicalPartitions;
     }
 
-    static int[] getPidsToAssign(int numUsers, TIntSet pids) {
+    static short[] getPidsToAssign(int numUsers, TShortSet pids) {
         //Fill array with pids such that:
         //(1) array.length = numUsers
         //(2) no pid occurs more than ceiling(numUsers/numPartitions) times
         //Note: The order is unimportant, since we'll shuffle it later
-        int[] replicatedPids = new int[numUsers];
+        short[] replicatedPids = new short[numUsers];
 
         //Step 1: fill the first numPartitions * floor(numUsers/numPartitions) elements
         //This is easy, because we can just put floor(numUsers/numPartitions) copies of each pid
-        int floorUsersPerPartition = numUsers / pids.size();
+        short floorUsersPerPartition = (short)(numUsers / pids.size());
 
         int index = 0;
-        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
-            int i = iter.next();
+        for(TShortIterator iter = pids.iterator(); iter.hasNext(); ) {
+            short i = iter.next();
             Arrays.fill(replicatedPids, index, index + floorUsersPerPartition, i);
             index += floorUsersPerPartition;
         }
 
         //Step 2: fill the remainder (if any) with randomly-selected pids (no more than once each)
-        int[] remainingPidArray = pids.toArray();
+        short[] remainingPidArray = pids.toArray();
         shuffle(remainingPidArray);
         int nextPidIndex = 0;
         while(index < replicatedPids.length) {
@@ -207,12 +207,12 @@ public class JRepartitioner {
 
     static class State {
         private final float alpha;
-        private final TIntObjectMap<TIntSet> friendships;
-        private TIntObjectMap<TIntIntMap> uidToPidToFriendCounts;
+        private final TShortObjectMap<TShortSet> friendships;
+        private TShortObjectMap<TShortShortMap> uidToPidToFriendCounts;
 
-        private TIntIntMap logicalPids;
+        private TShortShortMap logicalPids;
 
-        public State(float alpha, TIntObjectMap<TIntSet> friendships) {
+        public State(float alpha, TShortObjectMap<TShortSet> friendships) {
             this.alpha = alpha;
             this.friendships = friendships;
         }
@@ -221,29 +221,28 @@ public class JRepartitioner {
             return alpha;
         }
 
-        public TIntObjectMap<TIntSet> getFriendships() {
+        public TShortObjectMap<TShortSet> getFriendships() {
             return friendships;
         }
 
-        public TIntIntMap getLogicalPids() {
+        public TShortShortMap getLogicalPids() {
             return logicalPids;
         }
 
-        public void setLogicalPids(TIntIntMap logicalPids) {
+        public void setLogicalPids(TShortShortMap logicalPids) {
             this.logicalPids = logicalPids;
         }
 
-        public TIntObjectMap<TIntIntMap> getUidToPidToFriendCounts() {
+        public TShortObjectMap<TShortShortMap> getUidToPidToFriendCounts() {
             return uidToPidToFriendCounts;
         }
 
-        public void initUidToPidToFriendCount(TIntObjectMap<TIntSet> partitions) {
-            uidToPidToFriendCounts = new TIntObjectHashMap<>(friendships.size()+1);
-            for(int uid : friendships.keys()) {
-                TIntIntMap counts = new TIntIntHashMap(partitions.size()+1);
-                for(int pid : partitions.keys()) {
-
-                    counts.put(pid, intersection(partitions.get(pid), friendships.get(uid)).size());
+        public void initUidToPidToFriendCount(TShortObjectMap<TShortSet> partitions) {
+            uidToPidToFriendCounts = new TShortObjectHashMap<>(friendships.size() + 1);
+            for(short uid : friendships.keys()) {
+                TShortShortMap counts = new TShortShortHashMap(partitions.size()+1);
+                for(short pid : partitions.keys()) {
+                    counts.put(pid, (short) intersection(partitions.get(pid), friendships.get(uid)).size());
                 }
                 uidToPidToFriendCounts.put(uid, counts);
             }

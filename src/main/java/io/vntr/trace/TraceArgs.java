@@ -17,12 +17,12 @@ public class TraceArgs {
     private Float alpha = 3f;
     private Float initialT = 2f;
     private Float deltaT;
-    private Integer jaK = 15;
+    private short jaK = 15;
     private Float gamma;
-    private Integer hermesK = 3;
-    private Integer minNumReplicas = 0;
-    private Integer numRestarts = 10;
-    private Integer maxIterations = 100;
+    private short hermesK = 3;
+    private short minNumReplicas = 0;
+    private short numRestarts = 10;
+    private short maxIterations = 100;
     private double assortivityCheckProbability = 1;
     private double latencyCheckProbability = 1;
     private double validityCheckProbability = 0;
@@ -103,11 +103,11 @@ public class TraceArgs {
         this.deltaT = deltaT;
     }
 
-    public Integer getJaK() {
+    public short getJaK() {
         return jaK;
     }
 
-    public void setJaK(Integer jaK) {
+    public void setJaK(short jaK) {
         this.jaK = jaK;
     }
 
@@ -119,35 +119,35 @@ public class TraceArgs {
         this.gamma = gamma;
     }
 
-    public Integer getHermesK() {
+    public short getHermesK() {
         return hermesK;
     }
 
-    public void setHermesK(Integer hermesK) {
+    public void setHermesK(short hermesK) {
         this.hermesK = hermesK;
     }
 
-    public Integer getMinNumReplicas() {
+    public short getMinNumReplicas() {
         return minNumReplicas;
     }
 
-    public void setMinNumReplicas(Integer minNumReplicas) {
+    public void setMinNumReplicas(short minNumReplicas) {
         this.minNumReplicas = minNumReplicas;
     }
 
-    public Integer getNumRestarts() {
+    public short getNumRestarts() {
         return numRestarts;
     }
 
-    public void setNumRestarts(Integer numRestarts) {
+    public void setNumRestarts(short numRestarts) {
         this.numRestarts = numRestarts;
     }
 
-    public Integer getMaxIterations() {
+    public short getMaxIterations() {
         return maxIterations;
     }
 
-    public void setMaxIterations(Integer maxIterations) {
+    public void setMaxIterations(short maxIterations) {
         this.maxIterations = maxIterations;
     }
 
@@ -212,19 +212,19 @@ public class TraceArgs {
         double parsed = Double.parseDouble(rawValue);
         switch(flag) {
             case NUM_ACTIONS_FLAG:   setNumActions((int) parsed);             break;
-            case REPLICAS_FLAG:      setMinNumReplicas((int) parsed);         break;
+            case REPLICAS_FLAG:      setMinNumReplicas((short) parsed);       break;
             case GAMMA_FLAG:         setGamma((float) parsed);                break;
             case ALPHA_FLAG:         setAlpha((float) parsed);                break;
             case INITIAL_T_FLAG:     setInitialT((float) parsed);             break;
             case DELTA_T_FLAG:       setDeltaT((float) parsed);               break;
-            case NEIGHBORHOOD_FLAG:  setJaK((int) parsed);                    break;
-            case MAX_MOVES_FLAG:     setHermesK((int) parsed);                break;
-            case NUM_RESTARTS_FLAG:  setNumRestarts((int) parsed);            break;
+            case NEIGHBORHOOD_FLAG:  setJaK((short) parsed);                  break;
+            case MAX_MOVES_FLAG:     setHermesK((short) parsed);              break;
+            case NUM_RESTARTS_FLAG:  setNumRestarts((short) parsed);          break;
             case ASSORTIVITY_FLAG:   setAssortivityCheckProbability(parsed);  break;
             case LATENCY_FLAG:       setLatencyCheckProbability(parsed);      break;
             case VALIDITY_FLAG:      setValidityCheckProbability(parsed);     break;
             case LOGICAL_FLAG:       setLogicalMigrationRatio(parsed);        break;
-            case ITERATIONS_FLAG:    setMaxIterations((int) parsed);          break;
+            case ITERATIONS_FLAG:    setMaxIterations((short) parsed);        break;
             case EXPORT_CSV_FLAG:    setExportCSV(parsed != 0);               break;
             default: throw new RuntimeException(flag + " is not a valid flag");
         }

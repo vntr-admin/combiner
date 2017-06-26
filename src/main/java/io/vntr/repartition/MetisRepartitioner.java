@@ -1,12 +1,12 @@
 package io.vntr.repartition;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortShortHashMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,21 +19,21 @@ import static java.util.Arrays.sort;
  * Created by robertlindquist on 4/24/17.
  */
 public class MetisRepartitioner {
-    public static TIntIntMap partition(String commandLiteral, String tempDir, TIntObjectMap<TIntSet> tFriendships, TIntSet tPids) {
+    public static TShortShortMap partition(String commandLiteral, String tempDir, TShortObjectMap<TShortSet> tFriendships, TShortSet tPids) {
         int numPartitions = tPids.size();
         try {
             String inputFile = tempDir + File.separator + "e_pluribus_unum__" + System.nanoTime() + ".txt";
             String outputFile = inputFile + ".part." + numPartitions;
 
-            TIntIntMap reverseUidMap = new TIntIntHashMap(tFriendships.size()+1);
-            TIntIntMap mapping = getTranslationToZN(tFriendships.keys(), reverseUidMap);
-            TIntObjectMap<TIntSet> translatedFriendships = translateFriendshipsToZNBased(tFriendships, mapping);
+            TShortShortMap reverseUidMap = new TShortShortHashMap(tFriendships.size()+1);
+            TShortShortMap mapping = getTranslationToZN(tFriendships.keys(), reverseUidMap);
+            TShortObjectMap<TShortSet> translatedFriendships = translateFriendshipsToZNBased(tFriendships, mapping);
             writeAdjacencyGraphMetisStyle(translatedFriendships, inputFile);
 
-            TIntIntMap results = innerPartition(commandLiteral, outputFile, inputFile, numPartitions, tFriendships.size());
+            TShortShortMap results = innerPartition(commandLiteral, outputFile, inputFile, numPartitions, tFriendships.size());
 
-            TIntIntMap reversePidMap = getReversePidMap(tPids);
-            TIntIntMap translatedResults = translatePartitioningFromZNBased(results, reverseUidMap, reversePidMap);
+            TShortShortMap reversePidMap = getReversePidMap(tPids);
+            TShortShortMap translatedResults = translatePartitioningFromZNBased(results, reverseUidMap, reversePidMap);
 
             return translatedResults;
         } catch(Exception e) {
@@ -41,12 +41,12 @@ public class MetisRepartitioner {
         }
     }
 
-    private static TIntIntMap getReversePidMap(TIntSet pids) {
-        int[] sortedPids = pids.toArray();
+    private static TShortShortMap getReversePidMap(TShortSet pids) {
+        short[] sortedPids = pids.toArray();
         sort(sortedPids);
 
-        TIntIntMap reversePidMap = new TIntIntHashMap(pids.size()+1);
-        int count = 0;
+        TShortShortMap reversePidMap = new TShortShortHashMap(pids.size()+1);
+        short count = 0;
         for(int i=0; i<sortedPids.length; i++) {
             reversePidMap.put(count, sortedPids[i]);
         }
@@ -54,42 +54,42 @@ public class MetisRepartitioner {
         return reversePidMap;
     }
 
-    private static TIntIntMap innerPartition(String commandLiteral, String outputFile, String inputFile, int numPartitions, int numUsers) throws Exception {
+    private static TShortShortMap innerPartition(String commandLiteral, String outputFile, String inputFile, int numPartitions, int numUsers) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(commandLiteral, inputFile, "" + numPartitions);
         Process p = pb.start();
         p.waitFor();
         Scanner scanner = new Scanner(new File(outputFile));
-        TIntIntMap results = new TIntIntHashMap(numUsers+1);
-        int count = 1;
+        TShortShortMap results = new TShortShortHashMap(numUsers+1);
+        short count = 1;
         while(scanner.hasNextLine()) {
-            results.put(count++, Integer.parseInt(scanner.nextLine()));
+            results.put(count++, Short.parseShort(scanner.nextLine()));
         }
         scanner.close();
         return results;
     }
 
-    private static void writeAdjacencyGraphMetisStyle(TIntObjectMap<TIntSet> friendships, String filename) throws FileNotFoundException {
-        int[] sortedUids = friendships.keys();
+    private static void writeAdjacencyGraphMetisStyle(TShortObjectMap<TShortSet> friendships, String filename) throws FileNotFoundException {
+        short[] sortedUids = friendships.keys();
         sort(sortedUids);
         PrintWriter pw = new PrintWriter(filename);
 
         pw.println(friendships.size() + " " + getNumEdges(friendships));
 
         for(int i=0; i<sortedUids.length; i++) {
-            int next = sortedUids[i];
-            TIntSet friends = friendships.get(next);
+            short next = sortedUids[i];
+            TShortSet friends = friendships.get(next);
             String line = formatLine(friends);
             pw.println(line);
         }
         pw.close();
     }
 
-    private static TIntIntMap getTranslationToZN(int[] uids, TIntIntMap reverseMap) {
+    private static TShortShortMap getTranslationToZN(short[] uids, TShortShortMap reverseMap) {
         sort(uids);
-        TIntIntMap dict = new TIntIntHashMap(uids.length+1);
-        int index = 1;
-        for(int i=0; i<uids.length; i++) {
-            int nextUid = uids[i];
+        TShortShortMap dict = new TShortShortHashMap(uids.length+1);
+        short index = 1;
+        for(short i=0; i<uids.length; i++) {
+            short nextUid = uids[i];
             dict.put(nextUid, index);
             reverseMap.put(index, nextUid);
             index++;
@@ -97,11 +97,11 @@ public class MetisRepartitioner {
         return dict;
     }
 
-    private static TIntObjectMap<TIntSet> translateFriendshipsToZNBased(TIntObjectMap<TIntSet> originalFriendships, TIntIntMap mapping) {
-        TIntObjectMap<TIntSet> translated = new TIntObjectHashMap<>();
-        for(int i : originalFriendships.keys()) {
-            TIntSet translatedFriends = new TIntHashSet(originalFriendships.get(i).size()+1);
-            for(TIntIterator iter = originalFriendships.get(i).iterator(); iter.hasNext(); ) {
+    private static TShortObjectMap<TShortSet> translateFriendshipsToZNBased(TShortObjectMap<TShortSet> originalFriendships, TShortShortMap mapping) {
+        TShortObjectMap<TShortSet> translated = new TShortObjectHashMap<>();
+        for(short i : originalFriendships.keys()) {
+            TShortSet translatedFriends = new TShortHashSet(originalFriendships.get(i).size()+1);
+            for(TShortIterator iter = originalFriendships.get(i).iterator(); iter.hasNext(); ) {
                 translatedFriends.add(mapping.get(iter.next()));
             }
             translated.put(mapping.get(i), translatedFriends);
@@ -109,27 +109,27 @@ public class MetisRepartitioner {
         return translated;
     }
 
-    private static TIntIntMap translatePartitioningFromZNBased(TIntIntMap zNBasedPartitioning, TIntIntMap reverseUidMap, TIntIntMap reversePidMap) {
-        TIntIntMap translatedPartitioning = new TIntIntHashMap(zNBasedPartitioning.size()+1);
-        for(int i : zNBasedPartitioning.keys()) {
-            int rawPid = zNBasedPartitioning.get(i);
-            int translatedUid = reverseUidMap.get(i);
-            int translatedPid = reversePidMap.get(rawPid);
+    private static TShortShortMap translatePartitioningFromZNBased(TShortShortMap zNBasedPartitioning, TShortShortMap reverseUidMap, TShortShortMap reversePidMap) {
+        TShortShortMap translatedPartitioning = new TShortShortHashMap(zNBasedPartitioning.size()+1);
+        for(short i : zNBasedPartitioning.keys()) {
+            short rawPid = zNBasedPartitioning.get(i);
+            short translatedUid = reverseUidMap.get(i);
+            short translatedPid = reversePidMap.get(rawPid);
             translatedPartitioning.put(translatedUid, translatedPid);
         }
         return translatedPartitioning;
     }
 
-    static int getNumEdges(TIntObjectMap<TIntSet> friendships) {
+    static int getNumEdges(TShortObjectMap<TShortSet> friendships) {
         int count = 0;
-        for(int uid : friendships.keys()) {
+        for(short uid : friendships.keys()) {
             count += friendships.get(uid).size();
         }
         return count >> 1;
     }
 
-    static String formatLine(TIntSet friends) {
-        int[] sortedFriendIds = friends.toArray();
+    static String formatLine(TShortSet friends) {
+        short[] sortedFriendIds = friends.toArray();
         sort(sortedFriendIds);
         StringBuilder builder = new StringBuilder();
 

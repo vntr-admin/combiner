@@ -1,10 +1,10 @@
 package io.vntr;
 
- import gnu.trove.iterator.TIntIterator;
- import gnu.trove.map.TIntObjectMap;
- import gnu.trove.map.hash.TIntObjectHashMap;
- import gnu.trove.set.TIntSet;
- import gnu.trove.set.hash.TIntHashSet;
+ import gnu.trove.iterator.TShortIterator;
+ import gnu.trove.map.TShortObjectMap;
+ import gnu.trove.map.hash.TShortObjectHashMap;
+ import gnu.trove.set.TShortSet;
+ import gnu.trove.set.hash.TShortHashSet;
  import io.vntr.utils.TroveUtils;
 
  import java.io.File;
@@ -28,30 +28,30 @@ public class TestUtils {
         return set;
     }
 
-    public static TIntObjectMap<TIntSet> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
-        TIntObjectMap<TIntSet> userIdToFriendIds = new TIntObjectHashMap<>(numUsers+1);
-        for(int id=0; id<numUsers; id++) {
-            userIdToFriendIds.put(id, new TIntHashSet());
+    public static TShortObjectMap<TShortSet> getTopographyForMultigroupSocialNetwork(int numUsers, int numGroups, float groupMembershipProbability, float intraGroupFriendshipProbability) {
+        TShortObjectMap<TShortSet> userIdToFriendIds = new TShortObjectHashMap<>(numUsers+1);
+        for(short id=0; id<numUsers; id++) {
+            userIdToFriendIds.put(id, new TShortHashSet());
         }
 
-        TIntObjectMap<TIntSet> groupIdToUserIds = new TIntObjectHashMap<>(numGroups+1);
-        for(int id=0; id<numGroups; id++) {
-            groupIdToUserIds.put(id, new TIntHashSet());
+        TShortObjectMap<TShortSet> groupIdToUserIds = new TShortObjectHashMap<>(numGroups+1);
+        for(short id=0; id<numGroups; id++) {
+            groupIdToUserIds.put(id, new TShortHashSet());
         }
 
-        for(Integer userId : userIdToFriendIds.keys()) {
-            for(Integer groupId : groupIdToUserIds.keys()) {
+        for(short userId : userIdToFriendIds.keys()) {
+            for(short groupId : groupIdToUserIds.keys()) {
                 if(Math.random() < groupMembershipProbability) {
                     groupIdToUserIds.get(groupId).add(userId);
                 }
             }
         }
 
-        for(TIntSet groupMembers : groupIdToUserIds.valueCollection()) {
-            for(TIntIterator iter = groupMembers.iterator(); iter.hasNext(); ) {
-                int uid = iter.next();
-                for(TIntIterator iter2 = groupMembers.iterator(); iter2.hasNext(); ) {
-                    int otherUid = iter2.next();
+        for(TShortSet groupMembers : groupIdToUserIds.valueCollection()) {
+            for(TShortIterator iter = groupMembers.iterator(); iter.hasNext(); ) {
+                short uid = iter.next();
+                for(TShortIterator iter2 = groupMembers.iterator(); iter2.hasNext(); ) {
+                    short otherUid = iter2.next();
                     if(uid < otherUid) { //this avoids running it once for each user
                         if(Math.random() < intraGroupFriendshipProbability) {
                             userIdToFriendIds.get(uid).add(otherUid);
@@ -65,38 +65,38 @@ public class TestUtils {
         return userIdToFriendIds;
     }
 
-    public static TIntObjectMap<TIntSet> getRandomPartitioning(TIntSet pids, TIntSet uids) {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>(pids.size()+1);
-        TIntSet pidCopies = new TIntHashSet(pids);
+    public static TShortObjectMap<TShortSet> getRandomPartitioning(TShortSet pids, TShortSet uids) {
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>(pids.size()+1);
+        TShortSet pidCopies = new TShortHashSet(pids);
         int numPartitions = pidCopies.size();
         int numUsers = uids.size();
-        int usersPerPartition = numUsers / numPartitions;
+        short usersPerPartition = (short) (numUsers / numPartitions);
         int numRemainderUsers = numUsers % numPartitions;
-        TIntSet remainingUids = new TIntHashSet(uids);
+        TShortSet remainingUids = new TShortHashSet(uids);
         while(remainingUids.size() > 0) {
-            int k = usersPerPartition;
+            short k = usersPerPartition;
             if(numRemainderUsers > 0) {
                 k++;
                 numRemainderUsers--;
             }
-            TIntSet pUids = TroveUtils.getKDistinctValuesFromArray(k, remainingUids.toArray());
+            TShortSet pUids = TroveUtils.getKDistinctValuesFromArray(k, remainingUids.toArray());
             remainingUids.removeAll(pUids);
-            Integer pid = pidCopies.iterator().next();
+            short pid = pidCopies.iterator().next();
             pidCopies.remove(pid);
             partitions.put(pid, pUids);
         }
         return partitions;
     }
 
-    public static TIntObjectMap<TIntSet> extractFriendshipsFromFile(String filename) throws Exception {
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
+    public static TShortObjectMap<TShortSet> extractFriendshipsFromFile(String filename) throws Exception {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
         File file = new File(filename);
         Scanner scanner = new Scanner(file);
-        TIntSet allUids = new TIntHashSet();
+        TShortSet allUids = new TShortHashSet();
         while(scanner.hasNextLine()) {
             String line = scanner.nextLine();
-            Integer uid = extractIdFromLine(line);
-            TIntSet friends = extractFriendsFromLine(line);
+            Short uid = extractIdFromLine(line);
+            TShortSet friends = extractFriendsFromLine(line);
             if(uid != null) {
                 allUids.add(uid);
                 if(friends != null) {
@@ -106,20 +106,20 @@ public class TestUtils {
             }
         }
         allUids.removeAll(friendships.keySet());
-        for(TIntIterator iter = allUids.iterator(); iter.hasNext(); ) {
-            friendships.put(iter.next(), new TIntHashSet());
+        for(TShortIterator iter = allUids.iterator(); iter.hasNext(); ) {
+            friendships.put(iter.next(), new TShortHashSet());
         }
         return friendships;
     }
 
-    static Integer extractIdFromLine(String line) {
+    static Short extractIdFromLine(String line) {
         if(line == null || line.length() < 2 || line.indexOf(':') < 0) {
             return null;
         }
-        return Integer.parseInt(line.substring(0, line.indexOf(':')));
+        return Short.parseShort(line.substring(0, line.indexOf(':')));
     }
 
-    static TIntSet extractFriendsFromLine(String line) {
+    static TShortSet extractFriendsFromLine(String line) {
         if(line == null || line.length() < 4 || line.indexOf(':') < 0) {
             return null;
         }
@@ -128,16 +128,16 @@ public class TestUtils {
             return null;
         }
         String[] ids = mainPart.split(", ");
-        TIntSet idSet = new TIntHashSet(ids.length+1);
+        TShortSet idSet = new TShortHashSet(ids.length+1);
         for(String id : ids) {
-            idSet.add(Integer.parseInt(id));
+            idSet.add(Short.parseShort(id));
         }
         return idSet;
     }
 
-    public static TIntSet findKeysForUser(TIntObjectMap<TIntSet> m, int uid) {
-        TIntSet keys = new TIntHashSet();
-        for(int key : m.keys()) {
+    public static TShortSet findKeysForUser(TShortObjectMap<TShortSet> m, short uid) {
+        TShortSet keys = new TShortHashSet();
+        for(short key : m.keys()) {
             if(m.get(key).contains(uid)) {
                 keys.add(key);
             }

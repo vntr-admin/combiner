@@ -1,45 +1,45 @@
 package io.vntr;
 
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 public class User {
-    private final int id;
-    private Integer basePid;
-    private TIntSet friendIDs;
+    private final short id;
+    private short basePid = -1;
+    private TShortSet friendIDs;
 
-    public User(Integer id) {
+    public User(short id) {
         this.id = id;
-        this.friendIDs = new TIntHashSet();
+        this.friendIDs = new TShortHashSet();
     }
 
-    public User(int id, Integer basePid) {
+    public User(short id, short basePid) {
         this.id = id;
         this.basePid = basePid;
-        this.friendIDs = new TIntHashSet();
+        this.friendIDs = new TShortHashSet();
     }
 
-    public int getId() {
+    public short getId() {
         return id;
     }
 
-    public Integer getBasePid() {
+    public short getBasePid() {
         return basePid;
     }
 
-    public void setBasePid(Integer basePid) {
+    public void setBasePid(short basePid) {
         this.basePid = basePid;
     }
 
-    public void befriend(Integer friendId) {
+    public void befriend(short friendId) {
         friendIDs.add(friendId);
     }
 
-    public void unfriend(Integer friendId) {
+    public void unfriend(short friendId) {
         friendIDs.remove(friendId);
     }
 
-    public TIntSet getFriendIDs() {
+    public TShortSet getFriendIDs() {
         return friendIDs;
     }
 
@@ -56,15 +56,15 @@ public class User {
         User user = (User) o;
 
         if (id != user.id) return false;
-        if (basePid != null ? !basePid.equals(user.basePid) : user.basePid != null) return false;
-        return friendIDs != null ? friendIDs.equals(user.friendIDs) : user.friendIDs == null;
+        if (basePid != user.basePid) return false;
+        return friendIDs.equals(user.friendIDs);
     }
 
     @Override
     public int hashCode() {
-        int result = id;
-        result = 31 * result + (basePid != null ? basePid.hashCode() : 0);
-        result = 31 * result + (friendIDs != null ? friendIDs.hashCode() : 0);
+        int result = (int) id;
+        result = 31 * result + (int) basePid;
+        result = 31 * result + friendIDs.hashCode();
         return result;
     }
 }

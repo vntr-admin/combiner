@@ -2,10 +2,13 @@ package io.vntr.befriend;
 
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.TShortShortMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.repartition.HRepartitioner;
 import org.junit.Test;
 
@@ -19,28 +22,28 @@ public class HBefrienderTest {
 
     @Test
     public void testCalculateGain() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
-        friendships.put(2,  initSet(3, 6, 9, 12));
-        friendships.put(3,  initSet(4, 8, 12));
-        friendships.put(4,  initSet(5, 10));
-        friendships.put(5,  initSet(6, 12));
-        friendships.put(6,  initSet(7));
-        friendships.put(7,  initSet(8));
-        friendships.put(8,  initSet(9));
-        friendships.put(9,  initSet(10));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, new TIntHashSet());
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        friendships.put((short)1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put((short)2,  initSet(3, 6, 9, 12));
+        friendships.put((short)3,  initSet(4, 8, 12));
+        friendships.put((short)4,  initSet(5, 10));
+        friendships.put((short)5,  initSet(6, 12));
+        friendships.put((short)6,  initSet(7));
+        friendships.put((short)7,  initSet(8));
+        friendships.put((short)8,  initSet(9));
+        friendships.put((short)9,  initSet(10));
+        friendships.put((short)10, initSet(11));
+        friendships.put((short)11, initSet(12));
+        friendships.put((short)12, initSet(13));
+        friendships.put((short)13, new TShortHashSet());
 
-        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
-        TIntIntMap uidToPidMap = getUToMasterMap(partitions);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TShortShortMap uidToPidMap = getUToMasterMap(partitions);
 
         float differential = 0.0001f;
         float averageWeight = ((float) friendships.size()) / ((float) partitions.size());
@@ -49,10 +52,10 @@ public class HBefrienderTest {
         float gammaBarelyAllowingFiveOnPartition = (5f / averageWeight) + differential;
         float gammaNearlyAllowingFiveOnPartition = (5f / averageWeight) - differential;
 
-        TIntObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, bidirectionalFriendships, new TIntHashSet(friendships.keys()), gammaBarelyAllowingSixOnPartition);
+        TShortObjectMap<HRepartitioner.LogicalUser> lusers = HRepartitioner.initLogicalUsers(partitions, bidirectionalFriendships, new TShortHashSet(friendships.keys()), gammaBarelyAllowingSixOnPartition);
 
         TIntObjectMap<TIntIntMap> expectedResults = new TIntObjectHashMap<>();
-        for(int uid : friendships.keys()) {
+        for(short uid : friendships.keys()) {
             expectedResults.put(uid, new TIntIntHashMap());
         }
 
@@ -83,9 +86,9 @@ public class HBefrienderTest {
         expectedResults.get(13).put(1, -1);
         expectedResults.get(13).put(2, -1);
 
-        for(int uid : friendships.keys()) {
+        for(short uid : friendships.keys()) {
             int usersPid = uidToPidMap.get(uid);
-            for(int pid : partitions.keys()) {
+            for(short pid : partitions.keys()) {
                 if(pid != usersPid) {
                     int result = HBefriender.calculateGain(lusers.get(uid), pid, gammaBarelyAllowingSixOnPartition);
                     int expectedResult = expectedResults.get(uid).get(pid);
@@ -94,36 +97,36 @@ public class HBefrienderTest {
             }
         }
 
-        assertTrue( 2 == HBefriender.calculateGain(lusers.get(12), 1, gammaBarelyAllowingSixOnPartition));
-        assertTrue(-1 == HBefriender.calculateGain(lusers.get(12), 1, gammaNearlyAllowingSixOnPartition));
+        assertTrue( 2 == HBefriender.calculateGain(lusers.get((short)12), (short)1, gammaBarelyAllowingSixOnPartition));
+        assertTrue(-1 == HBefriender.calculateGain(lusers.get((short)12), (short)1, gammaNearlyAllowingSixOnPartition));
 
-        assertTrue( 0 == HBefriender.calculateGain(lusers.get(1), 3, gammaBarelyAllowingFiveOnPartition));
-        assertTrue(-1 == HBefriender.calculateGain(lusers.get(1), 3, gammaNearlyAllowingFiveOnPartition));
+        assertTrue( 0 == HBefriender.calculateGain(lusers.get((short)1), (short)3, gammaBarelyAllowingFiveOnPartition));
+        assertTrue(-1 == HBefriender.calculateGain(lusers.get((short)1), (short)3, gammaNearlyAllowingFiveOnPartition));
     }
 
     @Test
     public void testDetermineBestBefriendingRebalanceStrategy() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        friendships.put(1,  initSet(2, 4, 6, 8, 10, 12));
-        friendships.put(2,  initSet(3, 6, 9, 12));
-        friendships.put(3,  initSet(4, 8, 12));
-        friendships.put(4,  initSet(5, 10));
-        friendships.put(5,  initSet(6, 12));
-        friendships.put(6,  initSet(7));
-        friendships.put(7,  initSet(8, 10));
-        friendships.put(8,  initSet(9));
-        friendships.put(9,  initSet(10));
-        friendships.put(10, initSet(11));
-        friendships.put(11, initSet(12));
-        friendships.put(12, initSet(13));
-        friendships.put(13, new TIntHashSet());
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        friendships.put((short)1,  initSet(2, 4, 6, 8, 10, 12));
+        friendships.put((short)2,  initSet(3, 6, 9, 12));
+        friendships.put((short)3,  initSet(4, 8, 12));
+        friendships.put((short)4,  initSet(5, 10));
+        friendships.put((short)5,  initSet(6, 12));
+        friendships.put((short)6,  initSet(7));
+        friendships.put((short)7,  initSet(8, 10));
+        friendships.put((short)8,  initSet(9));
+        friendships.put((short)9,  initSet(10));
+        friendships.put((short)10, initSet(11));
+        friendships.put((short)11, initSet(12));
+        friendships.put((short)12, initSet(13));
+        friendships.put((short)13, new TShortHashSet());
 
-        TIntObjectMap<TIntSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         float differential = 0.0001f;
         float averageWeight = ((float) friendships.size()) / ((float) partitions.size());
@@ -132,16 +135,16 @@ public class HBefrienderTest {
         float gammaBarelyAllowingFiveOnPartition = (5f / averageWeight) + differential;
         float gammaNearlyAllowingFiveOnPartition = (5f / averageWeight) - differential;
 
-        BEFRIEND_REBALANCE_STRATEGY result = HBefriender.determineBestBefriendingRebalanceStrategy(1, 6, gammaBarelyAllowingSixOnPartition, bidirectionalFriendships, partitions);
+        BEFRIEND_REBALANCE_STRATEGY result = HBefriender.determineBestBefriendingRebalanceStrategy((short)1, (short)6, gammaBarelyAllowingSixOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.LARGE_TO_SMALL);
 
-        result = HBefriender.determineBestBefriendingRebalanceStrategy(1, 6, gammaNearlyAllowingSixOnPartition, bidirectionalFriendships, partitions);
+        result = HBefriender.determineBestBefriendingRebalanceStrategy((short)1, (short)6, gammaNearlyAllowingSixOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
 
-        result = HBefriender.determineBestBefriendingRebalanceStrategy(10, 6, gammaBarelyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
+        result = HBefriender.determineBestBefriendingRebalanceStrategy((short)10, (short)6, gammaBarelyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.SMALL_TO_LARGE);
 
-        result = HBefriender.determineBestBefriendingRebalanceStrategy(10, 6, gammaNearlyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
+        result = HBefriender.determineBestBefriendingRebalanceStrategy((short)10, (short)6, gammaNearlyAllowingFiveOnPartition, bidirectionalFriendships, partitions);
         assertTrue(result == BEFRIEND_REBALANCE_STRATEGY.NO_CHANGE);
     }
 

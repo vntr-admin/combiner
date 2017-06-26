@@ -1,24 +1,24 @@
 package io.vntr.middleware;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 /**
  * Created by robertlindquist on 9/23/16.
  */
 public interface IMiddlewareAnalyzer extends IMiddleware {
-    Integer getNumberOfPartitions();
-    Integer getNumberOfUsers();
-    Integer getNumberOfFriendships();
-    TIntSet getUserIds();
-    TIntSet getPids();
-    Integer getEdgeCut();
-    Integer getReplicationCount();
-    Long getMigrationTally();
+    short getNumberOfPartitions();
+    short getNumberOfUsers();
+    int getNumberOfFriendships();
+    TShortSet getUserIds();
+    TShortSet getPids();
+    int getEdgeCut();
+    int getReplicationCount();
+    long getMigrationTally();
     double calculateAssortivity();
     double calculateExpectedQueryDelay();
     void checkValidity();
-    TIntObjectMap<TIntSet> getPartitionToUserMap();
-    TIntObjectMap<TIntSet> getPartitionToReplicasMap();
-    TIntObjectMap<TIntSet> getFriendships();
+    TShortObjectMap<TShortSet> getPartitionToUserMap();
+    TShortObjectMap<TShortSet> getPartitionToReplicasMap();
+    TShortObjectMap<TShortSet> getFriendships();
 }

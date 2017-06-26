@@ -1,8 +1,8 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.set.TShortSet;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.MetisRepartitioner;
 
@@ -26,7 +26,7 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUid, Integer largerUid) {
+    public void befriend(short smallerUid, short largerUid) {
         super.befriend(smallerUid, largerUid);
         if(Math.random() > .9) {
             repartition();
@@ -34,12 +34,12 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntSet partition = manager.getPartition(pid);
+    public void removePartition(short pid) {
+        TShortSet partition = manager.getPartition(pid);
         manager.removePartition(pid);
-        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            Integer newPid = getRandomElement(manager.getPids());
+        for(TShortIterator iter = partition.iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
+            short newPid = getRandomElement(manager.getPids());
             manager.moveUser(uid, newPid, true);
         }
     }
@@ -50,9 +50,9 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        TIntIntMap newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, getManager().getFriendships(), getManager().getPartitionToUsers().keySet());
-        for(int uid : newPartitioning.keys()) {
-            int newPid = newPartitioning.get(uid);
+        TShortShortMap newPartitioning = MetisRepartitioner.partition(gpmetisLocation, gpmetisTempdir, getManager().getFriendships(), getManager().getPartitionToUsers().keySet());
+        for(short uid : newPartitioning.keys()) {
+            short newPid = newPartitioning.get(uid);
             if(newPid != manager.getUser(uid).getBasePid()) {
                 manager.moveUser(uid, newPid, false);
             }

@@ -1,10 +1,10 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 import io.vntr.repartition.ReplicaMetisRepartitioner;
@@ -19,9 +19,9 @@ import static io.vntr.utils.TroveUtils.*;
 public class ReplicaMetisMiddleware extends SparMiddleware {
     private final String gpmetisLocation;
     private final String gpmetisTempdir;
-    private int minNumReplicas;
+    private short minNumReplicas;
 
-    public ReplicaMetisMiddleware(RepManager manager, String gpmetisLocation, String gpmetisTempdir, int minNumReplicas) {
+    public ReplicaMetisMiddleware(RepManager manager, String gpmetisLocation, String gpmetisTempdir, short minNumReplicas) {
         super(manager);
         this.gpmetisLocation = gpmetisLocation;
         this.gpmetisTempdir = gpmetisTempdir;
@@ -29,7 +29,7 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
     }
 
     @Override
-    public void befriend(Integer smallerUid, Integer largerUid) {
+    public void befriend(short smallerUid, short largerUid) {
         super.befriend(smallerUid, largerUid);
         if(Math.random() > .9) {
             repartition();
@@ -43,34 +43,34 @@ public class ReplicaMetisMiddleware extends SparMiddleware {
 
     void repartition() {
         clearReplicas();
-        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, getManager().getFriendships(), new TIntHashSet(getManager().getPids()), minNumReplicas);
+        RepResults repResults = ReplicaMetisRepartitioner.repartition(gpmetisLocation, gpmetisTempdir, getManager().getFriendships(), new TShortHashSet(getManager().getPids()), minNumReplicas);
         getManager().increaseTallyLogical(repResults.getNumLogicalMoves());
         physicallyMigrate(repResults.getUidToPidMap(), repResults.getUidsToReplicaPids());
     }
 
     void clearReplicas() {
-        TIntObjectMap<TIntSet> replicaLocations = copyTIntObjectMapIntSet(getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TIntHashSet(getManager().getUids())));
-        for(Integer uid : replicaLocations.keys()) {
-            for(TIntIterator iter = replicaLocations.get(uid).iterator(); iter.hasNext(); ) {
+        TShortObjectMap<TShortSet> replicaLocations = copyTShortObjectMapIntSet(getUToReplicasMap(getManager().getPartitionToReplicasMap(), new TShortHashSet(getManager().getUids())));
+        for(short uid : replicaLocations.keys()) {
+            for(TShortIterator iter = replicaLocations.get(uid).iterator(); iter.hasNext(); ) {
                 getManager().removeReplica(getManager().getUserMaster(uid), iter.next());
             }
         }
     }
 
-    void physicallyMigrate(TIntIntMap newPids, TIntObjectMap<TIntSet> newReplicaPids) {
-        for(Integer uid : newPids.keys()) {
-            Integer newPid = newPids.get(uid);
-            TIntSet newReplicas = newReplicaPids.get(uid);
+    void physicallyMigrate(TShortShortMap newPids, TShortObjectMap<TShortSet> newReplicaPids) {
+        for(short uid : newPids.keys()) {
+            short newPid = newPids.get(uid);
+            TShortSet newReplicas = newReplicaPids.get(uid);
 
             RepUser user = getManager().getUserMaster(uid);
-            Integer oldPid = user.getBasePid();
+            short oldPid = user.getBasePid();
 
-            if(!oldPid.equals(newPid)) {
+            if(oldPid != newPid) {
                 getManager().moveMasterAndInformReplicas(uid, user.getBasePid(), newPid);
                 getManager().increaseTally(1);
             }
 
-            for(TIntIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
+            for(TShortIterator iter = newReplicas.iterator(); iter.hasNext(); ) {
                 getManager().addReplica(user, iter.next());
             }
         }

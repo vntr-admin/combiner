@@ -1,7 +1,7 @@
 package io.vntr.trace;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 import java.util.List;
 
@@ -10,26 +10,26 @@ import java.util.List;
  */
 public class TraceWithReplicas extends TraceWithPartitions {
 
-    private TIntObjectMap<TIntSet> replicas;
+    private TShortObjectMap<TShortSet> replicas;
 
     public TraceWithReplicas() {
     }
 
-    public TraceWithReplicas(TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas) {
+    public TraceWithReplicas(TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> replicas) {
         super(partitions);
         this.replicas = replicas;
     }
 
-    public TraceWithReplicas(TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, List<FullTraceAction> actions) {
+    public TraceWithReplicas(TShortObjectMap<TShortSet> friendships, TShortObjectMap<TShortSet> partitions, TShortObjectMap<TShortSet> replicas, List<FullTraceAction> actions) {
         super(friendships, partitions, actions);
         this.replicas = replicas;
     }
 
-    public TIntObjectMap<TIntSet> getReplicas() {
+    public TShortObjectMap<TShortSet> getReplicas() {
         return replicas;
     }
 
-    public void setReplicas(TIntObjectMap<TIntSet> replicas) {
+    public void setReplicas(TShortObjectMap<TShortSet> replicas) {
         this.replicas = replicas;
     }
 }

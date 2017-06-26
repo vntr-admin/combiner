@@ -1,9 +1,9 @@
 package io.vntr.trace;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 import java.io.File;
 import java.util.*;
@@ -15,10 +15,10 @@ public class TraceUtils {
     public static Trace getFullTraceFromFile(String filename) {
         Trace baseTrace = null;
         List<TraceAction> actions = new LinkedList<>();
-        TIntObjectMap<TIntSet> friendships = null;
-        TIntSet pids = null;
-        TIntObjectMap<TIntSet> partitions = null;
-        TIntObjectMap<TIntSet> replicas = null;
+        TShortObjectMap<TShortSet> friendships = null;
+        TShortSet pids = null;
+        TShortObjectMap<TShortSet> partitions = null;
+        TShortObjectMap<TShortSet> replicas = null;
 
         Scanner scanner = null;
 
@@ -61,22 +61,22 @@ public class TraceUtils {
         return baseTrace;
     }
 
-    static TIntObjectMap<TIntSet> parseMapSetLine(String line) {
+    static TShortObjectMap<TShortSet> parseMapSetLine(String line) {
         String tempLine = line.substring(1, line.length()-1);
         String[] chunks = tempLine.split("\\], ");
-        TIntObjectMap<TIntSet> mapSet = new TIntObjectHashMap<>(chunks.length+1);
+        TShortObjectMap<TShortSet> mapSet = new TShortObjectHashMap<>(chunks.length+1);
         for(int i=0; i<chunks.length; i++) {
             String chunk = chunks[i];
             if(i==chunks.length-1) {
                 chunk = chunk.substring(0, chunk.length()-1);
             }
             int equalsIndex = chunk.indexOf('=');
-            int key = Integer.parseInt(chunk.substring(0, equalsIndex));
+            short key = Short.parseShort(chunk.substring(0, equalsIndex));
             String[] values = chunk.substring(equalsIndex+2).split(", ");
-            TIntSet set = new TIntHashSet();
+            TShortSet set = new TShortHashSet();
             for(String value : values) {
                 if(!value.isEmpty()) {
-                    set.add(Integer.parseInt(value));
+                    set.add(Short.parseShort(value));
                 }
             }
             mapSet.put(key, set);
@@ -86,12 +86,12 @@ public class TraceUtils {
         return mapSet;
     }
 
-    static TIntSet parseSetLine(String line) {
+    static TShortSet parseSetLine(String line) {
         String[] values = line.substring(line.indexOf('[')+1, line.indexOf(']')).split(", ");
-        TIntSet set = new TIntHashSet();
+        TShortSet set = new TShortHashSet();
         for(String value : values) {
             if(!value.isEmpty()) {
-                set.add(Integer.parseInt(value));
+                set.add(Short.parseShort(value));
             }
         }
         return set;

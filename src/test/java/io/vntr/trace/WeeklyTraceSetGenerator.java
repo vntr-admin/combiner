@@ -1,14 +1,14 @@
 package io.vntr.trace;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.linked.TIntLinkedList;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.list.TShortList;
+import gnu.trove.list.array.TShortArrayList;
+import gnu.trove.list.linked.TShortLinkedList;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.TestUtils;
 import io.vntr.repartition.MetisRepartitioner;
 import io.vntr.utils.TroveUtils;
@@ -46,18 +46,18 @@ public class WeeklyTraceSetGenerator {
 
     private static final String OUTPUT_DIR = "/Users/robertlindquist/Documents/thesis/traces/";
 
-    private static final int USERS_PER_PARTITION = 125;
+    private static final short USERS_PER_PARTITION = 125;
 
-    private static final int HOUR = 60;
-    private static final int DAY = 24 * 60;
-    private static final int NUM_ACTIONS = (7 * DAY) + 1; //one per minute for a week
-    private static final int NUM_PARTITION_REMOVALS = 2;
-    private static final Integer[] DOWNTIME_INDICES = {3*HOUR, 3*HOUR + DAY, 3*HOUR + 2*DAY, 3*HOUR + 3*DAY, 3*HOUR + 4*DAY, 3*HOUR + 5*DAY, 3*HOUR + 6*DAY};
-    private static final Integer[] MIN_NUM_REPLICAS_OPTIONS = {0, 1, 2};
+    private static final short HOUR = 60;
+    private static final short DAY = 24 * 60;
+    private static final short NUM_ACTIONS = (7 * DAY) + 1; //one per minute for a week
+    private static final short NUM_PARTITION_REMOVALS = 2;
+    private static final short[] DOWNTIME_INDICES = {3*HOUR, 3*HOUR + DAY, 3*HOUR + 2*DAY, 3*HOUR + 3*DAY, 3*HOUR + 4*DAY, 3*HOUR + 5*DAY, 3*HOUR + 6*DAY};
+    private static final short[] MIN_NUM_REPLICAS_OPTIONS = {0, 1, 2};
     private static final double PROB_RANDOM_FRIENDSHIP = 0.2;
 
-    private static int maxUid = 0;
-    private static int maxPid = 0;
+    private static short maxUid = 0;
+    private static short maxPid = 0;
 
     private static final Map<TRACE_ACTION, Double> actionsProbability = new HashMap<>();
     static {
@@ -73,7 +73,7 @@ public class WeeklyTraceSetGenerator {
     private static final String INPUT_FILE = LESKOVEC_FACEBOOK_FILENAME;
     private static final String OUTPUT_FILENAME_STUB = OUTPUT_DIR + "facebook_";
 
-    private static TIntObjectMap<TIntSet> bidirectionalFriendships;
+    private static TShortObjectMap<TShortSet> bidirectionalFriendships;
 
     public static void main(String[] args) throws Exception {
         long nanoTime = System.nanoTime();
@@ -83,50 +83,50 @@ public class WeeklyTraceSetGenerator {
         String gpmetisTempdir = props.getProperty("gpmetis.tempdir");
         BaseTraces baseTraces = generateTrace(gpmetisLocation, gpmetisTempdir);
 
-        for(int minNumReplicas : baseTraces.getMinNumReplicasToHardStartTracesMap().keySet()) {
+        for(short minNumReplicas : baseTraces.getMinNumReplicasToHardStartTracesMap().keys()) {
             String outputFile = OUTPUT_FILENAME_STUB + minNumReplicas + "_hard_" + nanoTime + ".txt";
             TraceTestUtils.writeTraceToFile(outputFile, baseTraces.getMinNumReplicasToHardStartTracesMap().get(minNumReplicas));
         }
 
-        for(int minNumReplicas : baseTraces.getMinNumReplicasToSoftStartTracesMap().keySet()) {
+        for(short minNumReplicas : baseTraces.getMinNumReplicasToSoftStartTracesMap().keys()) {
             String outputFile = OUTPUT_FILENAME_STUB + minNumReplicas + "_soft_" + nanoTime + ".txt";
             TraceTestUtils.writeTraceToFile(outputFile, baseTraces.getMinNumReplicasToSoftStartTracesMap().get(minNumReplicas));
         }
     }
 
     private static BaseTraces generateTrace(String metisCommand, String metisTempDir) throws Exception {
-        TIntObjectMap<TIntSet> originalFriendships = TroveUtils.copyTIntObjectMapIntSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
+        TShortObjectMap<TShortSet> originalFriendships = TroveUtils.copyTShortObjectMapIntSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
         bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(TestUtils.extractFriendshipsFromFile(INPUT_FILE));
 
-        int numPids = 1 + (bidirectionalFriendships.size() / USERS_PER_PARTITION);
+        short numPids = (short)(1 + (bidirectionalFriendships.size() / USERS_PER_PARTITION));
 
-        int maxMinNumReplicas = new TreeSet<>(Arrays.asList(MIN_NUM_REPLICAS_OPTIONS)).last();
+        short maxMinNumReplicas = TroveUtils.max(new TShortHashSet(MIN_NUM_REPLICAS_OPTIONS));
         if(numPids < 3 + maxMinNumReplicas) {
-            numPids = 3 + maxMinNumReplicas;
+            numPids = (short)(3 + maxMinNumReplicas);
         }
-        TIntSet originalPids = new TIntHashSet(numPids+1);
-        for (int pid = 0; pid < numPids; pid++) {
+        TShortSet originalPids = new TShortHashSet(numPids+1);
+        for (short pid = 0; pid < numPids; pid++) {
             originalPids.add(pid);
         }
 
-        TIntObjectMap<TIntSet> hardStartPartitions = TestUtils.getRandomPartitioning(originalPids, bidirectionalFriendships.keySet());
-        TIntObjectMap<TIntSet> softStartPartitions = getSoftStartPartitions(originalPids, metisCommand, metisTempDir);
-        Map<Integer, TIntObjectMap<TIntSet>> hardStartReplicasMap = new HashMap<>();
-        Map<Integer, TIntObjectMap<TIntSet>> softStartReplicasMap = new HashMap<>();
-        for(int minNumReplicas : MIN_NUM_REPLICAS_OPTIONS) {
+        TShortObjectMap<TShortSet> hardStartPartitions = TestUtils.getRandomPartitioning(originalPids, bidirectionalFriendships.keySet());
+        TShortObjectMap<TShortSet> softStartPartitions = getSoftStartPartitions(originalPids, metisCommand, metisTempDir);
+        TShortObjectMap<TShortObjectMap<TShortSet>> hardStartReplicasMap = new TShortObjectHashMap<>();
+        TShortObjectMap<TShortObjectMap<TShortSet>> softStartReplicasMap = new TShortObjectHashMap<>();
+        for(short minNumReplicas : MIN_NUM_REPLICAS_OPTIONS) {
             hardStartReplicasMap.put(minNumReplicas, TroveUtils.getInitialReplicasObeyingKReplication(minNumReplicas, hardStartPartitions, bidirectionalFriendships));
             softStartReplicasMap.put(minNumReplicas, TroveUtils.getInitialReplicasObeyingKReplication(minNumReplicas, softStartPartitions, bidirectionalFriendships));
         }
 
-        List<FullTraceAction> actions = generateActions(new TIntHashSet(originalPids));
-        Map<Integer, BaseTrace> minNumReplicasToHardStartTracesMap = new HashMap<>();
-        for(int minNumReplicas : hardStartReplicasMap.keySet()) {
+        List<FullTraceAction> actions = generateActions(new TShortHashSet(originalPids));
+        TShortObjectMap<BaseTrace> minNumReplicasToHardStartTracesMap = new TShortObjectHashMap<>();
+        for(short minNumReplicas : hardStartReplicasMap.keys()) {
             BaseTrace trace = new TraceWithReplicas(originalFriendships, hardStartPartitions, hardStartReplicasMap.get(minNumReplicas), actions);
             minNumReplicasToHardStartTracesMap.put(minNumReplicas, trace);
         }
 
-        Map<Integer, BaseTrace> minNumReplicasToSoftStartTracesMap = new HashMap<>();
-        for(int minNumReplicas : softStartReplicasMap.keySet()) {
+        TShortObjectMap<BaseTrace> minNumReplicasToSoftStartTracesMap = new TShortObjectHashMap<>();
+        for(short minNumReplicas : softStartReplicasMap.keys()) {
             BaseTrace trace = new TraceWithReplicas(originalFriendships, softStartPartitions, softStartReplicasMap.get(minNumReplicas), actions);
             minNumReplicasToSoftStartTracesMap.put(minNumReplicas, trace);
         }
@@ -134,18 +134,18 @@ public class WeeklyTraceSetGenerator {
         return new BaseTraces(minNumReplicasToHardStartTracesMap, minNumReplicasToSoftStartTracesMap);
     }
 
-    private static List<FullTraceAction> generateActions(TIntSet pids) {
-        TIntSet possiblePartitionRemovalIndices = new TIntHashSet(NUM_ACTIONS+1);
-        for(int i=0; i<NUM_ACTIONS; i++) {
+    private static List<FullTraceAction> generateActions(TShortSet pids) {
+        TShortSet possiblePartitionRemovalIndices = new TShortHashSet(NUM_ACTIONS+1);
+        for(short i=0; i<NUM_ACTIONS; i++) {
             possiblePartitionRemovalIndices.add(i);
         }
         possiblePartitionRemovalIndices.removeAll(Arrays.asList(DOWNTIME_INDICES));
-        TIntSet partitionRemovalIndices = TroveUtils.getKDistinctValuesFromArray(NUM_PARTITION_REMOVALS, possiblePartitionRemovalIndices.toArray());
+        TShortSet partitionRemovalIndices = TroveUtils.getKDistinctValuesFromArray(NUM_PARTITION_REMOVALS, possiblePartitionRemovalIndices.toArray());
 
-        int numPartitions = pids.size();
-        int numUsers = bidirectionalFriendships.size();
+        short numPartitions = (short)pids.size();
+        short numUsers = (short)bidirectionalFriendships.size();
         TRACE_ACTION[] script = new TRACE_ACTION[NUM_ACTIONS];
-        for (int i = 0; i < NUM_ACTIONS; i++) {
+        for (short i = 0; i < NUM_ACTIONS; i++) {
 
             double usersPerPartition = ((double) numUsers) / numPartitions;
             if(Arrays.binarySearch(DOWNTIME_INDICES, i) >= 0) {
@@ -171,11 +171,11 @@ public class WeeklyTraceSetGenerator {
             }
         }
 
-        maxPid = pids.size();
-        maxUid = bidirectionalFriendships.size();
+        maxPid = (short)pids.size();
+        maxUid = (short)bidirectionalFriendships.size();
 
         List<FullTraceAction> actions = new LinkedList<>();
-        for(int i=0; i<NUM_ACTIONS; i++) {
+        for(short i=0; i<NUM_ACTIONS; i++) {
             switch (script[i]) {
                 case ADD_USER:         actions.add(addU());     break;
                 case REMOVE_USER:      actions.add(cutU());     break;
@@ -191,19 +191,19 @@ public class WeeklyTraceSetGenerator {
     }
 
     static FullTraceAction addU() {
-        int newUid = ++maxUid;
-        bidirectionalFriendships.put(newUid, new TIntHashSet());
+        short newUid = ++maxUid;
+        bidirectionalFriendships.put(newUid, new TShortHashSet());
         return new FullTraceAction(ADD_USER, newUid);
     }
 
     static FullTraceAction cutU() {
-        int userToRemove = TroveUtils.getRandomElement(bidirectionalFriendships.keySet());
-        TIntSet friends = bidirectionalFriendships.get(userToRemove);
+        short userToRemove = TroveUtils.getRandomElement(bidirectionalFriendships.keySet());
+        TShortSet friends = bidirectionalFriendships.get(userToRemove);
         if(friends.contains(userToRemove)) {
             throw new RuntimeException("User " + userToRemove + " is friends with itself");
         }
 
-        for(TIntIterator iter = bidirectionalFriendships.get(userToRemove).iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = bidirectionalFriendships.get(userToRemove).iterator(); iter.hasNext(); ) {
             bidirectionalFriendships.get(iter.next()).remove(userToRemove);
         }
         bidirectionalFriendships.remove(userToRemove);
@@ -212,15 +212,15 @@ public class WeeklyTraceSetGenerator {
     }
 
     static FullTraceAction addF() {
-        int uid = chooseKeyFromMapSetInProportionToSetSize(bidirectionalFriendships);
-        TIntList friendIds = new TIntArrayList(bidirectionalFriendships.get(uid));
+        short uid = chooseKeyFromMapSetInProportionToSetSize(bidirectionalFriendships);
+        TShortList friendIds = new TShortArrayList(bidirectionalFriendships.get(uid));
 
         //Grab a new friend either uniformly from friends of friends, or at random from everyone this user hasn't befriended
         if(Math.random() > PROB_RANDOM_FRIENDSHIP) {
 
             //We want all friends of this friend, except people who are already friends with uid
-            TIntList friendsOfFriends = new TIntLinkedList();
-            for(int i=0; i<friendIds.size(); i++) {
+            TShortList friendsOfFriends = new TShortLinkedList();
+            for(short i=0; i<friendIds.size(); i++) {
                 friendsOfFriends.addAll(convert(bidirectionalFriendships.get(friendIds.get(i))));
             }
             friendsOfFriends.removeAll(Collections.singleton(uid));
@@ -229,13 +229,13 @@ public class WeeklyTraceSetGenerator {
                 throw new RuntimeException("user " + uid + " might befriend itself");
             }
             if(!friendsOfFriends.isEmpty()) {
-                int friendId = friendIds.get((int) (Math.random() * friendsOfFriends.size()));
+                short friendId = friendIds.get((short) (Math.random() * friendsOfFriends.size()));
                 return innerBefriend(uid, friendId);
             }
         }
 
         //TODO: figure out how to select a nonFriendId with a preference towards those with a similar number of friends
-        TIntSet nonFriendIds = new TIntHashSet(bidirectionalFriendships.keySet());
+        TShortSet nonFriendIds = new TShortHashSet(bidirectionalFriendships.keySet());
         nonFriendIds.removeAll(friendIds);
         nonFriendIds.removeAll(Collections.singleton(uid));
 
@@ -247,87 +247,87 @@ public class WeeklyTraceSetGenerator {
             throw new RuntimeException("user " + uid + " might befriend itself");
         }
 
-        int friendId = chooseKeyFromMapSetWithCorrelationToSizeOfNode(bidirectionalFriendships, nonFriendIds, bidirectionalFriendships.get(uid).size());
+        short friendId = chooseKeyFromMapSetWithCorrelationToSizeOfNode(bidirectionalFriendships, nonFriendIds, (short)bidirectionalFriendships.get(uid).size());
 
         return innerBefriend(uid, friendId);
     }
 
-    static int chooseKeyFromMapSetWithCorrelationToSizeOfNode(TIntObjectMap<TIntSet> mapset, TIntSet candidates, int numFriendsOfUser) {
+    static short chooseKeyFromMapSetWithCorrelationToSizeOfNode(TShortObjectMap<TShortSet> mapset, TShortSet candidates, short numFriendsOfUser) {
         double numFriendsOfUserDouble = (double) numFriendsOfUser;
-        TIntList keys = new TIntArrayList(mapset.size() * 100);
-        for(TIntIterator iter = candidates.iterator(); iter.hasNext(); ) {
-            int key = iter.next();
-            int numEntries = getNumEntries((double) mapset.get(key).size(), numFriendsOfUserDouble);
+        TShortList keys = new TShortArrayList(mapset.size() * 100);
+        for(TShortIterator iter = candidates.iterator(); iter.hasNext(); ) {
+            short key = iter.next();
+            short numEntries = getNumEntries((double) mapset.get(key).size(), numFriendsOfUserDouble);
             keys.addAll(nCopies(numEntries, key)); //this is intentional: we want numEntries copies of key in there
         }
 
-        return keys.get((int) (Math.random() * keys.size()));
+        return keys.get((short) (Math.random() * keys.size()));
     }
 
-    static int getNumEntries(double thisSize, double comparisonSize) {
+    static short getNumEntries(double thisSize, double comparisonSize) {
         double lesser  = Math.min(thisSize, comparisonSize);
         double greater = Math.max(thisSize, comparisonSize);
         double similarity = Math.pow(lesser/greater, 2);
-        return 1 + (int) (9 * similarity);
+        return (short)(1 + (9 * similarity));
     }
 
-    private static FullTraceAction innerBefriend(int oneUid, int theOtherUid) {
-        int val1 = Math.min(oneUid, theOtherUid);
-        int val2 = Math.max(oneUid, theOtherUid);
+    private static FullTraceAction innerBefriend(short oneUid, short theOtherUid) {
+        short val1 = (short)Math.min(oneUid, theOtherUid);
+        short val2 = (short)Math.max(oneUid, theOtherUid);
         bidirectionalFriendships.get(val1).add(val2);
         bidirectionalFriendships.get(val2).add(val1);
         return new FullTraceAction(BEFRIEND, val1, val2);
     }
 
     static FullTraceAction cutF() {
-        List<Integer> friendship = chooseKeyValuePairFromMapSetUniformly(bidirectionalFriendships);
-        int val1 = Math.min(friendship.get(0), friendship.get(1));
-        int val2 = Math.max(friendship.get(0), friendship.get(1));
+        List<Short> friendship = chooseKeyValuePairFromMapSetUniformly(bidirectionalFriendships);
+        short val1 = (short)Math.min(friendship.get(0), friendship.get(1));
+        short val2 = (short)Math.max(friendship.get(0), friendship.get(1));
         bidirectionalFriendships.get(val1).remove(val2);
         bidirectionalFriendships.get(val2).remove(val1);
 
         return new FullTraceAction(UNFRIEND, val1, val2);
     }
 
-    static FullTraceAction addP(TIntSet pids) {
-        int newPid = ++maxPid;
+    static FullTraceAction addP(TShortSet pids) {
+        short newPid = ++maxPid;
         pids.add(newPid);
         return new FullTraceAction(ADD_PARTITION, newPid);
     }
 
-    static FullTraceAction cutP(TIntSet pids) {
-        int partitionToRemove = TroveUtils.getRandomElement(pids);
+    static FullTraceAction cutP(TShortSet pids) {
+        short partitionToRemove = TroveUtils.getRandomElement(pids);
         pids.remove(partitionToRemove);
 
         return new FullTraceAction(REMOVE_PARTITION, partitionToRemove);
     }
 
     private static class BaseTraces {
-        private final Map<Integer, BaseTrace> minNumReplicasToHardStartTracesMap;
-        private final Map<Integer, BaseTrace> minNumReplicasToSoftStartTracesMap;
+        private final TShortObjectMap<BaseTrace> minNumReplicasToHardStartTracesMap;
+        private final TShortObjectMap<BaseTrace> minNumReplicasToSoftStartTracesMap;
 
-        public BaseTraces(Map<Integer, BaseTrace> minNumReplicasToHardStartTracesMap, Map<Integer, BaseTrace> minNumReplicasToSoftStartTracesMap) {
+        public BaseTraces(TShortObjectMap<BaseTrace> minNumReplicasToHardStartTracesMap, TShortObjectMap<BaseTrace> minNumReplicasToSoftStartTracesMap) {
             this.minNumReplicasToHardStartTracesMap = minNumReplicasToHardStartTracesMap;
             this.minNumReplicasToSoftStartTracesMap = minNumReplicasToSoftStartTracesMap;
         }
 
-        public Map<Integer, BaseTrace> getMinNumReplicasToHardStartTracesMap() {
+        public TShortObjectMap<BaseTrace> getMinNumReplicasToHardStartTracesMap() {
             return minNumReplicasToHardStartTracesMap;
         }
 
-        public Map<Integer, BaseTrace> getMinNumReplicasToSoftStartTracesMap() {
+        public TShortObjectMap<BaseTrace> getMinNumReplicasToSoftStartTracesMap() {
             return minNumReplicasToSoftStartTracesMap;
         }
     }
 
-    private static TIntObjectMap<TIntSet> getSoftStartPartitions(TIntSet pids, String metisCommand, String metisTempDir) {
-        TIntIntMap softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, bidirectionalFriendships, new TIntHashSet(pids));
-        TIntObjectMap<TIntSet> softStartPartitions = new TIntObjectHashMap<>(pids.size()+1);
-        for(TIntIterator iter = pids.iterator(); iter.hasNext(); ) {
-            softStartPartitions.put(iter.next(), new TIntHashSet());
+    private static TShortObjectMap<TShortSet> getSoftStartPartitions(TShortSet pids, String metisCommand, String metisTempDir) {
+        TShortShortMap softStartUidToPidMap = MetisRepartitioner.partition(metisCommand, metisTempDir, bidirectionalFriendships, new TShortHashSet(pids));
+        TShortObjectMap<TShortSet> softStartPartitions = new TShortObjectHashMap<>(pids.size()+1);
+        for(TShortIterator iter = pids.iterator(); iter.hasNext(); ) {
+            softStartPartitions.put(iter.next(), new TShortHashSet());
         }
-        for(int uid : softStartUidToPidMap.keys()) {
-            int pid = softStartUidToPidMap.get(uid);
+        for(short uid : softStartUidToPidMap.keys()) {
+            short pid = softStartUidToPidMap.get(uid);
             softStartPartitions.get(pid).add(uid);
         }
         return softStartPartitions;

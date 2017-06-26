@@ -1,7 +1,7 @@
 package io.vntr.trace;
 
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.set.TShortSet;
 
 import java.util.List;
 
@@ -9,35 +9,35 @@ import java.util.List;
  * Created by robertlindquist on 10/20/16.
  */
 public class TraceWithPartitions extends BaseTrace {
-    private TIntObjectMap<TIntSet> partitions;
+    private TShortObjectMap<TShortSet> partitions;
 
     public TraceWithPartitions() {
     }
 
-    public TraceWithPartitions(TIntObjectMap<TIntSet> partitions) {
+    public TraceWithPartitions(TShortObjectMap<TShortSet> partitions) {
         this.partitions = partitions;
     }
 
-    public TraceWithPartitions(TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, List<FullTraceAction> actions) {
+    public TraceWithPartitions(TShortObjectMap<TShortSet> friendships, TShortObjectMap<TShortSet> partitions, List<FullTraceAction> actions) {
         super(friendships, null, actions);
         this.partitions = partitions;
     }
 
     @Override
-    public TIntSet getPids() {
+    public TShortSet getPids() {
         return partitions.keySet();
     }
 
     @Override
-    public void setPids(TIntSet pids) {
+    public void setPids(TShortSet pids) {
         throw new RuntimeException("setPids not allowed in TraceWithPartitions");
     }
 
-    public TIntObjectMap<TIntSet> getPartitions() {
+    public TShortObjectMap<TShortSet> getPartitions() {
         return partitions;
     }
 
-    public void setPartitions(TIntObjectMap<TIntSet> partitions) {
+    public void setPartitions(TShortObjectMap<TShortSet> partitions) {
         this.partitions = partitions;
     }
 }

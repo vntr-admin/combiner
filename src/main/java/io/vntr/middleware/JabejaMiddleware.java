@@ -1,8 +1,8 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.set.TIntSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.set.TShortSet;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.JRepartitioner;
@@ -17,11 +17,11 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     private final float alpha;
     private final float initialT;
     private final float deltaT;
-    private final int k;
+    private final short k;
     private final int numRestarts;
     private boolean incremental = false;
 
-    public JabejaMiddleware(float alpha, float initialT, float deltaT, int k, int numRestarts, NoRepManager manager) {
+    public JabejaMiddleware(float alpha, float initialT, float deltaT, short k, int numRestarts, NoRepManager manager) {
         super(manager);
         this.alpha = alpha;
         this.initialT = initialT;
@@ -30,7 +30,7 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
         this.numRestarts = numRestarts;
     }
 
-    public JabejaMiddleware(float alpha, float initialT, float deltaT, int k, int numRestarts, boolean incremental, NoRepManager manager) {
+    public JabejaMiddleware(float alpha, float initialT, float deltaT, short k, int numRestarts, boolean incremental, NoRepManager manager) {
         super(manager);
         this.alpha = alpha;
         this.initialT = initialT;
@@ -41,11 +41,11 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntSet partition = getManager().getPartition(pid);
+    public void removePartition(short pid) {
+        TShortSet partition = getManager().getPartition(pid);
         getManager().removePartition(pid);
-        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
-            Integer newPid = getRandomElement(getManager().getPids());
+        for(TShortIterator iter = partition.iterator(); iter.hasNext(); ) {
+            Short newPid = getRandomElement(getManager().getPids());
             getManager().moveUser(iter.next(), newPid, true);
         }
     }
@@ -63,11 +63,11 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
         }
     }
 
-    void physicallyMigrate(TIntIntMap logicalPids) {
-        for(Integer uid : logicalPids.keys()) {
+    void physicallyMigrate(TShortShortMap logicalPids) {
+        for(short uid : logicalPids.keys()) {
             User user = getManager().getUser(uid);
-            Integer newPid = logicalPids.get(uid);
-            if(!user.getBasePid().equals(newPid)) {
+            short newPid = logicalPids.get(uid);
+            if(user.getBasePid() != newPid) {
                 getManager().moveUser(uid, newPid, false);
             }
         }

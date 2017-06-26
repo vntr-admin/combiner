@@ -1,41 +1,41 @@
 package io.vntr;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 
 /**
  * Created by robertlindquist on 4/21/17.
  */
 public class RepUser extends User {
 
-    private TIntSet replicaPids;
+    private TShortSet replicaPids;
 
-    public RepUser(int id, int basePid) {
+    public RepUser(short id, short basePid) {
         super(id, basePid);
-        this.replicaPids = new TIntHashSet();
+        this.replicaPids = new TShortHashSet();
     }
 
-    public TIntSet getReplicaPids() {
+    public TShortSet getReplicaPids() {
         return replicaPids;
     }
 
-    public void addReplicaPids(Integer replicaPid) {
+    public void addReplicaPids(short replicaPid) {
         this.replicaPids.add(replicaPid);
     }
 
-    public void removeReplicaPid(Integer replicaPid) {
+    public void removeReplicaPid(short replicaPid) {
         this.replicaPids.remove(replicaPid);
     }
 
-    public void addReplicaPids(TIntSet replicaPid) {
+    public void addReplicaPids(TShortSet replicaPid) {
         this.replicaPids.addAll(replicaPid);
     }
 
     public RepUser dupe() {
         RepUser user = new RepUser(getId(), getBasePid());
         user.addReplicaPids(replicaPids);
-        for(TIntIterator iter = getFriendIDs().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = getFriendIDs().iterator(); iter.hasNext(); ) {
             user.befriend(iter.next());
         }
 

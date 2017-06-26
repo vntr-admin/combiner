@@ -30,10 +30,10 @@ public class TraceAction {
     }
 
     private final ACTION action;
-    private int val1 = -1;
-    private int val2 = -1;
+    private short val1 = -1;
+    private short val2 = -1;
 
-    public TraceAction(ACTION action, int val1, int val2) {
+    public TraceAction(ACTION action, short val1, short val2) {
         this.action = action;
         this.val1 = val1;
         this.val2 = val2;
@@ -43,11 +43,11 @@ public class TraceAction {
         return action;
     }
 
-    public int getVal1() {
+    public short getVal1() {
         return val1;
     }
 
-    public int getVal2() {
+    public short getVal2() {
         return val2;
     }
 
@@ -62,8 +62,8 @@ public class TraceAction {
         try {
             String[] chunks = str.split(" ");
             ACTION TRACEAction = ACTION.fromName(chunks[0]);
-            int val1 = Integer.parseInt(chunks[1].trim());
-            int val2 = Integer.parseInt(chunks[2].trim());
+            short val1 = Short.parseShort(chunks[1].trim());
+            short val2 = Short.parseShort(chunks[2].trim());
             return new TraceAction(TRACEAction, val1, val2);
         } catch(Exception e) {
             return null;

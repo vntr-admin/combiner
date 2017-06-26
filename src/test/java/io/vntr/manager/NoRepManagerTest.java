@@ -1,13 +1,12 @@
 package io.vntr.manager;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import io.vntr.utils.InitUtils;
 import io.vntr.User;
-import io.vntr.utils.TroveUtils;
 import org.junit.Test;
 
 import static io.vntr.utils.TroveUtils.*;
@@ -20,22 +19,22 @@ public class NoRepManagerTest {
 
     @Test
     public void testMoveUser() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        Integer uidToMove = 7;
-        Integer uidToUnfriend = 8;
-        Integer destinationPid = 3;
+        short uidToMove = 7;
+        short uidToUnfriend = 8;
+        short destinationPid = 3;
 
         //7 and 8 are not friends
         friendships.get(uidToMove).remove(uidToUnfriend);
@@ -43,18 +42,18 @@ public class NoRepManagerTest {
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
-        for(Integer pid : partitions.keys()) {
-            for(TIntIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
+        for(short pid : partitions.keys()) {
+            for(TShortIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
                 assertEquals(pid, manager.getUser(iter.next()).getBasePid());
             }
         }
 
         manager.moveUser(uidToMove, destinationPid, false);
 
-        for(Integer pid : partitions.keys()) {
-            for(TIntIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
-                int uid = iter.next();
-                int basePid = manager.getUser(uid).getBasePid();
+        for(short pid : partitions.keys()) {
+            for(TShortIterator iter = partitions.get((pid)).iterator(); iter.hasNext(); ) {
+                short uid = iter.next();
+                short basePid = manager.getUser(uid).getBasePid();
                 if(uid == uidToMove) {
                     assertTrue(destinationPid == basePid);
                 }
@@ -67,112 +66,112 @@ public class NoRepManagerTest {
 
     @Test
     public void testAddUser() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
-        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1, initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2, initSet( 6,  7,  8,  9));
+        partitions.put((short)3, initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
-        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
 
         //Automatic assignment of user id
-        Integer newUid = manager.addUser();
-        TIntSet expectedUids = new TIntHashSet(friendships.keySet());
+        short newUid = manager.addUser();
+        TShortSet expectedUids = new TShortHashSet(friendships.keySet());
         expectedUids.add(newUid);
-        assertEquals(new TIntHashSet(manager.getUids()), expectedUids);
+        assertEquals(new TShortHashSet(manager.getUids()), expectedUids);
         assertTrue(manager.getUser(newUid).getFriendIDs().isEmpty());
 
         assertTrue(manager.getPartition(manager.getUser(newUid).getBasePid()).contains(newUid));
 
-        for(Integer originalUid : friendships.keys()) {
+        for(short originalUid : friendships.keys()) {
             assertEquals(manager.getUser(originalUid).getFriendIDs(), bidirectionalFriendships.get(originalUid));
         }
 
 
         //Manual specification of user id
-        Integer uidToAddManually = TroveUtils.max(manager.getUids())+1;
+        short uidToAddManually = (short)(max(manager.getUids())+1);
         manager.addUser(new User(uidToAddManually));
         expectedUids.add(uidToAddManually);
-        assertEquals(new TIntHashSet(manager.getUids()), expectedUids);
+        assertEquals(new TShortHashSet(manager.getUids()), expectedUids);
         assertTrue(manager.getUser(uidToAddManually).getFriendIDs().isEmpty());
 
         assertTrue(manager.getPartition(manager.getUser(uidToAddManually).getBasePid()).contains(uidToAddManually));
 
-        for(Integer originalUid : friendships.keys()) {
+        for(short originalUid : friendships.keys()) {
             assertEquals(manager.getUser(originalUid).getFriendIDs(), bidirectionalFriendships.get(originalUid));
         }
     }
 
     @Test
     public void testRemoveUser() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
-        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1, initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2, initSet( 6,  7,  8,  9));
+        partitions.put((short)3, initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        Integer uidToRemove = 7;
+        short uidToRemove = 7;
 
-        friendships.get(uidToRemove).remove(8);
-        friendships.get(8).remove(uidToRemove);
+        friendships.get(uidToRemove).remove((short)8);
+        friendships.get((short)8).remove(uidToRemove);
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
-        TIntObjectMap<TIntSet> bidirectionalFriendships = TroveUtils.generateBidirectionalFriendshipSet(friendships);
+        TShortObjectMap<TShortSet> bidirectionalFriendships = generateBidirectionalFriendshipSet(friendships);
 
         assertEquals(bidirectionalFriendships, manager.getFriendships());
 
-        Integer pidForUserToRemove = manager.getUser(uidToRemove).getBasePid();
+        short pidForUserToRemove = manager.getUser(uidToRemove).getBasePid();
         manager.removeUser(uidToRemove);
 
-        for(Integer pid : partitions.keys()) {
-            if(pid.equals(pidForUserToRemove)) {
-                TIntSet expectedUsers = new TIntHashSet(partitions.get(pidForUserToRemove));
+        for(short pid : partitions.keys()) {
+            if(pid == (pidForUserToRemove)) {
+                TShortSet expectedUsers = new TShortHashSet(partitions.get(pidForUserToRemove));
                 expectedUsers.remove(uidToRemove);
-                assertEquals(new TIntHashSet(manager.getPartition(pidForUserToRemove)), expectedUsers);
+                assertEquals(new TShortHashSet(manager.getPartition(pidForUserToRemove)), expectedUsers);
             }
             else {
-                assertEquals(new TIntHashSet(manager.getPartition(pid)), partitions.get(pid));
+                assertEquals(new TShortHashSet(manager.getPartition(pid)), partitions.get(pid));
             }
         }
 
-        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+        for(TShortIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
             assertFalse(manager.getUser(iter.next()).getFriendIDs().contains(uidToRemove));
         }
     }
 
     @Test
     public void testBefriend() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
-        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1, initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2, initSet( 6,  7,  8,  9));
+        partitions.put((short)3, initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        Integer notFriend1Id = 7;
-        Integer notFriend2Id = 8;
+        short notFriend1Id = 7;
+        short notFriend2Id = 8;
 
         //7 and 8 are not friends
         friendships.get(notFriend1Id).remove(notFriend2Id);
@@ -180,10 +179,10 @@ public class NoRepManagerTest {
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
-        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
-            int uid1 = iter.next();
-            for(TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
-                int uid2 = iter2.next();
+        for(TShortIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            short uid1 = iter.next();
+            for(TShortIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                short uid2 = iter2.next();
                 if(uid1 == uid2) {
                     continue;
                 }
@@ -197,10 +196,10 @@ public class NoRepManagerTest {
         }
         manager.befriend(notFriend1Id, notFriend2Id);
 
-        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
-            int uid1 = iter.next();
-            for (TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
-                int uid2 = iter2.next();
+        for(TShortIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            short uid1 = iter.next();
+            for (TShortIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                short uid2 = iter2.next();
                 if(uid1 == uid2) {
                     continue;
                 }
@@ -211,28 +210,28 @@ public class NoRepManagerTest {
 
     @Test
     public void testUnfriend() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
-        Integer notFriend1Id = 7;
-        Integer notFriend2Id = 8;
+        short notFriend1Id = 7;
+        short notFriend2Id = 8;
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
-        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
-            int uid1 = iter.next();
-            for (TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
-                int uid2 = iter2.next();
+        for(TShortIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            short uid1 = iter.next();
+            for(TShortIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                short uid2 = iter2.next();
                 if(uid1 == uid2) {
                     continue;
                 }
@@ -242,10 +241,10 @@ public class NoRepManagerTest {
 
         manager.unfriend(notFriend1Id, notFriend2Id);
 
-        for(TIntIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
-            int uid1 = iter.next();
-            for (TIntIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
-                int uid2 = iter2.next();
+        for(TShortIterator iter = manager.getUids().iterator(); iter.hasNext(); ) {
+            short uid1 = iter.next();
+            for(TShortIterator iter2 = manager.getUids().iterator(); iter2.hasNext(); ) {
+                short uid2 = iter2.next();
                 if(uid1 == uid2) {
                     continue;
                 }
@@ -261,15 +260,15 @@ public class NoRepManagerTest {
 
     @Test
     public void testAddPartition() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
-        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1, initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2, initSet( 6,  7,  8,  9));
+        partitions.put((short)3, initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
@@ -278,14 +277,14 @@ public class NoRepManagerTest {
 
         assertEquals(manager.getPids(), partitions.keySet());
 
-        Integer newPid = manager.addPartition();
+        short newPid = manager.addPartition();
 
-        TIntSet expectedPids = new TIntHashSet(partitions.keySet());
+        TShortSet expectedPids = new TShortHashSet(partitions.keySet());
         expectedPids.add(newPid);
 
         assertEquals(manager.getPids(), expectedPids);
 
-        Integer pidToAdd = 1;
+        short pidToAdd = 1;
         for(; pidToAdd < 10; pidToAdd++) {
             if(!manager.getPids().contains(pidToAdd)) {
                 break;
@@ -299,15 +298,15 @@ public class NoRepManagerTest {
 
     @Test
     public void testRemovePartition() {
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, TroveUtils.initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, TroveUtils.initSet( 6,  7,  8,  9));
-        partitions.put(3, TroveUtils.initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1, initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2, initSet( 6,  7,  8,  9));
+        partitions.put((short)3, initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
@@ -316,51 +315,51 @@ public class NoRepManagerTest {
 
         assertEquals(manager.getPids(), partitions.keySet());
 
-        Integer pidToRemove = 2;
+        short pidToRemove = 2;
 
         manager.removePartition(pidToRemove);
 
-        assertEquals(TroveUtils.initSet(1, 3), manager.getPids());
+        assertEquals(initSet(1, 3), manager.getPids());
         assertEquals(manager.getUids(), friendships.keySet());
-        assertEquals(manager.getPartition(1), partitions.get(1));
-        assertEquals(manager.getPartition(3), partitions.get(3));
+        assertEquals(manager.getPartition((short)1), partitions.get((short)1));
+        assertEquals(manager.getPartition((short)3), partitions.get((short)3));
 
         //Note that manager.removePartition does not migrate!  It is the middleware that does this.
-        for(TIntIterator iter = partitions.get(pidToRemove).iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            Integer userSuppliedPid = manager.getUser(uid).getBasePid();
+        for(TShortIterator iter = partitions.get(pidToRemove).iterator(); iter.hasNext(); ) {
+            short uid = iter.next();
+            short userSuppliedPid = manager.getUser(uid).getBasePid();
             assertEquals(userSuppliedPid, pidToRemove);
-            assertFalse(manager.getPartition(1).contains(uid) || manager.getPartition(3).contains(uid));
+            assertFalse(manager.getPartition((short)1).contains(uid) || manager.getPartition((short)3).contains(uid));
         }
     }
 
     @Test
     public void testGetEdgeCut() {
         float alpha = 1.1f;
-        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
-        partitions.put(1, initSet( 1,  2,  3,  4, 5));
-        partitions.put(2, initSet( 6,  7,  8,  9));
-        partitions.put(3, initSet(10, 11, 12, 13));
+        TShortObjectMap<TShortSet> partitions = new TShortObjectHashMap<>();
+        partitions.put((short)1,  initSet( 1,  2,  3,  4, 5));
+        partitions.put((short)2,  initSet( 6,  7,  8,  9));
+        partitions.put((short)3,  initSet(10, 11, 12, 13));
 
-        TIntObjectMap<TIntSet> friendships = new TIntObjectHashMap<>();
-        for(Integer uid1 = 1; uid1 <= 13; uid1++) {
-            friendships.put(uid1, new TIntHashSet());
-            for(Integer uid2 = 1; uid2 < uid1; uid2++) {
+        TShortObjectMap<TShortSet> friendships = new TShortObjectHashMap<>();
+        for(short uid1 = 1; uid1 <= 13; uid1++) {
+            friendships.put(uid1, new TShortHashSet());
+            for(short uid2 = 1; uid2 < uid1; uid2++) {
                 friendships.get(uid1).add(uid2);
             }
         }
 
         NoRepManager manager = InitUtils.initNoRepManager(0, true, partitions, friendships);
 
-        Integer expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
-        assertEquals(manager.getEdgeCut(), expectedCut);
+        int expectedCut = 56; //20 friendships between p1 and p2, same between p1 and p3, and 16 friendships between p2 and p3
+        assertEquals(manager.getEdgeCut(), (Integer) expectedCut);
 
         //Everybody hates 13
-        for(Integer uid = 1; uid <= 12; uid++) {
-            manager.unfriend(uid, 13);
+        for(short uid = 1; uid <= 12; uid++) {
+            manager.unfriend(uid, (short)13);
         }
 
         expectedCut = 47; //20 between p1 and p2, 15 between p1 and p3, and 12 between p2 and p3
-        assertEquals(manager.getEdgeCut(), expectedCut);
+        assertEquals(manager.getEdgeCut(), (Integer) expectedCut);
     }
 }

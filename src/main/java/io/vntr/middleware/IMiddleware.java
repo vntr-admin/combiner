@@ -4,21 +4,21 @@ import io.vntr.User;
 
 public interface IMiddleware {
 
-    int addUser();
+    short addUser();
 
     void addUser(User user);
 
-    void removeUser(Integer uid);
+    void removeUser(short uid);
 
-    void befriend(Integer smallerUid, Integer largerUid);
+    void befriend(short smallerUid, short largerUid);
 
-    void unfriend(Integer smallerUid, Integer largerUid);
+    void unfriend(short smallerUid, short largerUid);
 
-    int addPartition();
+    short addPartition();
 
-    void addPartition(Integer pid);
+    void addPartition(short pid);
 
-    void removePartition(Integer pid);
+    void removePartition(short pid);
 
     void broadcastDowntime();
 }

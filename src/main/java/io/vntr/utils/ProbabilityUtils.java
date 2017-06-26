@@ -1,13 +1,13 @@
 package io.vntr.utils;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+import gnu.trove.iterator.TShortIterator;
+import gnu.trove.list.TShortList;
+import gnu.trove.list.array.TShortArrayList;
+import gnu.trove.map.TShortShortMap;
+import gnu.trove.map.TShortObjectMap;
+import gnu.trove.map.hash.TShortObjectHashMap;
+import gnu.trove.set.TShortSet;
+import gnu.trove.set.hash.TShortHashSet;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 
@@ -149,19 +149,19 @@ public class ProbabilityUtils
             1608847.201841079
     };
 
-    public static double calculateExpectedQueryDelay(TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions) {
-        TIntIntMap uidToPidMap = TroveUtils.getUToMasterMap(partitions);
-        TIntObjectMap<TIntSet> uidToFriendPidsMap = new TIntObjectHashMap<>(friendships.size()+1);
-        for(int uid : friendships.keys()) {
-            uidToFriendPidsMap.put(uid, new TIntHashSet());
+    public static double calculateExpectedQueryDelay(TShortObjectMap<TShortSet> friendships, TShortObjectMap<TShortSet> partitions) {
+        TShortShortMap uidToPidMap = TroveUtils.getUToMasterMap(partitions);
+        TShortObjectMap<TShortSet> uidToFriendPidsMap = new TShortObjectHashMap<>(friendships.size()+1);
+        for(short uid : friendships.keys()) {
+            uidToFriendPidsMap.put(uid, new TShortHashSet());
         }
 
-        for(int uid : friendships.keys()) {
-            for(TIntIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
-                int friendId = iter.next();
+        for(short uid : friendships.keys()) {
+            for(TShortIterator iter = friendships.get(uid).iterator(); iter.hasNext(); ) {
+                short friendId = iter.next();
                 if(uid < friendId) {
-                    int pid = uidToPidMap.get(uid);
-                    int friendPid = uidToPidMap.get(friendId);
+                    short pid = uidToPidMap.get(uid);
+                    short friendPid = uidToPidMap.get(friendId);
                     uidToFriendPidsMap.get(uid).add(friendPid);
                     uidToFriendPidsMap.get(friendId).add(pid);
                 }
@@ -169,7 +169,7 @@ public class ProbabilityUtils
         }
 
         double sum = 0;
-        for(int uid : friendships.keys()) {
+        for(short uid : friendships.keys()) {
             double expectedDelay = LND_12_08441436510468D__0_44631395858726847[uidToFriendPidsMap.get(uid).size()];
             sum += expectedDelay;
         }
@@ -177,20 +177,20 @@ public class ProbabilityUtils
         return sum / friendships.size();
     }
 
-	public static double calculateAssortivityCoefficient(TIntObjectMap<TIntSet> bidirectionalFriendships) {
+	public static double calculateAssortivityCoefficient(TShortObjectMap<TShortSet> bidirectionalFriendships) {
 		//We calculate "the Pearson correlation coefficient of the degrees at either ends of an edge"
         //Newman, M. E. (2002). Assortative mixing in networks. Physical review letters, 89(20), 208701.
         //This is also called "Degree-Centrality Assortativity"
         int edgeCount = 0;
-        for(TIntSet friends : bidirectionalFriendships.valueCollection()) {
+        for(TShortSet friends : bidirectionalFriendships.valueCollection()) {
             edgeCount += friends.size();
         }
         double[] x = new double[edgeCount];
         double[] y = new double[edgeCount];
         int i=0;
-        for(int uid1 : bidirectionalFriendships.keys()) {
-            for(TIntIterator iter = bidirectionalFriendships.get(uid1).iterator(); iter.hasNext(); ) {
-                int uid2 = iter.next();
+        for(short uid1 : bidirectionalFriendships.keys()) {
+            for(TShortIterator iter = bidirectionalFriendships.get(uid1).iterator(); iter.hasNext(); ) {
+                short uid2 = iter.next();
                 x[i] = bidirectionalFriendships.get(uid1).size();
                 y[i] = bidirectionalFriendships.get(uid2).size();
                 i++;
@@ -200,9 +200,9 @@ public class ProbabilityUtils
         return new PearsonsCorrelation().correlation(x, y);
 	}
 
-	public static int chooseKeyFromMapSetInProportionToSetSize(TIntObjectMap<TIntSet> mapset) {
-        TIntList keys = new TIntArrayList(mapset.size() * 100);
-        for(int key : mapset.keys()) {
+	public static short chooseKeyFromMapSetInProportionToSetSize(TShortObjectMap<TShortSet> mapset) {
+        TShortList keys = new TShortArrayList(mapset.size() * 100);
+        for(short key : mapset.keys()) {
             //this is intentional: we want mapset.get(key).size() copies of key in there
             keys.addAll(nCopies(mapset.get(key).size(), key));
         }
@@ -210,9 +210,9 @@ public class ProbabilityUtils
         return keys.get((int)(Math.random() * keys.size()));
     }
 
-    public static List<Integer> chooseKeyValuePairFromMapSetUniformly(TIntObjectMap<TIntSet> mapset) {
-        int key = chooseKeyFromMapSetInProportionToSetSize(mapset);
-        int value = TroveUtils.getRandomElement(mapset.get(key));
+    public static List<Short> chooseKeyValuePairFromMapSetUniformly(TShortObjectMap<TShortSet> mapset) {
+        short key = chooseKeyFromMapSetInProportionToSetSize(mapset);
+        short value = TroveUtils.getRandomElement(mapset.get(key));
         return Arrays.asList(key, value);
     }
 }
