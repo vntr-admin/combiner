@@ -20,24 +20,25 @@ public class HMigrator {
         TIntIntMap userCounts = getUserCounts(partitions);
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         NavigableSet<Target> preferredTargets = getPreferredTargets(pid, uidToPidMap, partitions, friendships);
-        TIntIntMap actualTargets = new TIntIntHashMap(preferredTargets.size()+1);
+        TIntIntMap strategy = new TIntIntHashMap(preferredTargets.size()+1);
 
         for(Iterator<Target> iter = preferredTargets.descendingIterator(); iter.hasNext(); ) {
             Target target = iter.next();
             if(!isOverloaded(target.pid, userCounts, gamma, uidToPidMap.size())) {
-                actualTargets.put(target.uid, target.pid);
+                strategy.put(target.uid, target.pid);
                 userCounts.put(target.pid, userCounts.get(target.pid) + 1);
                 iter.remove();
             }
         }
 
+        WaterFillingPriorityQueue priorityQueue = new WaterFillingPriorityQueue(partitions, new TIntIntHashMap(), pid);
+
         for(Target target : preferredTargets) {
-            Integer newPid = getPartitionWithFewestUsers(pid, userCounts);
-            actualTargets.put(target.uid, newPid);
-            userCounts.put(newPid, userCounts.get(newPid) + 1);
+            int newPid = priorityQueue.getNextPid();
+            strategy.put(target.uid, newPid);
         }
 
-        return actualTargets;
+        return strategy;
     }
 
     static boolean isOverloaded(Integer pid, TIntIntMap userCounts, float gamma, int numUsers) {
@@ -70,22 +71,6 @@ public class HMigrator {
             preferredTargets.add(target);
         }
         return preferredTargets;
-    }
-
-    static Integer getPartitionWithFewestUsers(Integer pid, TIntIntMap userCounts) {
-        int minUsers = Integer.MAX_VALUE;
-        Integer minPartition = null;
-        for(Integer newPid : userCounts.keys()) {
-            if(newPid.equals(pid)) {
-                continue;
-            }
-            int numUsers = userCounts.get(newPid);
-            if(numUsers < minUsers) {
-                minPartition = newPid;
-                minUsers = numUsers;
-            }
-        }
-        return minPartition;
     }
 
 }

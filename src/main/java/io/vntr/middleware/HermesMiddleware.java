@@ -31,15 +31,6 @@ public class HermesMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
-        for(Integer uid : targets.keys()) {
-            manager.moveUser(uid, targets.get(uid), true);
-        }
-        manager.removePartition(pid);
-    }
-
-    @Override
     public void broadcastDowntime() {
         //Hermes only repartitions upon node addition or node weight change (the latter of which we do not consider)
     }

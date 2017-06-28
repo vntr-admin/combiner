@@ -17,8 +17,6 @@ public class NoRepManager {
     private TIntObjectMap<User> uMap;
     private TIntObjectMap<TIntSet> pMap;
 
-    private final boolean placeNewUserRandomly;
-
     private long migrationTally;
     private long logicalMigrationTally;
     private final double logicalMigrationRatio;
@@ -26,8 +24,7 @@ public class NoRepManager {
     private int nextPid = 1;
     private int nextUid = 1;
 
-    public NoRepManager(double logicalMigrationRatio, boolean placeNewUserRandomly) {
-        this.placeNewUserRandomly = placeNewUserRandomly;
+    public NoRepManager(double logicalMigrationRatio) {
         this.logicalMigrationRatio = logicalMigrationRatio;
         uMap = new TIntObjectHashMap<>();
         pMap = new TIntObjectHashMap<>();
@@ -82,20 +79,15 @@ public class NoRepManager {
     }
 
     Integer getInitialPid() {
-        if(placeNewUserRandomly) {
-            return getRandomElement(pMap.keySet());
-        }
-        else {
-            int minUsers = Integer.MAX_VALUE;
-            Integer minPartition = null;
-            for(int pid : pMap.keys()) {
-                if(pMap.get(pid).size() < minUsers) {
-                    minUsers = pMap.get(pid).size();
-                    minPartition = pid;
-                }
+        int minUsers = Integer.MAX_VALUE;
+        Integer minPartition = null;
+        for(int pid : pMap.keys()) {
+            if(pMap.get(pid).size() < minUsers) {
+                minUsers = pMap.get(pid).size();
+                minPartition = pid;
             }
-            return minPartition;
         }
+        return minPartition;
     }
 
     public Integer addPartition() {

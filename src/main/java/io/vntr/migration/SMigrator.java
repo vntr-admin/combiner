@@ -18,7 +18,7 @@ import static io.vntr.utils.TroveUtils.*;
 
 public class SMigrator {
 
-    public static TIntIntMap getUserMigrationStrategy(Integer pid, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, boolean scoreTargets) {
+    public static TIntIntMap getUserMigrationStrategy(Integer pid, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas) {
         //Reallocate the N/M master nodes hosted in that server to the remaining M-1 servers equally.
         //Decide the server in which a slave replica is promoted to master, based on the ratio of its neighbors that already exist on that server.
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
@@ -32,41 +32,48 @@ public class SMigrator {
         TIntIntMap remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(pid), uidToPidMap.size(), pidToMasterCounts);
         TIntIntMap strategy = new TIntIntHashMap(masterIds.size() + 1);
 
-        if(scoreTargets) {
-            NavigableSet<Target> targets = new TreeSet<>();
-            for(TIntIterator iter = masterIds.iterator(); iter.hasNext(); ) {
-                int uid = iter.next();
-                for(TIntIterator iter2 = uidToReplicasMap.get(uid).iterator(); iter2.hasNext(); ) {
-                    int replicaPid = iter2.next();
-                    float score = scoreReplicaPromotion(friendships.get(uid), partitions.get(replicaPid));
-                    Target target = new Target(uid, replicaPid, pid, score);
-                    targets.add(target);
-                }
-            }
-
-
-            for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
-                Target target = iter.next();
-                int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
-                if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
-                    strategy.put(target.uid, target.pid);
-                    remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
-                }
+        //First, attempt to place vertices on partitions where they have a replica and the partition is not overloaded
+        NavigableSet<Target> targets = new TreeSet<>();
+        for(TIntIterator iter = masterIds.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
+            for(TIntIterator iter2 = uidToReplicasMap.get(uid).iterator(); iter2.hasNext(); ) {
+                int replicaPid = iter2.next();
+                float score = scoreReplicaPromotion(friendships.get(uid), partitions.get(replicaPid));
+                Target target = new Target(uid, replicaPid, pid, score);
+                targets.add(target);
             }
         }
 
+        for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
+            Target target = iter.next();
+            int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
+            if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
+                strategy.put(target.uid, target.pid);
+                remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
+            }
+        }
+
+        //Second, place remaining users wherever they have a replica
         TIntSet usersYetUnplaced = new TIntHashSet(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
 
         for(TIntIterator iter = usersYetUnplaced.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
-            Integer targetPid = getLeastOverloadedPartitionWhereThisUserHasAReplica(uidToReplicasMap.get(uid), strategy, pidToMasterCounts);
-            if(targetPid != null) {
-                strategy.put(uid, targetPid);
+            TIntSet replicaPids = uidToReplicasMap.get(uid);
+            if(replicaPids.size() > 0) {
+                int newPid = getRandomElement(uidToReplicasMap.get(uid));
+                strategy.put(uid, newPid);
+                iter.remove();
             }
-            else {
-                strategy.put(uid, getLeastOverloadedPartition(strategy, pid, pidToMasterCounts));
-            }
+        }
+
+        //Finally, place remaining users at random (only relevant if minNumReplicas == 0)
+        WaterFillingPriorityQueue priorityQueue = new WaterFillingPriorityQueue(partitions, strategy, pid);
+
+        for(TIntIterator iter = usersYetUnplaced.iterator(); iter.hasNext(); ) {
+            int uid = iter.next();
+            int newPid = priorityQueue.getNextPid();
+            strategy.put(uid, newPid);
         }
 
         return strategy;
@@ -88,29 +95,6 @@ public class SMigrator {
             if(pid.equals(pidToDelete)) {
                 continue;
             }
-            int numMasters = pToMasterCounts.get(pid) + pToStrategyCount.get(pid);
-            if(numMasters < minMasters) {
-                minMasters = numMasters;
-                minPid = pid;
-            }
-        }
-        return minPid;
-    }
-
-    static Integer getLeastOverloadedPartitionWhereThisUserHasAReplica(TIntSet replicaPids, TIntIntMap strategy, TIntIntMap pToMasterCounts) {
-        TIntIntMap pToStrategyCount = new TIntIntHashMap(pToMasterCounts.size()+1);
-        for(Integer pid : pToMasterCounts.keys()) {
-            pToStrategyCount.put(pid, 0);
-        }
-        for(Integer uid1 : strategy.keys()) {
-            int pid = strategy.get(uid1);
-            pToStrategyCount.put(pid, pToStrategyCount.get(pid) + 1);
-        }
-
-        int minMasters = Integer.MAX_VALUE;
-        Integer minPid = null;
-        for(TIntIterator iter = replicaPids.iterator(); iter.hasNext(); ) {
-            int pid = iter.next();
             int numMasters = pToMasterCounts.get(pid) + pToStrategyCount.get(pid);
             if(numMasters < minMasters) {
                 minMasters = numMasters;

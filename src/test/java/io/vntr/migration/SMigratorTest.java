@@ -62,48 +62,6 @@ public class SMigratorTest {
     }
 
     @Test
-    public void testGetLeastOverloadedPartitionWhereThisUserHasAReplica() {
-        TIntIntMap pToMasterCounts = new TIntIntHashMap();
-        pToMasterCounts.put(1, 10);
-        pToMasterCounts.put(2,  7);
-        pToMasterCounts.put(3,  9);
-        pToMasterCounts.put(4, 11);
-        pToMasterCounts.put(5, 13);
-
-        TIntIntMap strategy = new TIntIntHashMap();
-        strategy.put(1,  2);
-        strategy.put(2,  2);
-        strategy.put(3,  2);
-        strategy.put(4,  2);
-        strategy.put(5,  2);
-        strategy.put(6,  2);
-        strategy.put(7,  2);
-        strategy.put(8,  2);
-        strategy.put(9,  2);
-        strategy.put(10, 2);
-        strategy.put(11, 2);
-
-        strategy.put(12, 3);
-        strategy.put(13, 3);
-        strategy.put(14, 3);
-        strategy.put(15, 3);
-        strategy.put(16, 3);
-        strategy.put(17, 3);
-        strategy.put(18, 3);
-
-        strategy.put(19, 4);
-        strategy.put(20, 4);
-        strategy.put(21, 4);
-        strategy.put(22, 4);
-
-        strategy.put(23,  5);
-
-        int expectedResult = 3;
-        int result = SMigrator.getLeastOverloadedPartitionWhereThisUserHasAReplica(initSet(2, 3), strategy, pToMasterCounts);
-        assertTrue(result == expectedResult);
-    }
-
-    @Test
     public void testScoreReplicaPromotion() {
         TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
         partitions.put(1, initSet( 1,  2,  3,  4, 5));

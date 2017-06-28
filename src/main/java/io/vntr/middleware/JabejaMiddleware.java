@@ -41,22 +41,12 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntSet partition = getManager().getPartition(pid);
-        getManager().removePartition(pid);
-        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
-            Integer newPid = getRandomElement(getManager().getPids());
-            getManager().moveUser(iter.next(), newPid, true);
-        }
-    }
-
-    @Override
     public void broadcastDowntime() {
         repartition();
     }
 
     void repartition() {
-        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getManager().getPartitionToUsers(), getManager().getFriendships(), incremental);
+        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getManager().getPartitionToUsers(), getManager().getFriendships(), incremental, false);
         getManager().increaseTallyLogical(noRepResults.getLogicalMoves());
         if(noRepResults.getUidsToPids() != null) {
             physicallyMigrate(noRepResults.getUidsToPids());

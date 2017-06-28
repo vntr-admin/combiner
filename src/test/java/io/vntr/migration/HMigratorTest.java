@@ -137,19 +137,4 @@ public class HMigratorTest {
         assertTrue(p3Targets.contains(new Target(13, 1, 3, 1f)));
     }
 
-    @Test
-    public void testGetPartitionWithFewestUsers() {
-        TIntIntMap userCounts = new TIntIntHashMap();
-        userCounts.put(1, 10);
-        userCounts.put(2, 5);
-        userCounts.put(3, 6);
-        userCounts.put(4, 14);
-        userCounts.put(5, 15);
-
-        assertTrue(HMigrator.getPartitionWithFewestUsers(1, userCounts) == 2);
-        assertTrue(HMigrator.getPartitionWithFewestUsers(2, userCounts) == 3);
-        assertTrue(HMigrator.getPartitionWithFewestUsers(3, userCounts) == 2);
-        assertTrue(HMigrator.getPartitionWithFewestUsers(4, userCounts) == 2);
-        assertTrue(HMigrator.getPartitionWithFewestUsers(5, userCounts) == 2);
-    }
 }

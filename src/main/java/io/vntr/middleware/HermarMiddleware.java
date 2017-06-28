@@ -1,30 +1,22 @@
 package io.vntr.middleware;
 
-import gnu.trove.map.TIntIntMap;
 import io.vntr.User;
 import io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY;
 import io.vntr.befriend.HBefriender;
 import io.vntr.manager.NoRepManager;
-import io.vntr.migration.HMigrator;
-import io.vntr.repartition.HRepartitioner;
-import io.vntr.repartition.NoRepResults;
 
 import static io.vntr.befriend.BEFRIEND_REBALANCE_STRATEGY.*;
 
 /**
  * Created by robertlindquist on 9/19/16.
  */
-public class HermarMiddleware extends AbstractNoRepMiddleware {
+public class HermarMiddleware extends HermesMiddleware {
     private final float gamma;
-    private final int k;
-    private final int maxIterations;
     private NoRepManager manager;
 
     public HermarMiddleware(float gamma, int k, int maxIterations, NoRepManager manager) {
-        super(manager);
+        super(gamma, k, maxIterations, manager);
         this.gamma = gamma;
-        this.k = k;
-        this.maxIterations = maxIterations;
         this.manager = manager;
     }
 
@@ -38,7 +30,7 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         User smallerUser = manager.getUser(smallerUserId);
         User largerUser  = manager.getUser(largerUserId);
 
-        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), getGamma(), manager.getFriendships(), manager.getPartitionToUsers());
+        BEFRIEND_REBALANCE_STRATEGY strategy = HBefriender.determineBestBefriendingRebalanceStrategy(smallerUser.getId(), largerUser.getId(), gamma, manager.getFriendships(), manager.getPartitionToUsers());
 
         if(strategy == SMALL_TO_LARGE) {
             manager.moveUser(smallerUserId, largerUser.getBasePid(), false);
@@ -48,41 +40,4 @@ public class HermarMiddleware extends AbstractNoRepMiddleware {
         }
     }
 
-    @Override
-    public void removePartition(Integer pid) {
-        TIntIntMap targets = HMigrator.migrateOffPartition(pid, gamma, manager.getPartitionToUsers(), manager.getFriendships());
-        for(Integer uid : targets.keys()) {
-            manager.moveUser(uid, targets.get(uid), true);
-        }
-        manager.removePartition(pid);
-        repartition();
-    }
-
-    @Override
-    public void broadcastDowntime() {
-        repartition();
-    }
-
-    public float getGamma() {
-        return gamma;
-    }
-
-    void repartition() {
-        NoRepResults noRepResults = HRepartitioner.repartition(k, maxIterations, gamma, manager.getPartitionToUsers(), manager.getFriendships());
-        int numMoves = noRepResults.getLogicalMoves();
-        if(numMoves > 0) {
-            manager.increaseTallyLogical(numMoves);
-            physicallyMigrate(noRepResults.getUidsToPids());
-        }
-    }
-
-    void physicallyMigrate(TIntIntMap uidsToPids) {
-        for(int uid : uidsToPids.keys()) {
-            int pid = uidsToPids.get(uid);
-            User user = manager.getUser(uid);
-            if(user.getBasePid() != pid) {
-                manager.moveUser(uid, pid, false);
-            }
-        }
-    }
 }

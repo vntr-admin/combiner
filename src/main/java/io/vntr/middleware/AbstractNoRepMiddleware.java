@@ -1,6 +1,7 @@
 package io.vntr.middleware;
 
 import gnu.trove.iterator.TIntIterator;
+import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
@@ -8,6 +9,8 @@ import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.User;
 import io.vntr.manager.NoRepManager;
 import io.vntr.utils.ProbabilityUtils;
+
+import static io.vntr.migration.NoRepWaterFillingMigrator.migrateOffPartition;
 
 /**
  * Created by robertlindquist on 4/27/17.
@@ -56,6 +59,21 @@ public abstract class AbstractNoRepMiddleware implements IMiddlewareAnalyzer {
     @Override
     public void addPartition(Integer pid) {
         manager.addPartition(pid);
+    }
+
+    @Override
+    public void removePartition(Integer pid) {
+        TIntIntMap strategy = migrateOffPartition(pid, getPartitionToUserMap());
+        getManager().removePartition(pid);
+        for(int uid : strategy.keys()) {
+            int newPid = strategy.get(uid);
+            getManager().moveUser(uid, newPid, true);
+        }
+    }
+
+    @Override
+    public void broadcastDowntime() {
+        //There's nothing to do here
     }
 
     @Override

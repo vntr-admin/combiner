@@ -17,7 +17,7 @@ import static io.vntr.utils.TroveUtils.*;
  */
 public class JRepartitioner {
 
-    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, boolean incremental) {
+    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, boolean incremental, boolean earlyTermination) {
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         int bestEdgeCut = getEdgeCut(uidToPidMap, friendships);
         TIntIntMap bestLogicalPids = null;
@@ -30,6 +30,7 @@ public class JRepartitioner {
             state.initUidToPidToFriendCount(logicalPartitions);
 
             for(float t = initialT; t >= 1; t -= deltaT) {
+                int logicalMigrationCountBefore = logicalMigrationCount;
                 int[] randomUserArray = friendships.keys();
                 shuffle(randomUserArray);
                 for(Integer uid : randomUserArray) {
@@ -47,6 +48,9 @@ public class JRepartitioner {
                             logicalMigrationCount += 2;
                         }
                     }
+                }
+                if(earlyTermination && logicalMigrationCount == logicalMigrationCountBefore) {
+                    break;
                 }
             }
 

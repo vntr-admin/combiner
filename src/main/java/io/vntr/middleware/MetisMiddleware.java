@@ -1,12 +1,8 @@
 package io.vntr.middleware;
 
-import gnu.trove.iterator.TIntIterator;
 import gnu.trove.map.TIntIntMap;
-import gnu.trove.set.TIntSet;
 import io.vntr.manager.NoRepManager;
 import io.vntr.repartition.MetisRepartitioner;
-
-import static io.vntr.utils.TroveUtils.getRandomElement;
 
 /**
  * Created by robertlindquist on 12/5/16.
@@ -34,17 +30,6 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
     }
 
     @Override
-    public void removePartition(Integer pid) {
-        TIntSet partition = manager.getPartition(pid);
-        manager.removePartition(pid);
-        for(TIntIterator iter = partition.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            Integer newPid = getRandomElement(manager.getPids());
-            manager.moveUser(uid, newPid, true);
-        }
-    }
-
-    @Override
     public void broadcastDowntime() {
         repartition();
     }
@@ -58,6 +43,5 @@ public class MetisMiddleware extends AbstractNoRepMiddleware {
             }
         }
     }
-
 
 }

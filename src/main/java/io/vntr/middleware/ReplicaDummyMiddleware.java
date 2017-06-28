@@ -6,7 +6,7 @@ import gnu.trove.set.TIntSet;
 import io.vntr.RepUser;
 import io.vntr.manager.RepManager;
 
-import static io.vntr.migration.SMigrator.getUserMigrationStrategy;
+import static io.vntr.migration.RepWaterFillingMigrator.getUserMigrationStrategy;
 import static io.vntr.utils.TroveUtils.*;
 
 /**
@@ -49,7 +49,7 @@ public class ReplicaDummyMiddleware extends AbstractRepMiddleware {
         TIntSet usersInNeedOfNewReplicas = determineUsersWhoWillNeedAnAdditionalReplica(pid);
         
         //Second, determine the migration strategy
-        TIntIntMap migrationStrategy = getUserMigrationStrategy(pid, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap(), false);
+        TIntIntMap migrationStrategy = getUserMigrationStrategy(pid, getManager().getFriendships(), getManager().getPartitionToUserMap(), getManager().getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer uid : migrationStrategy.keys()) {

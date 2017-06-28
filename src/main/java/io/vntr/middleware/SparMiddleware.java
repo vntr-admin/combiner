@@ -97,7 +97,7 @@ public class SparMiddleware extends AbstractRepMiddleware {
         TIntSet affectedUsers = determineAffectedUsers(pid);
 
         //Second, determine the migration strategy
-        TIntIntMap migrationStrategy = SMigrator.getUserMigrationStrategy(pid, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap(), true);
+        TIntIntMap migrationStrategy = SMigrator.getUserMigrationStrategy(pid, getFriendships(), getPartitionToUserMap(), getPartitionToReplicasMap());
 
         //Third, promote replicas to masters as specified in the migration strategy
         for (Integer uid : migrationStrategy.keys()) {

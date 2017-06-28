@@ -33,7 +33,7 @@ public class HermesMiddlewareTest {
         for(int uid=0; uid<numUsers; uid++) {
             partitions.get(uid % numPartitions).add(uid);
         }
-        NoRepManager manager = initNoRepManager(0, false, partitions, friendships);
+        NoRepManager manager = initNoRepManager(0, partitions, friendships);
         HermesMiddleware middleware = new HermesMiddleware(gamma, 3, 100, manager);
         int partitionToRemove = (int)(Math.random() * numPartitions);
         middleware.removePartition((int)(Math.random() * numPartitions));

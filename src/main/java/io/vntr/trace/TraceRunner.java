@@ -48,8 +48,6 @@ public class TraceRunner {
 
     public static void main(String[] args) throws Exception {
 
-        Thread.sleep(5000);
-
         Properties props = new Properties();
         props.load(new FileInputStream(CONFIG_FILE));
 
@@ -347,7 +345,6 @@ public class TraceRunner {
         NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         traceArgs.getLogicalMigrationRatio(),
-                        true,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -364,7 +361,6 @@ public class TraceRunner {
         NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         traceArgs.getLogicalMigrationRatio(),
-                        true,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -376,7 +372,6 @@ public class TraceRunner {
         NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         traceArgs.getLogicalMigrationRatio(),
-                        true,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -387,7 +382,6 @@ public class TraceRunner {
         NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         traceArgs.getLogicalMigrationRatio(),
-                        false,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -398,7 +392,6 @@ public class TraceRunner {
         NoRepManager noRepManager =
                 InitUtils.initNoRepManager(
                         traceArgs.getLogicalMigrationRatio(),
-                        false,
                         trace.getPartitions(),
                         trace.getFriendships());
 
@@ -446,12 +439,12 @@ public class TraceRunner {
     static MetisMiddleware initMetisMiddleware(Trace trace, TraceArgs traceArgs, Properties prop) {
         String gpmetisLocation = prop.getProperty("gpmetis.location");
         String gpmetisTempdir = prop.getProperty("gpmetis.tempdir");
-        NoRepManager noRepManager = InitUtils.initNoRepManager(traceArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
+        NoRepManager noRepManager = InitUtils.initNoRepManager(traceArgs.getLogicalMigrationRatio(), trace.getPartitions(), trace.getFriendships());
         return new MetisMiddleware(gpmetisLocation, gpmetisTempdir, noRepManager);
     }
 
     static DummyMiddleware initDummyMiddleware(Trace trace, TraceArgs traceArgs, Properties prop) {
-        NoRepManager noRepManager = InitUtils.initNoRepManager(traceArgs.getLogicalMigrationRatio(), false, trace.getPartitions(), trace.getFriendships());
+        NoRepManager noRepManager = InitUtils.initNoRepManager(traceArgs.getLogicalMigrationRatio(), trace.getPartitions(), trace.getFriendships());
         return new DummyMiddleware(noRepManager);
     }
 

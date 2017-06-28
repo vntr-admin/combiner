@@ -13,8 +13,8 @@ import io.vntr.manager.RepManager;
  * Created by robertlindquist on 4/26/17.
  */
 public class InitUtils {
-    public static NoRepManager initNoRepManager(double logicalMigrationRatio, boolean placeNewUserRandomly, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships) {
-        NoRepManager manager = new NoRepManager(logicalMigrationRatio, placeNewUserRandomly);
+    public static NoRepManager initNoRepManager(double logicalMigrationRatio, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships) {
+        NoRepManager manager = new NoRepManager(logicalMigrationRatio);
         for(Integer pid : partitions.keys()) {
             manager.addPartition(pid);
             for(TIntIterator iter = partitions.get(pid).iterator(); iter.hasNext(); ) {

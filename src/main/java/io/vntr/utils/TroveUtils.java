@@ -312,5 +312,20 @@ public class TroveUtils {
             arr[nextInt] = tmp;
         }
     }
+
+    public static TIntObjectMap<TIntSet> invertTIntIntMap(TIntIntMap original) {
+        if(original == null) {
+            return null;
+        }
+        TIntObjectMap<TIntSet> inverted = new TIntObjectHashMap<>();
+        for(int key : original.keys()) {
+            int value = original.get(key);
+            if(!inverted.containsKey(value)) {
+                inverted.put(value, new TIntHashSet());
+            }
+            inverted.get(value).add(key);
+        }
+        return inverted;
+    }
 }
 
