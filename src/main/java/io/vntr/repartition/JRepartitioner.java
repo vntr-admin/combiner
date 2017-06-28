@@ -29,6 +29,7 @@ public class JRepartitioner {
             state.setLogicalPids(getUToMasterMap(logicalPartitions));
             state.initUidToPidToFriendCount(logicalPartitions);
 
+            boolean noChangesInPreviousIteration = false;
             for(float t = initialT; t >= 1; t -= deltaT) {
                 int logicalMigrationCountBefore = logicalMigrationCount;
                 int[] randomUserArray = friendships.keys();
@@ -49,9 +50,13 @@ public class JRepartitioner {
                         }
                     }
                 }
-                if(earlyTermination && logicalMigrationCount == logicalMigrationCountBefore) {
+
+                //Terminate if there are no changes for two consecutive iterations
+                boolean noChanges = (logicalMigrationCount == logicalMigrationCountBefore);
+                if(earlyTermination && noChanges && noChangesInPreviousIteration) {
                     break;
                 }
+                noChangesInPreviousIteration = noChanges;
             }
 
             int edgeCut = getEdgeCut(state.getLogicalPids(), state.getFriendships());
