@@ -46,7 +46,7 @@ public class JabejaMiddleware extends AbstractNoRepMiddleware {
     }
 
     void repartition() {
-        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getManager().getPartitionToUsers(), getManager().getFriendships(), incremental, false);
+        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, k, numRestarts, getManager().getPartitionToUsers(), getManager().getFriendships(), incremental);
         getManager().increaseTallyLogical(noRepResults.getLogicalMoves());
         if(noRepResults.getUidsToPids() != null) {
             physicallyMigrate(noRepResults.getUidsToPids());

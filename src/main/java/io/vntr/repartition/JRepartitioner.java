@@ -17,21 +17,19 @@ import static io.vntr.utils.TroveUtils.*;
  */
 public class JRepartitioner {
 
-    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, boolean incremental, boolean earlyTermination) {
+    public static NoRepResults repartition(float alpha, float initialT, float deltaT, int k, int numRestarts, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> friendships, boolean incremental) {
         TIntIntMap uidToPidMap = getUToMasterMap(partitions);
         int bestEdgeCut = getEdgeCut(uidToPidMap, friendships);
         TIntIntMap bestLogicalPids = null;
 
-        int logicalMigrationCount = 0;
+        int logicalMoves = 0;
         for (int i = 0; i < numRestarts; i++) {
             State state = initState(alpha, friendships);
             TIntObjectMap<TIntSet> logicalPartitions = incremental ? partitions : getRandomLogicalPartitions(friendships.keySet(), partitions.keySet());
             state.setLogicalPids(getUToMasterMap(logicalPartitions));
             state.initUidToPidToFriendCount(logicalPartitions);
 
-            boolean noChangesInPreviousIteration = false;
             for(float t = initialT; t >= 1; t -= deltaT) {
-                int logicalMigrationCountBefore = logicalMigrationCount;
                 int[] randomUserArray = friendships.keys();
                 shuffle(randomUserArray);
                 for(Integer uid : randomUserArray) {
@@ -46,17 +44,10 @@ public class JRepartitioner {
                         boolean localSwap = uidToPidMap.get(uid) == uidToPidMap.get(partnerId);
                         logicalSwap(uid, partnerId, state);
                         if(!localSwap) {
-                            logicalMigrationCount += 2;
+                            logicalMoves += 2;
                         }
                     }
                 }
-
-                //Terminate if there are no changes for two consecutive iterations
-                boolean noChanges = (logicalMigrationCount == logicalMigrationCountBefore);
-                if(earlyTermination && noChanges && noChangesInPreviousIteration) {
-                    break;
-                }
-                noChangesInPreviousIteration = noChanges;
             }
 
             int edgeCut = getEdgeCut(state.getLogicalPids(), state.getFriendships());
@@ -66,7 +57,7 @@ public class JRepartitioner {
             }
         }
 
-        return new NoRepResults(bestLogicalPids, logicalMigrationCount);
+        return new NoRepResults(bestLogicalPids, logicalMoves);
     }
 
     static Integer findPartner(Integer uid, TIntSet candidates, float t, State state) {
@@ -131,7 +122,7 @@ public class JRepartitioner {
             counts.put(pid2, counts.get(pid2) + 1);
         }
 
-        for(TIntIterator iter = state.getFriendships().get(uid1).iterator(); iter.hasNext(); ) {
+        for(TIntIterator iter = state.getFriendships().get(uid2).iterator(); iter.hasNext(); ) {
             int friendId = iter.next();
             TIntIntMap counts = state.getUidToPidToFriendCounts().get(friendId);
             counts.put(pid2, counts.get(pid2) - 1);

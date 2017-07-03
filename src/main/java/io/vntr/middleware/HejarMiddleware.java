@@ -31,7 +31,7 @@ public class HejarMiddleware extends H2Middleware {
     }
 
     void jRepartition() {
-        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, jaK, numRestarts, getManager().getPartitionToUsers(), getManager().getFriendships(), incremental, false);
+        NoRepResults noRepResults = JRepartitioner.repartition(alpha, initialT, deltaT, jaK, numRestarts, getManager().getPartitionToUsers(), getManager().getFriendships(), incremental);
         getManager().increaseTallyLogical(noRepResults.getLogicalMoves());
         if(noRepResults.getUidsToPids() != null) {
             physicallyMigrate(noRepResults.getUidsToPids());
