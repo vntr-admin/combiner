@@ -27,6 +27,7 @@ public class MetisRepartitioner {
 
             TIntIntMap reverseUidMap = new TIntIntHashMap(tFriendships.size()+1);
             TIntIntMap mapping = getTranslationToZN(tFriendships.keys(), reverseUidMap);
+
             TIntObjectMap<TIntSet> translatedFriendships = translateFriendshipsToZNBased(tFriendships, mapping);
             writeAdjacencyGraphMetisStyle(translatedFriendships, inputFile);
 
@@ -48,7 +49,7 @@ public class MetisRepartitioner {
         TIntIntMap reversePidMap = new TIntIntHashMap(pids.size()+1);
         int count = 0;
         for(int i=0; i<sortedPids.length; i++) {
-            reversePidMap.put(count, sortedPids[i]);
+            reversePidMap.put(count++, sortedPids[i]);
         }
 
         return reversePidMap;
