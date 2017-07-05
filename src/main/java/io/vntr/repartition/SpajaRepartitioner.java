@@ -16,40 +16,35 @@ import static io.vntr.utils.TroveUtils.*;
 public class SpajaRepartitioner {
 
     public static RepResults repartition(int minNumReplicas, float alpha, float initialT, float deltaT, int k, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas) {
-        int numRestarts = 1;
-        int moves = 0;
-
-        int bestNumReplicas = getLogicalReplicationCount(replicas);
+        int logicalMoves = 0;
+        int initialNumReplicas = getLogicalReplicationCount(replicas);
 
         TIntIntMap bestLogicalPids = new TIntIntHashMap(partitions.size()+1);
         TIntObjectMap<TIntSet> bestLogicalReplicaPids = new TIntObjectHashMap<>(partitions.size()+1);
-        for(int i=0; i<numRestarts; i++) {
-            State state = getState(minNumReplicas, alpha, initialT, deltaT, k, friendships, partitions, replicas);
+        State state = getState(minNumReplicas, alpha, initialT, deltaT, k, friendships, partitions, replicas);
 
-            for(float t = initialT; t >= 1; t -= deltaT) {
-                int[] randomUserIdArray = new int[friendships.size()];
-                System.arraycopy(friendships.keys(), 0, randomUserIdArray, 0, friendships.size());
-                shuffle(randomUserIdArray);
-                for (Integer uid : randomUserIdArray) {
-                    TIntSet swapCandidates = getKDistinctValuesFromArray(k, friendships.keys());
+        for(float t = initialT; t >= 1; t -= deltaT) {
+            int[] randomUserIdArray = new int[friendships.size()];
+            System.arraycopy(friendships.keys(), 0, randomUserIdArray, 0, friendships.size());
+            shuffle(randomUserIdArray);
+            for (Integer uid : randomUserIdArray) {
+                TIntSet swapCandidates = getKDistinctValuesFromArray(k, friendships.keys());
 
-                    Integer partnerId = findPartner(uid, swapCandidates, t, state);
-                    if(partnerId != null) {
-                        swap(uid, partnerId, state);
-                        moves += 2;
-                    }
+                Integer partnerId = findPartner(uid, swapCandidates, t, state);
+                if(partnerId != null) {
+                    swap(uid, partnerId, state);
+                    logicalMoves += 2;
                 }
-            }
-
-            int numReplicas = getLogicalReplicationCount(state.getLogicalReplicaPartitions());
-            if(numReplicas < bestNumReplicas) {
-                bestNumReplicas = numReplicas;
-                bestLogicalPids = new TIntIntHashMap(state.getLogicalPids());
-                bestLogicalReplicaPids = new TIntObjectHashMap<>(state.getLogicalReplicaPids());
             }
         }
 
-        RepResults repResults = new RepResults(moves, bestLogicalPids, bestLogicalReplicaPids);
+        int numReplicas = getLogicalReplicationCount(state.getLogicalReplicaPartitions());
+        if(numReplicas < initialNumReplicas) {
+            bestLogicalPids = new TIntIntHashMap(state.getLogicalPids());
+            bestLogicalReplicaPids = new TIntObjectHashMap<>(state.getLogicalReplicaPids());
+        }
+
+        RepResults repResults = new RepResults(logicalMoves, bestLogicalPids, bestLogicalReplicaPids);
         return repResults;
     }
 
