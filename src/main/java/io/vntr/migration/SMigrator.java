@@ -7,6 +7,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import io.vntr.repartition.Target;
+import io.vntr.utils.TroveUtils;
 
 import java.util.*;
 
@@ -53,16 +54,26 @@ public class SMigrator {
             }
         }
 
-        //Second, place remaining users wherever they have a replica
+        //Second, place remaining users wherever they have a replica, preferring locations with fewer masters
         TIntSet usersYetUnplaced = new TIntHashSet(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
+        TIntIntMap numOnEachPartition = getNumberOnEachPartition(partitions, strategy);
 
         for(TIntIterator iter = usersYetUnplaced.iterator(); iter.hasNext(); ) {
             int uid = iter.next();
             TIntSet replicaPids = uidToReplicasMap.get(uid);
             if(replicaPids.size() > 0) {
-                int newPid = getRandomElement(uidToReplicasMap.get(uid));
-                strategy.put(uid, newPid);
+                int lightestPid = -1;
+                int minWeight = Integer.MAX_VALUE;
+                for(TIntIterator iter2 = uidToReplicasMap.get(uid).iterator(); iter2.hasNext(); ) {
+                    int curPid = iter2.next();
+                    int weight = numOnEachPartition.get(curPid);
+                    if(weight < minWeight) {
+                        minWeight = weight;
+                        lightestPid = curPid;
+                    }
+                }
+                strategy.put(uid, lightestPid);
                 iter.remove();
             }
         }
@@ -77,6 +88,16 @@ public class SMigrator {
         }
 
         return strategy;
+    }
+
+    static TIntIntMap getNumberOnEachPartition(TIntObjectMap<TIntSet> partitions, TIntIntMap strategy) {
+        TIntIntMap numOnEachPartition = TroveUtils.getUserCounts(partitions);
+        TIntObjectMap<TIntSet> reverseStrategy = TroveUtils.invertTIntIntMap(strategy);
+        TIntIntMap numMovingToEachPartition = TroveUtils.getUserCounts(reverseStrategy);
+        for(int pid : numMovingToEachPartition.keys()) {
+            numOnEachPartition.put(pid, numOnEachPartition.get(pid) + numMovingToEachPartition.get(pid));
+        }
+        return numOnEachPartition;
     }
 
     static Integer getLeastOverloadedPartition(TIntIntMap strategy, Integer pidToDelete, TIntIntMap pToMasterCounts) {

@@ -176,4 +176,27 @@ public class SMigratorTest {
         assertEquals(expectedWithOnly5Remaining, SMigrator.getRemainingSpotsInPartitions(initSet(1, 2, 3, 4), 50, pToMasterCounts));
     }
 
+    @Test
+    public void testGetNumberOnEachPartition() {
+        TIntObjectMap<TIntSet> partitions = new TIntObjectHashMap<>();
+        partitions.put(1, initSet( 1,  2,  3,  4, 5));
+        partitions.put(2, initSet( 6,  7,  8,  9));
+        partitions.put(3, initSet(10, 11, 12, 13));
+
+        TIntIntMap strategy = new TIntIntHashMap();
+        strategy.put(14, 1);
+        strategy.put(15, 2);
+        strategy.put(16, 3);
+        strategy.put(17, 1);
+        strategy.put(18, 2);
+
+        TIntIntMap expectedResult = new TIntIntHashMap();
+        expectedResult.put(1, 7);
+        expectedResult.put(2, 6);
+        expectedResult.put(3, 5);
+
+        TIntIntMap result = SMigrator.getNumberOnEachPartition(partitions, strategy);
+
+        assertEquals(expectedResult, result);
+    }
 }
