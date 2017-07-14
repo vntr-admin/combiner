@@ -19,7 +19,7 @@ import static io.vntr.utils.TroveUtils.*;
 
 public class SMigrator {
 
-    public static TIntIntMap getUserMigrationStrategy(Integer pid, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas) {
+    public static TIntIntMap getUserMigrationStrategy(Integer pid, TIntObjectMap<TIntSet> friendships, TIntObjectMap<TIntSet> partitions, TIntObjectMap<TIntSet> replicas, boolean smartPlacement) {
         //Reallocate the N/M master nodes hosted in that server to the remaining M-1 servers equally.
         //Decide the server in which a slave replica is promoted to master, based on the ratio of its neighbors that already exist on that server.
         //Thus, highly connected nodes, with potentially many replicas to be moved due to local data semantics, get to first choose the server they go to.
@@ -33,28 +33,30 @@ public class SMigrator {
         TIntIntMap remainingSpotsInPartitions = getRemainingSpotsInPartitions(singleton(pid), uidToPidMap.size(), pidToMasterCounts);
         TIntIntMap strategy = new TIntIntHashMap(masterIds.size() + 1);
 
-        //First, attempt to place vertices on partitions where they have a replica and the partition is not overloaded
-        NavigableSet<Target> targets = new TreeSet<>();
-        for(TIntIterator iter = masterIds.iterator(); iter.hasNext(); ) {
-            int uid = iter.next();
-            for(TIntIterator iter2 = uidToReplicasMap.get(uid).iterator(); iter2.hasNext(); ) {
-                int replicaPid = iter2.next();
-                float score = scoreReplicaPromotion(friendships.get(uid), partitions.get(replicaPid));
-                Target target = new Target(uid, replicaPid, pid, score);
-                targets.add(target);
+        //First, attempt to place vertices on partitions where they have a large proportion of their friends
+        if(smartPlacement) {
+            NavigableSet<Target> targets = new TreeSet<>();
+            for(TIntIterator iter = masterIds.iterator(); iter.hasNext(); ) {
+                int uid = iter.next();
+                for(TIntIterator iter2 = uidToReplicasMap.get(uid).iterator(); iter2.hasNext(); ) {
+                    int replicaPid = iter2.next();
+                    float score = scoreReplicaPromotion(friendships.get(uid), partitions.get(replicaPid));
+                    Target target = new Target(uid, replicaPid, pid, score);
+                    targets.add(target);
+                }
+            }
+
+            for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
+                Target target = iter.next();
+                int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
+                if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
+                    strategy.put(target.uid, target.pid);
+                    remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
+                }
             }
         }
 
-        for (Iterator<Target> iter = targets.descendingIterator(); iter.hasNext(); ) {
-            Target target = iter.next();
-            int remainingSpotsInPartition = remainingSpotsInPartitions.get(target.pid);
-            if (!strategy.containsKey(target.uid) && remainingSpotsInPartition > 0) {
-                strategy.put(target.uid, target.pid);
-                remainingSpotsInPartitions.put(target.pid, remainingSpotsInPartition - 1);
-            }
-        }
-
-        //Second, place remaining users wherever they have a replica, preferring locations with fewer masters
+        //Second, place remaining users on the lightest partition where they have a replica
         TIntSet usersYetUnplaced = new TIntHashSet(masterIds);
         usersYetUnplaced.removeAll(strategy.keySet());
         TIntIntMap numOnEachPartition = getNumberOnEachPartition(partitions, strategy);
